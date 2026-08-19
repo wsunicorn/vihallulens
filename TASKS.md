@@ -58,7 +58,8 @@
 - [ ] **T06** · L · Nạp mô hình 4-bit trên T4
   - Nạp `Qwen/Qwen2.5-7B-Instruct` với NF4, `attn_implementation="eager"`, `torch_dtype=float16`.
   - In VRAM sau khi nạp.
-  - **Kiểm tra:** nạp thành công trên Kaggle T4, VRAM sau nạp dưới 7 GB. Dán log vào PR.
+  - Công cụ đã sẵn sàng từ 19/08/2026: `scripts/probe_load_model.py` và `notebooks/t06_nap_mo_hinh_t4.ipynb`. Script tự in compute capability và cảnh báo nếu card thấp hơn 7.5, tự kiểm `attn_implementation` có đúng là `eager` không, và trả mã thoát khác 0 nếu không đạt tiêu chí.
+  - **Kiểm tra:** nạp thành công trên Kaggle T4, VRAM sau nạp dưới 7 GB. Dán log vào PR. **Còn chờ chạy trên Kaggle** — không tick khi chưa có log thật.
 
 - [ ] **T07** · L · 🚩 Trích attention bằng hook, không tràn bộ nhớ
   - Đăng ký forward hook trên từng `self_attn`, tính tổng theo chunk ngay trong hook, `del` tensor trước khi ra khỏi hook. Chặn `all_self_attns` tích lũy bằng cách cho hook trả về `(attn_output, None)`.
