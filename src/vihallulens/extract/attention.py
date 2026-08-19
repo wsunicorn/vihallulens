@@ -11,8 +11,9 @@ The lookback ratio follows the original definition from Lookback Lens, reproduce
 
 from __future__ import annotations
 
+import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 import torch
@@ -127,6 +128,45 @@ def build_layout(
     )
 
 
+def drop_middle_chunks(
+    context: str, chunks: list[Chunk], n_drop: int
+) -> tuple[str, list[Chunk]]:
+    """Remove a contiguous block of chunks from the middle of the context.
+
+    Truncation has to be done in whole chunks. Cutting characters instead would leave the
+    surviving chunks pointing at offsets in the *original* string, so every per-chunk figure
+    afterwards would be attributed to the wrong span without anything failing.
+
+    The middle is chosen because the opening and closing of a document carry more of its
+    topic, and because ISE-DSC01 spreads evidence throughout, so neither end may be dropped
+    wholesale. Surviving chunks are shifted and re-indexed to stay contiguous.
+    """
+    if n_drop <= 0 or len(chunks) <= 1:
+        return context, chunks
+    n_drop = min(n_drop, len(chunks) - 1)
+    start = (len(chunks) - n_drop) // 2
+    end = start + n_drop
+
+    cut_start = chunks[start].char_start
+    cut_end = chunks[end - 1].char_end
+    gap = cut_end - cut_start
+    new_context = context[:cut_start] + context[cut_end:]
+
+    kept: list[Chunk] = []
+    for chunk in chunks[:start]:
+        kept.append(replace(chunk, index=len(kept)))
+    for chunk in chunks[end:]:
+        kept.append(
+            replace(
+                chunk,
+                index=len(kept),
+                char_start=chunk.char_start - gap,
+                char_end=chunk.char_end - gap,
+            )
+        )
+    return new_context, kept
+
+
 def lookback_from_layer(
     weights: torch.Tensor, layout: PromptLayout
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -236,23 +276,46 @@ class AttentionExtractor:
 
     # -- prompt preparation --------------------------------------------------------------
 
-    def _fit_context(self, context: str, question: str, response: str) -> tuple[str, bool]:
-        """Drop the middle of the context until the whole prompt fits the token budget.
+    def _prompt_length(self, context: str, question: str, response: str) -> int:
+        rendered = render_prompt(self.tokenizer, context, question, response)
+        return len(self.tokenizer(rendered.text, add_special_tokens=False)["input_ids"])
 
-        Section 2.2 of docs/SPEC.md asks for middle truncation: the opening and the closing
-        of a document carry more of its topic than its middle, and evidence positions in
-        ISE-DSC01 are spread throughout, so neither end may be sacrificed wholesale.
+    def _fit_to_budget(
+        self, context: str, question: str, response: str, chunks: list[Chunk]
+    ) -> tuple[str, list[Chunk], bool]:
+        """Shrink the context to the token budget, keeping context and chunks in step.
+
+        Section 2.2 of docs/SPEC.md asks for middle truncation. It is done a whole block of
+        chunks at a time so the surviving chunks keep exact offsets; see drop_middle_chunks.
         """
-        for _ in range(4):
-            rendered = render_prompt(self.tokenizer, context, question, response)
-            length = len(self.tokenizer(rendered.text, add_special_tokens=False)["input_ids"])
+        truncated = False
+        for _ in range(6):
+            length = self._prompt_length(context, question, response)
             if length <= self.max_context_tokens:
-                return context, False
-            excess_ratio = 1.0 - (self.max_context_tokens / length) - 0.02
-            drop = max(1, int(len(context) * max(excess_ratio, 0.01)))
-            keep = max(1, (len(context) - drop) // 2)
-            context = context[:keep] + context[-keep:]
-        return context, True
+                return context, chunks, truncated
+            if len(chunks) <= 1:
+                break
+            excess = 1.0 - self.max_context_tokens / length
+            n_drop = max(1, math.ceil(len(chunks) * (excess + 0.05)))
+            context, chunks = drop_middle_chunks(context, chunks, n_drop)
+            truncated = True
+
+        if self._prompt_length(context, question, response) > self.max_context_tokens:
+            # A single chunk larger than the whole budget. Nothing in the four corpora comes
+            # close, but cutting its middle is better than silently blowing the VRAM budget.
+            context = self._clip_text(context)
+            chunks = [Chunk(text=context, char_start=0, char_end=len(context), index=0)]
+            truncated = True
+        return context, chunks, truncated
+
+    def _clip_text(self, context: str) -> str:
+        """Last-resort character clip, keeping the head and the tail of the context."""
+        ids = self.tokenizer(context, add_special_tokens=False)["input_ids"]
+        if len(ids) <= self.max_context_tokens:
+            return context
+        ratio = self.max_context_tokens / len(ids)
+        keep = max(1, int(len(context) * ratio * 0.45))
+        return context[:keep] + context[-keep:]
 
     def _encode(self, prompt_text: str):
         encoded = self.tokenizer(
@@ -296,7 +359,7 @@ class AttentionExtractor:
         if not chunks:
             raise ValueError("at least one chunk is required")
 
-        context, truncated = self._fit_context(context, question, response)
+        context, chunks, truncated = self._fit_to_budget(context, question, response, chunks)
         rendered = render_prompt(self.tokenizer, context, question, response)
         input_ids, offsets = self._encode(rendered.text)
 
@@ -324,6 +387,11 @@ class AttentionExtractor:
                 # leaving the flag off means all_self_attns never accumulates in the first
                 # place. See the T07 note in section 5 of CLAUDE.md.
                 self.model(tensor, use_cache=False)
+                if not sink:
+                    # Older versions only fill attn_weights when asked. Retrying with the flag
+                    # is still safe: the hook replaces every matrix with None, so the tuple the
+                    # model collects stays empty of tensors.
+                    self.model(tensor, output_attentions=True, use_cache=False)
         finally:
             for handle in handles:
                 handle.remove()

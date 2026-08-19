@@ -273,7 +273,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Estimate attention memory and token lengths.")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--seq-len", type=int, nargs="+", default=list(DEFAULT_SEQ_LENS))
-    parser.add_argument("--data-dir", type=Path, default=Path("data/raw"))
+    parser.add_argument("--data-dir", type=Path, default=None)
     parser.add_argument("--skip-token-stats", action="store_true")
     args = parser.parse_args()
 
@@ -289,12 +289,21 @@ def main() -> None:
 
     from transformers import AutoTokenizer
 
+    from vihallulens.data.paths import find_raw_dir
+
+    try:
+        data_dir = find_raw_dir(args.data_dir)
+    except FileNotFoundError as error:
+        print(f"\n  Bỏ qua phần đo token: {error}")
+        return
+    print(f"\n  Thư mục dữ liệu       : {data_dir}")
+
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     results = {}
     for name in RAW_SOURCES:
-        rows = load_raw(args.data_dir, name)
+        rows = load_raw(data_dir, name)
         if not rows:
-            print(f"  [bỏ qua] không thấy file của {name} trong {args.data_dir}")
+            print(f"  [bỏ qua] không thấy file của {name} trong {data_dir}")
             continue
         results[name] = token_stats(tokenizer, rows)
     if results:
