@@ -22,6 +22,10 @@ import json
 import sys
 from pathlib import Path
 
+# Run against the checkout, not whatever an editable install may or may not have registered.
+# See the note in scripts/probe_env.py.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
 BYTES_PER_FP16 = 2
 BYTES_PER_NF4 = 0.5
 GB = 1000**3  # decimal GB, to match the table in section 5 of CLAUDE.md

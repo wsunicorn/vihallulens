@@ -26,8 +26,12 @@ from pathlib import Path
 
 import torch
 
-from vihallulens.data.chunking import Chunk
-from vihallulens.extract.attention import AttentionExtractor
+# Run against the checkout, not whatever an editable install may or may not have registered.
+# See the note in scripts/probe_env.py.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from vihallulens.data.chunking import Chunk  # noqa: E402
+from vihallulens.extract.attention import AttentionExtractor  # noqa: E402
 
 MB = 1024**2
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
