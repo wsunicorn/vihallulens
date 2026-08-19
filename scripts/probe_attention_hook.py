@@ -111,7 +111,8 @@ def run_one(extractor: AttentionExtractor, label: str, context: str, question: s
     print(f"\n  {label}")
     print(f"    ngữ cảnh              : {len(context.split()):,} từ, {len(chunks)} chunk")
     print(f"    lookback_per_chunk    : {features.lookback_per_chunk.shape}")
-    print(f"    lookback_total        : {features.lookback_total.shape}")
+    print(f"    lookback_total        : {features.lookback_total.shape}  (mẫu số cả prompt)")
+    print(f"    lookback_context      : {features.lookback_context.shape}  (mẫu số chỉ ngữ cảnh)")
     print(f"    self_attention        : {features.self_attention.shape}")
     print(f"    bị cắt ngữ cảnh       : {features.truncated}")
     print(f"    thời gian             : {features.elapsed_ms:,.0f} ms")
@@ -125,11 +126,15 @@ def run_one(extractor: AttentionExtractor, label: str, context: str, question: s
     else:
         print("    lớp có nan/inf        : không có")
 
-    values = features.lookback_total.astype("float32")
-    print(f"    lookback_total trung bình: {values.mean():.4f}  (min {values.min():.4f}, "
-          f"max {values.max():.4f})")
-    if not (values.min() >= 0.0 and values.max() <= 1.0001):
-        print("    CẢNH BÁO: lookback_total nằm ngoài [0, 1].")
+    for name, array in (
+        ("lookback_total  ", features.lookback_total),
+        ("lookback_context", features.lookback_context),
+    ):
+        values = array.astype("float32")
+        print(f"    {name}      : trung bình {values.mean():.4f}, min {values.min():.4f}, "
+              f"max {values.max():.4f}")
+        if not (values.min() >= 0.0 and values.max() <= 1.0001):
+            print(f"    CẢNH BÁO: {name.strip()} nằm ngoài [0, 1].")
     return features
 
 
@@ -139,6 +144,13 @@ def main() -> int:
     parser.add_argument("--tiny", action="store_true", help="random small model on the CPU")
     parser.add_argument("--max-context-tokens", type=int, default=4096)
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument(
+        "--exclude-layers",
+        type=int,
+        nargs="*",
+        default=[27],
+        help="lớp bỏ qua; mặc định 27 vì lớp cuối của Qwen2.5-7B tràn số ở float16",
+    )
     parser.add_argument(
         "--compute-dtype",
         default="float16",
@@ -182,10 +194,12 @@ def main() -> int:
         print(f"  thư mục dữ liệu       : {data_dir}")
 
         print(f"  compute dtype         : {args.compute_dtype}")
+        print(f"  lớp bỏ qua            : {args.exclude_layers or 'không bỏ lớp nào'}")
         extractor = AttentionExtractor(
             args.model,
             max_context_tokens=args.max_context_tokens,
             device="cuda",
+            exclude_layers=args.exclude_layers,
             compute_dtype=args.compute_dtype,
         )
         samples = load_samples(data_dir)
