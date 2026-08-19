@@ -37,9 +37,11 @@
   - Ba lớp bảo vệ khả năng tái lập: mọi model đặt `extra="forbid"` nên gõ sai tên khóa là raise chứ không bị bỏ qua âm thầm; `split_seed` khác 42 là raise theo mục 3 và mục 7 của `CLAUDE.md`; `config_hash` bỏ qua `run_name` nên đổi tên lần chạy không sinh hash mới.
   - **Kết quả kiểm tra:** `pytest tests/test_config.py` → `23 passed`; toàn bộ `pytest` → `27 passed`; `ruff check .` → `All checks passed!`.
 
-- [ ] **T04** · M · Module ghi kết quả
-  - Viết `src/vihallulens/evaluation/logging.py` với `log_result` và `export_table` theo `docs/SPEC.md`.
-  - **Kiểm tra:** gọi `log_result` hai lần rồi `export_table` trả về DataFrame 2 dòng.
+- [x] **T04** · M · Module ghi kết quả — hoàn thành 19/08/2026
+  - `src/vihallulens/evaluation/logging.py` với `log_result`, `export_table` và `read_results` theo mục 2.5 của `docs/SPEC.md`. Ghi nối vào `results/runs.jsonl`, mỗi lần chạy một dòng JSON, không bao giờ ghi đè.
+  - Mỗi bản ghi có đủ `timestamp`, `run_name`, `git_commit`, `config_hash`, `config`, `metrics`, `extra`. `config_hash` dùng chung hàm với `config.py` nên dict ghi ra và model sinh ra nó cho cùng một hash.
+  - `extra` thiếu `ms_per_sample` hoặc `peak_vram_mb` là raise, không ghi gì — theo mục 3 của `docs/EXPERIMENTS.md`.
+  - **Kết quả kiểm tra:** gọi `log_result` hai lần rồi `export_table` trả về đúng 2 dòng; `pytest` → `42 passed`; `ruff check .` → `All checks passed!`.
 
 ---
 
