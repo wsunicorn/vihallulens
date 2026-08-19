@@ -150,14 +150,21 @@ def load_config(path: str | Path) -> ExperimentConfig:
     return ExperimentConfig(**raw)
 
 
-def config_hash(cfg: ExperimentConfig, length: int = 12) -> str:
-    """Short, stable hash of everything in the config that can change a result.
+def hash_config_dict(payload: dict[str, Any], length: int = 12) -> str:
+    """Hash a config already reduced to a plain dictionary.
+
+    Kept separate from :func:`config_hash` so that the result logger, which receives a dict
+    rather than a model, produces exactly the same hash for the same configuration.
 
     ``run_name`` is excluded on purpose: it is a label, not a parameter. Two runs that differ
     only by name describe the same experiment and must share a hash, so that re-running under
     a new name is recognisable as a repeat rather than a new configuration.
     """
-    payload = cfg.to_dict()
-    payload.pop("run_name", None)
+    payload = {key: value for key, value in payload.items() if key != "run_name"}
     canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:length]
+
+
+def config_hash(cfg: ExperimentConfig, length: int = 12) -> str:
+    """Short, stable hash of everything in the config that can change a result."""
+    return hash_config_dict(cfg.to_dict(), length=length)
