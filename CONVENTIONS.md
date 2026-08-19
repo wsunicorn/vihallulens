@@ -20,7 +20,7 @@ Khóa luận tốt nghiệp ngành Khoa học dữ liệu, Trường Đại họ
 
 Những điều này KHÔNG được thương lượng khi viết code:
 
-- **Phần cứng: GPU Tesla T4 16 GB hoặc P100 16 GB** trên Kaggle/Colab. Mọi thứ phải chạy vừa trong 16 GB.
+- **Phần cứng: GPU Tesla T4 16 GB** trên Kaggle/Colab. Mọi thứ phải chạy vừa trong 16 GB. P100 cũng 16 GB nhưng là kiến trúc Pascal (compute capability 6.0) trong khi `bitsandbytes` NF4 khuyến nghị 7.5 trở lên — **chạy thử một lượt rồi mới coi P100 là phương án dự phòng**, đừng mặc định nó tương đương T4.
 - **Không có ngân sách API.** Chỉ dùng Gemini free tier ở quy mô rất nhỏ để dựng baseline LLM-giám-khảo. Không bao giờ viết code giả định có OpenAI/Anthropic API key.
 - **Mọi thứ phải tái lập được** trên máy khác: seed cố định, config ghi ra file, không có magic number nằm trong code.
 - **Ngôn ngữ:** code và docstring viết tiếng Anh; tài liệu, báo cáo, commit message viết tiếng Việt.
@@ -66,7 +66,40 @@ Bật `output_attentions` vô hiệu hóa FlashAttention và buộc materialize 
 
 **Cách duy nhất được chấp nhận:** đăng ký forward hook trên từng lớp, tính đặc trưng lookback ngay trong hook, giải phóng tensor trước khi sang lớp tiếp theo. Không bao giờ giữ toàn bộ tuple attention của tất cả các lớp.
 
-Nếu Task T05–T08 thất bại, dừng lại và báo cho người dùng. Không tự ý đổi hướng đề tài.
+### Ngân sách bộ nhớ — đây là phép tính, không phải phỏng đoán
+
+Qwen2.5-7B-Instruct có 28 lớp và 28 đầu chú ý. Ma trận chú ý một lớp ở fp16 chiếm `n_heads × seq_len² × 2` byte:
+
+| Độ dài chuỗi | Một lớp | Giữ cả 28 lớp cùng lúc |
+|---|---|---|
+| 2.048 token | 0,23 GB | 6,6 GB |
+| 4.096 token | 0,94 GB | 26 GB — tràn |
+| 8.192 token | 3,76 GB | 105 GB — tràn |
+
+Cột phải là hậu quả của `output_attentions=True` dùng ngây thơ. Cột giữa là mức mà thiết kế hook giữ lại. Cộng trọng số 4-bit khoảng 5–6 GB, đỉnh thực tế ở 4.096 token ước chừng 8–9 GB (có thêm bản sao tạm khi softmax, KV cache và activation) — vẫn nằm trong 16 GB.
+
+Kết luận: **T07 kiểm tra hook có cài đúng không, không phải kiểm tra bài toán có khả thi về mặt vật lý không.** Phần vật lý đã tính xong.
+
+### Ba điều dễ hiểu sai về thiết kế hook
+
+1. **Hook không giảm được đỉnh bộ nhớ của chính lớp đó.** Attention eager đã tạo đủ ma trận `(q_len × k_len)` bên trong module *trước khi* hook chạy. Hook chỉ quyết định giữ lại bao nhiêu. Muốn hạ dưới mức 0,94 GB một lớp thì phải **thay hàm tính attention** để chỉ tính các hàng truy vấn ứng với token phản hồi — đó là đổi kiến trúc, phải hỏi trước theo mục 6.
+2. **Hook có thể trả về giá trị mới để thay output.** Đây là cách chặn `all_self_attns` tích lũy: tính đặc trưng xong thì trả về `(attn_output, None)`.
+3. **Việc `output` của hook có chứa `attn_weights` hay không phụ thuộc phiên bản `transformers`.** Có phiên bản chỉ trả về khi bật `output_attentions=True`, có phiên bản luôn trả về. Phải kiểm tra thực tế ở T07 rồi **ghim đúng phiên bản** trong `pyproject.toml`, kèm một test khẳng định `attn_weights is not None`.
+
+### Nếu T07 không qua
+
+Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tài. Trước khi bàn tới phương án thay thế phải đi hết các nấc lùi dưới đây theo thứ tự:
+
+| Nấc | Cách làm | Hiệu quả |
+|---|---|---|
+| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | Bộ nhớ giảm 4 lần (bậc hai theo độ dài) |
+| 2 | Chỉ trích một phần lớp, ví dụ 8 trong 28 | Giảm gần tuyến tính; Lookback Lens cho thấy ít đầu mang phần lớn tín hiệu |
+| 3 | Thay hàm attention để chỉ tính hàng truy vấn của token phản hồi | Hiệu quả lớn nhất nhưng là đổi kiến trúc — phải hỏi |
+| 4 | Lùi Qwen2.5-3B rồi 1.5B | Cùng họ, chỉ đổi `model_name` trong YAML |
+| 5 | Xử lý ngữ cảnh theo cửa sổ trượt | Đổi mẫu số của lookback ratio — phải trích lại toàn bộ đặc trưng |
+| 6 | Đổi sang P100 hoặc Colab khi Kaggle hết quota | Xem cảnh báo về P100 ở mục 2 |
+
+Đi hết sáu nấc mà vẫn không lấy được attention thì mới bàn tới hướng thay thế đã nêu trong đề xuất đề tài.
 
 ## 6. Quy trình làm việc bắt buộc
 
@@ -86,10 +119,10 @@ Nếu Task T05–T08 thất bại, dừng lại và báo cho người dùng. Kh�
 - Không hardcode đường dẫn tuyệt đối của máy cá nhân.
 - Không commit file lớn hơn 10 MB.
 - Không tự ý đổi seed hoặc tỷ lệ chia tập.
-- Không đổi mẫu prompt đưa vào mô hình đọc sau khi đã chốt ở T07 (xem mục 9).
+- Không đổi mẫu prompt đưa vào mô hình đọc sau khi đã chốt ở T07 (xem mục 8).
 - Không commit khóa API, kể cả trong notebook đã chạy.
 
-## 9. Mẫu prompt đưa vào mô hình đọc
+## 8. Mẫu prompt đưa vào mô hình đọc
 
 Mẫu prompt quyết định vị trí token của ngữ cảnh, câu hỏi và phản hồi — tức quyết định toàn bộ việc tính chỉ số attention. **Đổi mẫu giữa chừng làm mọi đặc trưng đã trích trở nên vô giá trị.**
 
@@ -99,7 +132,7 @@ Quy tắc: ở Task T07, chốt đúng một mẫu, ghi nguyên văn vào mục 
 MẪU PROMPT ĐÃ CHỐT: (điền ở T07)
 ```
 
-## 10. Bố cục repo
+## 9. Bố cục repo
 
 ```
 .
