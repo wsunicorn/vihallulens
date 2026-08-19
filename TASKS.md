@@ -66,7 +66,10 @@
   - **Việc đầu tiên phải làm:** kiểm tra `output` của hook có thật sự chứa `attn_weights` không — điều này phụ thuộc phiên bản `transformers` (xem mục 5 của `CLAUDE.md`). Xong thì ghim đúng phiên bản đó vào `pyproject.toml` và viết một test khẳng định `attn_weights is not None`. Không ghim thì một lần `uv pip install` sau này có thể làm hỏng toàn bộ pipeline mà không báo lỗi.
   - Chạy thử với một mẫu ViHallu (~200 từ) và một mẫu ISE-DSC01 dài nhất (~4.805 từ).
   - Chốt **mẫu prompt duy nhất** ghép ngữ cảnh, câu hỏi và phản hồi. Ghi nguyên văn vào mục 8 của `CLAUDE.md`. Sau task này không được đổi.
-  - **Kiểm tra:** cả hai chạy xong, `torch.cuda.max_memory_allocated()` dưới 14 GB, in ra shape của `lookback_per_chunk`, và mục 8 của `CLAUDE.md` đã có mẫu prompt. **Đây là cổng chặn — không qua thì dừng.**
+  - Đã làm 19/08/2026: `src/vihallulens/extract/prompt.py` (mẫu prompt đã chốt), `src/vihallulens/extract/attention.py` (`AttentionExtractor` + hook), `scripts/probe_attention_hook.py`, `notebooks/t07_trich_attention_t4.ipynb`. Mục 8 của `CLAUDE.md` đã ghi nguyên văn mẫu prompt.
+  - Đã trả lời được câu hỏi phiên bản, đo trên `transformers` 5.15.0: **hook nhận `attn_weights` kể cả khi không bật `output_attentions`**, nên không bật cờ đó nữa và `all_self_attns` không bao giờ tích lũy.
+  - Toán lookback đã kiểm bằng `pytest tests/test_attention_math.py` (12 ca, đối chiếu ma trận chú ý có đáp án tính tay) và toàn tuyến đã chạy trên mô hình Qwen2 tí hon ở CPU: `lookback_per_chunk` ra đúng `(n_layers, n_heads, n_response_tokens, n_chunks)`.
+  - **Kiểm tra:** cả hai chạy xong, `torch.cuda.max_memory_allocated()` dưới 14 GB, in ra shape của `lookback_per_chunk`, và mục 8 của `CLAUDE.md` đã có mẫu prompt. **Còn chờ chạy trên Kaggle T4** — chưa tick khi chưa có log thật. **Đây là cổng chặn — không qua thì dừng.**
 
 - [ ] **T08** · L · Đo thông lượng và quyết định bậc thang
   - Đo ms/mẫu với 20 mẫu ở mỗi mức độ dài. Nếu 7B không qua T07, thử lại với 3B rồi 1.5B.
