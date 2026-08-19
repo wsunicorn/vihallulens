@@ -92,7 +92,7 @@ Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tà
 
 | Nấc | Cách làm | Hiệu quả |
 |---|---|---|
-| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | Bộ nhớ giảm 4 lần (bậc hai theo độ dài) |
+| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | Bộ nhớ giảm 4 lần (bậc hai theo độ dài). Đo ở T05: chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck — xem mục 4B của `docs/DATA.md` |
 | 2 | Chỉ trích một phần lớp, ví dụ 8 trong 28 | Giảm gần tuyến tính; Lookback Lens cho thấy ít đầu mang phần lớn tín hiệu |
 | 3 | Thay hàm attention để chỉ tính hàng truy vấn của token phản hồi | Hiệu quả lớn nhất nhưng là đổi kiến trúc — phải hỏi |
 | 4 | Lùi Qwen2.5-3B rồi 1.5B | Cùng họ, chỉ đổi `model_name` trong YAML |
