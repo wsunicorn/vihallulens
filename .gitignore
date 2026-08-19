@@ -7,7 +7,6 @@ data/raw/*
 # --- Tài liệu hành chính và bài báo tham khảo: chỉ giữ trên máy ---
 UniversityRequirements/
 reference_papers/
-DOC_TRUOC_TIEN.md
 
 # --- Kết quả nặng ---
 results/*.npz
