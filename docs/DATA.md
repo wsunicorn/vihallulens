@@ -90,6 +90,34 @@ Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
 
 **Chênh lệch phải ghi vào phần hạn chế của báo cáo:** tập train ISE-DSC01 nhóm tải về có **36.369** mẫu, trong khi bài SemViQA (arXiv:2503.00955) ghi **37.967** mẫu — thiếu 1.598 mẫu. Nhóm không truy được nguyên nhân (có thể do bản phát hành khác nhau của ban tổ chức). Quy tắc xử lý: **báo cáo theo số thực tế 36.369**, nêu rõ chênh lệch này ở chương đánh giá, và **không so trực tiếp** số của nhóm với số SemViQA công bố trên ISE-DSC01 mà không kèm ghi chú.
 
+## 4B. Độ dài tính bằng token — đo ở T05 ngày 19/08/2026
+
+Bảng mục 4 đếm bằng **từ**, còn ngân sách bộ nhớ ở mục 5 của `CLAUDE.md` tính bằng **token**. Đây là số quy đổi thật, đo bằng `python scripts/probe_vram.py` với tokenizer của `Qwen/Qwen2.5-7B-Instruct` trên toàn bộ dữ liệu có nhãn.
+
+Ngữ cảnh, tính trên từng mẫu:
+
+| Bộ | Mẫu | Ngữ cảnh duy nhất | token/từ | p50 | p90 | p99 | Dài nhất |
+|---|---|---|---|---|---|---|---|
+| ViHallu | 7.000 | 3.865 | 1,35 | 218 | 358 | 549 | 2.347 |
+| ISE-DSC01 | 36.369 | 4.793 | 1,33 | 768 | 1.456 | 2.049 | 6.543 |
+| ViWikiFC | 16.738 | 1.479 | 1,36 | 183 | 388 | 536 | 805 |
+| ViFactCheck | 5.062 | 1.035 | 1,33 | 823 | 1.519 | 2.687 | 4.696 |
+
+Ngữ cảnh + câu hỏi + phản hồi, và số mẫu bị cắt theo `max_context_tokens` (chưa kể phần khung của mẫu prompt, sẽ chốt ở T07):
+
+| Bộ | p50 | p99 | Dài nhất | Vượt 2.048 | Vượt 4.096 |
+|---|---|---|---|---|---|
+| ViHallu | 308 | 635 | 2.474 | 3 (0,04 %) | 0 (0,00 %) |
+| ISE-DSC01 | 796 | 2.072 | 6.622 | 396 (1,09 %) | 6 (0,02 %) |
+| ViWikiFC | 214 | 590 | 950 | 0 (0,00 %) | 0 (0,00 %) |
+| ViFactCheck | 870 | 2.738 | 4.782 | 142 (2,81 %) | 8 (0,16 %) |
+
+Ba kết luận dùng cho T07 và về sau:
+
+1. **Tokenizer của Qwen2.5 nén tiếng Việt tốt hơn dự đoán:** khoảng **1,33–1,36 token mỗi từ**, không phải 2 như ước lượng ban đầu. Ngữ cảnh 4.805 từ dài nhất của ISE-DSC01 chỉ ra 6.543 token.
+2. **`max_context_tokens = 4096` gần như không cắt gì:** tổng cộng 14 mẫu trên cả bốn bộ. Con số này không đủ để ảnh hưởng kết quả, nhưng vẫn phải đặt cờ `truncated=True` và đếm lại khi trích đặc trưng.
+3. **Nấc lùi 1 rẻ hơn tưởng:** hạ xuống 2.048 token chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck. Nếu T07 chật bộ nhớ thì đây là nấc đầu tiên nên dùng, gần như không mất mát.
+
 ## 5. Chia tập
 
 - **ViHallu và ISE-DSC01:** chỉ có tập train nên tự chia 80/10/10 theo `context_id`, seed 42.
