@@ -55,11 +55,11 @@
   - **Đo tỷ lệ token trên từ của tokenizer Qwen2.5 với tiếng Việt.** Mọi số liệu trong `docs/DATA.md` tính bằng **từ**, còn ngân sách bộ nhớ tính bằng **token** — không có tỷ lệ thật thì không biết `max_context_tokens = 4096` cắt mất bao nhiêu phần trăm mẫu. Tokenize toàn bộ ngữ cảnh của bốn bộ, in ra phân vị 50/90/99 và tỷ lệ mẫu vượt 2.048 và 4.096 token.
   - **Kết quả kiểm tra:** `python scripts/probe_vram.py` in ra cả hai bảng, chạy 21 giây trên CPU. Ma trận một lớp 0,23 / 0,94 / 3,76 GB ở 2.048 / 4.096 / 8.192 token — **khớp chính xác bảng mục 5 của `CLAUDE.md`**. Trọng số sau NF4 là 5,44 GB, thấp hơn ngưỡng 7 GB mà T06 đặt ra. Tỷ lệ quy đổi đo được là 1,33–1,36 token mỗi từ; ở `max_context_tokens = 4096` chỉ 14 mẫu trên cả bốn bộ bị cắt. Chi tiết ghi ở mục 4B của `docs/DATA.md`.
 
-- [ ] **T06** · L · Nạp mô hình 4-bit trên T4
+- [x] **T06** · L · Nạp mô hình 4-bit trên T4 — hoàn thành 19/08/2026
   - Nạp `Qwen/Qwen2.5-7B-Instruct` với NF4, `attn_implementation="eager"`, `torch_dtype=float16`.
   - In VRAM sau khi nạp.
   - Công cụ đã sẵn sàng từ 19/08/2026: `scripts/probe_load_model.py`, chạy qua `notebooks/t07_trich_attention_t4.ipynb` (notebook đó làm cả T06 lẫn T07 trong một phiên GPU). Script tự in compute capability và cảnh báo nếu card thấp hơn 7.5, tự kiểm `attn_implementation` có đúng là `eager` không, và trả mã thoát khác 0 nếu không đạt tiêu chí.
-  - **Kiểm tra:** nạp thành công trên Kaggle T4, VRAM sau nạp dưới 7 GB. Dán log vào PR. **Còn chờ chạy trên Kaggle** — không tick khi chưa có log thật.
+  - **Kết quả kiểm tra** trên Kaggle Tesla T4 (compute capability 7.5, 14.912 MB): nạp 121,4 giây, `attn_implementation = eager`, 28 lớp / 28 đầu, `dtype` tham số `torch.float16`. **VRAM cấp phát 5.302 MB**, đặt chỗ 5.462 MB, còn trống 9.450 MB cho attention. Dưới ngưỡng 7.168 MB → ĐẠT. Ước tính trên giấy ở T05 là 5,44 GB, lệch dưới 3 %.
 
 - [ ] **T07** · L · 🚩 Trích attention bằng hook, không tràn bộ nhớ
   - Đăng ký forward hook trên từng `self_attn`, tính tổng theo chunk ngay trong hook, `del` tensor trước khi ra khỏi hook. Chặn `all_self_attns` tích lũy bằng cách cho hook trả về `(attn_output, None)`.
@@ -244,4 +244,5 @@ Ghi lại mọi lần bị chặn và cách xử lý, để đưa vào phần h�
 
 | Ngày | Task | Vấn đề | Xử lý |
 |---|---|---|---|
-| | | | |
+| 19/08 | T07 | Notebook chạy code cũ: `git clone` vào thư mục đã tồn tại thì hỏng nhưng `!` không dừng ô; và `pip install -e .` ghi file `.pth` mà Python chỉ đọc lúc khởi động nên kernel đang chạy không thấy gói vừa cài | Ô 1 kéo bản mới thay vì clone đè; `conftest.py` và các script tự thêm `src/` vào `sys.path`; thêm `scripts/probe_env.py` in commit và đường dẫn gói |
+| 19/08 | T07 | `lookback_total` ra `nan` trên cả hai mẫu, dù bộ nhớ đạt (đỉnh 8.395 MB < 14 GB). Toán lookback không thể sinh `nan` từ đầu vào hữu hạn nên `attn_weights` đã chứa `nan`/`inf`. Nghi Qwen2.5 huấn luyện ở bfloat16 nên tràn số khi chạy float16 | Đang chẩn đoán: thêm kiểm tra hữu hạn theo từng lớp và tùy chọn `--compute-dtype` để thử float32 |

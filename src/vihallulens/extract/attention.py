@@ -70,6 +70,11 @@ class AttentionFeatures:
     peak_vram_mb: float
     elapsed_ms: float
     layer_indices: list[int] = field(default_factory=list)
+    # Layers whose attention matrix was not finite. A model overflowing in float16 still
+    # runs to completion and still fills these arrays, only with nan, so it is recorded.
+    nonfinite_layers: list[int] = field(default_factory=list)
+    # Mean of the attention row sums; a healthy post-softmax matrix gives 1.0.
+    row_sum_mean: float = 0.0
 
 
 def token_span(offsets: list[tuple[int, int]], char_start: int, char_end: int) -> list[int]:
@@ -167,6 +172,22 @@ def drop_middle_chunks(
     return new_context, kept
 
 
+def layer_diagnostics(weights: torch.Tensor, layout: PromptLayout) -> tuple[bool, float]:
+    """Check the rows actually used: are they finite, and do they sum to one?
+
+    A non-finite attention matrix yields nan features while the run still finishes and still
+    reports a plausible VRAM figure, so it has to be checked rather than assumed. The row sum
+    confirms these are post-softmax probabilities rather than raw scores, which is the other
+    thing that could silently change between library versions.
+
+    Only the response rows are inspected: they are the ones the features come from, and
+    checking the whole matrix would allocate a boolean copy of it.
+    """
+    rows = weights[0].index_select(1, layout.response_positions)
+    finite = bool(torch.isfinite(rows).all())
+    return finite, float(rows[:, -1, :].float().sum(-1).mean())
+
+
 def lookback_from_layer(
     weights: torch.Tensor, layout: PromptLayout
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -220,10 +241,15 @@ class AttentionExtractor:
         max_context_tokens: int = 4096,
         device: str = "cuda",
         layers: list[int] | None = None,
+        compute_dtype: str = "float16",
     ) -> None:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # Qwen2.5 was trained in bfloat16, and float16 has a much smaller range, so some
+        # layers can overflow to inf and turn the attention matrix into nan. Being able to
+        # change this without touching code is what lets that be tested rather than argued.
+        torch_dtype = getattr(torch, compute_dtype)
 
         kwargs: dict = {"attn_implementation": "eager"}
         if quantization == "nf4":
@@ -232,15 +258,15 @@ class AttentionExtractor:
             kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_compute_dtype=torch_dtype,
                 bnb_4bit_use_double_quant=True,
             )
             kwargs["device_map"] = {"": 0}
         try:
-            model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.float16, **kwargs)
+            model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch_dtype, **kwargs)
         except TypeError:  # transformers 4.x still spells it torch_dtype
             model = AutoModelForCausalLM.from_pretrained(
-                model_name, torch_dtype=torch.float16, **kwargs
+                model_name, torch_dtype=torch_dtype, **kwargs
             )
         if quantization != "nf4":
             model = model.to(device)
@@ -248,6 +274,7 @@ class AttentionExtractor:
         self._attach(model, tokenizer, max_context_tokens, layers)
         self.model_name = model_name
         self.device = device
+        self.compute_dtype = compute_dtype
 
     @classmethod
     def from_components(
@@ -337,11 +364,14 @@ class AttentionExtractor:
             if not isinstance(output, tuple) or len(output) < 2 or output[1] is None:
                 return output
             weights = output[1]
+            finite, row_sum = layer_diagnostics(weights, layout)
             per_chunk, total, own = lookback_from_layer(weights, layout)
             sink[layer_index] = (
                 per_chunk.cpu().numpy(),
                 total.cpu().numpy(),
                 own.cpu().numpy(),
+                finite,
+                row_sum,
             )
             del weights, per_chunk, total, own
             # Returning None in place of the matrix is what stops all_self_attns from
@@ -418,6 +448,8 @@ class AttentionExtractor:
             peak_vram_mb=peak,
             elapsed_ms=elapsed_ms,
             layer_indices=list(self.layer_indices),
+            nonfinite_layers=[i for i in self.layer_indices if not sink[i][3]],
+            row_sum_mean=float(np.mean([sink[i][4] for i in self.layer_indices])),
         )
 
     @staticmethod

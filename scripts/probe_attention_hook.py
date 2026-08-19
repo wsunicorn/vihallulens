@@ -117,11 +117,19 @@ def run_one(extractor: AttentionExtractor, label: str, context: str, question: s
     print(f"    thời gian             : {features.elapsed_ms:,.0f} ms")
     print(f"    VRAM đỉnh             : {features.peak_vram_mb:,.0f} MB")
 
+    print(f"    tổng hàng attention   : {features.row_sum_mean:.4f}  (khỏe mạnh là 1,0000)")
+    bad = features.nonfinite_layers
+    if bad:
+        print(f"    LỚP CÓ nan/inf        : {len(bad)}/{len(features.layer_indices)} lớp -> {bad}")
+        print("    Ma trận chú ý đã hỏng từ trong mô hình, không phải do công thức lookback.")
+    else:
+        print("    lớp có nan/inf        : không có")
+
     values = features.lookback_total.astype("float32")
     print(f"    lookback_total trung bình: {values.mean():.4f}  (min {values.min():.4f}, "
           f"max {values.max():.4f})")
     if not (values.min() >= 0.0 and values.max() <= 1.0001):
-        print("    CẢNH BÁO: lookback_total nằm ngoài [0, 1] — công thức sai ở đâu đó.")
+        print("    CẢNH BÁO: lookback_total nằm ngoài [0, 1].")
     return features
 
 
@@ -131,6 +139,12 @@ def main() -> int:
     parser.add_argument("--tiny", action="store_true", help="random small model on the CPU")
     parser.add_argument("--max-context-tokens", type=int, default=4096)
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument(
+        "--compute-dtype",
+        default="float16",
+        choices=["float16", "bfloat16", "float32"],
+        help="kiểu số dùng để tính; float16 có thể tràn với Qwen2.5",
+    )
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -167,8 +181,12 @@ def main() -> int:
             return 1
         print(f"  thư mục dữ liệu       : {data_dir}")
 
+        print(f"  compute dtype         : {args.compute_dtype}")
         extractor = AttentionExtractor(
-            args.model, max_context_tokens=args.max_context_tokens, device="cuda"
+            args.model,
+            max_context_tokens=args.max_context_tokens,
+            device="cuda",
+            compute_dtype=args.compute_dtype,
         )
         samples = load_samples(data_dir)
         if not samples:
