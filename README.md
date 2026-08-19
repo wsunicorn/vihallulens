@@ -64,6 +64,14 @@ Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi
 !python scripts/extract_features.py --config configs/example.yaml
 ```
 
+## Làm việc với Claude Code
+
+Đầu mỗi phiên, mở Claude Code ở thư mục gốc repo rồi gõ đúng câu này:
+
+```
+Đọc CLAUDE.md và TASKS.md. Làm task chưa hoàn thành có số nhỏ nhất.
+```
+
 ## Tài liệu
 
 | File | Nội dung |
