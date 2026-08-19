@@ -1,0 +1,33 @@
+# --- Dữ liệu: không commit, chỉ giữ lại MANIFEST.md ---
+data/*
+!data/raw/
+data/raw/*
+!data/raw/MANIFEST.md
+
+# --- Tài liệu hành chính và bài báo tham khảo: chỉ giữ trên máy ---
+UniversityRequirements/
+reference_papers/
+DOC_TRUOC_TIEN.md
+
+# --- Kết quả nặng ---
+results/*.npz
+results/*.npy
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Bí mật ---
+.env
+
+# --- Hệ điều hành và IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

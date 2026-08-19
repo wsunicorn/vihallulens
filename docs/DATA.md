@@ -1,0 +1,125 @@
+# DATA.md — Schema chung và cách chuẩn hóa
+
+## 1. Schema chuẩn
+
+Cả bốn bộ chuẩn hóa về đúng các cột sau, lưu Parquet tại `data/interim/{dataset}_{split}.parquet`.
+
+| Cột | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `sample_id` | str | có | Định danh duy nhất, dạng `{dataset}_{split}_{index}` |
+| `dataset` | str | có | Một trong `vihallu`, `isedsc01`, `viwikifc`, `vifactcheck` |
+| `split` | str | có | `train`, `dev`, `test` |
+| `context` | str | có | Đoạn văn bản làm bằng chứng nguồn |
+| `context_id` | str | có | Hash của `context`, dùng để chia tập theo nhóm |
+| `question` | str | không | Câu hỏi. Rỗng với ba bộ kiểm chứng thông tin. |
+| `response` | str | có | Văn bản cần chấm. Với ViHallu là phản hồi LLM, ba bộ còn lại là claim. |
+| `label` | str | có | `no`, `intrinsic`, `extrinsic` — xem mục 3 |
+| `label_original` | str | có | Nhãn gốc chưa ánh xạ, giữ để truy vết |
+| `evidence` | str | không | Câu bằng chứng vàng. Rỗng nếu bộ không có. |
+| `evidence_start` | int | không | Vị trí ký tự bắt đầu của bằng chứng trong `context`, `-1` nếu không xác định |
+| `evidence_end` | int | không | Vị trí ký tự kết thúc, `-1` nếu không xác định |
+| `response_is_generated` | bool | có | `True` chỉ với ViHallu |
+| `meta` | str (JSON) | có | Các trường riêng của từng bộ |
+
+## 2. Nguồn và cách đọc
+
+Dữ liệu gốc nằm trong `data/raw/`, **để phẳng, không có thư mục con**, đặt tên theo quy ước `{dataset}_{split}.{ext}`. Task T08B đã đổi tên xong ngày 19/08/2026; bảng ánh xạ tên cũ sang tên mới nằm ở `data/raw/MANIFEST.md`.
+
+Đây là danh sách đường dẫn cố định mà code được phép giả định. Thiếu file nào thì raise, không đoán tên khác:
+
+| Bộ | Tập | Đường dẫn | Số dòng | Dùng không |
+|---|---|---|---|---|
+| ViHallu | train | `data/raw/vihallu_train.csv` | 7.000 | có |
+| ViHallu | public test | `data/raw/vihallu_test_public.csv` | 1.000 | **không** — `predict_label` rỗng toàn bộ |
+| ISE-DSC01 | train | `data/raw/isedsc01_train.json` | 36.369 | có |
+| ISE-DSC01 | public test | `data/raw/isedsc01_test_public.json` | 4.794 | **không** — thiếu `verdict` |
+| ISE-DSC01 | private test | `data/raw/isedsc01_test_private.json` | 5.396 | **không** — thiếu `verdict` |
+| ViWikiFC | train | `data/raw/viwikifc_train.csv` | 16.738 | có |
+| ViWikiFC | dev | `data/raw/viwikifc_dev.csv` | 2.090 | có |
+| ViWikiFC | test | `data/raw/viwikifc_test.csv` | 2.091 | có |
+| ViFactCheck | train | `data/raw/vifactcheck_train.parquet` | 5.062 | có |
+| ViFactCheck | dev | `data/raw/vifactcheck_dev.parquet` | 723 | có |
+| ViFactCheck | test | `data/raw/vifactcheck_test.parquet` | 1.447 | có |
+
+Kèm theo hai file mô tả tải từ Hugging Face, không phải dữ liệu: `data/raw/vifactcheck_dataset_card.md` và `data/raw/vifactcheck_gitattributes.txt`.
+
+Cột thực tế của từng file — dùng làm dấu hiệu nhận diện nếu sau này phải nhận lại dữ liệu từ nguồn:
+
+| Bộ | Định dạng | Cột đọc được | Ghi chú |
+|---|---|---|---|
+| ViHallu | CSV | `id, context, prompt, response, label` | File public test thay `label` bằng `predict_label` rỗng |
+| ISE-DSC01 | JSON | `context, claim, verdict, evidence, domain` | JSON là một dict, khóa là số thứ tự dạng chuỗi, mỗi value là một record. Hai file test chỉ có `context, claim` |
+| ViWikiFC | CSV | `pairID, evidence, gold_label, link, context, sentenceID, claim, annotator_labels, title` | Dùng cả ba tập |
+| ViFactCheck | Parquet | `Unnamed: 0, index, Statement, Context, annotation_id, Topic, Author, Url, labels, Evidence` | Dùng cả ba tập. Bỏ cột `Unnamed: 0` khi đọc |
+
+## 3. Ánh xạ nhãn
+
+| Bộ | Nhãn gốc | Nhãn chuẩn |
+|---|---|---|
+| ViHallu | `no` | `no` |
+| ViHallu | `intrinsic` | `intrinsic` |
+| ViHallu | `extrinsic` | `extrinsic` |
+| ISE-DSC01 | `SUPPORTED` | `no` |
+| ISE-DSC01 | `REFUTED` | `intrinsic` |
+| ISE-DSC01 | `NEI` | `extrinsic` |
+| ViWikiFC | `Supports` | `no` |
+| ViWikiFC | `Refutes` | `intrinsic` |
+| ViWikiFC | `Not_Enough_Information` | `extrinsic` |
+| ViFactCheck | `0` | `no` |
+| ViFactCheck | `1` | `intrinsic` |
+| ViFactCheck | `2` | `extrinsic` |
+
+**Cảnh báo phải ghi vào báo cáo:** ánh xạ NEI sang `extrinsic` là gần đúng, không phải tương đương định nghĩa. NEI nghĩa là "không đủ thông tin để kết luận", còn ảo giác ngoại lai nghĩa là "chứa thông tin không có trong ngữ cảnh". Hai khái niệm giao nhau lớn nhưng không trùng. Task T13 yêu cầu kiểm tra thủ công 100 mẫu để báo cáo tỷ lệ khớp.
+
+## 4. Số liệu kiểm tra đã xác nhận
+
+Dùng làm giá trị kỳ vọng trong test tự động. Nếu số liệu sau khi chuẩn hóa lệch khỏi bảng này, dừng lại và báo.
+
+| Chỉ tiêu | ViHallu | ISE-DSC01 | ViWikiFC | ViFactCheck |
+|---|---|---|---|---|
+| Số mẫu có nhãn | 7.000 | 36.369 | 20.919 | 7.232 |
+| Chia tập gốc | chỉ train | chỉ train | 16.738 / 2.090 / 2.091 | 5.062 / 723 / 1.447 |
+| Phân bố nhãn (train) | 2.245 / 2.448 / 2.307 | 12.786 / 11.000 / 12.583 | 5.594 / 5.573 / 5.571 | cân bằng |
+| Số ngữ cảnh gốc | 3.865 | 4.793 | 1.479 | 1.035 |
+| Độ dài ngữ cảnh trung bình | 179,7 từ | 637 từ | 153 từ | 693 từ |
+| Số câu mỗi ngữ cảnh (trung vị) | 5 | 19 | 4 | 17 |
+| Ngữ cảnh dài nhất | 1.537 từ | 4.805 từ | 600 từ | 3.602 từ |
+| Bằng chứng nguyên văn | không có trường | 23.785/23.786 | 100 % cả ba nhãn | 59,2 % |
+
+Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
+
+## 5. Chia tập
+
+- **ViHallu và ISE-DSC01:** chỉ có tập train nên tự chia 80/10/10 theo `context_id`, seed 42.
+- **ViWikiFC và ViFactCheck:** giữ nguyên split gốc để so sánh được với số công bố. Không chia lại.
+
+Hàm `group_split` phải kiểm tra và raise nếu phát hiện `context_id` xuất hiện ở nhiều tập.
+
+## 6. Rò rỉ ngữ cảnh trong split gốc
+
+Đây là phát hiện của nhóm, phải giữ lại và báo cáo:
+
+| Bộ | Ngữ cảnh test có trong train |
+|---|---|
+| ViWikiFC | 845/845 (100 %) |
+| ViFactCheck | 753/758 (99,3 %) |
+| ISE-DSC01 (public test) | 1.004/1.319 |
+| ViHallu (public test) | 713/919 |
+
+Với ViWikiFC và ViFactCheck, nhóm chấp nhận rò rỉ vì phải giữ split gốc để đối chứng — nhưng **không dùng hai bộ này để kết luận về khả năng khái quát hóa**. Task T14 sinh báo cáo rò rỉ tự động.
+
+## 7. Xử lý riêng từng bộ
+
+**ViHallu.** `prompt` map sang `question`. `response_is_generated = True`. Không có trường bằng chứng nên `evidence` rỗng và `evidence_start = -1`. Ghi `meta.prompt_type` nếu suy ra được.
+
+**ISE-DSC01.** `claim` map sang `response`, `question` rỗng. `verdict` map theo bảng mục 3. Với nhãn NEI, `evidence` rỗng — đây là hạn chế đã biết. Tìm `evidence_start` bằng `context.find(evidence)`; nếu không thấy thì đặt `-1` và đếm vào báo cáo. Ghi `meta.domain`.
+
+**ViWikiFC.** `claim` map sang `response`, `question` rỗng. Bằng chứng có ở cả ba nhãn, `context.find` phải thành công 100% — nếu không thì có lỗi encoding, dừng lại kiểm tra. Ghi `meta.title`, `meta.link`, `meta.sentenceID`.
+
+**ViFactCheck.** `Statement` map sang `response`, `Context` sang `context`, `Evidence` sang `evidence`. Chỉ 59,2% bằng chứng nằm nguyên văn nên `evidence_start = -1` khá thường xuyên; điều này bình thường, không phải lỗi. Ghi `meta.topic`, `meta.author`.
+
+## 8. Kho truy xuất ViWikiFC
+
+ViWikiFC có đặc điểm riêng: toàn bộ chỉ 3.814 câu bằng chứng duy nhất từ 73 bài Wikipedia. Task T16 xây một chỉ mục BM25 trên toàn bộ 3.814 câu này để dựng ngữ cảnh nhiều đoạn thật sự — lấy top-k câu thay vì dùng `context` ngắn có sẵn. Đây là cách duy nhất chạy được thí nghiệm chunk-aware trên bộ này.
+
+Lưu chỉ mục tại `data/interim/viwikifc_evidence_corpus.parquet` với cột `evidence_id, text, title, link`.
