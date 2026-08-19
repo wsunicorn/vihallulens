@@ -20,7 +20,7 @@
   - Khai báo phụ thuộc: `torch`, `transformers`, `accelerate`, `bitsandbytes`, `pandas`, `pyarrow`, `numpy`, `scikit-learn`, `pydantic`, `pyyaml`, `rank-bm25`, `fastapi`, `uvicorn`, `pytest`, `ruff`.
   - `.gitignore` đã tạo sẵn lúc dựng repo ngày 19/08/2026 (loại trừ `data/` trừ `data/raw/MANIFEST.md`, `results/*.npz`, `__pycache__`, `.venv`, `.env`) — chỉ cần rà lại, không tạo mới.
   - Tạo `.env.example` với các khóa cần thiết để trống, ví dụ `GEMINI_API_KEY=`.
-  - Tạo cây thư mục theo mục 10 của `CLAUDE.md`.
+  - Tạo cây thư mục theo mục 9 của `CLAUDE.md`.
   - **Kiểm tra:** `uv pip install -e .` chạy sạch và `python -c "import vihallulens"` không lỗi.
 
 - [ ] **T02** · L · Cấu hình lint và test
@@ -46,8 +46,9 @@
 
 - [ ] **T05** · L · Đo ngân sách bộ nhớ trên giấy
   - Viết `scripts/probe_vram.py --model ... --seq-len ...` in ra: số lớp, số đầu chú ý, dung lượng trọng số sau lượng tử hóa 4-bit, và ước tính dung lượng ma trận chú ý **một lớp** theo công thức `n_heads × seq_len² × 2 byte`.
-  - Chạy với `seq_len` thuộc `{1024, 2048, 4096, 8192}`.
-  - **Kiểm tra:** in ra bảng ước tính, không cần GPU.
+  - Chạy với `seq_len` thuộc `{1024, 2048, 4096, 8192}`. Đối chiếu với bảng ngân sách ở mục 5 của `CLAUDE.md`.
+  - **Đo tỷ lệ token trên từ của tokenizer Qwen2.5 với tiếng Việt.** Mọi số liệu trong `docs/DATA.md` tính bằng **từ**, còn ngân sách bộ nhớ tính bằng **token** — không có tỷ lệ thật thì không biết `max_context_tokens = 4096` cắt mất bao nhiêu phần trăm mẫu. Tokenize toàn bộ ngữ cảnh của bốn bộ, in ra phân vị 50/90/99 và tỷ lệ mẫu vượt 2.048 và 4.096 token.
+  - **Kiểm tra:** in ra bảng ước tính bộ nhớ và bảng phân bố độ dài token, không cần GPU. Ghi tỷ lệ mẫu bị cắt vào PR.
 
 - [ ] **T06** · L · Nạp mô hình 4-bit trên T4
   - Nạp `Qwen/Qwen2.5-7B-Instruct` với NF4, `attn_implementation="eager"`, `torch_dtype=float16`.
@@ -55,10 +56,11 @@
   - **Kiểm tra:** nạp thành công trên Kaggle T4, VRAM sau nạp dưới 7 GB. Dán log vào PR.
 
 - [ ] **T07** · L · 🚩 Trích attention bằng hook, không tràn bộ nhớ
-  - Đăng ký forward hook trên từng `self_attn`, tính tổng theo chunk ngay trong hook, `del` tensor trước khi ra khỏi hook.
+  - Đăng ký forward hook trên từng `self_attn`, tính tổng theo chunk ngay trong hook, `del` tensor trước khi ra khỏi hook. Chặn `all_self_attns` tích lũy bằng cách cho hook trả về `(attn_output, None)`.
+  - **Việc đầu tiên phải làm:** kiểm tra `output` của hook có thật sự chứa `attn_weights` không — điều này phụ thuộc phiên bản `transformers` (xem mục 5 của `CLAUDE.md`). Xong thì ghim đúng phiên bản đó vào `pyproject.toml` và viết một test khẳng định `attn_weights is not None`. Không ghim thì một lần `uv pip install` sau này có thể làm hỏng toàn bộ pipeline mà không báo lỗi.
   - Chạy thử với một mẫu ViHallu (~200 từ) và một mẫu ISE-DSC01 dài nhất (~4.805 từ).
-  - Chốt **mẫu prompt duy nhất** ghép ngữ cảnh, câu hỏi và phản hồi. Ghi nguyên văn vào mục 9 của `CLAUDE.md`. Sau task này không được đổi.
-  - **Kiểm tra:** cả hai chạy xong, `torch.cuda.max_memory_allocated()` dưới 14 GB, in ra shape của `lookback_per_chunk`, và mục 9 của `CLAUDE.md` đã có mẫu prompt. **Đây là cổng chặn — không qua thì dừng.**
+  - Chốt **mẫu prompt duy nhất** ghép ngữ cảnh, câu hỏi và phản hồi. Ghi nguyên văn vào mục 8 của `CLAUDE.md`. Sau task này không được đổi.
+  - **Kiểm tra:** cả hai chạy xong, `torch.cuda.max_memory_allocated()` dưới 14 GB, in ra shape của `lookback_per_chunk`, và mục 8 của `CLAUDE.md` đã có mẫu prompt. **Đây là cổng chặn — không qua thì dừng.**
 
 - [ ] **T08** · L · Đo thông lượng và quyết định bậc thang
   - Đo ms/mẫu với 20 mẫu ở mỗi mức độ dài. Nếu 7B không qua T07, thử lại với 3B rồi 1.5B.
