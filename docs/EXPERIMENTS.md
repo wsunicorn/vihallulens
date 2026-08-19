@@ -55,6 +55,14 @@ Mọi con số phải kèm độ lệch chuẩn qua 5 seed cho phần huấn luy
 
 Nếu baseline này đạt macro-F1 cao, mọi phương pháp phức tạp hơn phải chứng minh vượt nó chứ không phải vượt PhoBERT 32,83%.
 
+### E02 — Tái lập Lookback Lens gốc
+
+Đây là mốc so sánh nội bộ quan trọng nhất: nếu chunk-aware không hơn E02 thì đóng góp của đề tài không đứng vững. Vì vậy E02 phải tái lập **đúng** công thức gốc, không phải một biến thể gần đúng.
+
+Công thức nguyên bản, bốn điểm dễ làm sai và khác biệt về bài toán: xem mục 1 của `docs/REFERENCES.md`. Tóm tắt điểm dễ sai nhất — lookback ratio gốc là **trung bình chú ý theo token** (chia cho số token ngữ cảnh và số token đã sinh), không phải tổng khối lượng chú ý.
+
+Chỉ khi E02 vượt được baseline tầm thường E01 mới chạy tiếp E03–E05. Không vượt thì dừng lại rà soát cách trích đặc trưng, vì lỗi gần như chắc chắn nằm ở khâu trích chứ không ở phương pháp.
+
 ### E05 — Chọn cách chia chunk
 
 Chạy E03 và E04 với cùng mọi thứ khác. Với `token_window` quét `window_size` thuộc `{64, 128, 256}` và `stride` bằng nửa cửa sổ. Báo cáo bảng đầy đủ, chọn cấu hình tốt nhất trên tập dev, và **giữ nguyên cấu hình đó cho mọi thí nghiệm sau**.
@@ -73,6 +81,12 @@ Với mỗi mẫu: chia ngữ cảnh thành chunk, xác định chunk chứa b�
 - So với sàn ngẫu nhiên `1/n_chunks`
 
 Với nhãn NEI (không có bằng chứng), đo entropy phân bố và kiểm định giả thuyết entropy cao hơn đáng kể so với hai nhãn kia.
+
+### Phân tích theo loại prompt — áp dụng cho mọi thí nghiệm trên ViHallu
+
+Ngoài số tổng, mọi thí nghiệm chạy trên ViHallu phải báo thêm macro-F1 **tách theo `meta.prompt_type`**, tối thiểu là hai nhóm `noisy` và phần còn lại.
+
+Lý do: prompt `noisy` bị bỏ dấu tiếng Việt nên tokenize ra chuỗi token khác hẳn, làm thay đổi số token của câu hỏi và do đó thay đổi mẫu số của lookback ratio. Nếu không tách, không phân biệt được "mô hình phát hiện ảo giác" với "mô hình phát hiện prompt bị nhiễu". Đây cũng là một kết quả phụ có giá trị công bố: tín hiệu chú ý bền tới đâu khi đầu vào bị bỏ dấu — một dạng nhiễu rất đặc thù tiếng Việt.
 
 ### E11 — Bảng đánh đổi
 
@@ -156,7 +170,8 @@ Ghi lại để không phải tra lại:
 
 - **ViHallu private test:** hệ thống tốt nhất 84,80 % macro-F1; baseline PhoBERT 32,83 %. Lưu ý nhóm không chấm được trên tập này vì không có nhãn — chỉ dùng để định vị, không đặt cạnh số của nhóm trong cùng một cột.
 - **ViWikiFC test:** InfoXLM large 86,51 % macro-F1 (verdict prediction); pipeline BM25 + InfoXLM large 67,00 % strict accuracy; SemViQA 80,82 % strict accuracy và 95,31 % evidence retrieval accuracy; BM25 truy xuất top-1 đạt 88,30 % SUPPORTS / 86,93 % REFUTES / 56,67 % NEI.
-- **ISE-DSC01 private test:** SemViQA 78,97 % strict accuracy, 82,54 % VC accuracy, 80,91 % ER accuracy.
+- **ISE-DSC01 private test:** SemViQA 78,97 % strict accuracy, 82,54 % VC accuracy, 80,91 % ER accuracy. Lưu ý tập train nhóm dùng có 36.369 mẫu còn bài SemViQA ghi 37.967 — xem cảnh báo ở mục 4 của `docs/DATA.md`, **không so trực tiếp nếu không kèm ghi chú**.
+- **SemViQA là công trình của chính Trường ĐH Công nghiệp TP.HCM.** Mã nguồn, thư viện PyPI và checkpoint đều công khai, nên nếu cần làm rõ cách tính strict accuracy hay cách chia tập thì hỏi được trực tiếp qua GVHD thay vì suy đoán từ bài báo. Đây là cơ sở so sánh gần nhất về mặt tổ chức mà nhóm có.
 - **ViFactCheck test:** Gemma 89,90 % macro-F1 với gold evidence, 85,94 % với full context; XLM-R large 88,02 % / 75,42 %; con người 84,93 %.
 
 ## 7. Nguyên tắc báo cáo

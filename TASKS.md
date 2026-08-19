@@ -77,6 +77,7 @@
 
 - [ ] **T09** · M · Chuẩn hóa ViHallu
   - Viết `src/vihallulens/data/vihallu.py` theo `docs/DATA.md`. Nguồn: `data/raw/vihallu_train.csv`. Bỏ qua `data/raw/vihallu_test_public.csv` vì không có nhãn.
+  - Suy ra `meta.prompt_type` theo luật ở mục 7 của `docs/DATA.md`: prompt không có ký tự có dấu tiếng Việt thì gán `noisy`, còn lại gán `unknown`. Ghi kèm `meta.prompt_has_diacritics`.
   - **Kiểm tra:** `python scripts/normalize_data.py --dataset vihallu` sinh Parquet 7.000 dòng, phân bố nhãn khớp 2.245 / 2.448 / 2.307.
 
 - [ ] **T10** · M · Chuẩn hóa ISE-DSC01
@@ -125,8 +126,10 @@
   - **Kiểm tra:** file cache tồn tại, chạy lại không gọi API thêm; kết quả ghi vào `runs.jsonl` kèm ghi chú cỡ mẫu.
 
 - [ ] **T20** · L · E02 tái lập Lookback Lens gốc
-  - Trích đặc trưng lookback gộp, huấn luyện bộ phân loại tuyến tính.
-  - **Kiểm tra:** kết quả cao hơn baseline tầm thường; nếu không thì dừng lại rà soát cách trích đặc trưng.
+  - Đọc mục 1 của `docs/REFERENCES.md` trước khi viết code. Tái lập **đúng công thức gốc**, không phải biến thể gần đúng.
+  - Trích đặc trưng lookback gộp, huấn luyện `LogisticRegression`.
+  - Ba điểm phải tự kiểm trước khi báo kết quả: (a) lookback ratio là **trung bình chú ý theo token**, chia cho số token ngữ cảnh và số token đã sinh, không phải tổng; (b) véc-tơ đặc trưng nối đủ `L × H` giá trị rồi mới lấy trung bình qua các bước trong span; (c) span ở đây là **toàn bộ phản hồi** vì nhãn của ViHallu ở mức phản hồi, khác thiết lập sliding-window-8 của bài gốc — ghi khác biệt này vào PR.
+  - **Kiểm tra:** kết quả cao hơn baseline tầm thường E01; nếu không thì dừng lại rà soát cách trích đặc trưng, lỗi gần như chắc chắn ở khâu trích chứ không ở phương pháp.
 
 ---
 
@@ -167,7 +170,8 @@
 - [ ] **T34** · M · E16 khái quát hóa chéo bộ
 - [ ] **T35** · LM · Phân tích sai sót
   - Lấy 100 mẫu dự đoán sai, phân loại kiểu lỗi, viết nhận xét.
-  - **Kiểm tra:** `results/error_analysis.csv` 100 dòng có cột loại lỗi, kèm biểu đồ phân bố.
+  - Tách kết quả theo `meta.prompt_type`: so macro-F1 trên nhóm `noisy` (prompt bị bỏ dấu) với phần còn lại, theo yêu cầu ở `docs/EXPERIMENTS.md`.
+  - **Kiểm tra:** `results/error_analysis.csv` 100 dòng có cột loại lỗi và cột `prompt_type`, kèm biểu đồ phân bố và một bảng hai dòng `noisy` / còn lại.
 
 ---
 

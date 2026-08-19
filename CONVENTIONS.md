@@ -58,7 +58,7 @@ Những điều này KHÔNG được thương lượng khi viết code:
 
 Tên file theo quy ước `{dataset}_{split}.{ext}`, để phẳng ngay trong `data/raw/`, không có thư mục con. Bảng ánh xạ từ tên gốc lúc tải về nằm ở `data/raw/MANIFEST.md` — file duy nhất trong `data/` được commit.
 
-Chi tiết schema, đường dẫn đầy đủ và cách chuẩn hóa: xem `docs/DATA.md`.
+Chi tiết schema, đường dẫn đầy đủ và cách chuẩn hóa: xem `docs/DATA.md`. Bài báo nền và công thức gốc phải tái lập: xem `docs/REFERENCES.md`.
 
 ## 5. Rủi ro số một
 
@@ -123,7 +123,8 @@ MẪU PROMPT ĐÃ CHỐT: (điền ở T07)
 ├── docs/
 │   ├── SPEC.md            # đặc tả kỹ thuật
 │   ├── DATA.md            # schema và chuẩn hóa dữ liệu
-│   └── EXPERIMENTS.md     # kế hoạch thực nghiệm và bảng kết quả
+│   ├── EXPERIMENTS.md     # kế hoạch thực nghiệm và bảng kết quả
+│   └── REFERENCES.md      # bài báo nền, công thức gốc Lookback Lens
 ├── notebooks/             # notebook chạy trên Kaggle, chỉ gọi hàm từ src
 ├── results/               # kết quả thí nghiệm dạng jsonl/csv
 ├── scripts/               # entry point CLI

@@ -88,6 +88,8 @@ Dùng làm giá trị kỳ vọng trong test tự động. Nếu số liệu sau
 
 Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
 
+**Chênh lệch phải ghi vào phần hạn chế của báo cáo:** tập train ISE-DSC01 nhóm tải về có **36.369** mẫu, trong khi bài SemViQA (arXiv:2503.00955) ghi **37.967** mẫu — thiếu 1.598 mẫu. Nhóm không truy được nguyên nhân (có thể do bản phát hành khác nhau của ban tổ chức). Quy tắc xử lý: **báo cáo theo số thực tế 36.369**, nêu rõ chênh lệch này ở chương đánh giá, và **không so trực tiếp** số của nhóm với số SemViQA công bố trên ISE-DSC01 mà không kèm ghi chú.
+
 ## 5. Chia tập
 
 - **ViHallu và ISE-DSC01:** chỉ có tập train nên tự chia 80/10/10 theo `context_id`, seed 42.
@@ -110,7 +112,22 @@ Với ViWikiFC và ViFactCheck, nhóm chấp nhận rò rỉ vì phải giữ sp
 
 ## 7. Xử lý riêng từng bộ
 
-**ViHallu.** `prompt` map sang `question`. `response_is_generated = True`. Không có trường bằng chứng nên `evidence` rỗng và `evidence_start = -1`. Ghi `meta.prompt_type` nếu suy ra được.
+**ViHallu.** `prompt` map sang `question`. `response_is_generated = True`. Không có trường bằng chứng nên `evidence` rỗng và `evidence_start = -1`.
+
+Bài báo ViHallu (arXiv:2601.04711) nói rõ mỗi ngữ cảnh được sinh **ba loại prompt**, phân bố cân bằng:
+
+| Loại | Cách tạo | Vì sao quan trọng với đề tài |
+|---|---|---|
+| `factual` | Câu hỏi trực tiếp, đúng ngữ pháp, rút từ nội dung ngữ cảnh | Mức nền |
+| `noisy` | Nhiễu có kiểm soát: **bỏ dấu tiếng Việt**, hoán vị ký tự, xóa token, đảo trật tự từ | **Bỏ dấu làm tokenizer cắt ra chuỗi token hoàn toàn khác** → thay đổi số token và vị trí token của câu hỏi, tức thay đổi trực tiếp mẫu số của lookback ratio. Không tách riêng thì hiệu ứng này lẫn vào tín hiệu ảo giác |
+| `adversarial` | LLM sinh prompt chứa tiền giả định sai, tiền đề giả, bẫy logic, đảo ngược quan hệ kéo theo | Loại khó nhất, nhiều khả năng là nguồn chính của nhãn `intrinsic` |
+
+Bộ dữ liệu không có cột ghi loại prompt nên phải suy ra và ghi vào `meta.prompt_type`:
+
+- `noisy` — nhận diện được tin cậy: prompt **không chứa ký tự có dấu tiếng Việt** trong khi ngữ cảnh có. Dùng dải Unicode tiếng Việt để kiểm tra, không dùng danh sách từ.
+- `factual` và `adversarial` — không tách được bằng luật đơn giản. Ghi `unknown`, **không đoán bừa**.
+
+Ghi thêm `meta.prompt_has_diacritics` (bool) để phân tích sau này kiểm chứng được.
 
 **ISE-DSC01.** `claim` map sang `response`, `question` rỗng. `verdict` map theo bảng mục 3. Với nhãn NEI, `evidence` rỗng — đây là hạn chế đã biết. Tìm `evidence_start` bằng `context.find(evidence)`; nếu không thấy thì đặt `-1` và đếm vào báo cáo. Ghi `meta.domain`.
 
