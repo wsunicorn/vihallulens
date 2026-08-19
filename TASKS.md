@@ -30,11 +30,12 @@
   - `tests/test_smoke.py`: kiểm tra gói import được, có `__version__`, và cả sáu gói con theo `docs/SPEC.md` đều import được.
   - **Kết quả kiểm tra:** `ruff check .` → `All checks passed!`; `pytest` → `2 passed in 0.02s`.
 
-- [ ] **T03** · M · Module cấu hình
-  - Viết `src/vihallulens/config.py` định nghĩa các pydantic model theo mục 3 của `docs/SPEC.md`.
-  - Hàm `load_config(path) -> ExperimentConfig` và `config_hash(cfg) -> str`.
-  - Tạo `configs/example.yaml`.
-  - **Kiểm tra:** `pytest tests/test_config.py` xanh, gồm ca hợp lệ và ca thiếu trường bắt buộc phải raise.
+- [x] **T03** · M · Module cấu hình — hoàn thành 19/08/2026
+  - `src/vihallulens/config.py`: sáu pydantic model theo mục 3 của `docs/SPEC.md` — `ExperimentConfig` gồm `DatasetConfig`, `ChunkingConfig`, `ExtractorConfig`, `FeatureConfig`, `DetectorConfig`.
+  - `load_config(path) -> ExperimentConfig` và `config_hash(cfg) -> str`.
+  - `configs/example.yaml` theo đúng cấu trúc ví dụ trong `docs/SPEC.md`.
+  - Ba lớp bảo vệ khả năng tái lập: mọi model đặt `extra="forbid"` nên gõ sai tên khóa là raise chứ không bị bỏ qua âm thầm; `split_seed` khác 42 là raise theo mục 3 và mục 7 của `CLAUDE.md`; `config_hash` bỏ qua `run_name` nên đổi tên lần chạy không sinh hash mới.
+  - **Kết quả kiểm tra:** `pytest tests/test_config.py` → `23 passed`; toàn bộ `pytest` → `27 passed`; `ruff check .` → `All checks passed!`.
 
 - [ ] **T04** · M · Module ghi kết quả
   - Viết `src/vihallulens/evaluation/logging.py` với `log_result` và `export_table` theo `docs/SPEC.md`.

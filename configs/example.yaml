@@ -1,0 +1,27 @@
+# Cấu hình mẫu — sao chép rồi đổi tên khi tạo thí nghiệm mới.
+# Cấu trúc theo mục 3 của docs/SPEC.md. Mọi thứ ảnh hưởng tới kết quả phải nằm trong file này.
+
+run_name: example_chunk_aware_sentence_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42          # cố định theo mục 3 của CLAUDE.md, đổi là raise
+
+chunking:
+  strategy: sentence      # sentence | token_window
+  min_words: 5            # câu ngắn hơn ngần này gộp vào câu trước
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4       # nf4 | none
+  max_context_tokens: 4096
+  device: cuda
+
+features:
+  groups: [basic, chunk_aware, stability]   # surface | basic | chunk_aware | stability | localization
+  head_aggregation: topk_heads              # all | mean_over_heads | topk_heads
+  topk: 32
+
+detector:
+  type: logistic_regression   # logistic_regression | linear_svc | lightgbm
+  class_weight: balanced      # balanced | none
