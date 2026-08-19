@@ -27,6 +27,8 @@ Bốn điểm dễ làm sai khi tái lập:
 3. Bộ phân loại là `sklearn.linear_model.LogisticRegression` — đúng như quyết định đã chốt trong `CLAUDE.md`.
 4. Bài gốc có hai cách lấy span: **predefined span** (khi có nhãn theo đoạn) và **sliding window kích thước 8 token**. Đề tài của nhóm có nhãn ở mức toàn phản hồi nên dùng nguyên phản hồi làm một span; ghi rõ khác biệt này trong báo cáo.
 
+Cách nhóm hiện thực, chốt ở T07 sau khi đo: lưu **hai** biến thể tính từ cùng một ma trận. `lookback_total` lấy X là toàn bộ token trước phản hồi, đúng như công thức trên, và là bản E02 dùng. `lookback_context` chỉ đếm ngữ cảnh truy xuất, dễ diễn giải hơn và là nền của phần chunk-aware. Token phản hồi đầu tiên không được chấm vì mẫu số `t-1` bằng 0.
+
 Khác biệt về bài toán phải nêu khi so sánh: bài gốc phân loại **nhị phân** (factual / hallucinated) và báo cáo **AUROC**; đề tài phân loại **ba lớp** và báo cáo **macro-F1**. Không đặt hai con số cạnh nhau.
 
 Hai kết quả của bài gốc đáng đối chiếu: bộ phân loại tuyến tính trên lookback ratio ngang hoặc hơn bộ phân loại dùng toàn bộ hidden state; và bộ dò huấn luyện trên mô hình 7B dùng lại được cho 13B không cần huấn luyện lại — đây là gợi ý trực tiếp cho E13 và E14.

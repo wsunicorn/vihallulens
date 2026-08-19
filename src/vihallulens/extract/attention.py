@@ -29,13 +29,24 @@ EPSILON = 1e-9
 class PromptLayout:
     """Token positions of everything the lookback ratio needs.
 
-    Template scaffolding tokens belong to neither region: they are not context the model may
-    ground itself in, and they are not text the model produced. They are excluded from both
-    the numerator and the denominator.
+    Two denominators are kept on purpose, decided at T07:
+
+    * ``prompt_positions`` — every token before the response, scaffolding and question
+      included. This reproduces the original Lookback Lens definition, where X is the whole
+      input sequence, and is what experiment E02 must use to be a faithful reproduction.
+    * ``context_positions`` — only the retrieved context. Easier to interpret as "how much
+      does the model look at the evidence", and the basis of the chunk-aware contribution.
+
+    The first response token is not scored at all. It has no previously generated token to
+    compare against, so its ratio is 1 by construction whatever the model did, and in float16
+    it can instead come out as 0 when the context attention underflows. Both answers are
+    meaningless, so the token is excluded rather than left to add noise.
     """
 
-    response_positions: torch.Tensor  # (R,) query rows to score
-    context_positions: torch.Tensor  # (C,) all context tokens
+    query_positions: torch.Tensor  # (Q,) response tokens scored, the first one excluded
+    response_positions: torch.Tensor  # (R,) all response tokens, used as keys
+    prompt_positions: torch.Tensor  # (P,) every token before the response
+    context_positions: torch.Tensor  # (C,) retrieved context only
     chunk_positions: torch.Tensor  # (C',) context tokens that fall inside a chunk
     chunk_ids: torch.Tensor  # (C',) which chunk each of those belongs to
     chunk_token_counts: torch.Tensor  # (n_chunks,)
@@ -46,9 +57,15 @@ class PromptLayout:
     def n_response_tokens(self) -> int:
         return int(self.response_positions.numel())
 
+    @property
+    def n_query_tokens(self) -> int:
+        return int(self.query_positions.numel())
+
     def to(self, device: str | torch.device) -> PromptLayout:
         return PromptLayout(
+            query_positions=self.query_positions.to(device),
             response_positions=self.response_positions.to(device),
+            prompt_positions=self.prompt_positions.to(device),
             context_positions=self.context_positions.to(device),
             chunk_positions=self.chunk_positions.to(device),
             chunk_ids=self.chunk_ids.to(device),
@@ -62,9 +79,12 @@ class PromptLayout:
 class AttentionFeatures:
     """Per-layer, per-head lookback signal for one sample. Fields follow docs/SPEC.md 2.2."""
 
-    lookback_per_chunk: np.ndarray  # (n_layers, n_heads, n_response_tokens, n_chunks)
-    lookback_total: np.ndarray  # (n_layers, n_heads, n_response_tokens)
-    self_attention: np.ndarray  # (n_layers, n_heads, n_response_tokens)
+    # The token axis holds the response tokens that are scored, which is every response token
+    # except the first; see PromptLayout for why the first one is dropped.
+    lookback_per_chunk: np.ndarray  # (n_layers, n_heads, n_scored_tokens, n_chunks)
+    lookback_total: np.ndarray  # (n_layers, n_heads, n_scored_tokens) whole prompt, as in the paper
+    lookback_context: np.ndarray  # (n_layers, n_heads, n_scored_tokens) retrieved context only
+    self_attention: np.ndarray  # (n_layers, n_heads, n_scored_tokens)
     n_chunks: int
     truncated: bool
     peak_vram_mb: float
@@ -108,6 +128,15 @@ def build_layout(
         raise ValueError("no tokens fall inside the context span")
     if not response_positions:
         raise ValueError("no tokens fall inside the response span")
+    if len(response_positions) < 2:
+        raise ValueError(
+            "the response is a single token, so there is nothing to score: the first response "
+            "token carries no lookback information"
+        )
+
+    # Everything before the response: scaffolding, context and question alike. This is X in
+    # the original Lookback Lens definition.
+    prompt_positions = list(range(response_positions[0]))
 
     chunk_positions: list[int] = []
     chunk_ids: list[int] = []
@@ -123,7 +152,9 @@ def build_layout(
                 counts[chunk.index] += 1
 
     return PromptLayout(
+        query_positions=torch.tensor(response_positions[1:], dtype=torch.long),
         response_positions=torch.tensor(response_positions, dtype=torch.long),
+        prompt_positions=torch.tensor(prompt_positions, dtype=torch.long),
         context_positions=torch.tensor(context_positions, dtype=torch.long),
         chunk_positions=torch.tensor(chunk_positions, dtype=torch.long),
         chunk_ids=torch.tensor(chunk_ids, dtype=torch.long),
@@ -183,49 +214,59 @@ def layer_diagnostics(weights: torch.Tensor, layout: PromptLayout) -> tuple[bool
     Only the response rows are inspected: they are the ones the features come from, and
     checking the whole matrix would allocate a boolean copy of it.
     """
-    rows = weights[0].index_select(1, layout.response_positions)
+    rows = weights[0].index_select(1, layout.query_positions)
     finite = bool(torch.isfinite(rows).all())
     return finite, float(rows[:, -1, :].float().sum(-1).mean())
 
 
 def lookback_from_layer(
     weights: torch.Tensor, layout: PromptLayout
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Reduce one layer's attention matrix to its lookback statistics.
 
     ``weights`` has shape (batch, heads, q_len, k_len) and only the first batch item is used,
-    since extraction runs one sample at a time. Returns per-chunk ratios (heads, response,
-    chunks), the pooled context ratio (heads, response) and the self-attention mean.
+    since extraction runs one sample at a time. Returns, each shaped (heads, queries[, chunks]):
+
+    * ``per_chunk``       — attention density on each chunk, over the context denominator
+    * ``lookback_total``  — the original Lookback Lens ratio, whole prompt versus own output
+    * ``lookback_context``— the same ratio counting only the retrieved context
+    * ``self_mean``       — mean attention paid to previously generated tokens
 
     This is the whole numerical core, kept free of models and hooks so it can be checked on
     the CPU against attention matrices with known answers.
     """
-    rows = weights[0].index_select(1, layout.response_positions).float()  # (H, R, K)
+    rows = weights[0].index_select(1, layout.query_positions).float()  # (H, Q, K)
 
+    prompt_mean = rows.index_select(2, layout.prompt_positions).sum(-1) / float(
+        layout.prompt_positions.numel()
+    )
     context_mean = rows.index_select(2, layout.context_positions).sum(-1) / float(
         layout.context_positions.numel()
     )
 
-    own = rows.index_select(2, layout.response_positions)  # (H, R, R)
-    # Causal masking zeroes the future, so summing the row and removing the diagonal leaves
-    # exactly the tokens generated before the current one.
-    preceding = own.sum(-1) - own.diagonal(dim1=-2, dim2=-1)
+    own = rows.index_select(2, layout.response_positions)  # (H, Q, R)
+    # Causal masking zeroes the future. Query i is response token i+1, whose own column is
+    # i+1, so the diagonal at offset 1 holds exactly the self-attention to remove.
+    preceding = own.sum(-1) - own.diagonal(offset=1, dim1=-2, dim2=-1)
+    # Query i has i+1 previously generated tokens, matching the t-1 divisor of the paper.
     divisor = torch.arange(
-        layout.n_response_tokens, device=rows.device, dtype=rows.dtype
-    ).clamp(min=1.0)
+        1, layout.n_query_tokens + 1, device=rows.device, dtype=rows.dtype
+    )
     self_mean = preceding / divisor
 
-    denominator = (context_mean + self_mean).clamp(min=EPSILON)
-    lookback_total = context_mean / denominator
+    prompt_denominator = (prompt_mean + self_mean).clamp(min=EPSILON)
+    context_denominator = (context_mean + self_mean).clamp(min=EPSILON)
+    lookback_total = prompt_mean / prompt_denominator
+    lookback_context = context_mean / context_denominator
 
-    heads, n_response = context_mean.shape
-    per_chunk = torch.zeros(heads, n_response, layout.n_chunks, device=rows.device)
+    heads, n_queries = context_mean.shape
+    per_chunk = torch.zeros(heads, n_queries, layout.n_chunks, device=rows.device)
     if layout.chunk_positions.numel():
         per_chunk.index_add_(2, layout.chunk_ids, rows.index_select(2, layout.chunk_positions))
     per_chunk /= layout.chunk_token_counts
-    per_chunk /= denominator.unsqueeze(-1)
+    per_chunk /= context_denominator.unsqueeze(-1)
 
-    return per_chunk, lookback_total, self_mean
+    return per_chunk, lookback_total, lookback_context, self_mean
 
 
 class AttentionExtractor:
@@ -241,6 +282,7 @@ class AttentionExtractor:
         max_context_tokens: int = 4096,
         device: str = "cuda",
         layers: list[int] | None = None,
+        exclude_layers: list[int] | None = None,
         compute_dtype: str = "float16",
     ) -> None:
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -271,7 +313,7 @@ class AttentionExtractor:
         if quantization != "nf4":
             model = model.to(device)
 
-        self._attach(model, tokenizer, max_context_tokens, layers)
+        self._attach(model, tokenizer, max_context_tokens, layers, exclude_layers)
         self.model_name = model_name
         self.device = device
         self.compute_dtype = compute_dtype
@@ -283,23 +325,36 @@ class AttentionExtractor:
         tokenizer,
         max_context_tokens: int = 4096,
         layers: list[int] | None = None,
+        exclude_layers: list[int] | None = None,
     ) -> AttentionExtractor:
         """Wrap a model that is already in memory, used by the tiny-model probe of task T07."""
         extractor = cls.__new__(cls)
-        extractor._attach(model, tokenizer, max_context_tokens, layers)
+        extractor._attach(model, tokenizer, max_context_tokens, layers, exclude_layers)
         extractor.model_name = getattr(model.config, "name_or_path", "<in-memory>")
         extractor.device = str(next(model.parameters()).device)
         return extractor
 
-    def _attach(self, model, tokenizer, max_context_tokens: int, layers: list[int] | None) -> None:
+    def _attach(
+        self,
+        model,
+        tokenizer,
+        max_context_tokens: int,
+        layers: list[int] | None,
+        exclude_layers: list[int] | None = None,
+    ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.max_context_tokens = max_context_tokens
         self.model.eval()
         self.decoder_layers = self.model.model.layers
-        self.layer_indices = (
-            list(range(len(self.decoder_layers))) if layers is None else sorted(layers)
-        )
+        chosen = list(range(len(self.decoder_layers))) if layers is None else sorted(layers)
+        # Measured at T07: layer 27 of Qwen2.5-7B overflows in float16 on every sample, while
+        # the other 27 layers agree with float32 to 0.07 % of the scale. Dropping it by name
+        # is fallback step 2 of section 5 of CLAUDE.md.
+        self.excluded_layers = sorted(exclude_layers or [])
+        self.layer_indices = [index for index in chosen if index not in set(self.excluded_layers)]
+        if not self.layer_indices:
+            raise ValueError("every layer was excluded; nothing left to extract")
 
     # -- prompt preparation --------------------------------------------------------------
 
@@ -365,15 +420,16 @@ class AttentionExtractor:
                 return output
             weights = output[1]
             finite, row_sum = layer_diagnostics(weights, layout)
-            per_chunk, total, own = lookback_from_layer(weights, layout)
+            per_chunk, total, context_only, own = lookback_from_layer(weights, layout)
             sink[layer_index] = (
                 per_chunk.cpu().numpy(),
                 total.cpu().numpy(),
+                context_only.cpu().numpy(),
                 own.cpu().numpy(),
                 finite,
                 row_sum,
             )
-            del weights, per_chunk, total, own
+            del weights, per_chunk, total, context_only, own
             # Returning None in place of the matrix is what stops all_self_attns from
             # accumulating 28 layers worth of attention. See section 5 of CLAUDE.md.
             return (output[0], None, *output[2:])
@@ -442,14 +498,15 @@ class AttentionExtractor:
         return AttentionFeatures(
             lookback_per_chunk=np.stack([item[0] for item in order]).astype(np.float16),
             lookback_total=np.stack([item[1] for item in order]).astype(np.float16),
-            self_attention=np.stack([item[2] for item in order]).astype(np.float16),
+            lookback_context=np.stack([item[2] for item in order]).astype(np.float16),
+            self_attention=np.stack([item[3] for item in order]).astype(np.float16),
             n_chunks=len(chunks),
             truncated=truncated,
             peak_vram_mb=peak,
             elapsed_ms=elapsed_ms,
             layer_indices=list(self.layer_indices),
-            nonfinite_layers=[i for i in self.layer_indices if not sink[i][3]],
-            row_sum_mean=float(np.mean([sink[i][4] for i in self.layer_indices])),
+            nonfinite_layers=[i for i in self.layer_indices if not sink[i][4]],
+            row_sum_mean=float(np.mean([sink[i][5] for i in self.layer_indices])),
         )
 
     @staticmethod

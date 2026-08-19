@@ -24,6 +24,7 @@ REQUIRED_SPLIT_SEED = 42
 DatasetName = Literal["vihallu", "isedsc01", "viwikifc", "vifactcheck"]
 ChunkStrategy = Literal["sentence", "token_window"]
 Quantization = Literal["nf4", "none"]
+ComputeDtype = Literal["float16", "bfloat16", "float32"]
 FeatureGroup = Literal["surface", "basic", "chunk_aware", "stability", "localization"]
 HeadAggregation = Literal["all", "mean_over_heads", "topk_heads"]
 DetectorType = Literal["logistic_regression", "linear_svc", "lightgbm"]
@@ -89,6 +90,11 @@ class ExtractorConfig(_Base):
     quantization: Quantization = "nf4"
     max_context_tokens: int = Field(default=4096, ge=128)
     device: str = "cuda"
+    compute_dtype: ComputeDtype = "float16"
+    # Measured at T07: layer 27 of Qwen2.5-7B overflows in float16 on every sample while the
+    # other 27 layers match float32 to 0.07 % of the scale. Listing it here rather than
+    # detecting it at runtime keeps the experiment declaration honest about what was used.
+    exclude_layers: list[int] = Field(default_factory=list)
 
 
 class FeatureConfig(_Base):
