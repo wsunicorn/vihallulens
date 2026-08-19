@@ -38,14 +38,15 @@ Dữ liệu khoảng 248 MB và **không nằm trong repo**, nên notebook khôn
 
 **`unicorn1209/vihallulens`** — kaggle.com/datasets/unicorn1209/vihallulens (version 1, 248,47 MB, 14 file để phẳng đúng tên chuẩn).
 
-Attach dataset đó vào notebook, Kaggle gắn ở `/kaggle/input/vihallulens/`. Trong notebook trỏ `data/raw` sang đó bằng symlink, **không copy** để khỏi tốn dung lượng phiên:
+Chỉ cần attach dataset vào notebook, **không cần biết Kaggle gắn nó vào đâu**. Kaggle đã dùng cả `/kaggle/input/<slug>/` lẫn `/kaggle/input/datasets/<chủ>/<slug>/`, nên code tự dò thay vì đoán:
 
 ```python
-import os, pathlib
-pathlib.Path("data").mkdir(exist_ok=True)
-if not os.path.exists("data/raw"):
-    os.symlink("/kaggle/input/vihallulens", "data/raw")
+from vihallulens.data.paths import find_raw_dir
+
+print(find_raw_dir())   # tìm thư mục chứa vihallu_train.csv
 ```
+
+Thứ tự ưu tiên: `--data-dir` truyền tay → biến môi trường `VIHALLULENS_DATA_DIR` → `data/raw` → các vị trí dưới `/kaggle/input`. Truyền `--data-dir` sai đường dẫn thì báo lỗi chứ không âm thầm dùng thư mục khác.
 
 Nếu tải lại dataset ở bản mới, **giữ nguyên tên file** theo `data/raw/MANIFEST.md` — đổi tên là code gãy.
 
@@ -104,8 +105,6 @@ Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi
 !git clone https://github.com/wsunicorn/vihallulens.git /kaggle/working/vihallulens
 %cd /kaggle/working/vihallulens
 !pip install -e . -q
-import os
-os.symlink("/kaggle/input/vihallulens", "data/raw")
 !python scripts/extract_features.py --config configs/example.yaml
 ```
 

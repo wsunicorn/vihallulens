@@ -126,7 +126,7 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--tiny", action="store_true", help="random small model on the CPU")
     parser.add_argument("--max-context-tokens", type=int, default=4096)
-    parser.add_argument("--data-dir", type=Path, default=Path("data/raw"))
+    parser.add_argument("--data-dir", type=Path, default=None)
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -154,12 +154,21 @@ def main() -> int:
             )
         ]
     else:
+        from vihallulens.data.paths import find_raw_dir
+
+        try:
+            data_dir = find_raw_dir(args.data_dir)
+        except FileNotFoundError as error:
+            print(f"  {error}")
+            return 1
+        print(f"  thư mục dữ liệu       : {data_dir}")
+
         extractor = AttentionExtractor(
             args.model, max_context_tokens=args.max_context_tokens, device="cuda"
         )
-        samples = load_samples(args.data_dir)
+        samples = load_samples(data_dir)
         if not samples:
-            print(f"  KHÔNG thấy dữ liệu trong {args.data_dir} — attach dataset rồi chạy lại.")
+            print(f"  KHÔNG thấy file dữ liệu nào trong {data_dir}.")
             return 1
 
     print(f"  số lớp được hook      : {len(extractor.layer_indices)}")
