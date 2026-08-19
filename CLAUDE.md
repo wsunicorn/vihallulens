@@ -44,6 +44,8 @@ Những điều này KHÔNG được thương lượng khi viết code:
 | Bậc thang lùi | `Qwen/Qwen2.5-3B-Instruct` → `Qwen/Qwen2.5-1.5B-Instruct` |
 | Mô hình ablation | `sail/Sailor2-8B-SFT` (mở rộng từ Qwen2.5, dùng chung code path) |
 | Trích attention | `attn_implementation="eager"` + forward hook, cộng dồn trong hook |
+| Kiểu số khi tính | `float16`, **bỏ lớp 27** của Qwen2.5-7B. Đo ở T07: lớp 27 tràn số ở 20/20 mẫu, 27 lớp còn lại khớp `float32` với sai lệch trung bình 0,07 % thang đo và lỗi không tăng dần về cuối. `float32` sạch nhưng chậm 3,6 lần |
+| Mẫu số lookback | Lưu **cả hai**: `lookback_total` tính cả token khung như bài gốc (dùng cho E02), `lookback_context` chỉ tính ngữ cảnh (dùng cho phần chunk-aware) |
 | Chia chunk | Làm **cả hai** cách (theo câu và theo cửa sổ token) rồi so sánh — đây là một thí nghiệm riêng, không phải chọn sẵn |
 | Chia tập | Theo ngữ cảnh (group split), seed 42, tỷ lệ 80/10/10 |
 
@@ -147,7 +149,8 @@ Bốn quy tắc đi kèm, cũng không được đổi:
 1. **Không có câu hỏi thì bỏ hẳn khối câu hỏi.** Ba bộ kiểm chứng thông tin không có câu hỏi; in ra dòng `Câu hỏi:` rỗng sẽ thêm token vô nghĩa và dịch chuyển mọi vị trí.
 2. **Vùng ngữ cảnh là đúng chuỗi `{context}`**, không gồm dòng tiêu đề `Ngữ cảnh:`. Chunk chia trên chuỗi này.
 3. **Vùng phản hồi là đúng chuỗi `{response}`**, không gồm token `<|im_start|>assistant`.
-4. **Token khung không tính vào đâu cả.** Chúng không phải ngữ cảnh để bám vào, cũng không phải chữ mô hình sinh ra, nên bị loại khỏi cả tử số lẫn mẫu số của lookback ratio.
+4. **Token khung được xử lý theo hai cách, lưu song song.** `lookback_total` tính chúng vào mẫu số đúng như bài Lookback Lens gốc, nơi X là toàn bộ chuỗi đầu vào — đây là bản E02 phải dùng để gọi là tái lập. `lookback_context` loại chúng ra, chỉ đếm ngữ cảnh truy xuất, dễ diễn giải hơn và là nền của phần chunk-aware. Chi phí thêm gần bằng không vì cả hai tính từ cùng một ma trận.
+5. **Token phản hồi đầu tiên không được chấm.** Nó chưa có token nào đứng trước để so, nên tỷ lệ của nó luôn bằng 1 bất kể mô hình làm gì — và ở `float16` có khi thành 0 do underflow. Cả hai đều vô nghĩa. Trục token của mọi mảng đặc trưng vì thế có độ dài `n_response_tokens - 1`.
 
 Vị trí hai vùng được tìm bằng cách **dò chuỗi trong prompt đã render** rồi ánh xạ sang token qua `return_offsets_mapping`, chứ không đếm ký tự khung. Nhờ vậy nếu chat template của mô hình khác (Sailor2 ở E13) có khác đôi chút thì vị trí vẫn đúng, không lệch âm thầm.
 

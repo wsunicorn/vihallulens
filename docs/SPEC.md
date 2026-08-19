@@ -70,15 +70,21 @@ Yêu cầu hiện thực bắt buộc:
 ```python
 @dataclass
 class AttentionFeatures:
-    lookback_per_chunk: np.ndarray   # (n_layers, n_heads, n_response_tokens, n_chunks)
-    lookback_total: np.ndarray       # (n_layers, n_heads, n_response_tokens)
-    self_attention: np.ndarray       # (n_layers, n_heads, n_response_tokens)
+    # Trục token là các token phản hồi được chấm, tức bỏ token đầu tiên:
+    # n_scored = n_response_tokens - 1. Xem mục 8 quy tắc 5 của CLAUDE.md.
+    lookback_per_chunk: np.ndarray   # (n_layers, n_heads, n_scored, n_chunks)
+    lookback_total: np.ndarray       # (n_layers, n_heads, n_scored) mẫu số cả prompt, như bài gốc
+    lookback_context: np.ndarray     # (n_layers, n_heads, n_scored) mẫu số chỉ ngữ cảnh
+    self_attention: np.ndarray       # (n_layers, n_heads, n_scored)
     # Mọi giá trị chuẩn hóa theo trung bình trên mỗi token nguồn, không phải tổng
     # khối lượng chú ý — giữ đúng định nghĩa gốc của Lookback Lens.
     n_chunks: int
     truncated: bool
     peak_vram_mb: float
     elapsed_ms: float
+    layer_indices: list[int]         # lớp thật sự được trích, đã bỏ lớp trong exclude_layers
+    nonfinite_layers: list[int]      # lớp có nan/inf, phải rỗng thì kết quả mới dùng được
+    row_sum_mean: float              # tổng hàng attention, khỏe mạnh là 1,0
 ```
 
 Lưu ra đĩa dạng `.npz` nén, `float16`. Một file cho mỗi mẫu, tên `{dataset}_{sample_id}.npz`.

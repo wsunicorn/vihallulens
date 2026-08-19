@@ -16,6 +16,8 @@ extractor:
   quantization: nf4       # nf4 | none
   max_context_tokens: 4096
   device: cuda
+  compute_dtype: float16  # float16 | bfloat16 | float32
+  exclude_layers: [27]    # lớp cuối của Qwen2.5-7B tràn số ở float16, đo ở T07
 
 features:
   groups: [basic, chunk_aware, stability]   # surface | basic | chunk_aware | stability | localization

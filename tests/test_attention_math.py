@@ -3,6 +3,14 @@
 No model and no GPU: the lookback arithmetic is checked against attention matrices whose
 answers are worked out by hand, which is the only way to know the extractor is right rather
 than merely running without crashing.
+
+The layout used throughout is an eight-token prompt::
+
+    0 1 2 3   context, split into chunks
+    4         chat template scaffolding
+    5 6 7     response
+
+Token 5 is the first response token and is never scored, so the results have two columns.
 """
 
 import pytest
@@ -18,7 +26,6 @@ from vihallulens.extract.attention import (
 
 
 def make_layout(chunk_sizes=(2, 2)):
-    """Layout for an 8-token prompt: 0-3 context, 4 scaffolding, 5-7 response."""
     positions, ids, counts = [], [], []
     cursor = 0
     for chunk_index, size in enumerate(chunk_sizes):
@@ -27,7 +34,9 @@ def make_layout(chunk_sizes=(2, 2)):
         counts.append(size)
         cursor += size
     return PromptLayout(
+        query_positions=torch.tensor([6, 7]),
         response_positions=torch.tensor([5, 6, 7]),
+        prompt_positions=torch.tensor([0, 1, 2, 3, 4]),
         context_positions=torch.tensor(list(range(cursor))),
         chunk_positions=torch.tensor(positions),
         chunk_ids=torch.tensor(ids),
@@ -67,91 +76,133 @@ def test_token_span_ignores_zero_width_special_tokens():
 # --- build_layout -----------------------------------------------------------------------
 
 
-def test_build_layout_maps_chunks_to_token_positions():
-    # Prompt "AA BB CC" where the context starts at character 3 and is "BB CC".
-    offsets = [(0, 2), (3, 5), (5, 6), (6, 8), (8, 12)]
-    chunks = [Chunk(text="BB", char_start=0, char_end=2, index=0),
-              Chunk(text="CC", char_start=3, char_end=5, index=1)]
-    layout = build_layout(offsets, (3, 8), (8, 12), chunks, context_char_offset=3)
+def build_small_layout():
+    # Prompt "AA BB CC DDD EEE": context is "BB CC" at characters 3..8, response at 8..16.
+    offsets = [(0, 2), (3, 5), (5, 6), (6, 8), (8, 12), (12, 16)]
+    chunks = [
+        Chunk(text="BB", char_start=0, char_end=2, index=0),
+        Chunk(text="CC", char_start=3, char_end=5, index=1),
+    ]
+    return build_layout(offsets, (3, 8), (8, 16), chunks, context_char_offset=3)
 
+
+def test_build_layout_maps_chunks_to_token_positions():
+    layout = build_small_layout()
     assert layout.n_chunks == 2
-    assert layout.response_positions.tolist() == [4]
     assert layout.context_positions.tolist() == [1, 2, 3]
     assert layout.chunk_ids.tolist() == [0, 1]
+
+
+def test_build_layout_drops_the_first_response_token_from_the_queries():
+    """The first response token has no history, so its ratio is 1 whatever the model did."""
+    layout = build_small_layout()
+    assert layout.response_positions.tolist() == [4, 5]
+    assert layout.query_positions.tolist() == [5]
+
+
+def test_prompt_positions_cover_everything_before_the_response():
+    """The paper's X is the whole input, scaffolding included, not just the context."""
+    layout = build_small_layout()
+    assert layout.prompt_positions.tolist() == [0, 1, 2, 3]
 
 
 def test_build_layout_rejects_a_context_with_no_tokens():
     offsets = [(0, 4), (4, 8)]
     chunks = [Chunk(text="x", char_start=0, char_end=1, index=0)]
     with pytest.raises(ValueError, match="context"):
-        build_layout(offsets, (20, 24), (0, 4), chunks, context_char_offset=20)
+        build_layout(offsets, (20, 24), (0, 8), chunks, context_char_offset=20)
+
+
+def test_build_layout_rejects_a_single_token_response():
+    offsets = [(0, 4), (4, 8)]
+    chunks = [Chunk(text="x", char_start=0, char_end=4, index=0)]
+    with pytest.raises(ValueError, match="single token"):
+        build_layout(offsets, (0, 4), (4, 8), chunks, context_char_offset=0)
 
 
 # --- lookback_from_layer ----------------------------------------------------------------
 
 
-def test_first_response_token_has_no_history_so_lookback_is_one():
-    """Nothing has been generated yet, so all attention that counts is context attention."""
+def test_output_shapes_drop_the_unscored_first_token():
     layout = make_layout()
-    weights = make_weights({5: {0: 0.1, 1: 0.1, 2: 0.1, 3: 0.1}})
-    per_chunk, total, own = lookback_from_layer(weights, layout)
-
-    assert own[0, 0].item() == pytest.approx(0.0)
-    assert total[0, 0].item() == pytest.approx(1.0)
-    assert per_chunk[0, 0].tolist() == pytest.approx([1.0, 1.0])
+    per_chunk, total, context_only, own = lookback_from_layer(
+        make_weights({6: {0: 0.5}}, heads=4), layout
+    )
+    assert per_chunk.shape == (4, 2, 2)
+    assert total.shape == (4, 2)
+    assert context_only.shape == (4, 2)
+    assert own.shape == (4, 2)
 
 
 def test_context_and_self_attention_are_averaged_per_token():
     """The ratio divides by token counts, per the definition in docs/REFERENCES.md."""
     layout = make_layout()
     weights = make_weights({6: {0: 0.05, 1: 0.05, 2: 0.05, 3: 0.05, 5: 0.3}})
-    _, total, own = lookback_from_layer(weights, layout)
+    _, _, context_only, own = lookback_from_layer(weights, layout)
 
-    assert own[0, 1].item() == pytest.approx(0.3)  # one preceding token, divisor 1
-    assert total[0, 1].item() == pytest.approx(0.05 / 0.35)
+    assert own[0, 0].item() == pytest.approx(0.3)  # one preceding token, divisor 1
+    assert context_only[0, 0].item() == pytest.approx(0.05 / 0.35)
 
 
 def test_self_attention_divides_by_the_number_of_preceding_tokens():
     layout = make_layout()
     weights = make_weights({7: {0: 0.02, 1: 0.02, 2: 0.02, 3: 0.02, 5: 0.1, 6: 0.2, 7: 0.5}})
-    _, total, own = lookback_from_layer(weights, layout)
+    _, _, context_only, own = lookback_from_layer(weights, layout)
 
-    assert own[0, 2].item() == pytest.approx((0.1 + 0.2) / 2)  # diagonal excluded
-    assert total[0, 2].item() == pytest.approx(0.02 / (0.02 + 0.15))
+    assert own[0, 1].item() == pytest.approx((0.1 + 0.2) / 2)  # own column excluded
+    assert context_only[0, 1].item() == pytest.approx(0.02 / (0.02 + 0.15))
+
+
+def test_the_two_denominators_differ_by_the_scaffolding():
+    """lookback_total counts the whole prompt as in the paper; lookback_context does not."""
+    layout = make_layout()
+    weights = make_weights({6: {0: 0.05, 1: 0.05, 2: 0.05, 3: 0.05, 4: 0.4, 5: 0.3}})
+    _, total, context_only, _ = lookback_from_layer(weights, layout)
+
+    prompt_mean = (0.05 * 4 + 0.4) / 5
+    assert total[0, 0].item() == pytest.approx(prompt_mean / (prompt_mean + 0.3))
+    assert context_only[0, 0].item() == pytest.approx(0.05 / 0.35)
+    assert total[0, 0].item() != pytest.approx(context_only[0, 0].item())
+
+
+def test_scaffolding_does_not_touch_the_context_ratio():
+    layout = make_layout()
+    without = make_weights({6: {0: 0.05, 1: 0.05, 2: 0.05, 3: 0.05, 5: 0.3}})
+    with_scaffold = make_weights({6: {0: 0.05, 1: 0.05, 2: 0.05, 3: 0.05, 4: 0.9, 5: 0.3}})
+
+    _, total_a, context_a, _ = lookback_from_layer(without, layout)
+    _, total_b, context_b, _ = lookback_from_layer(with_scaffold, layout)
+
+    assert context_a[0, 0].item() == pytest.approx(context_b[0, 0].item())
+    assert total_a[0, 0].item() != pytest.approx(total_b[0, 0].item())
 
 
 def test_chunks_are_normalised_by_their_own_length():
     """Two chunks holding the same attention mass but different lengths must not tie."""
     layout = make_layout(chunk_sizes=(1, 3))
-    weights = make_weights({5: {0: 0.3, 1: 0.1, 2: 0.1, 3: 0.1}})
-    per_chunk, _, _ = lookback_from_layer(weights, layout)
+    weights = make_weights({6: {0: 0.3, 1: 0.1, 2: 0.1, 3: 0.1}})
+    per_chunk, _, _, _ = lookback_from_layer(weights, layout)
 
     short, long = per_chunk[0, 0].tolist()
     assert short == pytest.approx(3 * long)
 
 
-def test_scaffolding_tokens_are_ignored_entirely():
-    """Token 4 belongs to the chat template and must count in neither region."""
-    layout = make_layout()
-    without = make_weights({5: {0: 0.1, 1: 0.1, 2: 0.1, 3: 0.1}})
-    with_scaffold = make_weights({5: {0: 0.1, 1: 0.1, 2: 0.1, 3: 0.1, 4: 0.9}})
-
-    a = lookback_from_layer(without, layout)
-    b = lookback_from_layer(with_scaffold, layout)
-    assert a[1][0, 0].item() == pytest.approx(b[1][0, 0].item())
-
-
-def test_output_shapes_follow_the_spec():
-    layout = make_layout()
-    per_chunk, total, own = lookback_from_layer(make_weights({5: {0: 0.5}}, heads=4), layout)
-    assert per_chunk.shape == (4, 3, 2)
-    assert total.shape == (4, 3)
-    assert own.shape == (4, 3)
-
-
 def test_all_zero_attention_does_not_divide_by_zero():
     layout = make_layout()
-    per_chunk, total, own = lookback_from_layer(make_weights({}), layout)
-    assert torch.isfinite(per_chunk).all()
-    assert torch.isfinite(total).all()
-    assert torch.isfinite(own).all()
+    per_chunk, total, context_only, own = lookback_from_layer(make_weights({}), layout)
+    for tensor in (per_chunk, total, context_only, own):
+        assert torch.isfinite(tensor).all()
+
+
+def test_every_ratio_stays_inside_the_unit_interval():
+    layout = make_layout()
+    weights = make_weights(
+        {
+            6: {0: 0.05, 1: 0.05, 2: 0.05, 3: 0.05, 4: 0.4, 5: 0.3},
+            7: {0: 0.02, 1: 0.02, 2: 0.02, 3: 0.02, 4: 0.1, 5: 0.1, 6: 0.2, 7: 0.5},
+        }
+    )
+    _, total, context_only, _ = lookback_from_layer(weights, layout)
+    for tensor in (total, context_only):
+        assert float(tensor.min()) >= 0.0
+        assert float(tensor.max()) <= 1.0
