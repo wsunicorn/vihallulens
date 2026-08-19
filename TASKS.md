@@ -24,10 +24,11 @@
   - **Kết quả kiểm tra:** `uv pip install -e ".[dev]"` chạy sạch trên Python 3.11.9, `python -c "import vihallulens"` in ra `import vihallulens OK, version 0.1.0`. Phiên bản đã giải: torch 2.13.0, transformers 5.15.0, accelerate 1.14.0, bitsandbytes 0.50.1, pandas 3.0.5, numpy 2.4.6, scikit-learn 1.9.0, pydantic 2.13.4, pytest 9.1.1, ruff 0.16.3.
   - **Ghi chú chuyển cho T07:** `transformers` giải ra **bản 5.15.0**, tức nhánh API mới chứ không phải 4.x mà bài Lookback Lens và phần lớn ví dụ trên mạng dùng. Việc hook trên `self_attn` có nhận được `attn_weights` hay không phải kiểm tra thực tế rồi mới ghim phiên bản — xem mục 5 của `CLAUDE.md`. Chưa ghim ở T01 vì T07 mới là nơi có căn cứ để chọn.
 
-- [ ] **T02** · L · Cấu hình lint và test
-  - Thêm cấu hình `ruff` vào `pyproject.toml`, dòng tối đa 100 ký tự.
-  - Tạo `tests/test_smoke.py` với một test tầm thường.
-  - **Kiểm tra:** `ruff check .` và `pytest` đều xanh.
+- [x] **T02** · L · Cấu hình lint và test — hoàn thành 19/08/2026
+  - Cấu hình `ruff` trong `pyproject.toml`: `line-length = 100`, `target-version = "py311"`, bộ luật `E, W, F, I, UP, B, SIM, N`, isort biết `vihallulens` là gói nội bộ.
+  - Cấu hình `pytest`: `testpaths = ["tests"]`.
+  - `tests/test_smoke.py`: kiểm tra gói import được, có `__version__`, và cả sáu gói con theo `docs/SPEC.md` đều import được.
+  - **Kết quả kiểm tra:** `ruff check .` → `All checks passed!`; `pytest` → `2 passed in 0.02s`.
 
 - [ ] **T03** · M · Module cấu hình
   - Viết `src/vihallulens/config.py` định nghĩa các pydantic model theo mục 3 của `docs/SPEC.md`.
