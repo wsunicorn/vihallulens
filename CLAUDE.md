@@ -128,9 +128,28 @@ Mẫu prompt quyết định vị trí token của ngữ cảnh, câu hỏi và 
 
 Quy tắc: ở Task T07, chốt đúng một mẫu, ghi nguyên văn vào mục này của `CLAUDE.md`, rồi không đổi nữa. Nếu buộc phải đổi, phải trích lại toàn bộ đặc trưng và ghi vào Nhật ký chặn trong `TASKS.md`.
 
+**Đã chốt ngày 19/08/2026 ở T07.** Dùng chat template chính thức của mô hình qua `tokenizer.apply_chat_template`, ngữ cảnh và câu hỏi ở lượt `user`, phản hồi cần chấm ở lượt `assistant`. Hiện thực nằm ở `src/vihallulens/extract/prompt.py` — file đó là nguồn sự thật, mục này là bản ghi để đọc nhanh.
+
 ```
-MẪU PROMPT ĐÃ CHỐT: (điền ở T07)
+<|im_start|>system
+Bạn là trợ lý trả lời câu hỏi dựa trên ngữ cảnh được cung cấp.<|im_end|>
+<|im_start|>user
+Ngữ cảnh:
+{context}
+
+Câu hỏi: {question}<|im_end|>
+<|im_start|>assistant
+{response}<|im_end|>
 ```
+
+Bốn quy tắc đi kèm, cũng không được đổi:
+
+1. **Không có câu hỏi thì bỏ hẳn khối câu hỏi.** Ba bộ kiểm chứng thông tin không có câu hỏi; in ra dòng `Câu hỏi:` rỗng sẽ thêm token vô nghĩa và dịch chuyển mọi vị trí.
+2. **Vùng ngữ cảnh là đúng chuỗi `{context}`**, không gồm dòng tiêu đề `Ngữ cảnh:`. Chunk chia trên chuỗi này.
+3. **Vùng phản hồi là đúng chuỗi `{response}`**, không gồm token `<|im_start|>assistant`.
+4. **Token khung không tính vào đâu cả.** Chúng không phải ngữ cảnh để bám vào, cũng không phải chữ mô hình sinh ra, nên bị loại khỏi cả tử số lẫn mẫu số của lookback ratio.
+
+Vị trí hai vùng được tìm bằng cách **dò chuỗi trong prompt đã render** rồi ánh xạ sang token qua `return_offsets_mapping`, chứ không đếm ký tự khung. Nhờ vậy nếu chat template của mô hình khác (Sailor2 ở E13) có khác đôi chút thì vị trí vẫn đúng, không lệch âm thầm.
 
 ## 9. Bố cục repo
 
