@@ -150,7 +150,7 @@ Giao diện quan sát: một trang HTML tĩnh, hiển thị ngữ cảnh với c
 Mọi thí nghiệm khai báo bằng một file YAML trong `configs/`. Ví dụ cấu trúc:
 
 ```yaml
-run_name: t20_chunk_aware_sentence_vihallu
+run_name: e03_chunk_aware_sentence_vihallu
 dataset:
   name: vihallu
   split_seed: 42
