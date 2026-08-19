@@ -73,6 +73,8 @@ class AttentionFeatures:
     lookback_per_chunk: np.ndarray   # (n_layers, n_heads, n_response_tokens, n_chunks)
     lookback_total: np.ndarray       # (n_layers, n_heads, n_response_tokens)
     self_attention: np.ndarray       # (n_layers, n_heads, n_response_tokens)
+    # Mọi giá trị chuẩn hóa theo trung bình trên mỗi token nguồn, không phải tổng
+    # khối lượng chú ý — giữ đúng định nghĩa gốc của Lookback Lens.
     n_chunks: int
     truncated: bool
     peak_vram_mb: float
@@ -87,7 +89,7 @@ Từ `AttentionFeatures` sinh véc-tơ đặc trưng cho bộ phân loại:
 
 | Nhóm | Đặc trưng | Mô tả |
 |---|---|---|
-| Cơ bản | `lookback_mean`, `lookback_std` | Tỷ lệ chú ý vào ngữ cảnh, gộp toàn bộ — tái lập Lookback Lens gốc |
+| Cơ bản | `lookback_mean`, `lookback_std` | Tỷ lệ chú ý vào ngữ cảnh, gộp toàn bộ — tái lập Lookback Lens gốc. Tỷ lệ tính theo **trung bình chú ý trên mỗi token**, xem công thức ở mục 1 của `docs/REFERENCES.md` |
 | Chunk-aware | `chunk_entropy` | Entropy của phân bố chú ý trên các chunk. Thấp = tập trung. |
 | Chunk-aware | `chunk_max_share` | Tỷ trọng chunk được chú ý nhiều nhất |
 | Chunk-aware | `chunk_gini` | Hệ số Gini của phân bố |

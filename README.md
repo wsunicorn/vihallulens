@@ -82,6 +82,7 @@ Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi
 | `docs/DATA.md` | Schema chung, đường dẫn dữ liệu và cách chuẩn hóa bốn bộ |
 | `data/raw/MANIFEST.md` | Ánh xạ tên file gốc sang tên chuẩn, kèm số dòng đã đối chiếu |
 | `docs/EXPERIMENTS.md` | Kế hoạch thực nghiệm và bảng kết quả |
+| `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các mốc so sánh |
 
 ## Dữ liệu
 
