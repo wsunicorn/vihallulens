@@ -231,8 +231,8 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 
 | Việc | Tần suất | Ghi chú |
 |---|---|---|
-| Email báo cáo tuần gửi GVHD | mỗi tuần, kể cả tuần không tiến triển | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Đề xuất gửi chiều thứ Sáu. Mẫu: `UniversityRequirements/Mau_email_bao_cao_tuan.md` |
-| Cập nhật sheet "Nhật ký" trong `Ke_hoach_KLTN_da_dien.xlsx` | mỗi tuần | Xin GVHD phê duyệt nhật ký |
+| Email báo cáo tuần gửi GVHD | mỗi tuần, kể cả tuần không tiến triển | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Đề xuất gửi chiều thứ Sáu. Mẫu: `UniversityRequirements/WeeklyLogs/Mau_email_bao_cao_tuan.md` |
+| Cập nhật sheet "Nhật ký" trong `UniversityRequirements/Plan/Ke_hoach_KLTN_da_dien.xlsx` | mỗi tuần | Xin GVHD phê duyệt nhật ký |
 | Cập nhật cột "thực tế" trong sheet kế hoạch | mỗi tuần | Đơn vị trên Gantt là **tuần** |
 
 ## Bốn mốc không được lỡ
@@ -244,7 +244,7 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 | Báo cáo cuối kỳ (T48) | 16 | trước 22/11 | GVHD quyết định đề tài có được phản biện hay không |
 | Phản biện (T49) | 17 | 23/11 – 29/11 | Quyết định được bảo vệ qua hội đồng oral hay hội đồng poster |
 
-Tuần 18 (30/11 – 06/12) báo cáo trước hội đồng. Hình thức có thể là **oral hoặc poster** tùy kết quả phản biện — xem mục "BÁO CÁO POSTER" trong `UniversityRequirements/Mau bao cao KLTN_DS.docx` nếu rơi vào hướng poster.
+Tuần 18 (30/11 – 06/12) báo cáo trước hội đồng. Hình thức có thể là **oral hoặc poster** tùy kết quả phản biện — xem mục "BÁO CÁO POSTER" trong `UniversityRequirements/Reports/Mau bao cao KLTN_DS.docx` nếu rơi vào hướng poster.
 
 ## Nhật ký chặn
 
