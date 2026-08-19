@@ -32,13 +32,22 @@ Khóa API để trong `.env` ở máy, và trong **Add-ons → Secrets** khi ch�
 - `uv` — cài bằng `pip install uv` hoặc `winget install astral-sh.uv`
 - Git, và một tài khoản GitHub đã đăng nhập `gh` hoặc đã cấu hình credential helper
 
-### Đưa dữ liệu lên Kaggle
+### Dữ liệu trên Kaggle
 
-Dữ liệu khoảng 240 MB và **không nằm trong repo**, nên notebook không clone kèm được. Cách làm:
+Dữ liệu khoảng 248 MB và **không nằm trong repo**, nên notebook không clone kèm được. Đã tải sẵn lên Kaggle Dataset:
 
-1. Tạo một **Kaggle Dataset riêng tư** chứa đúng 11 file trong `data/raw/` với **nguyên tên chuẩn** (`vihallu_train.csv`, `isedsc01_train.json`, …). Đổi tên là code gãy.
-2. Attach dataset đó vào notebook. Kaggle gắn nó vào `/kaggle/input/<tên-dataset>/`.
-3. Trong notebook, trỏ `data/raw` sang đường dẫn đó bằng symlink hoặc biến cấu hình — **không copy** để khỏi tốn dung lượng phiên.
+**`unicorn1209/vihallulens`** — kaggle.com/datasets/unicorn1209/vihallulens (version 1, 248,47 MB, 14 file để phẳng đúng tên chuẩn).
+
+Attach dataset đó vào notebook, Kaggle gắn ở `/kaggle/input/vihallulens/`. Trong notebook trỏ `data/raw` sang đó bằng symlink, **không copy** để khỏi tốn dung lượng phiên:
+
+```python
+import os, pathlib
+pathlib.Path("data").mkdir(exist_ok=True)
+if not os.path.exists("data/raw"):
+    os.symlink("/kaggle/input/vihallulens", "data/raw")
+```
+
+Nếu tải lại dataset ở bản mới, **giữ nguyên tên file** theo `data/raw/MANIFEST.md` — đổi tên là code gãy.
 
 Repo là public nên notebook Kaggle clone bằng HTTPS không cần token, chỉ cần bật Internet trong phần cài đặt notebook.
 
@@ -47,7 +56,7 @@ Kết quả chạy ghi vào `/kaggle/working/`, tải về máy rồi commit t�
 ## Bắt đầu
 
 ```bash
-git clone <repo>
+git clone https://github.com/wsunicorn/vihallulens.git
 cd vihallulens
 uv pip install -e .
 ```
@@ -92,10 +101,19 @@ python scripts/evaluate.py         --config configs/example.yaml
 Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi script. Không viết logic trong notebook.
 
 ```python
-!git clone <repo> /kaggle/working/vihallulens
+!git clone https://github.com/wsunicorn/vihallulens.git /kaggle/working/vihallulens
 %cd /kaggle/working/vihallulens
 !pip install -e . -q
+import os
+os.symlink("/kaggle/input/vihallulens", "data/raw")
 !python scripts/extract_features.py --config configs/example.yaml
+```
+
+Khóa API lấy từ Kaggle Secrets, không viết thẳng vào notebook:
+
+```python
+from kaggle_secrets import UserSecretsClient
+os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 ```
 
 ## Làm việc với Claude Code
