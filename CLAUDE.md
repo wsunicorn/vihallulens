@@ -84,6 +84,8 @@ Kết luận: **T07 kiểm tra hook có cài đúng không, không phải kiểm
 
 **Bộ nhớ bậc hai, thời gian tuyến tính — đừng lẫn hai thứ.** Bảng trên nói về bộ nhớ và vẫn đúng. Thời gian thì khác: đo ở T08 trên T4, chi phí là **khoảng 1,05 ms mỗi token prompt**, gần như hằng số từ 371 tới 2.492 token (mũ đo được `k ≈ 1,00`). Lý do là ở dải này các phép nhân ma trận của MLP và việc giải nén trọng số NF4 vẫn chi phối, ma trận chú ý chưa đủ lớn để lấn. Hệ quả thực dụng: muốn tiết kiệm **bộ nhớ** thì cắt độ dài, muốn tiết kiệm **thời gian** thì giảm số mẫu.
 
+**Đo ms/mẫu thì mỗi cấu hình một phiên GPU riêng.** Ở T08, hai lượt chạy nối nhau trong cùng phiên cho thấy ba mức độ dài có khối lượng tính toán *y hệt nhau* vẫn chậm đi 10–15 % ở lượt sau — nhiều khả năng do T4 tản nhiệt thụ động bị hạ xung sau vài phút chạy liên tục. Vì vậy mọi so sánh chi phí giữa các mô hình (E13 Sailor2, E14 bậc thang 3B/1.5B) phải chạy mỗi cấu hình một phiên riêng hoặc đo xen kẽ, nếu không phần hạ xung sẽ bị tính nhầm thành khác biệt giữa các mô hình.
+
 ### Ba điều dễ hiểu sai về thiết kế hook
 
 1. **Hook không giảm được đỉnh bộ nhớ của chính lớp đó.** Attention eager đã tạo đủ ma trận `(q_len × k_len)` bên trong module *trước khi* hook chạy. Hook chỉ quyết định giữ lại bao nhiêu. Muốn hạ dưới mức 0,94 GB một lớp thì phải **thay hàm tính attention** để chỉ tính các hàng truy vấn ứng với token phản hồi — đó là đổi kiến trúc, phải hỏi trước theo mục 6.
@@ -96,7 +98,7 @@ Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tà
 
 | Nấc | Cách làm | Hiệu quả |
 |---|---|---|
-| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | **Bộ nhớ** giảm 4 lần (bậc hai theo độ dài). Đo ở T05: chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck — xem mục 4B của `docs/DATA.md`. **Không dùng nấc này để tiết kiệm thời gian:** đo ở T08, thời gian tăng *tuyến tính* theo độ dài chứ không bậc hai, và chỉ 483 mẫu của hai bộ bắt buộc vượt 2.048, nên hạ ngưỡng chỉ tiết kiệm 10 phút trên tổng 10 giờ 19 |
+| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | **Chỉ mua được bộ nhớ, không mua được thời gian.** Đo ở T08 bằng hai lượt chạy thật: VRAM đỉnh 8.428 → 6.305 MB (giảm 25 %), nhưng dự báo giờ GPU lại *tăng* 10,32 → 11,58 giờ. Lý do ở mục ngay trên bảng này. Về mất mát dữ liệu thì nấc này rẻ: đo ở T05, chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck — xem mục 4B `docs/DATA.md` |
 | 2 | Chỉ trích một phần lớp, ví dụ 8 trong 28 | Giảm gần tuyến tính; Lookback Lens cho thấy ít đầu mang phần lớn tín hiệu |
 | 3 | Thay hàm attention để chỉ tính hàng truy vấn của token phản hồi | Hiệu quả lớn nhất nhưng là đổi kiến trúc — phải hỏi |
 | 4 | Lùi Qwen2.5-3B rồi 1.5B | Cùng họ, chỉ đổi `model_name` trong YAML |

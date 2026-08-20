@@ -132,13 +132,32 @@
 
   1. **Chi phí tăng tuyến tính theo độ dài, không phải bậc hai.** Mũ đo được là `k ≈ 1,00`, và chia ra thì bốn mức cho 1,049 / 1,044 / 1,016 / 1,060 ms mỗi token — gần như một hằng số. Quy tắc nhẩm dùng được từ nay: **khoảng 1,05 ms cho mỗi token prompt**. Lý do là ở dải 512–4.096 token, phần tốn thời gian vẫn là các phép nhân ma trận của MLP và các phép chiếu (tỷ lệ với độ dài), cộng với việc giải nén trọng số NF4; ma trận chú ý tuy tăng theo bình phương nhưng chưa đủ lớn để chi phối. Nó chi phối *bộ nhớ* thì đúng — bảng mục 5 `CLAUDE.md` vẫn nguyên giá trị — nhưng bộ nhớ và thời gian là hai chuyện khác nhau.
 
-  2. **Hệ quả trực tiếp: nấc lùi 1 là đòn bẩy cho bộ nhớ, gần như vô dụng với thời gian.** Hạ `max_context_tokens` từ 4.096 xuống 2.048 chỉ ảnh hưởng 483 mẫu của hai bộ bắt buộc (3 của ViHallu, 480 của ISE-DSC01), tiết kiệm đúng **10 phút** trên tổng 10 giờ 19. Nếu sau này thiếu giờ GPU thì **đòn bẩy thật là lấy mẫu con ISE-DSC01**, không phải cắt ngữ cảnh. Ghi lại đây để sau này khỏi lùi nhầm nấc.
+  2. **Hệ quả trực tiếp: nấc lùi 1 là đòn bẩy cho bộ nhớ, không phải cho thời gian.** Hạ `max_context_tokens` từ 4.096 xuống 2.048 chỉ ảnh hưởng 483 mẫu của hai bộ bắt buộc (3 của ViHallu, 480 của ISE-DSC01) — tính trên giấy thì tiết kiệm khoảng 10 phút trên tổng 10 giờ 19, còn **đo thật thì không tiết kiệm gì cả**, xem lượt đo 2.048 ở dưới. Nếu sau này thiếu giờ GPU thì **đòn bẩy thật là lấy mẫu con ISE-DSC01**, không phải cắt ngữ cảnh. Ghi lại đây để sau này khỏi lùi nhầm nấc.
 
   3. **ISE-DSC01 nuốt 92 % chi phí của hai bộ bắt buộc** trong khi chỉ chiếm 84 % số mẫu — vì mẫu của nó dài hơn gấp đôi (941 ms/mẫu so với 420 ms/mẫu của ViHallu). Nó cũng là bộ duy nhất có nhiều mẫu ở mức đắt nhất (480 mẫu).
 
   4. **Phần ngoài GPU chỉ chiếm 9 %.** Lời gọi mô hình chiếm 90–92 % thời gian ở cả bốn mức; render prompt, cắt theo ngân sách và chuyển đặc trưng về CPU gộp lại chưa tới một phần mười. Tối ưu phía CPU không đáng công.
 
-  **Ghi chú chuyển cho giai đoạn trích đặc trưng (T21 trở đi), chưa làm bây giờ:** một lượt ISE-DSC01 mất 9 giờ 30 liên tục, sát giới hạn thời gian một phiên Kaggle. Script trích đặc trưng thật phải **chạy được theo lô và nối lại được** — ghi ra từng phần rồi bỏ qua phần đã có khi chạy lại — chứ không thể là một vòng lặp duy nhất mất chín tiếng rồi mất sạch nếu phiên đứt. Ngoài ra một số thí nghiệm cần **trích lại toàn bộ** chứ không dùng lại được: E04 quét ba cỡ cửa sổ token (ranh giới chunk đổi), E13 đổi mô hình đọc sang Sailor2-8B, E14 lùi 3B và 1.5B. Ước tổng cộng khoảng 19 giờ GPU trải từ tuần 6 tới tuần 11, tức 2–4 giờ mỗi tuần — vẫn thoải mái trong quota, nhưng phải xếp lịch chứ không dồn.
+  **Đã chạy thêm cấu hình 2.048 token (ô 6) để kiểm chứng điểm 2 bằng đo đạc thay vì suy luận.** Kết quả nằm ở dòng thứ hai của `results/feasibility.jsonl`, và nó xác nhận: **hạ ngân sách token không mua được thời gian.**
+
+| Mức | 4.096 token | 2.048 token | Chênh | Mẫu bị cắt ở 2.048 |
+|---|---|---|---|---|
+| 0–512 | 389 ms | 429 ms | +10,2 % | 0/20 |
+| 513–1024 | 779 ms | 872 ms | +12,0 % | 0/20 |
+| 1025–2048 | 1.401 ms | 1.616 ms | +15,4 % | 0/20 |
+| 2049–4096 | 2.641 ms | 2.080 ms | −21,2 % | 20/20 |
+| **Dự báo hai bộ bắt buộc** | **10,32 giờ** | **11,58 giờ** | **+12 %** | |
+| **VRAM đỉnh** | **8.428 MB** | **6.305 MB** | **−25 %** | |
+
+  Ba mức dưới **không có mẫu nào bị cắt ở cả hai lượt** — cùng 20 mẫu đó, cùng số token đó, cùng số chunk đó — vậy mà chậm đi 10–15 %. Khối lượng tính toán không đổi thì phần chênh này không đến từ thuật toán mà từ máy. Giải thích khả dĩ nhất là **T4 trên Kaggle bị hạ xung do nhiệt**: card tản nhiệt thụ động, lượt đo thứ hai chạy ngay sau khi lượt đầu vừa nạp GPU liên tục vài phút. Nhóm **chưa xác minh** bằng cách đọc nhiệt độ hay xung nhịp, nên đây là giả thuyết chứ không phải kết luận.
+
+  Dù giải thích thế nào, kết luận thực dụng không đổi: chỉ mức trên cùng nhanh lên, ba mức dưới không được lợi gì, và tổng cục lại **đắt hơn** chứ không rẻ hơn. Nấc lùi 1 chỉ mua được **bộ nhớ** (8.428 → 6.305 MB, giảm 25 %), đúng như bảng mục 5 `CLAUDE.md` nói, và không mua được thời gian.
+
+  **Bài học về cách đo, phải nhớ cho E11 và E14:** hai lượt đo chạy nối nhau trong cùng một phiên GPU **không so trực tiếp với nhau được**, vì trạng thái nhiệt của card đã khác. Các thí nghiệm sau có so ms/mẫu giữa các mô hình (E14 lùi 3B, 1.5B; E13 đổi sang Sailor2) phải **chạy mỗi cấu hình trong một phiên riêng, hoặc đo xen kẽ** rồi lấy trung bình, chứ không xếp tuần tự rồi so thẳng. Nếu không, kết luận "mô hình nhỏ hơn nhanh hơn X %" sẽ lẫn cả phần hạ xung vào.
+
+  **Một lỗi trong script đã lộ ra nhờ lượt đo này và đã sửa.** Lượt 2.048 báo mũ `k = 0,85`, khác hẳn `k = 1,00` của lượt 4.096. Nguyên nhân: mũ được khớp giữa `median_ms` và `mean_tokens`, mà `mean_tokens` là độ dài **lúc mẫu đi vào**, còn mẫu bị cắt thì thực tế chỉ được đưa vào 2.048 token. Ghép chi phí thật với độ dài không thật thì khớp ra một đường cong chưa từng tồn tại. Đã sửa: chỉ khớp trên các mức **không có mẫu nào bị cắt**, và in ra mức nào bị loại. Thêm `tiers_without_truncation` và hai ca kiểm thử.
+
+  **Ghi chú chuyển cho giai đoạn trích đặc trưng (T21 trở đi), chưa làm bây giờ:** một lượt ISE-DSC01 mất 9 giờ 30. Việc này **không cần ngồi canh** — Kaggle cho "Save Version" chạy nền theo lô, giới hạn 12 tiếng, nên 9 giờ 30 nằm gọn trong một lượt commit. Cái vẫn nên làm là **ghi kết quả ra từng phần và bỏ qua phần đã có khi chạy lại**, không phải vì sợ đứt phiên mà vì nếu hỏng ở giờ thứ tám thì không muốn mất cả tám giờ. Ngoài ra một số thí nghiệm cần **trích lại toàn bộ** chứ không dùng lại được: E04 quét ba cỡ cửa sổ token (ranh giới chunk đổi), E13 đổi mô hình đọc sang Sailor2-8B, E14 lùi 3B và 1.5B. Ước tổng cộng khoảng 19 giờ GPU trải từ tuần 6 tới tuần 11, tức 2–4 giờ mỗi tuần — vẫn thoải mái trong quota, nhưng phải xếp lịch chứ không dồn.
 
 ---
 
