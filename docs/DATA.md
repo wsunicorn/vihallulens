@@ -157,6 +157,20 @@ Bộ dữ liệu không có cột ghi loại prompt nên phải suy ra và ghi v
 
 Ghi thêm `meta.prompt_has_diacritics` (bool) để phân tích sau này kiểm chứng được.
 
+**Đo thật ở T09 ngày 20/08/2026: luật này bắt được 245 mẫu, tức 3,5 %.** Con số này **thấp hơn nhiều** so với tỷ lệ một phần ba mà bài báo ngụ ý cho nhóm `noisy`, và đó là chuyện bình thường chứ không phải lỗi: bỏ dấu chỉ là **một trong bốn** phép nhiễu mà bài báo liệt kê. Một prompt bị hoán vị ký tự hoặc xóa token nhưng vẫn còn dấu thì luật này không bắt được, và nó bị xếp vào `unknown`.
+
+Nói cách khác, `prompt_type = noisy` là một nhóm **độ chính xác cao, độ phủ thấp**. Hệ quả phải nhớ khi làm T35: so sánh không phải là "nhóm noisy với nhóm không noisy" mà là **"nhóm bị bỏ dấu với tất cả phần còn lại"**, trong đó phần còn lại vẫn lẫn những mẫu noisy kiểu khác. Phải viết đúng như vậy trong báo cáo, đừng gọi tắt thành "noisy".
+
+Ba mẫu bắt được, để thấy luật hoạt động đúng:
+
+```
+De tai duoc su dung nhieu nhat trong cac luan van tien si A Rap Xe Ut la gi?
+Coo bao nhieu nguooi dan Bac Trieu Tien ti nan o mien Nam sau cuoc cai cach ruong ddats?
+Truoc khi duoc Ton Trung Son cai to thanh Trung Quoc Quoc dan Dang thi Dang nay da tung...
+```
+
+Chú ý mẫu thứ hai: ngoài bỏ dấu còn có nhân đôi ký tự (`Coo`, `nguooi`, `ddats`), tức một mẫu có thể dính nhiều phép nhiễu cùng lúc. Phân bố nhãn trong 245 mẫu này là 68 `no` / 79 `intrinsic` / 98 `extrinsic`, lệch về `extrinsic` hơn tổng thể một chút nhưng cỡ mẫu quá nhỏ để kết luận gì.
+
 **ISE-DSC01.** `claim` map sang `response`, `question` rỗng. `verdict` map theo bảng mục 3. Với nhãn NEI, `evidence` rỗng — đây là hạn chế đã biết. Tìm `evidence_start` bằng `context.find(evidence)`; nếu không thấy thì đặt `-1` và đếm vào báo cáo. Ghi `meta.domain`.
 
 **ViWikiFC.** `claim` map sang `response`, `question` rỗng. Bằng chứng có ở cả ba nhãn, `context.find` phải thành công 100% — nếu không thì có lỗi encoding, dừng lại kiểm tra. Ghi `meta.title`, `meta.link`, `meta.sentenceID`.
