@@ -84,6 +84,31 @@
   - Ghi kết quả vào `results/feasibility.jsonl`.
   - **Kiểm tra:** file kết quả tồn tại, có kết luận rõ mô hình nào dùng được với ngữ cảnh tối đa bao nhiêu token.
 
+  **Task này để làm gì.** T07 trả lời "một mẫu có vừa 16 GB không" — câu hỏi về *vật lý*. T08 trả lời câu hỏi về *lịch*: với hạn mức 30 giờ GPU mỗi tuần trên Kaggle, trích đặc trưng cho 71.520 mẫu của bốn bộ có kịp không. Hai câu này độc lập: một mẫu vừa bộ nhớ không có nghĩa là 71.520 mẫu chạy xong trong tuần. *Thông lượng* (throughput) ở đây là số mẫu xử lý được trong một đơn vị thời gian, quy ước báo cáo bằng nghịch đảo của nó là **ms/mẫu** cho dễ so sánh. *Bậc thang* là bảng sáu nấc lùi ở mục 5 `CLAUDE.md` — nếu không kịp thì lùi theo thứ tự nào.
+
+  **Cách đo, và vì sao không đo bằng một con số duy nhất.** Chi phí mỗi mẫu phụ thuộc mạnh vào độ dài chuỗi, nên một con số "ms/mẫu trung bình" đo trên vài mẫu bất kỳ là vô nghĩa: đo toàn mẫu ngắn thì lạc quan, đo toàn mẫu dài thì bi quan. Thay vào đó chia mẫu thành **bốn mức độ dài** theo số token của prompt — 0–512, 513–1024, 1025–2048, 2049–4096 — đo 20 mẫu mỗi mức, rồi nhân trung vị từng mức với **số mẫu thật rơi vào mức đó** của từng bộ. Kết quả không phải một con số mà là số giờ GPU cho mỗi bộ, tức thứ mà lịch chạy cần.
+
+  **Công cụ đã sẵn sàng từ 20/08/2026:** `scripts/measure_throughput.py` (có cờ `--dry-run` chạy được trên CPU), `tests/test_throughput.py` (26 ca cho phần toán dự báo), `notebooks/t08_thong_luong_t4.ipynb`. Script ghi kết quả qua chính `log_result` của T04 nên bản ghi có đủ `git_commit` và `config_hash` như mọi thí nghiệm khác, chỉ khác đường dẫn là `results/feasibility.jsonl`.
+
+  **Đã đo được trên CPU ngày 20/08/2026** (`python scripts/measure_throughput.py --dry-run`) — phân bố độ dài prompt thật của cả bốn bộ, đây là mẫu số của mọi phép dự báo:
+
+| Bộ | 0–512 | 513–1024 | 1025–2048 | 2049–4096 | Tổng |
+|---|---|---|---|---|---|
+| ViHallu | 6.461 | 530 | 6 | 3 | 7.000 |
+| ISE-DSC01 | 6.188 | 17.770 | 11.931 | 480 | 36.369 |
+| ViWikiFC | 20.102 | 817 | 0 | 0 | 20.919 |
+| ViFactCheck | 705 | 3.546 | 2.785 | 196 | 7.232 |
+| **Tổng** | **33.456** | **22.663** | **14.722** | **679** | **71.520** |
+
+  Khung mẫu prompt (các token `<|im_start|>`, dòng `Ngữ cảnh:`, câu hệ thống) tốn **37 token**, hoặc **41 token** khi có khối câu hỏi. Số mẫu của cả bốn bộ khớp đúng bảng mục 4 `docs/DATA.md`, nên trình đọc dữ liệu trong script không bỏ sót dòng nào.
+
+  Ba điều rút ra ngay từ bảng này, trước cả khi chạm GPU:
+  1. **ISE-DSC01 quyết định chi phí.** Nó chiếm 51 % số mẫu nhưng gần như toàn bộ khối lượng ở hai mức đắt: 11.931 mẫu ở mức 1025–2048 và 480 mẫu ở mức trên cùng. Ba bộ còn lại dồn về mức rẻ nhất.
+  2. **ViWikiFC gần như miễn phí.** 96 % số mẫu dưới 512 token, không mẫu nào vượt 1.024.
+  3. **Mức trên cùng rất thưa** — 679 mẫu trên tổng 71.520, tức 0,9 %. Nếu chỉ mức này quá đắt thì cắt nó rẻ hơn nhiều so với lùi mô hình.
+
+  **Còn lại:** chạy ô 5 của notebook trên Kaggle để có số ms thật và kết luận. Chưa tick.
+
 ---
 
 ## Giai đoạn 2 — Chuẩn hóa dữ liệu (tuần 3–4)
