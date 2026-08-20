@@ -153,6 +153,20 @@
 
   Dù giải thích thế nào, kết luận thực dụng không đổi: chỉ mức trên cùng nhanh lên, ba mức dưới không được lợi gì, và tổng cục lại **đắt hơn** chứ không rẻ hơn. Nấc lùi 1 chỉ mua được **bộ nhớ** (8.428 → 6.305 MB, giảm 25 %), đúng như bảng mục 5 `CLAUDE.md` nói, và không mua được thời gian.
 
+  **Hệ quả cho việc xếp lịch, và đây là chỗ mình suýt ghi hụt:** lượt đo 4.096 chạy **đầu tiên trong phiên, GPU còn nguội**. Một lượt trích thật kéo 9–10 tiếng thì card nóng gần như suốt, nên con số dưới đây là lạc quan. Cộng 15 % cho chắc:
+
+| | Dự báo lúc GPU nguội | Nên lấy để xếp lịch |
+|---|---|---|
+| ISE-DSC01 một lượt | 9 giờ 30 | **~11 giờ** |
+| Hai bộ bắt buộc | 10 giờ 19 | **~12 giờ** |
+| Cả bốn bộ | 14 giờ 44 | **~17 giờ** |
+
+  Vẫn nằm trong quota 30 giờ. Nhưng **11 tiếng cho ISE-DSC01 sát giới hạn 12 tiếng của một lượt Save Version** — đây mới là lý do thật để ghi kết quả theo phần.
+
+  **Đã thêm đo nhiệt độ và xung nhịp vào script** (`nvidia-smi`, không thêm thư viện) để lần chạy GPU kế tiếp tự trả lời câu hỏi hạ xung mà không tốn thêm phút quota nào: đọc một lần trước khi đo và một lần sau mỗi mức, in bảng nhiệt độ theo mức, và cảnh báo nếu xung tụt. Tiêu chí là **xu hướng chứ không phải một số đo lẻ** — ngưỡng tuyệt đối kiểu "xung dưới 95 % là hạ xung" nghe hợp lý nhưng sai, vì card rảnh tự hạ xung: đo thử trên card rời của máy cá nhân lúc không làm gì được 1.500/2.100 MHz, tức 71 %, mà chẳng có gì bị ghìm cả. Dấu hiệu thật là **xung cuối phiên thấp hơn đầu phiên trong khi nhiệt độ tăng**.
+
+  **Đã cân nhắc và quyết định KHÔNG chạy lại hai phiên riêng để đo chính xác phần chênh 4.096 với 2.048.** Lý do là có một chặn trên bằng số học khiến mọi kết quả đo đều dẫn tới cùng một quyết định: ngân sách 2.048 chỉ ảnh hưởng 483 mẫu của hai bộ bắt buộc, mà 483 mẫu đó ở cấu hình 4.096 chỉ tốn 21 phút trên tổng 10 giờ 19. Nghĩa là kể cả nếu chúng nhanh bằng không thì tiết kiệm tối đa cũng chỉ **3,4 %**, thực tế khoảng 1,6 %. Đốt quota để làm rõ 1,6 % hay 3,4 % trong khi cả hai đều dẫn tới "giữ 4.096" là không đáng.
+
   **Bài học về cách đo, phải nhớ cho E11 và E14:** hai lượt đo chạy nối nhau trong cùng một phiên GPU **không so trực tiếp với nhau được**, vì trạng thái nhiệt của card đã khác. Các thí nghiệm sau có so ms/mẫu giữa các mô hình (E14 lùi 3B, 1.5B; E13 đổi sang Sailor2) phải **chạy mỗi cấu hình trong một phiên riêng, hoặc đo xen kẽ** rồi lấy trung bình, chứ không xếp tuần tự rồi so thẳng. Nếu không, kết luận "mô hình nhỏ hơn nhanh hơn X %" sẽ lẫn cả phần hạ xung vào.
 
   **Một lỗi trong script đã lộ ra nhờ lượt đo này và đã sửa.** Lượt 2.048 báo mũ `k = 0,85`, khác hẳn `k = 1,00` của lượt 4.096. Nguyên nhân: mũ được khớp giữa `median_ms` và `mean_tokens`, mà `mean_tokens` là độ dài **lúc mẫu đi vào**, còn mẫu bị cắt thì thực tế chỉ được đưa vào 2.048 token. Ghép chi phí thật với độ dài không thật thì khớp ra một đường cong chưa từng tồn tại. Đã sửa: chỉ khớp trên các mức **không có mẫu nào bị cắt**, và in ra mức nào bị loại. Thêm `tiers_without_truncation` và hai ca kiểm thử.
