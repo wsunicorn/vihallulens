@@ -78,6 +78,17 @@ def infer_prompt_type(prompt: str, context: str) -> str:
 
 
 def normalize_vihallu(raw_dir: Path) -> pd.DataFrame:
+    """Read the corpus, check it against the documented counts, and return it.
+
+    Split from :func:`read_vihallu` so the reading can be exercised on a handful of rows: the
+    size check is exactly what makes a small fixture impossible to run through.
+    """
+    frame = read_vihallu(raw_dir)
+    check_expected(frame)
+    return frame
+
+
+def read_vihallu(raw_dir: Path) -> pd.DataFrame:
     """Read ``vihallu_train.csv`` and return it in the common schema."""
     source = Path(raw_dir) / SOURCE_FILE
     if not source.is_file():
@@ -123,9 +134,7 @@ def normalize_vihallu(raw_dir: Path) -> pd.DataFrame:
             }
         )
 
-    frame = finalise(pd.DataFrame.from_records(records))
-    check_expected(frame)
-    return frame
+    return finalise(pd.DataFrame.from_records(records))
 
 
 def check_expected(frame: pd.DataFrame) -> None:
