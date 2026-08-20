@@ -110,7 +110,7 @@ Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tà
 3. **Trước khi tick hoàn thành**, phải chạy được lệnh nêu trong mục "Tiêu chí hoàn thành" của task và dán output vào PR.
 4. **Nếu một task cần quyết định chưa có trong file này** — ví dụ chọn thư viện mới, đổi kiến trúc, thêm phụ thuộc nặng — **DỪNG LẠI và hỏi người dùng.** Không tự quyết.
 5. **Không viết code cho task chưa tới.** Nếu thấy task sau cần thứ gì đó, ghi chú vào PR, đừng làm trước.
-6. Sau mỗi task, cập nhật `TASKS.md`: đổi `[ ]` thành `[x]` và ghi ngày hoàn thành.
+6. Sau mỗi task, cập nhật `TASKS.md`: đổi `[ ]` thành `[x]`, ghi ngày hoàn thành, **và viết phần diễn giải ngay dưới task đó** — task này để làm gì, đã làm gì, kết quả số ra sao, học được gì. `TASKS.md` vừa là nguồn sự thật về tiến độ vừa là sổ tay giải thích, nên viết sao cho người chưa biết gì đọc cũng hiểu: thuật ngữ xuất hiện lần đầu thì giải thích ngay tại chỗ.
 
 ## 7. Những điều không được làm
 
