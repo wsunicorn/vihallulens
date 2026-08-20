@@ -394,9 +394,57 @@
 
   **Tổng 71.520 mẫu**, đúng bằng con số T08 dùng để dự báo giờ GPU.
 
-- [ ] **T13** · LM · Kiểm tra thủ công ánh xạ NEI sang ngoại lai
+- [ ] **T13** · LM · Kiểm tra thủ công ánh xạ NEI sang ngoại lai — **công cụ đã sẵn sàng 20/08/2026, chờ hai người gán nhãn**
   - Lấy ngẫu nhiên 100 mẫu nhãn NEI từ ViWikiFC, hai người gán độc lập xem có đúng là "chứa thông tin ngoài ngữ cảnh" không.
   - **Kiểm tra:** file `results/nei_mapping_audit.csv` có 100 dòng, báo cáo tỷ lệ khớp và hệ số đồng thuận.
+
+  **Task này để làm gì.** Mục 3 `docs/DATA.md` ánh xạ nhãn `NEI` của ViWikiFC thành `extrinsic`, và ngay câu sau đã tự cảnh báo rằng hai khái niệm này **không tương đương**:
+
+  - **NEI** (*Not Enough Information*) nghĩa là: ngữ cảnh **không đủ** để kết luận phát biểu đúng hay sai.
+  - **Ảo giác ngoại lai** (*extrinsic hallucination*) nghĩa là: phát biểu **mang vào** thông tin mà ngữ cảnh không hề có.
+
+  Hai cái giao nhau nhiều nhưng không trùng. Một phát biểu hoàn toàn có thể *không kết luận được* trong khi mọi dữ kiện nó nhắc tới đều nằm sẵn trong ngữ cảnh — khi đó ánh xạ sai. Không ai biết chuyện đó xảy ra bao nhiêu phần trăm cho tới khi có người **đọc tay** một mẫu đủ lớn. Đây chính là task đó, và kết quả của nó đi thẳng vào phần hạn chế của báo cáo.
+
+  **Vì sao Claude không làm thay được.** Nếu mình gán cả 100 mẫu thì không còn "hai người gán độc lập", và **hệ số đồng thuận trở thành con số vô nghĩa**. Cái task này đo chính là mức độ hai người thật sự thống nhất với nhau, nên phần gán nhãn bắt buộc là việc của Lân và Minh.
+
+  ### Đã chuẩn bị xong
+
+  `scripts/audit_nei_mapping.py` với hai chế độ, và ba file trong `results/`:
+
+| File | Dùng làm gì |
+|---|---|
+| `nei_mapping_audit_HUONGDAN.md` | Hướng dẫn gán nhãn — **đọc trước khi làm** |
+| `nei_mapping_audit_lan.csv` | Phiếu của Lân, 120 dòng |
+| `nei_mapping_audit_minh.csv` | Phiếu của Minh, 120 dòng, **giống hệt** phiếu kia |
+
+  **Bốn đáp án**, không phải hai. Câu hỏi "có phải ngoại lai không" nếu để dạng có/không sẽ mất thông tin, vì "không phải ngoại lai" thật ra là **hai chuyện rất khác nhau**: phát biểu bám sát ngữ cảnh (nhãn `no`), hay phát biểu mâu thuẫn với ngữ cảnh (nhãn `intrinsic`). Chỉ trường hợp đầu nghĩa là nhãn NEI đơn thuần yếu quá; trường hợp sau nghĩa là ánh xạ đẩy mẫu sang **sai hẳn lớp**. Nên bốn mã: `ngoai_lai`, `noi_tai`, `khong`, `khong_chac`.
+
+  ### Vì sao có 120 dòng mà kết quả chỉ 100
+
+  20 dòng là **mẫu đối chứng**: 10 mẫu `Supports` và 10 mẫu `Refutes`, trộn lẫn và xáo ngẫu nhiên nên không phân biệt được với 100 mẫu NEI. Bước `--report` tách chúng ra khỏi thống kê chính, nên **file nộp vẫn đúng 100 dòng** như tiêu chí đòi.
+
+  Lý do cần chúng: cả 100 mẫu NEI đều cùng một nhãn gốc. Nếu ai đó gõ `ngoai_lai` cho tất cả mà không đọc, kết quả sẽ là *tỷ lệ khớp 100 %* — trông rất đẹp — trong khi **Cohen kappa không tính được**, và không có cách nào phân biệt "hai người thật sự đồng ý" với "hai người cùng bấm bừa". Mẫu đối chứng phá thế đó: gán sai `Supports`/`Refutes` là lộ ngay. Ngưỡng cảnh báo đặt ở 70 %.
+
+  *Cohen kappa* là hệ số đo mức đồng thuận **sau khi trừ đi phần đồng thuận do may rủi**. Hai người cùng thích một đáp án thì tự nhiên hay trùng nhau; kappa đo phần trùng vượt quá mức đó. Bằng 1 là trùng khớp hoàn toàn, bằng 0 là không hơn ngẫu nhiên, âm là tệ hơn ngẫu nhiên. Báo cáo in cả kappa lẫn tỷ lệ khớp thô kèm diễn giải theo thang Landis–Koch.
+
+  ### Vài quyết định thiết kế
+
+  - **Hai file riêng, không phải hai cột trong một file.** Hai cột cạnh nhau thì gần như chắc chắn người sau sẽ liếc thấy đáp án của người trước.
+  - **Phiếu không chứa đáp án.** Không có cột nhãn gốc, không có file khóa đáp án. Nhãn thật được tra lại qua `sample_id` ở bước `--report`.
+  - **Ghi bằng UTF-8 có BOM.** Excel trên Windows mở CSV UTF-8 thường sẽ hiện tiếng Việt thành ký tự rác; BOM là thứ khiến nó hiển thị đúng khi bấm đúp mở file.
+  - **`--prepare` không ghi đè phiếu đã có** trừ khi truyền `--force`, kẻo sinh lại đè mất buổi làm của ai đó.
+  - **Sắp theo `sample_id` trước khi lấy mẫu.** pandas lấy mẫu theo *vị trí*, nên nếu không cố định thứ tự thì việc chạy lại `normalize_data.py` có thể âm thầm đổi 100 mẫu được kiểm. Lỗi này do một ca kiểm thử phát hiện ra, và đã sửa ở code chứ không sửa test.
+
+  Đã kiểm toàn tuyến bằng phiếu điền giả: `--report` chạy đúng, in đủ đối chứng, tỷ lệ ánh xạ, kappa, bảng chéo 4×4, và sinh `results/nei_mapping_audit.csv` 100 dòng. `ruff` sạch, `pytest` 244 ca xanh (thêm 30 ca).
+
+  ### Việc của Lân và Minh
+
+  1. Đọc `results/nei_mapping_audit_HUONGDAN.md`.
+  2. Mỗi người điền cột `nhan_dinh` trong file của mình, **độc lập, không bàn nhau**.
+  3. Chạy `python scripts/audit_nei_mapping.py --report`.
+  4. Dán output vào PR rồi tick task này.
+
+  Ngữ cảnh của bộ này ngắn — trung vị 124 từ, dài nhất 344 từ — nên 120 dòng ước chừng 60–90 phút mỗi người.
 
 - [ ] **T14** · M · Chia tập và báo cáo rò rỉ
   - Hiện thực `group_split`. Chia ViHallu và ISE-DSC01 80/10/10 seed 42. ViWikiFC và ViFactCheck giữ split gốc.
