@@ -84,8 +84,15 @@ def find_evidence(context: str, evidence: str) -> tuple[int, int]:
     Only an exact match counts. An approximate match would put a plausible-looking number in
     a column that later experiments treat as ground truth, which is worse than admitting the
     evidence was not found: section 7 of docs/DATA.md asks for these misses to be counted.
+
+    Evidence made only of whitespace counts as no evidence. It has to be ruled out by name,
+    because it is the one empty value that *does* match: ``context.find("\\n\\n")`` happily
+    returns the position of some blank line, and the row then carries an offset pointing at
+    nothing while looking perfectly valid. Measured at T10: two ISE-DSC01 rows hold ``"\\n\\n"``
+    as their evidence, and counting them is exactly how the figure 23.785 in section 4 of
+    docs/DATA.md came to be two higher than the number of real matches.
     """
-    if not evidence:
+    if not evidence.strip():
         return NO_OFFSET, NO_OFFSET
     start = context.find(evidence)
     if start < 0:

@@ -25,10 +25,11 @@ DEFAULT_OUTPUT_DIR = Path("data/interim")
 # Which task implements which corpus. Naming the task in the error keeps the sequence of
 # TASKS.md visible from the command line instead of only in the file.
 PENDING = {
-    "isedsc01": "T10",
     "viwikifc": "T11",
     "vifactcheck": "T12",
 }
+
+READY = ("vihallu", "isedsc01")
 
 
 def normalize(name: str, raw_dir: Path):
@@ -37,6 +38,10 @@ def normalize(name: str, raw_dir: Path):
         from vihallulens.data.vihallu import normalize_vihallu
 
         return normalize_vihallu(raw_dir)
+    if name == "isedsc01":
+        from vihallulens.data.isedsc01 import normalize_isedsc01
+
+        return normalize_isedsc01(raw_dir)
     if name in PENDING:
         raise NotImplementedError(
             f"bộ {name} chưa chuẩn hóa được: đó là task {PENDING[name]} trong TASKS.md"
@@ -46,7 +51,7 @@ def normalize(name: str, raw_dir: Path):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Chuẩn hóa dữ liệu thô về schema chung.")
-    parser.add_argument("--dataset", required=True, choices=["vihallu", *PENDING])
+    parser.add_argument("--dataset", required=True, choices=[*READY, *PENDING])
     parser.add_argument("--data-dir", type=Path, default=None, help="thư mục data/raw")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
@@ -84,12 +89,20 @@ def main() -> int:
     located = int((frame["evidence_start"] >= 0).sum())
     print(f"  có bằng chứng nguyên văn : {located:,}/{len(frame):,}")
 
+    # Section 7 of docs/DATA.md asks for the misses to be counted, not merely tolerated. A row
+    # whose source names an evidence sentence that cannot be found in its own context is a
+    # defect in the corpus, and the count belongs in the report rather than in silence.
+    meta = frame["meta"].map(json.loads)
+    given = int(meta.map(lambda payload: bool(payload.get("evidence_given"))).sum())
+    if given:
+        print(f"  nguồn có ghi bằng chứng  : {given:,}")
+        print(f"  ghi mà không định vị được: {given - located:,}")
+
     # meta carries whatever is specific to one corpus. Reporting the small categorical fields
     # here means a rule that silently stops firing — such as the noisy-prompt rule of section 7
     # of docs/DATA.md — shows up as a changed count instead of going unnoticed.
-    meta = frame["meta"].map(json.loads)
     for key in sorted({name for payload in meta for name in payload}):
-        values = meta.map(lambda payload, key=key: payload[key])
+        values = meta.map(lambda payload, key=key: payload.get(key, ""))
         if values.nunique() > 8 or values.map(type).eq(bool).all():
             continue
         print()

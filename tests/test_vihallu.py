@@ -91,13 +91,13 @@ def sample(**overrides):
 
 def test_a_missing_source_file_is_reported_by_name(tmp_path):
     with pytest.raises(FileNotFoundError, match=vihallu.SOURCE_FILE):
-        vihallu.normalize_vihallu(tmp_path)
+        vihallu.read_vihallu(tmp_path)
 
 
 def test_a_file_missing_a_column_is_rejected(tmp_path):
     write_csv(tmp_path, [{"id": "1", "context": "a", "prompt": "b", "response": "c"}])
     with pytest.raises(ValueError, match="thiếu cột"):
-        vihallu.normalize_vihallu(tmp_path)
+        vihallu.read_vihallu(tmp_path)
 
 
 def test_a_changed_row_count_stops_the_run(tmp_path):
@@ -110,3 +110,18 @@ def test_a_changed_row_count_stops_the_run(tmp_path):
 
 def test_the_expected_counts_match_the_documented_total():
     assert sum(vihallu.EXPECTED_LABELS.values()) == vihallu.EXPECTED_ROWS
+
+
+def test_the_noisy_rule_reaches_the_meta_column(tmp_path):
+    """The rule is only useful if what it decides actually lands in the frame."""
+    import json
+
+    write_csv(tmp_path, [
+        sample(prompt="Thu do cua Viet Nam la gi?"),
+        sample(id="def-456", prompt="Thủ đô của Việt Nam là gì?"),
+    ])
+    frame = vihallu.read_vihallu(tmp_path)
+    types = [json.loads(value)["prompt_type"] for value in frame["meta"]]
+    assert types == [vihallu.PROMPT_TYPE_NOISY, vihallu.PROMPT_TYPE_UNKNOWN]
+    flags = [json.loads(value)["prompt_has_diacritics"] for value in frame["meta"]]
+    assert flags == [False, True]

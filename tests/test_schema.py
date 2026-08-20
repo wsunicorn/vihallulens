@@ -155,3 +155,13 @@ def test_an_evidence_span_past_the_end_of_the_context_is_rejected():
 def test_an_empty_frame_is_rejected():
     with pytest.raises(ValueError, match="rỗng"):
         schema.validate(frame().iloc[0:0])
+
+
+def test_whitespace_only_evidence_is_a_miss_not_a_match_on_a_blank_line():
+    """The one empty value that *does* match. ``context.find("\n\n")`` returns the position
+    of some blank line, so the row ends up carrying an offset that points at nothing while
+    looking perfectly valid. Two ISE-DSC01 rows hold exactly this, and counting them is how
+    the figure 23.785 in docs/DATA.md came to be two higher than the real match count."""
+    context = "Câu một.\n\nCâu hai."
+    assert "\n\n" in context
+    assert schema.find_evidence(context, "\n\n") == (schema.NO_OFFSET, schema.NO_OFFSET)
