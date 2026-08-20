@@ -183,10 +183,44 @@
   - Đã đổi tên về quy ước `{dataset}_{split}.{ext}`, dời hết lên `data/raw/` (bỏ bốn thư mục con), bảng ánh xạ ghi ở `data/raw/MANIFEST.md`. Danh sách đường dẫn chốt nằm ở mục 2 của `docs/DATA.md`.
   - **Kết quả kiểm tra:** `data/raw/MANIFEST.md` liệt kê đủ bốn bộ với tên file trước và sau khi đổi; số dòng và phân bố nhãn khớp 100 % bảng mục 4 của `docs/DATA.md` (7.000 / 36.369 / 16.738+2.090+2.091 / 5.062+723+1.447). Không có file lạ, không thiếu bộ nào.
 
-- [ ] **T09** · M · Chuẩn hóa ViHallu
+- [x] **T09** · M · Chuẩn hóa ViHallu — hoàn thành 20/08/2026
   - Viết `src/vihallulens/data/vihallu.py` theo `docs/DATA.md`. Nguồn: `data/raw/vihallu_train.csv`. Bỏ qua `data/raw/vihallu_test_public.csv` vì không có nhãn.
   - Suy ra `meta.prompt_type` theo luật ở mục 7 của `docs/DATA.md`: prompt không có ký tự có dấu tiếng Việt thì gán `noisy`, còn lại gán `unknown`. Ghi kèm `meta.prompt_has_diacritics`.
   - **Kiểm tra:** `python scripts/normalize_data.py --dataset vihallu` sinh Parquet 7.000 dòng, phân bố nhãn khớp 2.245 / 2.448 / 2.307.
+
+  **Task này để làm gì.** Bốn bộ dữ liệu có bốn định dạng khác nhau: CSV, JSON, CSV, Parquet; cột tên khác nhau; nhãn gọi tên khác nhau. Nếu để nguyên thì mỗi thí nghiệm phải biết cách đọc từng bộ, và mỗi lần thêm bộ mới là sửa khắp nơi. *Chuẩn hóa* (normalise) nghĩa là đổ cả bốn về **cùng một bộ cột**, gọi là **schema chung**, định nghĩa ở mục 1 `docs/DATA.md`. Sau bước này, phần còn lại của hệ thống chỉ cần biết đúng 14 cột đó, không cần biết dữ liệu gốc trông ra sao. T09 làm bộ đầu tiên, T10–T12 làm ba bộ còn lại theo đúng khuôn này.
+
+  **Đã làm.** Ba file mới:
+  - `src/vihallulens/data/schema.py` — sở hữu định nghĩa schema chung. Mọi bộ đọc xong đều phải đi qua `finalise()`, hàm này sắp lại thứ tự cột, ép kiểu, rồi kiểm tra ràng buộc. Đặt kiểm tra ở lúc ghi là cố ý: một bộ dữ liệu lặng lẽ mất nhãn, hay để `null` vào chỗ mô hình mong đợi chuỗi, bắt ở đây rẻ hơn nhiều so với phát hiện ba tuần sau bên trong vòng lặp huấn luyện.
+  - `src/vihallulens/data/vihallu.py` — bộ đọc ViHallu.
+  - `scripts/normalize_data.py` — điểm vào dòng lệnh, gọi `--dataset viwikifc` thì báo rõ "đó là task T11" chứ không im lặng.
+
+  **Kết quả chạy:**
+
+```
+  số dòng               : 7,000
+  ngữ cảnh duy nhất     : 3,865
+  phân bố nhãn:
+      extrinsic      2,307  ( 33.0 %)
+      intrinsic      2,448  ( 35.0 %)
+      no             2,245  ( 32.1 %)
+  phân bố meta.prompt_type:
+      noisy            245  (  3.5 %)
+      unknown        6,755  ( 96.5 %)
+  đã ghi: data/interim/vihallu_train.parquet  (7,000 dòng)
+```
+
+  Khớp đúng bảng mục 4 `docs/DATA.md`. `ruff check .` sạch, `pytest` 167 ca xanh (thêm 55 ca mới).
+
+  **Ba điều học được:**
+
+  1. **Luật nhận `noisy` có độ chính xác cao nhưng độ phủ thấp — 3,5 %, không phải một phần ba như bài báo ngụ ý.** Bài ViHallu nói mỗi ngữ cảnh sinh ba loại prompt phân bố cân bằng, tức `noisy` đáng lẽ khoảng 33 %. Nhưng bỏ dấu chỉ là **một trong bốn** phép nhiễu bài báo liệt kê (bỏ dấu, hoán vị ký tự, xóa token, đảo trật tự từ). Prompt bị hoán vị ký tự mà vẫn còn dấu thì luật không bắt được. Hệ quả phải nhớ khi làm T35: so sánh sẽ là **"nhóm bị bỏ dấu với tất cả phần còn lại"**, chứ không phải "noisy với không noisy" — phần còn lại vẫn lẫn mẫu noisy kiểu khác. Đã ghi vào mục 7 `docs/DATA.md`.
+
+  2. **Nhận diện dấu tiếng Việt phải suy từ Unicode, và phải so với ngữ cảnh chứ không xét prompt một mình.** Cách làm: một ký tự được coi là "có dấu" nếu **phân rã chuẩn tắc** của nó (normalisation form D — tách ký tự có dấu thành chữ cái gốc cộng dấu rời) ra một chữ cái ASCII kèm dấu; cộng thêm `đ`/`Đ` gọi tên riêng vì nó mang nét gạch chứ không phải dấu rời nên Unicode không phân rã, song vẫn biến mất khi bỏ dấu. Cách này đúng cho cả `á` lẫn `ệ` lẫn `ự` mà không phải gõ tay 134 ký tự. Còn việc **so với ngữ cảnh** là để tránh bẫy: một câu hỏi chỉ gồm tên riêng và con số như `IBM 1970?` vốn không có dấu nào để mất, xét một mình sẽ bị gán nhầm là `noisy`.
+
+  3. **`context_id` phải chuẩn hóa NFC trước khi băm.** `context_id` là mã băm của ngữ cảnh, dùng để chia tập theo nhóm ở T14. Cùng một chữ `ế` có thể được lưu thành một mã điểm, hoặc thành `e` cộng hai dấu rời — nhìn giống hệt nhau nhưng băm ra hai giá trị khác nhau. Nếu vậy thì cùng một ngữ cảnh sẽ rơi vào hai tập khác nhau và **rò rỉ từ train sang test**, đúng cái mà việc chia theo nhóm sinh ra để ngăn. Đã chuẩn hóa NFC trước khi băm, và có ca kiểm thử khẳng định hai dạng cho cùng một `context_id`.
+
+  **Ghi chú:** `load_dataset(name, split)` ở mục 2.1 `docs/SPEC.md` chưa viết, vì chưa task nào cần đọc lại file interim. Sẽ viết ở T14 khi chia tập.
 
 - [ ] **T10** · M · Chuẩn hóa ISE-DSC01
   - Nguồn: `data/raw/isedsc01_train.json`. Bỏ qua hai file `isedsc01_test_public.json` và `isedsc01_test_private.json` vì thiếu `verdict`.
