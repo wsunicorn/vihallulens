@@ -84,7 +84,7 @@ Dùng làm giá trị kỳ vọng trong test tự động. Nếu số liệu sau
 | Độ dài ngữ cảnh trung bình | 179,7 từ | 637 từ | 153 từ | 693 từ |
 | Số câu mỗi ngữ cảnh (trung vị) | 5 | 19 | 4 | 17 |
 | Ngữ cảnh dài nhất | 1.537 từ | 4.805 từ | 600 từ | 3.602 từ |
-| Bằng chứng nguyên văn | không có trường | **23.783/23.784** (sửa ở T10, xem dưới) | **20.918/20.919** = 99,995 % (sửa ở T11, xem dưới) | 59,2 % |
+| Bằng chứng nguyên văn | không có trường | **23.783/23.784** (sửa ở T10, xem dưới) | **20.918/20.919** = 99,995 % (sửa ở T11, xem dưới) | 59,2 % (xác nhận ở T12, biết lý do — xem dưới) |
 
 Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
 
@@ -210,7 +210,45 @@ Phân bố nhãn ba tập, đo ở T11 (bảng mục 4 trước đây chỉ có 
 | dev | 666 | 694 | 730 | 2.090 |
 | test | 708 | 706 | 677 | 2.091 |
 
-**ViFactCheck.** `Statement` map sang `response`, `Context` sang `context`, `Evidence` sang `evidence`. Chỉ 59,2% bằng chứng nằm nguyên văn nên `evidence_start = -1` khá thường xuyên; điều này bình thường, không phải lỗi. Ghi `meta.topic`, `meta.author`.
+**ViFactCheck.** `Statement` map sang `response`, `Context` sang `context`, `Evidence` sang `evidence`. Chỉ 59,2% bằng chứng nằm nguyên văn nên `evidence_start = -1` khá thường xuyên; điều này bình thường, không phải lỗi. Ghi `meta.topic`, `meta.author`, `meta.url`, `meta.evidence_given`. Bỏ cột `Unnamed: 0` — nó chỉ là số thứ tự dòng 0..n-1 được lưu kèm.
+
+**T12 ngày 20/08/2026 tìm ra vì sao chỉ 59 %: bằng chứng của bộ này là nhiều câu KHÔNG LIỀN NHAU ghép lại.** Đo trên 2.064 mẫu trượt của tập train:
+
+| Quan sát | Số mẫu |
+|---|---|
+| 30 ký tự **đầu** của bằng chứng có trong ngữ cảnh | 1.874 |
+| Cả 30 ký tự **đầu lẫn 30 ký tự cuối** đều có | 1.741 |
+| Không thấy đầu cũng không thấy đuôi | 20 |
+
+Ví dụ điển hình — bằng chứng ghi:
+
+```
+... tư vấn xếp lớp rất nhanh chóng và nhiệt tình ILA tiếp nhận và hỗ trợ ...
+```
+
+còn ngữ cảnh ghi:
+
+```
+... tư vấn xếp lớp rất nhanh chóng và nhiệt tình. Chẳng những được miễn học phí ...
+```
+
+Người gán nhãn lấy câu A, **bỏ dấu chấm cuối câu**, rồi nối thẳng câu C ở chỗ khác vào. Cả hai mảnh đều có thật trong ngữ cảnh, chỉ có chuỗi ghép là không.
+
+Đã kiểm và loại trừ hai giả thuyết dễ nghĩ tới: gộp khoảng trắng cứu được **0/2.064**, chuẩn hóa NFC cứu được **0/2.064**. Nên đây không phải chuyện định dạng.
+
+**Hệ quả về mặt thiết kế:** schema chung chỉ có **một** cặp `(evidence_start, evidence_end)`, tức một đoạn liền mạch. Bằng chứng nhiều mảnh rời **về nguyên tắc không biểu diễn được** bằng cấu trúc đó. Con số 59,2 % vì thế không phải "tỷ lệ khớp" mà là **tỷ lệ bằng chứng chỉ có một mảnh**. Ai định làm thí nghiệm định vị bằng chứng trên bộ này (E17) phải mở rộng schema thành danh sách đoạn trước, hoặc chấp nhận chỉ dùng 59 % kia.
+
+**Cảnh báo giống ViWikiFC: `annotation_id` không phải khóa chính.** Tập train có 5.062 dòng nhưng chỉ **1.250** `annotation_id` duy nhất. Nó nằm ở `meta.source_id`; khóa thật là `sample_id`.
+
+**Cột `Topic` không nhất quán hoa thường.** 52 giá trị khác nhau, trong đó có cả `Thể thao` lẫn `THỂ THAO`, cả `Văn hoá` lẫn `Văn hóa` lẫn `VĂN HÓA` lẫn `VĂN HOÁ`. Schema **giữ nguyên văn** để còn truy ngược về nguồn; ai cắt kết quả theo chủ đề phải tự gộp hoa thường và thống nhất `hoá`/`hóa` trước, nếu không sẽ đếm một chủ đề thành bốn.
+
+Phân bố nhãn ba tập, đo ở T12:
+
+| Tập | no | intrinsic | extrinsic | Tổng | Bằng chứng nguyên văn |
+|---|---|---|---|---|---|
+| train | 1.751 | 1.658 | 1.653 | 5.062 | 2.998 (59,2 %) |
+| dev | 256 | 244 | 223 | 723 | 430 (59,5 %) |
+| test | 508 | 468 | 471 | 1.447 | 868 (60,0 %) |
 
 ## 8. Kho truy xuất ViWikiFC
 

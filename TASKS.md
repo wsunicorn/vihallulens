@@ -322,9 +322,77 @@
 
   Không dựng báo cáo rò rỉ ở đây vì đó là T14.
 
-- [ ] **T12** · M · Chuẩn hóa ViFactCheck
+- [x] **T12** · M · Chuẩn hóa ViFactCheck — hoàn thành 20/08/2026, **hết giai đoạn chuẩn hóa dữ liệu**
   - Nguồn: `data/raw/vifactcheck_{train,dev,test}.parquet`, giữ nguyên split gốc. Bỏ cột `Unnamed: 0`.
-  - **Kiểm tra:** 5.062 / 723 / 1.447 dòng, tỷ lệ `evidence_start` tìm được xấp xỉ 59 %.
+  - **Kiểm tra:** 5.062 / 723 / 1.447 dòng ✅, tỷ lệ `evidence_start` tìm được **59,4 %** ✅ (đúng "xấp xỉ 59 %").
+
+  **Task này để làm gì.** Bộ thứ tư và cuối cùng. ViFactCheck là bộ **dự phòng**, chỉ dùng cho E17 — thí nghiệm chuyển miền, và E17 chỉ làm nếu tuần 14–15 còn thời gian. Chuẩn hóa nó bây giờ vì rẻ (chạy CPU vài giây) và vì để sau thì phải nhớ lại toàn bộ ngữ cảnh.
+
+  **Kết quả chạy:**
+
+```
+  số dòng               : 7,232       (5.062 train / 723 dev / 1.447 test)
+  ngữ cảnh duy nhất     : 1,041
+  phân bố nhãn:
+      extrinsic      2,347  ( 32.5 %)
+      intrinsic      2,370  ( 32.8 %)
+      no             2,515  ( 34.8 %)
+  có bằng chứng nguyên văn : 4,296/7,232 (59.4 %)
+  ghi mà không định vị được: 2,936
+```
+
+  Khớp bảng mục 4 `docs/DATA.md`. `ruff` sạch, `pytest` 214 ca xanh (thêm 17 ca).
+
+  ### Vì sao chỉ 59 % — câu hỏi tài liệu bỏ ngỏ, nay đã trả lời
+
+  `docs/DATA.md` ghi "chỉ 59,2 % bằng chứng nằm nguyên văn; điều này bình thường, không phải lỗi" nhưng **không nói vì sao**. Task này truy ra.
+
+  Trước hết loại trừ hai giả thuyết dễ nghĩ nhất. Gộp khoảng trắng cứu được **0/2.064** mẫu trượt; chuẩn hóa NFC cũng cứu được **0/2.064**. Vậy không phải chuyện định dạng ký tự.
+
+  Rồi nhìn vào chỗ chuỗi bắt đầu lệch nhau:
+
+| Quan sát trên 2.064 mẫu trượt của tập train | Số mẫu |
+|---|---|
+| 30 ký tự **đầu** của bằng chứng có trong ngữ cảnh | 1.874 |
+| Cả 30 ký tự **đầu lẫn 30 ký tự cuối** đều có | 1.741 |
+| Không thấy đầu cũng không thấy đuôi | 20 |
+
+  Đầu có, đuôi có, mà cả chuỗi thì không — chỉ có một cách giải thích. Bằng chứng ghi:
+
+```
+... tư vấn xếp lớp rất nhanh chóng và nhiệt tình ILA tiếp nhận và hỗ trợ ...
+```
+
+  ngữ cảnh ghi:
+
+```
+... tư vấn xếp lớp rất nhanh chóng và nhiệt tình. Chẳng những được miễn học phí ...
+```
+
+  Người gán nhãn lấy câu A, **bỏ dấu chấm cuối câu**, rồi nối thẳng một câu khác ở chỗ khác vào. **Bằng chứng của bộ này là nhiều câu rời nhau ghép lại.** Cả hai mảnh đều có thật; chỉ chuỗi ghép là không có.
+
+  **Hệ quả về mặt thiết kế, đáng ghi nhớ:** schema chung chỉ có **một** cặp `(evidence_start, evidence_end)`, tức một đoạn liền mạch. Bằng chứng nhiều mảnh rời **về nguyên tắc không biểu diễn được** bằng cấu trúc ấy. Nên con số 59,2 % không phải là "tỷ lệ khớp thành công" mà là **tỷ lệ bằng chứng chỉ gồm một mảnh**. Nếu sau này làm E17 có phần định vị bằng chứng thì phải mở rộng schema thành danh sách đoạn trước, hoặc chấp nhận chỉ dùng 59 % kia. Đã ghi vào mục 7 `docs/DATA.md`.
+
+  ### Bẫy lặp lại lần thứ hai
+
+  `annotation_id` cũng **không phải khóa chính**: 5.062 dòng train nhưng chỉ **1.250** giá trị duy nhất. Đúng cái bẫy `pairID` của ViWikiFC ở T11. Hai trên bốn bộ có cột trông như khóa mà không phải khóa — nên quy ước dùng `sample_id` do mình sinh làm khóa duy nhất là đúng, và mọi mã nguồn gốc đều nằm ở `meta.source_id`.
+
+  ### Cột `Topic` không nhất quán hoa thường
+
+  52 giá trị, trong đó có cả `Thể thao` lẫn `THỂ THAO`, và `Văn hoá` / `Văn hóa` / `VĂN HÓA` / `VĂN HOÁ` — bốn cách viết cho một chủ đề. Schema **giữ nguyên văn** để còn truy ngược về nguồn, nhưng ai cắt kết quả theo chủ đề phải tự gộp hoa thường và thống nhất `hoá`/`hóa` trước, nếu không sẽ đếm một chủ đề thành bốn. Đã ghi cảnh báo và có ca kiểm thử khẳng định giá trị được giữ nguyên văn chứ không bị "dọn dẹp" âm thầm.
+
+  ### Thêm `--all`
+
+  `scripts/normalize_data.py --all` chạy lần lượt cả bốn bộ. Đầu ra một lượt:
+
+```
+  vihallu      7.000 dòng · 3.865 ngữ cảnh · bằng chứng   0/7.000  (bộ không có trường này)
+  isedsc01    36.369 dòng · 4.793 ngữ cảnh · bằng chứng  23.783/36.369  (65,4 %)
+  viwikifc    20.919 dòng · 1.481 ngữ cảnh · bằng chứng  20.918/20.919  (100,0 %)
+  vifactcheck  7.232 dòng · 1.041 ngữ cảnh · bằng chứng   4.296/7.232   (59,4 %)
+```
+
+  **Tổng 71.520 mẫu**, đúng bằng con số T08 dùng để dự báo giờ GPU.
 
 - [ ] **T13** · LM · Kiểm tra thủ công ánh xạ NEI sang ngoại lai
   - Lấy ngẫu nhiên 100 mẫu nhãn NEI từ ViWikiFC, hai người gán độc lập xem có đúng là "chứa thông tin ngoài ngữ cảnh" không.
