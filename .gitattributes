@@ -1,0 +1,7 @@
+# Sổ kết quả ghi nối từ nhiều máy: Kaggle chạy Linux, máy cá nhân chạy Windows.
+# Ép LF để cùng một lần chạy không sinh ra byte khác nhau tùy máy nào commit.
+*.jsonl text eol=lf
+*.csv   text eol=lf
+
+# Notebook là JSON, để Git tự nhận diện thay vì đoán.
+*.ipynb text eol=lf

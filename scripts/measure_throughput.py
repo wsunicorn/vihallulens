@@ -147,6 +147,15 @@ def log_log_slope(lengths: list[float], costs: list[float]) -> float:
     return float(np.polyfit(x, y, 1)[0])
 
 
+def tiers_without_truncation(summaries: dict[int, dict]) -> dict[int, dict]:
+    """Tiers whose samples all fitted the token budget.
+
+    Only these may be fitted against length. A truncated sample is fed at the budget, not at
+    its own length, so pairing the two in a curve fit describes something that never ran.
+    """
+    return {tier: item for tier, item in summaries.items() if item["n_truncated"] == 0}
+
+
 def format_duration(seconds: float) -> str:
     """Seconds as hours and minutes, the unit the weekly quota is spent in."""
     hours, remainder = divmod(int(round(seconds)), 3600)
@@ -445,13 +454,27 @@ def main() -> int:
               f"{item['n_nonfinite']:>4}/{item['n_samples']:<3} | "
               f"{item['forward_share'] * 100:>12.1f}%")
 
+    # Only tiers where nothing was truncated may enter the fit. ``mean_tokens`` is the length
+    # of the sample as it arrived, but a truncated sample is fed at the token budget instead,
+    # so pairing its original length with its measured cost fits the curve against an x value
+    # the GPU never saw. Measured at T08: including them turned k = 1.00 into a bogus 0.85.
+    clean = tiers_without_truncation(summaries)
     slope = log_log_slope(
-        [item["mean_tokens"] for item in summaries.values()],
-        [item["median_ms"] for item in summaries.values()],
+        [item["mean_tokens"] for item in clean.values()],
+        [item["median_ms"] for item in clean.values()],
     )
+    dropped = sorted(set(summaries) - set(clean))
     print()
-    print(f"  Chi phí tăng theo độ dài mũ k ≈ {slope:.2f}  "
-          f"(k≈2 là ma trận chú ý chi phối, k≈1 là phần còn lại của mạng chi phối)")
+    if len(clean) < 2:
+        print("  Không đủ mức không bị cắt để ước mũ k. Cần ít nhất hai mức mà mọi mẫu đều "
+              "vừa ngân sách token.")
+    else:
+        print(f"  Chi phí tăng theo độ dài mũ k ≈ {slope:.2f}  "
+              f"(k≈2 là ma trận chú ý chi phối, k≈1 là phần còn lại của mạng chi phối)")
+        if dropped:
+            print(f"  Ước trên {len(clean)} mức không bị cắt; bỏ qua "
+                  f"{[tier_label(t) for t in dropped]} vì mẫu ở đó bị cắt nên độ dài thật "
+                  f"khác độ dài dùng để xếp mức.")
 
     # -- projection -----------------------------------------------------------------------
     seconds_per_tier = {tier: item["median_ms"] / 1000 for tier, item in summaries.items()}
