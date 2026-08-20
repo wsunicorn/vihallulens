@@ -25,11 +25,10 @@ DEFAULT_OUTPUT_DIR = Path("data/interim")
 # Which task implements which corpus. Naming the task in the error keeps the sequence of
 # TASKS.md visible from the command line instead of only in the file.
 PENDING = {
-    "viwikifc": "T11",
     "vifactcheck": "T12",
 }
 
-READY = ("vihallu", "isedsc01")
+READY = ("vihallu", "isedsc01", "viwikifc")
 
 
 def normalize(name: str, raw_dir: Path):
@@ -42,6 +41,10 @@ def normalize(name: str, raw_dir: Path):
         from vihallulens.data.isedsc01 import normalize_isedsc01
 
         return normalize_isedsc01(raw_dir)
+    if name == "viwikifc":
+        from vihallulens.data.viwikifc import normalize_viwikifc
+
+        return normalize_viwikifc(raw_dir)
     if name in PENDING:
         raise NotImplementedError(
             f"bộ {name} chưa chuẩn hóa được: đó là task {PENDING[name]} trong TASKS.md"
