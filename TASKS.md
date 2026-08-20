@@ -275,9 +275,52 @@
 
   2. **Test phải gọi đúng bộ đọc thật.** Bản test đầu mình viết dựng lại logic đọc ngay trong file test để né phép kiểm tra 36.369 dòng, tức là đi kiểm tra một bản sao chứ không kiểm tra thứ sẽ chạy — nếu bộ đọc sai thì test vẫn xanh. Đã tách `read_isedsc01` (đọc) khỏi `normalize_isedsc01` (đọc rồi đối chiếu số lượng), làm tương tự cho ViHallu, và mọi ca kiểm thử nay chạy qua `read_*` thật với dữ liệu vài dòng.
 
-- [ ] **T11** · M · Chuẩn hóa ViWikiFC
+- [x] **T11** · M · Chuẩn hóa ViWikiFC — hoàn thành 20/08/2026
   - Nguồn: `data/raw/viwikifc_{train,dev,test}.csv`, giữ nguyên split gốc.
-  - **Kiểm tra:** 16.738 / 2.090 / 2.091 dòng, `evidence_start` tìm được 100 % ở cả ba nhãn. Nếu không đủ 100 % thì có lỗi encoding, dừng lại.
+  - **Kiểm tra:** 16.738 / 2.090 / 2.091 dòng ✅. `evidence_start` tìm được ~~100 %~~ → **99,995 % (20.918/20.919)**. Đã dừng lại kiểm tra đúng như tiêu chí yêu cầu, kết luận **không phải lỗi encoding** — xem bên dưới.
+
+  **Task này để làm gì.** Bộ thứ ba, cũng theo khuôn T09. Vai trò riêng của ViWikiFC là **đối chứng ngoài**: nó có bằng chứng cho **cả nhãn NEI**, thứ mà không bộ nào khác có. Ở ISE-DSC01, toàn bộ 12.583 mẫu NEI đều không có bằng chứng, nên không thể hỏi "chú ý có nhìn đúng chỗ không" với lớp ngoại lai. Ở đây thì hỏi được, và đó là toàn bộ nền tảng của E08.
+
+  **Kết quả chạy:**
+
+```
+  số dòng               : 20,919      (16.738 train / 2.090 dev / 2.091 test)
+  ngữ cảnh duy nhất     : 1,481
+  phân bố nhãn:
+      extrinsic      6,978  ( 33.4 %)
+      intrinsic      6,973  ( 33.3 %)
+      no             6,968  ( 33.3 %)
+  có bằng chứng nguyên văn : 20,918/20,919
+  ghi mà không định vị được: 1
+```
+
+  Số dòng ba tập và phân bố nhãn tập train (5.594 / 5.573 / 5.571) khớp đúng bảng mục 4 `docs/DATA.md`. `ruff` sạch, `pytest` 197 ca xanh (thêm 15 ca).
+
+  ### Tiêu chí bảo dừng lại, nên đã dừng lại kiểm tra
+
+  Tiêu chí ghi: *"`evidence_start` tìm được 100 % ở cả ba nhãn. Nếu không đủ 100 % thì có lỗi encoding, dừng lại."* Đo ra 99,995 %, tức **đúng một dòng** của tập train trượt. Đã dừng và truy đến cùng trước khi viết tiếp một dòng code nào.
+
+  **Kết luận: không phải lỗi encoding.** Bằng chứng của dòng đó ghi `...thế kỷ 20 thì NhậtaimBản đã trở thành...`, còn ngữ cảnh của chính nó ghi `...thế kỷ 20 thì Nhật Bản đã trở thành...`. Ba chữ `aim` bị chèn đè lên dấu cách. Đã thử khớp theo NFC, theo NFD, và sau khi cắt khoảng trắng — đều không khớp; còn 20.918 dòng kia khớp chính xác từng ký tự. *Encoding* (cách mã hóa ký tự thành byte) mà hỏng thì hỏng đồng loạt cả tập chứ không hỏng đúng một dòng ở giữa. Đây là lỗi của bộ dữ liệu công bố, không phải của mình.
+
+  Xử lý theo đúng quy tắc mục 7 `docs/DATA.md`: `evidence_start = -1`, đếm vào báo cáo, **không khớp gần đúng**.
+
+  **Vẫn giữ phép kiểm tra, nhưng sửa ngưỡng cho đúng mục đích của nó.** Mục đích thật của phép kiểm tra này là bắt lỗi encoding hàng loạt — thứ làm hỏng hàng nghìn dòng trong im lặng trong khi mọi con số khác vẫn đúng. Nên `check_evidence` raise khi số trượt **nhiều hơn** một, chứ không phải khi **khác** một. Ít hơn một thì chỉ có thể nghĩa là bộ dữ liệu đã được sửa, mà từ chối chạy trên bộ đã sửa thì vô lý. Có ca kiểm thử cho cả hai chiều.
+
+  ### `pairID` trông như khóa chính nhưng không phải
+
+  Tập train có 16.738 dòng nhưng chỉ **15.903 `pairID` duy nhất**: 321 nhóm gồm 835 dòng dùng chung một mã, mỗi nhóm 2–7 dòng. Kiểm tra kỹ thì các dòng trong cùng nhóm **luôn cùng `evidence`, luôn cùng `gold_label`, nhưng khác `claim` 100 %**. Nghĩa là `pairID` định danh **cặp (bằng chứng, nhãn)**, không định danh mẫu: một câu bằng chứng được viết lại thành nhiều cách phát biểu khác nhau, tất cả dùng chung mã.
+
+  Ai dùng nó làm khóa sẽ âm thầm gộp 835 dòng thành 321 và mất 514 mẫu mà không có lỗi nào báo. Trong schema chung nó nằm ở `meta.source_id`, khóa thật là `sample_id` do mình sinh theo chỉ số dòng. Đã ghi cảnh báo vào mục 7 `docs/DATA.md` và có ca kiểm thử.
+
+  ### Xác nhận lại con số rò rỉ của mục 6, bằng một đường tính khác
+
+  Mục 6 `docs/DATA.md` ghi ViWikiFC rò rỉ ngữ cảnh test sang train 845/845, tức 100 %. Tính lại từ `context_id` vừa sinh: **đúng 845/845 ngữ cảnh, 2.091/2.091 dòng**. Tập dev thêm số chưa từng ghi: 836/838 ngữ cảnh, 2.088/2.090 dòng, tức 99,9 %.
+
+  Cả ba tập cộng lại chỉ có **1.481 ngữ cảnh duy nhất** trong khi riêng train đã 1.479 — dev và test gần như không mang theo ngữ cảnh nào mới. Split gốc của bộ này chia theo *phát biểu* chứ không theo *tài liệu nguồn*.
+
+  Hai điều rút ra: thứ nhất, ghi nhận của nhóm ở mục 6 là chính xác. Thứ hai, việc con số tái lập đúng bằng một đường tính hoàn toàn khác (băm NFC của chuỗi ngữ cảnh) cũng là một phép thử gián tiếp cho `context_id` — nếu hàm băm sai thì con số đã không trùng.
+
+  Không dựng báo cáo rò rỉ ở đây vì đó là T14.
 
 - [ ] **T12** · M · Chuẩn hóa ViFactCheck
   - Nguồn: `data/raw/vifactcheck_{train,dev,test}.parquet`, giữ nguyên split gốc. Bỏ cột `Unnamed: 0`.
