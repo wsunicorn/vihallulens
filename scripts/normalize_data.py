@@ -3,6 +3,7 @@
 Usage:
     python scripts/normalize_data.py --dataset vihallu
     python scripts/normalize_data.py --dataset vihallu --data-dir /kaggle/input/...
+    python scripts/normalize_data.py --all
 
 Output goes to ``data/interim/{dataset}_{split}.parquet``, one file per split, following
 section 1 of docs/DATA.md. The directory is gitignored: the files are reproducible from
@@ -24,11 +25,9 @@ DEFAULT_OUTPUT_DIR = Path("data/interim")
 
 # Which task implements which corpus. Naming the task in the error keeps the sequence of
 # TASKS.md visible from the command line instead of only in the file.
-PENDING = {
-    "vifactcheck": "T12",
-}
+PENDING: dict[str, str] = {}
 
-READY = ("vihallu", "isedsc01", "viwikifc")
+READY = ("vihallu", "isedsc01", "viwikifc", "vifactcheck")
 
 
 def normalize(name: str, raw_dir: Path):
@@ -45,6 +44,10 @@ def normalize(name: str, raw_dir: Path):
         from vihallulens.data.viwikifc import normalize_viwikifc
 
         return normalize_viwikifc(raw_dir)
+    if name == "vifactcheck":
+        from vihallulens.data.vifactcheck import normalize_vifactcheck
+
+        return normalize_vifactcheck(raw_dir)
     if name in PENDING:
         raise NotImplementedError(
             f"bộ {name} chưa chuẩn hóa được: đó là task {PENDING[name]} trong TASKS.md"
@@ -52,33 +55,24 @@ def normalize(name: str, raw_dir: Path):
     raise ValueError(f"không biết bộ dữ liệu {name}")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Chuẩn hóa dữ liệu thô về schema chung.")
-    parser.add_argument("--dataset", required=True, choices=[*READY, *PENDING])
-    parser.add_argument("--data-dir", type=Path, default=None, help="thư mục data/raw")
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
-    args = parser.parse_args()
-
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-    raw_dir = find_raw_dir(args.data_dir)
+def run_one(name: str, raw_dir: Path, out_dir: Path) -> int:
+    """Normalise one corpus, write its splits, and report what came out."""
     print()
     print("=" * 80)
-    print(f"CHUẨN HÓA {args.dataset.upper()}")
+    print(f"CHUẨN HÓA {name.upper()}")
     print("=" * 80)
     print(f"  nguồn                 : {raw_dir}")
 
     try:
-        frame = normalize(args.dataset, raw_dir)
+        frame = normalize(name, raw_dir)
     except NotImplementedError as error:
         print(f"  {error}")
         return 1
 
-    args.out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for split, part in frame.groupby("split", sort=True):
-        path = args.out_dir / f"{args.dataset}_{split}.parquet"
+        path = out_dir / f"{name}_{split}.parquet"
         part.reset_index(drop=True).to_parquet(path, index=False)
         written.append((path, len(part)))
 
@@ -90,7 +84,8 @@ def main() -> int:
         print(f"      {label:<12} {count:>7,}  ({count / len(frame) * 100:5.1f} %)")
 
     located = int((frame["evidence_start"] >= 0).sum())
-    print(f"  có bằng chứng nguyên văn : {located:,}/{len(frame):,}")
+    print(f"  có bằng chứng nguyên văn : {located:,}/{len(frame):,} "
+          f"({located / len(frame) * 100:.1f} %)")
 
     # Section 7 of docs/DATA.md asks for the misses to be counted, not merely tolerated. A row
     # whose source names an evidence sentence that cannot be found in its own context is a
@@ -104,7 +99,7 @@ def main() -> int:
     # meta carries whatever is specific to one corpus. Reporting the small categorical fields
     # here means a rule that silently stops firing — such as the noisy-prompt rule of section 7
     # of docs/DATA.md — shows up as a changed count instead of going unnoticed.
-    for key in sorted({name for payload in meta for name in payload}):
+    for key in sorted({field for payload in meta for field in payload}):
         values = meta.map(lambda payload, key=key: payload.get(key, ""))
         if values.nunique() > 8 or values.map(type).eq(bool).all():
             continue
@@ -118,6 +113,25 @@ def main() -> int:
     for path, count in written:
         print(f"      {path}  ({count:,} dòng)")
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Chuẩn hóa dữ liệu thô về schema chung.")
+    parser.add_argument("--dataset", choices=[*READY, *PENDING])
+    parser.add_argument("--all", action="store_true", help="chuẩn hóa lần lượt cả bốn bộ")
+    parser.add_argument("--data-dir", type=Path, default=None, help="thư mục data/raw")
+    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    args = parser.parse_args()
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+    if bool(args.dataset) == bool(args.all):
+        parser.error("chọn đúng một trong hai: --dataset <tên> hoặc --all")
+
+    raw_dir = find_raw_dir(args.data_dir)
+    names = [*READY, *PENDING] if args.all else [args.dataset]
+    return max(run_one(name, raw_dir, args.out_dir) for name in names)
 
 
 if __name__ == "__main__":
