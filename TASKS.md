@@ -79,7 +79,7 @@
   - Đỉnh toàn phiên 8.395 MB trên ngưỡng 14.336 MB → **ĐẠT**, còn dư 42 %. Mục 8 của `CLAUDE.md` đã có mẫu prompt nguyên văn. Cắt ngữ cảnh hoạt động đúng: 169 chunk còn 96, offset vẫn khớp.
   - Ghi chú cho T21: `lookback_total` vẫn có phần tử ở đúng 0 và đúng 1. Đó là các đầu chú ý chỉ nhìn prompt hoặc chỉ nhìn phần tự sinh, tức giá trị biên thật chứ không phải 0/0 như lỗi token đầu đã sửa. Khi gộp đặc trưng cần xử lý biên này.
 
-- [ ] **T08** · L · Đo thông lượng và quyết định bậc thang
+- [x] **T08** · L · Đo thông lượng và quyết định bậc thang — hoàn thành 20/08/2026, **CỔNG KHẢ THI KỸ THUẬT ĐÃ QUA TRỌN VẸN**
   - Đo ms/mẫu với 20 mẫu ở mỗi mức độ dài. Nếu 7B không qua T07, thử lại với 3B rồi 1.5B.
   - Ghi kết quả vào `results/feasibility.jsonl`.
   - **Kiểm tra:** file kết quả tồn tại, có kết luận rõ mô hình nào dùng được với ngữ cảnh tối đa bao nhiêu token.
@@ -107,7 +107,38 @@
   2. **ViWikiFC gần như miễn phí.** 96 % số mẫu dưới 512 token, không mẫu nào vượt 1.024.
   3. **Mức trên cùng rất thưa** — 679 mẫu trên tổng 71.520, tức 0,9 %. Nếu chỉ mức này quá đắt thì cắt nó rẻ hơn nhiều so với lùi mô hình.
 
-  **Còn lại:** chạy ô 5 của notebook trên Kaggle để có số ms thật và kết luận. Chưa tick.
+  **Kết quả đo trên Kaggle Tesla T4 ngày 20/08/2026** (`python scripts/measure_throughput.py --per-tier 20`, nạp mô hình 116 giây, 27 lớp được hook):
+
+| Mức (token) | Trung vị | Trung bình | p90 | Token TB | Chunk TB | VRAM đỉnh | Lớp nan |
+|---|---|---|---|---|---|---|---|
+| 0–512 | 389 ms | 407 ms | 486 ms | 371 | 7,5 | 5.517 MB | không có |
+| 513–1024 | 779 ms | 743 ms | 879 ms | 746 | 20,4 | 5.617 MB | không có |
+| 1025–2048 | 1.401 ms | 1.460 ms | 1.833 ms | 1.379 | 40,7 | 6.305 MB | không có |
+| 2049–4096 | 2.641 ms | 2.907 ms | 3.660 ms | 2.492 | 61,5 | **8.428 MB** | không có |
+
+  Dự báo thời gian trích đặc trưng một lượt cho từng bộ:
+
+| Bộ | Số mẫu | ms/mẫu | Thời gian GPU | % quota tuần |
+|---|---|---|---|---|
+| ViHallu | 7.000 | 420 | 0 giờ 49 | 2,7 % |
+| ISE-DSC01 | 36.369 | 941 | 9 giờ 30 | 31,7 % |
+| ViWikiFC | 20.919 | 404 | 2 giờ 20 | 7,8 % |
+| ViFactCheck | 7.232 | 1.031 | 2 giờ 04 | 6,9 % |
+| **Tổng** | **71.520** | **742** | **14 giờ 44** | **49,1 %** |
+
+  **Kết luận: Qwen2.5-7B-Instruct dùng được ở ngữ cảnh tối đa 4.096 token.** Hai bộ bắt buộc (ViHallu + ISE-DSC01) cần **10 giờ 19**, tức 34,4 % quota tuần, nằm dưới ngưỡng nửa quota mà script đặt ra. VRAM đỉnh 8.428 MB trên trần 14.336 MB, còn dư 41 %, khớp với 8.395 MB đo ở T07. Không lớp nào ra `nan` trên cả 80 mẫu, xác nhận quyết định float16 + bỏ lớp 27 chốt ở T07 ổn định chứ không chỉ đúng trên hai mẫu. **Không phải dùng nấc lùi nào.**
+
+  **Bốn điều học được, ba trong đó không đoán trước được:**
+
+  1. **Chi phí tăng tuyến tính theo độ dài, không phải bậc hai.** Mũ đo được là `k ≈ 1,00`, và chia ra thì bốn mức cho 1,049 / 1,044 / 1,016 / 1,060 ms mỗi token — gần như một hằng số. Quy tắc nhẩm dùng được từ nay: **khoảng 1,05 ms cho mỗi token prompt**. Lý do là ở dải 512–4.096 token, phần tốn thời gian vẫn là các phép nhân ma trận của MLP và các phép chiếu (tỷ lệ với độ dài), cộng với việc giải nén trọng số NF4; ma trận chú ý tuy tăng theo bình phương nhưng chưa đủ lớn để chi phối. Nó chi phối *bộ nhớ* thì đúng — bảng mục 5 `CLAUDE.md` vẫn nguyên giá trị — nhưng bộ nhớ và thời gian là hai chuyện khác nhau.
+
+  2. **Hệ quả trực tiếp: nấc lùi 1 là đòn bẩy cho bộ nhớ, gần như vô dụng với thời gian.** Hạ `max_context_tokens` từ 4.096 xuống 2.048 chỉ ảnh hưởng 483 mẫu của hai bộ bắt buộc (3 của ViHallu, 480 của ISE-DSC01), tiết kiệm đúng **10 phút** trên tổng 10 giờ 19. Nếu sau này thiếu giờ GPU thì **đòn bẩy thật là lấy mẫu con ISE-DSC01**, không phải cắt ngữ cảnh. Ghi lại đây để sau này khỏi lùi nhầm nấc.
+
+  3. **ISE-DSC01 nuốt 92 % chi phí của hai bộ bắt buộc** trong khi chỉ chiếm 84 % số mẫu — vì mẫu của nó dài hơn gấp đôi (941 ms/mẫu so với 420 ms/mẫu của ViHallu). Nó cũng là bộ duy nhất có nhiều mẫu ở mức đắt nhất (480 mẫu).
+
+  4. **Phần ngoài GPU chỉ chiếm 9 %.** Lời gọi mô hình chiếm 90–92 % thời gian ở cả bốn mức; render prompt, cắt theo ngân sách và chuyển đặc trưng về CPU gộp lại chưa tới một phần mười. Tối ưu phía CPU không đáng công.
+
+  **Ghi chú chuyển cho giai đoạn trích đặc trưng (T21 trở đi), chưa làm bây giờ:** một lượt ISE-DSC01 mất 9 giờ 30 liên tục, sát giới hạn thời gian một phiên Kaggle. Script trích đặc trưng thật phải **chạy được theo lô và nối lại được** — ghi ra từng phần rồi bỏ qua phần đã có khi chạy lại — chứ không thể là một vòng lặp duy nhất mất chín tiếng rồi mất sạch nếu phiên đứt. Ngoài ra một số thí nghiệm cần **trích lại toàn bộ** chứ không dùng lại được: E04 quét ba cỡ cửa sổ token (ranh giới chunk đổi), E13 đổi mô hình đọc sang Sailor2-8B, E14 lùi 3B và 1.5B. Ước tổng cộng khoảng 19 giờ GPU trải từ tuần 6 tới tuần 11, tức 2–4 giờ mỗi tuần — vẫn thoải mái trong quota, nhưng phải xếp lịch chứ không dồn.
 
 ---
 
@@ -264,7 +295,7 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 
 | Mốc | Tuần | Thời gian | Ý nghĩa |
 |---|---|---|---|
-| Cổng khả thi kỹ thuật (T05–T08) | 3 | 17/8 – 23/8 | Không qua thì chuyển sang đề tài thay thế (phân đoạn tăng cường tóm tắt cho RAG pháp lý). Biết càng sớm càng đỡ mất thời gian |
+| ~~Cổng khả thi kỹ thuật (T05–T08)~~ | 3 | 17/8 – 23/8 | **ĐÃ QUA 20/08/2026.** Qwen2.5-7B ở 4.096 token, VRAM đỉnh 8.428/14.336 MB, hai bộ bắt buộc cần 10 giờ 19 GPU. Không dùng nấc lùi nào. Đề tài thay thế (phân đoạn tăng cường tóm tắt cho RAG pháp lý) **không cần tới nữa** |
 | Báo cáo giữa kỳ (T28) | 8–9 | trước 04/10 | Phải có kết quả thực nghiệm sơ bộ, không chỉ đọc tài liệu |
 | Báo cáo cuối kỳ (T48) | 16 | trước 22/11 | GVHD quyết định đề tài có được phản biện hay không |
 | Phản biện (T49) | 17 | 23/11 – 29/11 | Quyết định được bảo vệ qua hội đồng oral hay hội đồng poster |

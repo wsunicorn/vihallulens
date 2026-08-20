@@ -82,6 +82,8 @@ Cột phải là hậu quả của `output_attentions=True` dùng ngây thơ. C�
 
 Kết luận: **T07 kiểm tra hook có cài đúng không, không phải kiểm tra bài toán có khả thi về mặt vật lý không.** Phần vật lý đã tính xong.
 
+**Bộ nhớ bậc hai, thời gian tuyến tính — đừng lẫn hai thứ.** Bảng trên nói về bộ nhớ và vẫn đúng. Thời gian thì khác: đo ở T08 trên T4, chi phí là **khoảng 1,05 ms mỗi token prompt**, gần như hằng số từ 371 tới 2.492 token (mũ đo được `k ≈ 1,00`). Lý do là ở dải này các phép nhân ma trận của MLP và việc giải nén trọng số NF4 vẫn chi phối, ma trận chú ý chưa đủ lớn để lấn. Hệ quả thực dụng: muốn tiết kiệm **bộ nhớ** thì cắt độ dài, muốn tiết kiệm **thời gian** thì giảm số mẫu.
+
 ### Ba điều dễ hiểu sai về thiết kế hook
 
 1. **Hook không giảm được đỉnh bộ nhớ của chính lớp đó.** Attention eager đã tạo đủ ma trận `(q_len × k_len)` bên trong module *trước khi* hook chạy. Hook chỉ quyết định giữ lại bao nhiêu. Muốn hạ dưới mức 0,94 GB một lớp thì phải **thay hàm tính attention** để chỉ tính các hàng truy vấn ứng với token phản hồi — đó là đổi kiến trúc, phải hỏi trước theo mục 6.
@@ -94,7 +96,7 @@ Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tà
 
 | Nấc | Cách làm | Hiệu quả |
 |---|---|---|
-| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | Bộ nhớ giảm 4 lần (bậc hai theo độ dài). Đo ở T05: chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck — xem mục 4B của `docs/DATA.md` |
+| 1 | Hạ `max_context_tokens` từ 4.096 xuống 2.048 | **Bộ nhớ** giảm 4 lần (bậc hai theo độ dài). Đo ở T05: chỉ cắt thêm 1,09 % mẫu ISE-DSC01 và 2,81 % ViFactCheck — xem mục 4B của `docs/DATA.md`. **Không dùng nấc này để tiết kiệm thời gian:** đo ở T08, thời gian tăng *tuyến tính* theo độ dài chứ không bậc hai, và chỉ 483 mẫu của hai bộ bắt buộc vượt 2.048, nên hạ ngưỡng chỉ tiết kiệm 10 phút trên tổng 10 giờ 19 |
 | 2 | Chỉ trích một phần lớp, ví dụ 8 trong 28 | Giảm gần tuyến tính; Lookback Lens cho thấy ít đầu mang phần lớn tín hiệu |
 | 3 | Thay hàm attention để chỉ tính hàng truy vấn của token phản hồi | Hiệu quả lớn nhất nhưng là đổi kiến trúc — phải hỏi |
 | 4 | Lùi Qwen2.5-3B rồi 1.5B | Cùng họ, chỉ đổi `model_name` trong YAML |
