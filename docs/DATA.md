@@ -84,7 +84,7 @@ Dùng làm giá trị kỳ vọng trong test tự động. Nếu số liệu sau
 | Độ dài ngữ cảnh trung bình | 179,7 từ | 637 từ | 153 từ | 693 từ |
 | Số câu mỗi ngữ cảnh (trung vị) | 5 | 19 | 4 | 17 |
 | Ngữ cảnh dài nhất | 1.537 từ | 4.805 từ | 600 từ | 3.602 từ |
-| Bằng chứng nguyên văn | không có trường | **23.783/23.784** (sửa ở T10, xem dưới) | 100 % cả ba nhãn | 59,2 % |
+| Bằng chứng nguyên văn | không có trường | **23.783/23.784** (sửa ở T10, xem dưới) | **20.918/20.919** = 99,995 % (sửa ở T11, xem dưới) | 59,2 % |
 
 Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
 
@@ -138,6 +138,8 @@ Hàm `group_split` phải kiểm tra và raise nếu phát hiện `context_id` x
 
 Với ViWikiFC và ViFactCheck, nhóm chấp nhận rò rỉ vì phải giữ split gốc để đối chứng — nhưng **không dùng hai bộ này để kết luận về khả năng khái quát hóa**. Task T14 sinh báo cáo rò rỉ tự động.
 
+**Đo lại độc lập ở T11 bằng `context_id`, khớp đúng bảng trên:** ViWikiFC test có 845/845 ngữ cảnh nằm trong train, tức 2.091/2.091 dòng, **100 % rò rỉ**. Tập dev thêm một số chưa từng ghi: 836/838 ngữ cảnh, tức 2.088/2.090 dòng, **99,9 %**. Cả ba tập cộng lại chỉ có 1.481 ngữ cảnh duy nhất, trong khi riêng train đã 1.479 — nghĩa là dev và test gần như **không mang theo ngữ cảnh nào mới**. Việc con số này tái lập đúng bằng một đường tính hoàn toàn khác cũng là một phép thử cho `context_id`.
+
 ## 7. Xử lý riêng từng bộ
 
 **ViHallu.** `prompt` map sang `question`. `response_is_generated = True`. Không có trường bằng chứng nên `evidence` rỗng và `evidence_start = -1`.
@@ -190,7 +192,23 @@ Tổng kết ba loại "không có offset" của bộ này, phải phân biệt 
 
 Cột `meta.evidence_given` phân biệt loại một với ba loại kia: `false` nghĩa là bộ dữ liệu không có bằng chứng cho dòng đó, `true` mà `evidence_start = -1` nghĩa là có ghi nhưng không định vị được.
 
-**ViWikiFC.** `claim` map sang `response`, `question` rỗng. Bằng chứng có ở cả ba nhãn, `context.find` phải thành công 100% — nếu không thì có lỗi encoding, dừng lại kiểm tra. Ghi `meta.title`, `meta.link`, `meta.sentenceID`.
+**ViWikiFC.** `claim` map sang `response`, `question` rỗng. Bằng chứng có ở cả ba nhãn, `context.find` phải thành công gần như 100% — nếu tụt nhiều thì có lỗi encoding, dừng lại kiểm tra. Ghi `meta.title`, `meta.link`, `meta.sentence_id`, `meta.evidence_given`.
+
+**Sửa số ở T11 ngày 20/08/2026: 20.918/20.919, tức 99,995 %, không phải tròn 100 %.** Đúng **một** dòng của tập train trượt. Nguyên nhân **không phải encoding**: bằng chứng ghi `...thế kỷ 20 thì NhậtaimBản đã trở thành...`, còn ngữ cảnh ghi `...thế kỷ 20 thì Nhật Bản đã trở thành...` — ba chữ `aim` chèn đè lên dấu cách. Đã kiểm cả NFC lẫn NFD lẫn cắt khoảng trắng, đều không khớp; 20.918 dòng còn lại khớp chính xác, nên encoding của bộ này lành lặn. Đây là lỗi của bộ dữ liệu công bố, xử lý bằng `evidence_start = -1` và đếm vào báo cáo, **không khớp gần đúng**.
+
+Vì sao vẫn giữ phép kiểm tra dù biết nó không bao giờ đạt tròn 100 %: mục đích của nó là bắt **lỗi encoding hàng loạt**, thứ sẽ làm hỏng hàng nghìn dòng trong im lặng trong khi mọi con số khác vẫn đúng. Nên hàm `check_evidence` raise khi số trượt **nhiều hơn** một, chứ không phải khi khác một — ít hơn thì chỉ có thể nghĩa là bộ dữ liệu đã được sửa, và từ chối chạy trên bộ đã sửa thì vô lý.
+
+**Tính chất riêng của bộ này, đo lại ở T11 và xác nhận:** nhãn NEI có bằng chứng tìm thấy **100 % ở cả ba tập** (5.571/5.571 train, 730/730 dev, 677/677 test). Đây là thứ không bộ nào khác có, và là toàn bộ nền tảng của E08.
+
+**Cảnh báo: `pairID` trông như khóa chính nhưng không phải.** Tập train có 16.738 dòng nhưng chỉ 15.903 `pairID` duy nhất: 321 nhóm gồm 835 dòng dùng chung một `pairID`, mỗi nhóm 2–7 dòng. Đo ở T11, các dòng trong cùng nhóm **luôn cùng `evidence` và cùng `gold_label` nhưng khác `claim` 100 %** — tức `pairID` định danh cặp (bằng chứng, nhãn), không định danh mẫu. Code nào dùng nó làm khóa sẽ âm thầm gộp các dòng đó lại. Trong schema chung nó nằm ở `meta.source_id`, còn khóa thật là `sample_id`.
+
+Phân bố nhãn ba tập, đo ở T11 (bảng mục 4 trước đây chỉ có tập train):
+
+| Tập | no | intrinsic | extrinsic | Tổng |
+|---|---|---|---|---|
+| train | 5.594 | 5.573 | 5.571 | 16.738 |
+| dev | 666 | 694 | 730 | 2.090 |
+| test | 708 | 706 | 677 | 2.091 |
 
 **ViFactCheck.** `Statement` map sang `response`, `Context` sang `context`, `Evidence` sang `evidence`. Chỉ 59,2% bằng chứng nằm nguyên văn nên `evidence_start = -1` khá thường xuyên; điều này bình thường, không phải lỗi. Ghi `meta.topic`, `meta.author`.
 
