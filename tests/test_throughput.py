@@ -17,9 +17,11 @@ from measure_throughput import (  # noqa: E402
     assign_tier,
     format_duration,
     log_log_slope,
+    parse_telemetry,
     pick_tier_samples,
     project_seconds,
     spread,
+    throttling_verdict,
     tier_label,
     tiers_without_truncation,
 )
@@ -151,3 +153,51 @@ def test_a_single_tier_cannot_give_a_slope():
 )
 def test_duration_is_reported_in_hours_and_minutes(seconds, expected):
     assert format_duration(seconds) == expected
+
+
+# -- GPU telemetry -----------------------------------------------------------------------
+
+
+def reading(clock_ratio: float, temperature: float) -> dict:
+    return {"clock_ratio": clock_ratio, "temperature_c": temperature}
+
+
+def test_telemetry_row_is_parsed_into_numbers():
+    item = parse_telemetry("62, 1440, 1590, 98")
+    assert item["temperature_c"] == 62
+    assert item["sm_clock_mhz"] == 1440
+    assert item["clock_ratio"] == pytest.approx(1440 / 1590)
+
+
+def test_a_field_the_card_does_not_expose_yields_nothing():
+    """nvidia-smi answers "[N/A]" instead of failing, so success is not proof of a reading."""
+    assert parse_telemetry("[N/A], 1440, 1590, 98") is None
+
+
+def test_a_row_with_the_wrong_number_of_fields_yields_nothing():
+    assert parse_telemetry("62, 1440") is None
+
+
+def test_a_falling_clock_with_rising_heat_is_reported_as_throttling():
+    throttled, reason = throttling_verdict([reading(1.0, 45.0), reading(0.88, 78.0)])
+    assert throttled
+    assert "nhiệt" in reason
+
+
+def test_an_idle_but_steady_clock_is_not_throttling():
+    """A card at rest down-clocks on purpose. Judging one low reading as throttling would flag
+    every session; only the trend across the session carries information."""
+    throttled, _ = throttling_verdict([reading(0.71, 44.0), reading(0.71, 46.0)])
+    assert not throttled
+
+
+def test_heat_without_a_clock_drop_is_reported_but_not_flagged():
+    throttled, reason = throttling_verdict([reading(1.0, 40.0), reading(1.0, 70.0)])
+    assert not throttled
+    assert "chưa tụt" in reason
+
+
+def test_a_single_reading_cannot_support_a_verdict():
+    throttled, reason = throttling_verdict([reading(1.0, 45.0)])
+    assert not throttled
+    assert "không đủ" in reason
