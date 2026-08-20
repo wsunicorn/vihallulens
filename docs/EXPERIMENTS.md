@@ -92,6 +92,10 @@ Lý do: prompt `noisy` bị bỏ dấu tiếng Việt nên tokenize ra chuỗi t
 
 Bảng trung tâm của chương 7. Mỗi dòng một phương pháp, cột gồm macro-F1, ms/mẫu, VRAM đỉnh, số tham số huấn luyện, và có cần API ngoài không.
 
+**Chi phí của hướng nội tại đã đo xong ở T08**, dùng làm cột chi phí cho mọi dòng lookback và chunk-aware: trên Tesla T4 với Qwen2.5-7B-Instruct lượng tử hóa NF4, một mẫu tốn **khoảng 1,05 ms mỗi token prompt**, gần như tuyến tính từ 371 tới 2.492 token. Quy ra từng bộ: **420 ms/mẫu trên ViHallu**, 941 ms/mẫu trên ISE-DSC01, 404 ms/mẫu trên ViWikiFC. VRAM đỉnh 8.428 MB. Số tham số phải huấn luyện chỉ là của bộ phân loại tuyến tính đặt trên đặc trưng, mô hình đọc không được huấn luyện gì. Chi tiết và bảng theo mức độ dài nằm ở phần T08 của `TASKS.md`; bản ghi máy đọc được ở `results/feasibility.jsonl`.
+
+Khi so với E10 (Gemini giám khảo) nhớ rằng hai cột chi phí không cùng đơn vị: hướng nội tại tốn GPU cục bộ, LLM giám khảo tốn lượt gọi API và độ trễ mạng. Bảng phải ghi rõ cả hai chứ không qua một con số ms/mẫu duy nhất.
+
 ### E13 — Qwen2.5 với Sailor2
 
 Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **vị trí các đầu chú ý có ích nhất** (theo trọng số của bộ phân loại tuyến tính) và kiểm tra chúng có nằm ở cùng lớp/đầu giữa hai mô hình không. Đây là câu hỏi khoa học mới: huấn luyện chuyên sâu tiếng Việt có dịch chuyển vị trí các đầu sao chép không.

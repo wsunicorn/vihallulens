@@ -21,6 +21,7 @@ from measure_throughput import (  # noqa: E402
     project_seconds,
     spread,
     tier_label,
+    tiers_without_truncation,
 )
 
 
@@ -119,6 +120,22 @@ def test_linear_cost_gives_an_exponent_near_one():
     lengths = [256.0, 512.0, 1024.0, 2048.0]
     costs = [3.0 * length for length in lengths]
     assert log_log_slope(lengths, costs) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_truncated_tiers_are_kept_out_of_the_fit():
+    """A truncated sample runs at the token budget, not at the length that sorted it into a
+    tier, so fitting cost against that length describes a run that never happened. Measured at
+    T08: including them turned a clean k = 1.00 into a meaningless 0.85."""
+    summaries = {
+        0: {"n_truncated": 0, "mean_tokens": 371.0, "median_ms": 389.0},
+        3: {"n_truncated": 20, "mean_tokens": 2492.0, "median_ms": 2080.0},
+    }
+    assert sorted(tiers_without_truncation(summaries)) == [0]
+
+
+def test_a_tier_with_one_truncated_sample_is_still_dropped():
+    summaries = {0: {"n_truncated": 1, "mean_tokens": 371.0, "median_ms": 389.0}}
+    assert tiers_without_truncation(summaries) == {}
 
 
 def test_a_single_tier_cannot_give_a_slope():
