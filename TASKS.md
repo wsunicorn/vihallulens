@@ -222,9 +222,58 @@
 
   **Ghi chú:** `load_dataset(name, split)` ở mục 2.1 `docs/SPEC.md` chưa viết, vì chưa task nào cần đọc lại file interim. Sẽ viết ở T14 khi chia tập.
 
-- [ ] **T10** · M · Chuẩn hóa ISE-DSC01
+- [x] **T10** · M · Chuẩn hóa ISE-DSC01 — hoàn thành 20/08/2026
   - Nguồn: `data/raw/isedsc01_train.json`. Bỏ qua hai file `isedsc01_test_public.json` và `isedsc01_test_private.json` vì thiếu `verdict`.
-  - **Kiểm tra:** 36.369 dòng, phân bố 12.786 / 11.000 / 12.583, số mẫu tìm được `evidence_start` là 23.785.
+  - **Kiểm tra:** 36.369 dòng, phân bố 12.786 / 11.000 / 12.583, số mẫu tìm được `evidence_start` là ~~23.785~~ → **23.783**. Xem mục "Sửa một con số" bên dưới: tiêu chí gốc lấy từ một phép đếm sai, và số đúng là 23.783.
+
+  **Task này để làm gì.** Đổ ISE-DSC01 về schema chung, theo đúng khuôn T09 đã dựng. Bộ này quan trọng riêng: ngữ cảnh của nó dài 21–73 câu, tức là nơi duy nhất mà chú ý *có chỗ để phân bố*. Trên ViHallu ngữ cảnh chỉ khoảng 5 câu nên chia đoạn hay không cũng gần như nhau; trên ISE-DSC01 thì khác hẳn. Nó cũng là bộ duy nhất chỉ ra **câu nào** là bằng chứng, nên là bộ duy nhất kiểm chứng được câu hỏi cốt lõi CH1: chú ý có tập trung đúng vào đoạn chứa bằng chứng không (E06).
+
+  **Kết quả chạy:**
+
+```
+  số dòng               : 36,369
+  ngữ cảnh duy nhất     : 4,793
+  phân bố nhãn:
+      extrinsic     12,583  ( 34.6 %)
+      intrinsic     11,000  ( 30.2 %)
+      no            12,786  ( 35.2 %)
+  có bằng chứng nguyên văn : 23,783/36,369
+  nguồn có ghi bằng chứng  : 23,784
+  ghi mà không định vị được: 1
+  phân bố meta.domain      : the-gioi 7.405 · thoi-su 7.121 · khoa-hoc 6.522
+                             suc-khoe 5.416 · du-lich 5.175 · giao-duc 4.730
+```
+
+  Số dòng, số ngữ cảnh duy nhất và phân bố nhãn khớp đúng bảng mục 4 `docs/DATA.md`. `ruff` sạch, `pytest` 182 ca xanh (thêm 15 ca).
+
+  ### Sửa một con số trong tài liệu
+
+  Tiêu chí gốc ghi **23.785**, đo được **23.783**. Chênh đúng hai, và nguyên nhân đáng ghi lại.
+
+  Hai mẫu trong bộ có trường `evidence` chỉ gồm **hai ký tự xuống dòng**, tức một dòng trống, không có chữ nào. Khoảng trắng là **giá trị rỗng duy nhất mà phép tìm chuỗi vẫn tìm thấy**: `context.find("<xuống dòng><xuống dòng>")` trả về vị trí của một dòng trống nào đó trong ngữ cảnh. Hai mẫu ấy vì thế được đếm là "có bằng chứng" và "tìm thấy bằng chứng", trong khi thực chất chúng mang một `evidence_start` trỏ vào chỗ không có gì — mà trông vẫn hoàn toàn hợp lệ.
+
+  Hai mẫu trên ba mươi sáu nghìn thì có đáng sửa không? Có, vì hai lý do. Thứ nhất, E06 đo hit@1, hit@3 và MRR bằng cách so đoạn được chú ý nhiều nhất với **đoạn chứa bằng chứng vàng** — một `evidence_start` trỏ vào dòng trống sẽ được E06 coi là đáp án đúng cần trúng, tức là hai câu hỏi thi có đáp án rác. Thứ hai, chi phí sửa bằng không, còn đây đúng là loại lỗi âm thầm mà sáu tuần sau không ai truy ra nổi. Đã sửa `find_evidence` trong `schema.py` để coi bằng chứng chỉ gồm khoảng trắng là **không có bằng chứng**, kèm ca kiểm thử.
+
+  Đã cập nhật số ở mục 4 `docs/DATA.md` và mục 4 `CLAUDE.md`, có ghi rõ số cũ và lý do lệch chứ không lặng lẽ đổi.
+
+  ### Ba loại "không có offset", phải phân biệt được
+
+| Loại | Số mẫu | Ý nghĩa |
+|---|---|---|
+| `evidence` là `null` | 12.583 | Toàn bộ nhãn NEI. Bộ dữ liệu không cung cấp bằng chứng |
+| `evidence` chỉ gồm khoảng trắng | 2 | Rác trong dữ liệu gốc |
+| Có bằng chứng nhưng không tìm thấy nguyên văn | 1 | Lỗi dữ liệu gốc |
+| **Tìm thấy nguyên văn** | **23.783** | Dùng được cho E06 |
+
+  Ba loại này đều cho `evidence_start = -1` nhưng khác nhau về ý nghĩa, nên thêm cột `meta.evidence_given`: `false` là bộ dữ liệu không có bằng chứng cho dòng đó, còn `true` mà `evidence_start = -1` là có ghi nhưng không định vị được.
+
+  Mẫu trượt duy nhất: bằng chứng ghi `...ông Thiệu nói..` với **hai dấu chấm**, còn ngữ cảnh chỉ có một dấu chấm rồi xuống dòng — có lẽ do công cụ tách câu tự thêm dấu chấm vào câu vốn đã có. Xử lý theo đúng quy tắc: `evidence_start = -1`, đếm vào báo cáo, **không dùng khớp gần đúng**. Khớp gần đúng sẽ đặt một con số trông hợp lý vào cột mà thí nghiệm sau coi là chân lý, và như vậy còn tệ hơn thừa nhận không tìm thấy.
+
+  ### Hai điều khác học được
+
+  1. **`evidence` của nhãn NEI là `null` trong JSON, không phải chuỗi rỗng.** `str(record["evidence"])` trên `None` cho ra chuỗi `"None"` — bốn ký tự trông như dữ liệu thật, `strip()` ra khác rỗng, và thế là 12.583 dòng NEI sẽ mang bằng chứng giả. Mình đã dính đúng bẫy này lúc dò dữ liệu, phát hiện vì output phình lên hai megabyte. Trong code dùng `str(record.get("evidence") or "")`.
+
+  2. **Test phải gọi đúng bộ đọc thật.** Bản test đầu mình viết dựng lại logic đọc ngay trong file test để né phép kiểm tra 36.369 dòng, tức là đi kiểm tra một bản sao chứ không kiểm tra thứ sẽ chạy — nếu bộ đọc sai thì test vẫn xanh. Đã tách `read_isedsc01` (đọc) khỏi `normalize_isedsc01` (đọc rồi đối chiếu số lượng), làm tương tự cho ViHallu, và mọi ca kiểm thử nay chạy qua `read_*` thật với dữ liệu vài dòng.
 
 - [ ] **T11** · M · Chuẩn hóa ViWikiFC
   - Nguồn: `data/raw/viwikifc_{train,dev,test}.csv`, giữ nguyên split gốc.

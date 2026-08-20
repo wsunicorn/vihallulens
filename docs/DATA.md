@@ -84,7 +84,7 @@ Dùng làm giá trị kỳ vọng trong test tự động. Nếu số liệu sau
 | Độ dài ngữ cảnh trung bình | 179,7 từ | 637 từ | 153 từ | 693 từ |
 | Số câu mỗi ngữ cảnh (trung vị) | 5 | 19 | 4 | 17 |
 | Ngữ cảnh dài nhất | 1.537 từ | 4.805 từ | 600 từ | 3.602 từ |
-| Bằng chứng nguyên văn | không có trường | 23.785/23.786 | 100 % cả ba nhãn | 59,2 % |
+| Bằng chứng nguyên văn | không có trường | **23.783/23.784** (sửa ở T10, xem dưới) | 100 % cả ba nhãn | 59,2 % |
 
 Thứ tự phân bố nhãn theo `no / intrinsic / extrinsic`.
 
@@ -171,7 +171,24 @@ Truoc khi duoc Ton Trung Son cai to thanh Trung Quoc Quoc dan Dang thi Dang nay 
 
 Chú ý mẫu thứ hai: ngoài bỏ dấu còn có nhân đôi ký tự (`Coo`, `nguooi`, `ddats`), tức một mẫu có thể dính nhiều phép nhiễu cùng lúc. Phân bố nhãn trong 245 mẫu này là 68 `no` / 79 `intrinsic` / 98 `extrinsic`, lệch về `extrinsic` hơn tổng thể một chút nhưng cỡ mẫu quá nhỏ để kết luận gì.
 
-**ISE-DSC01.** `claim` map sang `response`, `question` rỗng. `verdict` map theo bảng mục 3. Với nhãn NEI, `evidence` rỗng — đây là hạn chế đã biết. Tìm `evidence_start` bằng `context.find(evidence)`; nếu không thấy thì đặt `-1` và đếm vào báo cáo. Ghi `meta.domain`.
+**ISE-DSC01.** `claim` map sang `response`, `question` rỗng. `verdict` map theo bảng mục 3. Với nhãn NEI, `evidence` là **`null` trong JSON** chứ không phải chuỗi rỗng — đây là hạn chế đã biết. Tìm `evidence_start` bằng `context.find(evidence)`; nếu không thấy thì đặt `-1` và đếm vào báo cáo. Ghi `meta.domain` và `meta.evidence_given`.
+
+**Sửa số ở T10 ngày 20/08/2026: đúng là 23.783/23.784, không phải 23.785/23.786.** Con số cũ đếm cả **hai mẫu có `evidence` chỉ gồm hai ký tự xuống dòng**, tức một dòng trống. Khoảng trắng là giá trị rỗng duy nhất mà `context.find` vẫn **tìm thấy**: nó trả về vị trí của một dòng trống nào đó trong ngữ cảnh, và mẫu đó mang một `evidence_start` trỏ vào chỗ không có gì trong khi trông vẫn hợp lệ. Đúng hai mẫu, đúng hai đơn vị chênh lệch.
+
+Vì sao phải sửa chứ không mặc kệ hai dòng trên ba vạn: E06 đo hit@1, hit@3 và MRR bằng cách so đoạn được chú ý nhiều nhất với **đoạn chứa bằng chứng vàng**. Một `evidence_start` trỏ vào dòng trống sẽ được E06 coi là đáp án đúng cần trúng. Hai mẫu không đủ làm lệch kết quả, nhưng chi phí sửa bằng không và đây là loại lỗi âm thầm khó truy về sau. Hàm `find_evidence` trong `src/vihallulens/data/schema.py` vì thế coi bằng chứng chỉ gồm khoảng trắng là **không có bằng chứng**.
+
+Ngoài ra còn **đúng một mẫu trượt thật**: bằng chứng ghi `...ông Thiệu nói..` với hai dấu chấm, còn ngữ cảnh chỉ có một dấu chấm rồi xuống dòng. Đây là lỗi của bộ dữ liệu gốc, xử lý theo đúng quy tắc trên: `evidence_start = -1`, đếm vào báo cáo, không dùng khớp gần đúng.
+
+Tổng kết ba loại "không có offset" của bộ này, phải phân biệt được với nhau:
+
+| Loại | Số mẫu | Ý nghĩa |
+|---|---|---|
+| `evidence` là `null` | 12.583 | Toàn bộ nhãn NEI. Bộ dữ liệu không cung cấp bằng chứng |
+| `evidence` chỉ gồm khoảng trắng | 2 | Rác trong dữ liệu gốc, coi như không có |
+| Có bằng chứng nhưng không tìm thấy nguyên văn | 1 | Lỗi dữ liệu gốc: dấu chấm thừa |
+| **Tìm thấy nguyên văn** | **23.783** | Dùng được cho E06 |
+
+Cột `meta.evidence_given` phân biệt loại một với ba loại kia: `false` nghĩa là bộ dữ liệu không có bằng chứng cho dòng đó, `true` mà `evidence_start = -1` nghĩa là có ghi nhưng không định vị được.
 
 **ViWikiFC.** `claim` map sang `response`, `question` rỗng. Bằng chứng có ở cả ba nhãn, `context.find` phải thành công 100% — nếu không thì có lỗi encoding, dừng lại kiểm tra. Ghi `meta.title`, `meta.link`, `meta.sentenceID`.
 
