@@ -54,7 +54,7 @@ Những điều này KHÔNG được thương lượng khi viết code:
 | Bộ | Vai trò | File trong `data/raw/` | Ghi chú quan trọng |
 |---|---|---|---|
 | **ViHallu** | Bộ chính, xác định khung bài toán | `vihallu_train.csv` | Duy nhất có `response` do LLM sinh thật (GPT-4o). Chỉ tập train 7.000 mẫu có nhãn. File `vihallu_test_public.csv` không có nhãn, bỏ qua. |
-| **ISE-DSC01** | Kiểm chứng `chunk-aware` | `isedsc01_train.json` | Ngữ cảnh dài 21–73 câu. Bằng chứng nguyên văn 23.785/23.786. **Nhãn NEI không có bằng chứng.** Hai file `isedsc01_test_public.json` và `isedsc01_test_private.json` thiếu `verdict`, bỏ qua. |
+| **ISE-DSC01** | Kiểm chứng `chunk-aware` | `isedsc01_train.json` | Ngữ cảnh dài 21–73 câu. Bằng chứng nguyên văn 23.783/23.784 (số cũ 23.785/23.786 đếm nhầm hai mẫu có bằng chứng chỉ là dòng trống, sửa ở T10). **Nhãn NEI không có bằng chứng.** Hai file `isedsc01_test_public.json` và `isedsc01_test_private.json` thiếu `verdict`, bỏ qua. |
 | **ViWikiFC** | Đối chứng ngoài + thí nghiệm ảo giác ngoại lai | `viwikifc_train.csv`, `viwikifc_dev.csv`, `viwikifc_test.csv` | Duy nhất có bằng chứng cho cả nhãn NEI (100% nguyên văn). Tập test có nhãn. |
 | **ViFactCheck** | Dự phòng, thí nghiệm chuyển miền | `vifactcheck_train.parquet`, `vifactcheck_dev.parquet`, `vifactcheck_test.parquet` | Chỉ làm nếu tuần 14–15 còn thời gian. |
 
