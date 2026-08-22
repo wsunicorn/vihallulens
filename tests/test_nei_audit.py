@@ -125,6 +125,23 @@ def test_an_unfilled_cell_stays_blank_so_it_can_be_counted(typed):
     assert normalise_answer(typed) == ""
 
 
+@pytest.mark.parametrize(
+    "typed",
+    [
+        "​ngoai_lai",   # zero-width space, what copying out of a rendered document gives
+        "ngoai_lai​",
+        "﻿ngoai_lai",   # byte-order mark pasted as a character
+        "ngoai lai",    # non-breaking space instead of a plain one
+    ],
+)
+def test_invisible_characters_from_copy_paste_are_removed(typed):
+    """This is not hypothetical: 34 answers on the first real sheet arrived with a zero-width
+    space in front. str.strip() does not remove it — Python strips whitespace, and a zero-width
+    space is a format character — so every one of them would have been rejected as an invalid
+    code at report time, after the reading was already done."""
+    assert normalise_answer(typed) == "ngoai_lai"
+
+
 def test_a_wrong_answer_is_passed_through_rather_than_silently_dropped():
     """Turning a typo into a blank would let it be reported as "not finished yet" instead of
     as the mistake it is."""

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import unicodedata
 from pathlib import Path
 
 import pandas as pd
@@ -123,8 +124,21 @@ def build_sheet(drawn: pd.DataFrame) -> pd.DataFrame:
 
 
 def normalise_answer(value) -> str:
-    """Tidy one filled-in cell. Blank stays blank so it can be counted as unfinished."""
-    text = str(value).strip().lower().replace(" ", "_").replace("-", "_")
+    """Tidy one filled-in cell. Blank stays blank so it can be counted as unfinished.
+
+    Invisible characters have to go first. Copying a code out of a rendered document brings a
+    zero-width space along often enough that it happened on the very first sheet: 34 answers
+    arrived as ``"​ngoai_lai"``. ``str.strip()`` does not touch it, because Python strips
+    whitespace and a zero-width space is a *format* character, not whitespace. Left alone every
+    one of those answers would be rejected as an invalid code at report time, after the work was
+    already done.
+    """
+    text = "".join(
+        " " if char in "   " else char
+        for char in str(value)
+        if unicodedata.category(char) != "Cf"
+    )
+    text = text.strip().lower().replace(" ", "_").replace("-", "_")
     return text if text in CHOICES else ("" if text in ("", "nan", "none") else text)
 
 
@@ -232,6 +246,45 @@ Ví dụ. Ngữ cảnh:
 | Hà Nội có 8 triệu dân. | `ngoai_lai` | Ngữ cảnh không hề nói gì về **dân số** |
 
 Nói gọn: `noi_tai` là **xáo trộn thứ đã có**, `ngoai_lai` là **mang thứ chưa có vào**.
+
+## Phép thử khi phân vân
+
+Ba gạch đầu dòng trên đủ cho phần lớn dòng. Gặp ca khó thì dùng phép thử này, sắc hơn:
+
+> **Chỉ với ngữ cảnh này thôi, tôi có BÁC BỎ được phát biểu không?**
+
+| Trả lời | Nghĩa | Mã |
+|---|---|---|
+| Bác bỏ được | Ngữ cảnh nói về đúng chuyện đó, và nói khác đi | `noi_tai` |
+| Không bác bỏ được, cũng không xác nhận được | Ngữ cảnh im lặng về chuyện đó | `ngoai_lai` |
+| Xác nhận được | Ngữ cảnh nói đúng như vậy | `khong` |
+
+## Số liệu sai thì tính là gì?
+
+Câu hỏi hay gặp nhất. Trả lời ngắn: **`noi_tai`**, nếu ngữ cảnh có nói về con số đó.
+
+Chỗ dễ nhầm: một con số sai thì bản thân **giá trị mới** không xuất hiện trong ngữ cảnh, nghe
+như "mang thứ chưa có vào". Nhưng phép thử **không phải** là "con số đó có trong ngữ cảnh
+không" — mà là **ngữ cảnh có nói về thuộc tính đó của thực thể đó không**. Nếu có, thì mọi sai
+lệch về nó là **mâu thuẫn**, không phải thông tin mới.
+
+Ví dụ. Ngữ cảnh: *"Khoảng 65% bệnh nhân genotype 4 đáp ứng lâu dài với 48 tuần điều trị."*
+
+| Phát biểu | Đáp án | Vì sao |
+|---|---|---|
+| 65% bệnh nhân genotype 4 đáp ứng với **72 tuần**. | `noi_tai` | Ngữ cảnh nói 48, bác bỏ được |
+| **30%** bệnh nhân genotype 4 đáp ứng với 48 tuần. | `noi_tai` | Ngữ cảnh nói 65%, bác bỏ được |
+| 65% bệnh nhân **genotype 5** đáp ứng với 48 tuần. | `ngoai_lai` | Không nói gì về genotype 5 |
+| Genotype 4 tốn **12 triệu đồng** mỗi đợt. | `ngoai_lai` | Không nói gì về chi phí |
+
+**Diễn đạt lỏng thì khác với nói sai.** "48 tuần" viết lại thành *"gần 50 tuần"* là **diễn đạt
+lại** — 48 đúng là gần 50 — nên `khong`, không phải `noi_tai`. Chỉ tính là `noi_tai` khi giá
+trị mới **loại trừ** giá trị trong ngữ cảnh: "72 tuần" thì không cách nào là 48.
+
+Ranh giới này có chỗ mờ, nhất là khi phát biểu **đổi cả cách nói** chứ không chỉ đổi số — ví dụ
+*"đáp ứng lâu dài"* thành *"thích nghi"*, hai khái niệm không hẳn trùng nhau. Gặp ca mờ thì
+`khong_chac` kèm một dòng `ghi_chu` là câu trả lời trung thực nhất. **Chính những dòng đó là
+phần đáng bàn nhất trong báo cáo** — chúng cho thấy ranh giới giữa ba lớp nhãn mờ tới đâu.
 
 **Lưu ý quan trọng:** đừng đánh giá phát biểu **đúng hay sai ngoài đời**. Chỉ so với ngữ cảnh
 được cho. Một phát biểu hoàn toàn đúng sự thật nhưng ngữ cảnh không nhắc tới thì vẫn là
