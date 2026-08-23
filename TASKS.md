@@ -545,9 +545,68 @@
 
   `ruff` sạch, `pytest` 277 ca xanh (thêm 33 ca).
 
-- [ ] **T15** · M · Chia chunk
+- [x] **T15** · M · Chia chunk — hoàn thành 23/08/2026
   - Hiện thực `chunk_context` cả hai chiến lược và `locate_evidence_chunk`.
-  - **Kiểm tra:** `pytest tests/test_chunking.py` xanh, gồm ca câu tiếng Việt có số thập phân, ca bằng chứng vắt qua ranh giới chunk.
+  - **Kiểm tra:** `pytest tests/test_chunking.py` xanh (37 ca), gồm ca câu tiếng Việt có số thập phân ✅ và ca bằng chứng vắt qua ranh giới chunk ✅.
+
+  **Task này để làm gì.** Đây là chỗ đóng góp của đề tài bắt đầu thành hình. Lookback Lens gốc coi **toàn bộ** ngữ cảnh truy xuất là một khối và hỏi "mô hình nhìn vào ngữ cảnh bao nhiêu phần". Phiên bản chunk-aware hỏi thêm "nhìn vào **đoạn nào**" — mà câu hỏi đó chỉ tồn tại sau khi ngữ cảnh đã được cắt ra. Nên cách cắt không phải chi tiết phụ: mục 2 `docs/EXPERIMENTS.md` đặt hẳn việc so hai cách cắt thành một thí nghiệm riêng (E05).
+
+  Hai chiến lược, theo mục 2.1 `docs/SPEC.md`:
+  - **`sentence`** — cắt theo ranh giới câu, gộp những mảnh quá ngắn. Các chunk **lát kín** ngữ cảnh: mỗi ký tự thuộc đúng một chunk.
+  - **`token_window`** — cửa sổ cố định `window_size` token, trượt mỗi lần `stride` token. Với `stride` mặc định bằng nửa cửa sổ thì các chunk **chồng lấn**.
+
+  ### Bốn cái bẫy của việc tách câu tiếng Việt
+
+  Tách câu nghe như chỉ cần cắt ở dấu chấm. Bốn ca sau phá ngay ý đó:
+
+  1. **Số thập phân và số hàng nghìn.** Tiếng Việt viết hàng nghìn bằng dấu chấm: `331.212`. May là ca này **tự khỏi** — dấu chấm trong số không có khoảng trắng theo sau, mà mẫu regex đòi phải có khoảng trắng mới coi là ranh giới. Vẫn có ca kiểm thử để nếu ai đó nới lỏng mẫu regex thì test đỏ ngay.
+  2. **Chữ viết tắt.** `ThS. Trương Vĩnh Linh`, `TP. Hồ Chí Minh`, `Nxb. Giáo dục` — chấm rồi khoảng trắng rồi chữ hoa, đúng khuôn một ranh giới câu thật. Phải có danh sách viết tắt; thiếu chữ nào là cắt ngay giữa tên người. Đã liệt 40 chữ hay gặp, chia theo nhóm học hàm, đơn vị hành chính, tổ chức, xuất bản.
+  3. **Chữ cái viết tắt tên người.** `Nguyễn V. A.` — không thể liệt kê hết, nên bắt bằng luật: một ký tự chữ cái đứng một mình trước dấu chấm thì không phải hết câu.
+  4. **Ngày tháng và số thứ tự.** `ngày 31. 12. 2024` — cắt vào giữa ngày còn tệ hơn để nguyên. Luật: từ toàn chữ số trước dấu chấm thì không phải ranh giới.
+
+  ### Hai quyết định thiết kế đáng ghi
+
+  **Chunk theo câu phải lát kín ngữ cảnh, không được để khe hở.** Nếu chunk chỉ giữ phần chữ và bỏ khoảng trắng giữa hai câu, thì token rơi vào khe hở sẽ **không thuộc chunk nào** — nó vẫn nằm trong mẫu số của `lookback_context` nhưng không xuất hiện ở bất kỳ chunk nào, tức rò rỉ một phần chú ý ra ngoài mọi ô. Nên mỗi chunk ôm luôn khoảng trắng đuôi, và `char_end` của chunk này bằng đúng `char_start` của chunk kế. Có ca kiểm thử khẳng định nối các chunk lại ra đúng ngữ cảnh gốc.
+
+  **Câu quá ngắn đầu tiên phải gộp về sau, không gộp về trước.** Mục 2.1 `docs/SPEC.md` ghi "gộp vào câu trước", nhưng câu **đầu tiên** không có câu trước nào để gộp. Mà mở đầu ngắn lại rất hay gặp trong bốn bộ này — một dòng tít, một dòng `Theo VnExpress.` Bỏ mặc thì nó thành một chunk vài từ mà không phân bố chú ý nào nói được điều gì. Nên ca này gộp **về sau**.
+
+  ### Kết quả trên dữ liệu thật
+
+| Bộ | Chunk mỗi ngữ cảnh | Từ mỗi chunk | Ngữ cảnh chỉ có 1 chunk |
+|---|---|---|---|
+| ViHallu | 5,3 (trung vị 5, tối đa 42) | 33,9 | 1,0 % |
+| ISE-DSC01 | 22,8 (trung vị 20, tối đa 161) | 27,7 | 0,0 % |
+| ViWikiFC | 3,5 (trung vị 3, tối đa 20) | 31,5 | **15,3 %** |
+| ViFactCheck | 19,3 (trung vị 17, tối đa 86) | 35,3 | 0,0 % |
+
+  Trung vị khớp sát cột "số câu mỗi ngữ cảnh" ở mục 4 `docs/DATA.md` (5 / 19 / 4 / 17), lệch chút ở ISE-DSC01 và ViWikiFC do phần gộp câu ngắn.
+
+  **Định vị bằng chứng — đây là nền của E06:**
+
+| Bộ | Định vị được | Vắt qua ranh giới chunk |
+|---|---|---|
+| ISE-DSC01 | 3.000/3.000 (100 %) | 41 (1,4 %) |
+| ViWikiFC | 3.000/3.000 (100 %) | 57 (1,9 %) |
+
+  Đo trên 3.000 mẫu ngẫu nhiên seed 42 của mỗi bộ. **Định vị được 100 %** — nghĩa là E06 có đủ nhãn vàng để chấm hit@1, hit@3 và MRR trên toàn bộ số mẫu có bằng chứng, không mất mẫu nào ở khâu này.
+
+  Chỉ 1,4–1,9 % bằng chứng vắt qua ranh giới hai chunk. Với những ca đó, `locate_evidence_chunk` trả về chunk **chứa phần lớn nhất** của bằng chứng — E06 chấm hit@1 với đúng một chunk vàng nên buộc phải chọn một, và "chứa phần lớn nhất" là cách chọn duy nhất bảo vệ được.
+
+  ### Một phát hiện phải xử lý ở T16
+
+  **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk.** Với một chunk thì chunk-aware **thoái hóa thành lookback gộp** — không còn gì để phân biệt, mọi đặc trưng phân bố (entropy, Gini, top1–top2) đều là hằng số. Nghĩa là trên bộ này, hơn một phần bảy số mẫu không đóng góp gì cho câu hỏi CH1.
+
+  Đây đúng là lý do mục 8 `docs/DATA.md` yêu cầu T16 dựng chỉ mục BM25 trên 3.814 câu bằng chứng: để ghép ngữ cảnh nhiều đoạn thật sự thay vì dùng `context` ngắn có sẵn. Trước T15 thì đó là một suy đoán, giờ có con số đỡ lưng.
+
+  ### Ghi chú về chồng lấn, chuyển cho T21
+
+  Với `stride` mặc định bằng nửa cửa sổ, các chunk `token_window` **chồng lấn nhau**, nên một token nằm trong phần chồng được **đếm hai lần** và tổng tỷ trọng các chunk không còn bằng 1. Hệ quả: các đặc trưng của T21 coi véc-tơ per-chunk là một **phân bố xác suất** — `chunk_entropy`, `chunk_gini` — chỉ thật sự đọc một phân bố khi dùng chiến lược `sentence`. Với `token_window` phải chuẩn hóa lại trước khi tính, nếu không entropy sẽ lệch một cách có hệ thống theo `stride`, và E04 quét ba cỡ cửa sổ sẽ đo nhầm thứ đó thành khác biệt giữa các cỡ.
+
+  ### Dọn nợ
+
+  Bộ tách câu tạm trong `scripts/probe_attention_hook.py` — viết ở T07 kèm chú thích "T15 sẽ thay" — đã bị xóa; ba script `probe_attention_hook.py`, `compare_dtypes.py`, `measure_throughput.py` nay đều gọi `chunk_by_sentence` thật. Hệ quả nhỏ cần biết: chạy lại T07 hoặc T08 bây giờ sẽ ra **số chunk khác** với con số đã ghi (ví dụ mẫu ISE-DSC01 dài nhất trước đây ra 169 chunk). Thời gian và bộ nhớ không đổi đáng kể, và hai task đó là thăm dò khả thi chứ không phải thí nghiệm, nên số cũ vẫn giữ nguyên làm bản ghi lịch sử.
+
+  `ruff` sạch, `pytest` 314 ca xanh (thêm 37 ca).
 
 - [ ] **T16** · M · Kho truy xuất ViWikiFC
   - Trích 3.814 câu bằng chứng duy nhất, dựng chỉ mục BM25.

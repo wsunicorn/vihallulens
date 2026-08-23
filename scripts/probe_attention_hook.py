@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -30,35 +29,12 @@ import torch
 # See the note in scripts/probe_env.py.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vihallulens.data.chunking import Chunk  # noqa: E402
+from vihallulens.data.chunking import chunk_by_sentence  # noqa: E402
 from vihallulens.extract.attention import AttentionExtractor  # noqa: E402
 
 MB = 1024**2
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 PEAK_BUDGET_MB = 14 * 1024  # the ceiling task T07 must stay under
-
-# Temporary splitter, good enough to give the hook something to attribute attention to.
-# Task T15 replaces it with the two real strategies from docs/SPEC.md 2.1.
-SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
-
-
-def split_sentences(context: str) -> list[Chunk]:
-    """Naive sentence split, only so T07 has chunks to work with."""
-    chunks: list[Chunk] = []
-    cursor = 0
-    for piece in SENTENCE_END.split(context):
-        if not piece.strip():
-            cursor += len(piece)
-            continue
-        start = context.find(piece, cursor)
-        chunks.append(
-            Chunk(text=piece, char_start=start, char_end=start + len(piece), index=len(chunks))
-        )
-        cursor = start + len(piece)
-    if not chunks:
-        chunks.append(Chunk(text=context, char_start=0, char_end=len(context), index=0))
-    return chunks
-
 
 def build_tiny_extractor(model_name: str) -> AttentionExtractor:
     """A two-layer randomly initialised Qwen2 sharing the real tokenizer."""
@@ -105,7 +81,7 @@ def load_samples(data_dir: Path) -> list[tuple[str, str, str, str]]:
 
 
 def run_one(extractor: AttentionExtractor, label: str, context: str, question: str, response: str):
-    chunks = split_sentences(context)
+    chunks = chunk_by_sentence(context)
     features = extractor.extract(context, question, response, chunks)
 
     print(f"\n  {label}")
