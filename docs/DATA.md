@@ -144,6 +144,26 @@ Ba kết luận dùng cho T07 và về sau:
 
 Hàm `group_split` phải kiểm tra và raise nếu phát hiện `context_id` xuất hiện ở nhiều tập.
 
+**Đã hiện thực ở T14**, `src/vihallulens/data/splits.py`. Kết quả chia thật:
+
+| Bộ | train | dev | test |
+|---|---|---|---|
+| ViHallu | 5.598 (80,0 %) | 702 (10,0 %) | 700 (10,0 %) |
+| ISE-DSC01 | 29.082 (80,0 %) | 3.653 (10,0 %) | 3.634 (10,0 %) |
+
+Tỷ lệ chỉ **xấp xỉ** 80/10/10 vì chia cả nhóm chứ không chia dòng — một ngữ cảnh phải rơi trọn vào một tập. Sai lệch nhỏ vì nhóm nhỏ: nhóm lớn nhất của ViHallu có 5 dòng, của ISE-DSC01 có 33 dòng, đều dưới 0,1 % cỡ bộ.
+
+Phân bố nhãn sau khi chia lệch không quá 2 điểm phần trăm so với toàn bộ, dù **không hề ép cân bằng nhãn** — chia theo nhóm ngữ cảnh và ép cân bằng nhãn là hai ràng buộc xung khắc, không thỏa mãn đồng thời được. Bảng đầy đủ ở `results/leakage_report.md`.
+
+Chạy hai lệnh này, theo thứ tự:
+
+```
+python scripts/normalize_data.py --all
+python scripts/split_data.py
+```
+
+Chạy lại lệnh thứ hai nhiều lần vẫn ra đúng kết quả cũ: nó gộp các tập lại trước rồi mới chia, nên không cắt 80 % của 80 %. Chạy lại lệnh thứ nhất sau khi đã chia thì nó tự xóa file dev và test cũ, nên không để hai bản của cùng một dòng nằm trong hai file.
+
 ## 6. Rò rỉ ngữ cảnh trong split gốc
 
 Đây là phát hiện của nhóm, phải giữ lại và báo cáo:
@@ -154,6 +174,21 @@ Hàm `group_split` phải kiểm tra và raise nếu phát hiện `context_id` x
 | ViFactCheck | 753/758 (99,3 %) |
 | ISE-DSC01 (public test) | 1.004/1.319 |
 | ViHallu (public test) | 713/919 |
+
+**Đo lại tự động ở T14 ngày 23/08/2026, cả bốn con số khớp chính xác.** Báo cáo đầy đủ sinh tự động ở `results/leakage_report.md`; chạy lại bằng `python scripts/split_data.py`. Bảng dưới bổ sung hai thứ bảng trên không có: tập dev, và **tỷ lệ theo dòng** — con số đáng lo hơn tỷ lệ theo ngữ cảnh, vì nó cho biết bao nhiêu phần điểm số thật sự dựa lên vật liệu đã thấy.
+
+| Bộ | Tập | Rò rỉ theo ngữ cảnh | Rò rỉ theo dòng |
+|---|---|---|---|
+| ViWikiFC | dev | 836/838 (99,8 %) | 2.088/2.090 (99,9 %) |
+| ViWikiFC | test | 845/845 (100 %) | 2.091/2.091 (100 %) |
+| ViFactCheck | dev | 495/496 (99,8 %) | 721/723 (99,7 %) |
+| ViFactCheck | test | 753/758 (99,3 %) | 1.433/1.447 (99,0 %) |
+| **ViHallu** (nhóm tự chia) | dev, test | **0** | **0** |
+| **ISE-DSC01** (nhóm tự chia) | dev, test | **0** | **0** |
+
+Hai bộ nhóm tự chia có rò rỉ bằng 0 **theo thiết kế**: `group_split` raise nếu có bất kỳ `context_id` nào lọt vào hai tập, nên con số 0 là bằng chứng chứ không phải kỳ vọng.
+
+File public test của ViHallu và ISE-DSC01 rò rỉ 77,6 % và 76,1 % — nhóm không dùng chúng vì thiếu nhãn, nhưng con số này là bằng chứng rằng split do ban tổ chức phát hành **cũng** rò rỉ, tức việc nhóm tự chia không phải là tự làm khó mình.
 
 Với ViWikiFC và ViFactCheck, nhóm chấp nhận rò rỉ vì phải giữ split gốc để đối chứng — nhưng **không dùng hai bộ này để kết luận về khả năng khái quát hóa**. Task T14 sinh báo cáo rò rỉ tự động.
 
