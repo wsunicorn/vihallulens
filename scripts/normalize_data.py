@@ -20,6 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vihallulens.data.paths import find_raw_dir  # noqa: E402
+from vihallulens.data.schema import SPLITS  # noqa: E402
 
 DEFAULT_OUTPUT_DIR = Path("data/interim")
 
@@ -71,10 +72,22 @@ def run_one(name: str, raw_dir: Path, out_dir: Path) -> int:
 
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
+    fresh = set()
     for split, part in frame.groupby("split", sort=True):
         path = out_dir / f"{name}_{split}.parquet"
         part.reset_index(drop=True).to_parquet(path, index=False)
         written.append((path, len(part)))
+        fresh.add(split)
+
+    # Task T14 splits ViHallu and ISE-DSC01 into three files. Re-normalising afterwards writes
+    # the whole corpus back into the train file and would leave the old dev and test beside it,
+    # so the same rows would sit in two files at once. Clearing them is what keeps the two
+    # scripts safe to run in any order.
+    for stale in sorted(set(SPLITS) - fresh):
+        path = out_dir / f"{name}_{stale}.parquet"
+        if path.is_file():
+            path.unlink()
+            print(f"  đã xóa {path} (còn sót từ lần chia tập trước)")
 
     print(f"  số dòng               : {len(frame):,}")
     print(f"  ngữ cảnh duy nhất     : {frame['context_id'].nunique():,}")
