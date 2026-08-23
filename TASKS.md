@@ -608,9 +608,65 @@
 
   `ruff` sạch, `pytest` 314 ca xanh (thêm 37 ca).
 
-- [ ] **T16** · M · Kho truy xuất ViWikiFC
+- [x] **T16** · M · Kho truy xuất ViWikiFC — hoàn thành 23/08/2026, **hết giai đoạn 2**
   - Trích 3.814 câu bằng chứng duy nhất, dựng chỉ mục BM25.
-  - **Kiểm tra:** file `data/interim/viwikifc_evidence_corpus.parquet` có 3.814 dòng; truy vấn thử một claim trả về top-5 hợp lý.
+  - **Kiểm tra:** file `data/interim/viwikifc_evidence_corpus.parquet` có **3.814 dòng** ✅ từ **73 bài** ✅; truy vấn thử trả về top-5 hợp lý ✅ (và đo hẳn recall, xem dưới).
+
+  **Task này để làm gì.** T15 vừa đo ra một vấn đề: **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk**, vì `context` của bộ này thường chỉ ba bốn câu. Với một chunk thì chunk-aware thoái hóa thành lookback gộp — chẳng còn gì để so sánh giữa các đoạn.
+
+  Mục 8 `docs/DATA.md` đưa ra lời giải: cả bộ chỉ dựa trên **3.814 câu bằng chứng duy nhất** rút từ 73 bài Wikipedia — đủ ít để giữ trọn trong bộ nhớ làm **kho truy xuất**. E08 sẽ dựng ngữ cảnh nhiều đoạn thật sự bằng cách lấy top-k câu cho mỗi claim, thay vì dùng `context` ngắn có sẵn.
+
+  *BM25* là công thức xếp hạng văn bản theo mức khớp từ khóa: tài liệu chứa nhiều từ **hiếm** của truy vấn thì điểm cao, từ nào xuất hiện ở khắp nơi thì gần như không tính, và tài liệu dài bị chia bớt điểm để không thắng chỉ nhờ dài. Không cần huấn luyện, không cần GPU — đúng thứ cần ở đây, vì E08 quan tâm chú ý làm gì với ngữ cảnh nhiều đoạn chứ không quan tâm bộ truy xuất giỏi tới đâu.
+
+  ### Kết quả
+
+```
+  câu bằng chứng        : 3,814
+  bài Wikipedia         : 73
+  độ dài câu (từ)       : trung vị 31, trung bình 35.2, dài nhất 251
+  claim mỗi câu         : trung bình 5.5, tối đa 42
+  dựng chỉ mục BM25     : 0.07 s
+```
+
+  Cả hai con số của mục 8 `docs/DATA.md` khớp chính xác. Chỉ mục dựng trong 0,07 giây nên **không lưu chỉ mục xuống đĩa**, chỉ lưu kho câu: một file pickle chứa chỉ mục sẽ mong manh theo phiên bản thư viện mà không giữ gì không tính lại được.
+
+  ### Recall của bằng chứng vàng — con số quyết định E08 có làm được không
+
+  Tiêu chí ghi "truy vấn thử một claim trả về top-5 hợp lý", nhưng nhìn ba kết quả bằng mắt thì không nói lên điều gì. Câu hỏi thật là: **BM25 có tìm lại được đúng câu bằng chứng của một claim, giữa 3.814 ứng viên, hay không.** Nếu không thì ngữ cảnh ghép từ top-k sẽ thường **không chứa câu trả lời**, và E08 sẽ đo chất lượng bộ truy xuất chứ không đo tín hiệu chú ý.
+
+  Đo trên 2.000 claim ngẫu nhiên seed 42:
+
+| | recall@1 | recall@5 | recall@10 | recall@20 | recall@50 |
+|---|---|---|---|---|---|
+| Bằng chứng vàng | **80,3 %** | 89,6 % | **91,3 %** | 93,2 % | 95,2 % |
+
+  **Kho dùng được.** Bốn trên năm claim tìm đúng bằng chứng ngay ở hạng 1, hơn chín trên mười nằm trong top-10. Ngữ cảnh ghép từ top-k sẽ thường chứa câu trả lời, nên E08 đo được đúng thứ nó muốn đo. Script tự in cảnh báo nếu recall@10 tụt dưới 70 %.
+
+  ### Ba quyết định đáng ghi
+
+  **1. Dựng kho từ file thô, không từ file đã chuẩn hóa.** Con số ra khác nhau đúng một: file thô cho 3.814, file chuẩn hóa cho **3.813**. Lý do là T11 xóa trắng cột `evidence` của mọi dòng không định vị được bằng chứng trong ngữ cảnh của chính nó — và đúng một dòng rơi vào đó, chính là câu `NhậtaimBản` bị lỗi ở nguồn.
+
+  Nếu dựng kho từ file chuẩn hóa thì câu ấy biến mất, và claim tương ứng **vĩnh viễn không thể truy xuất được bằng chứng vàng của nó** — E08 mất một mẫu vì một lý do chẳng liên quan gì tới truy xuất. Kho truy xuất là một **tập câu để tìm kiếm**; việc có định vị được offset của một câu trong ngữ cảnh hay không là câu hỏi hoàn toàn khác.
+
+  **2. Tách token theo âm tiết, không dùng bộ tách từ tiếng Việt.** Tiếng Việt viết mỗi âm tiết rời nhau — "Hà Nội" là hai mảnh của một từ — nên tách theo khoảng trắng cho ra **âm tiết chứ không phải từ**. Bộ tách từ đúng nghĩa sẽ gộp chúng lại, nhưng đó là thêm một phụ thuộc mới, mà mục 7 `CLAUDE.md` bảo phải hỏi trước. Cái giá thực tế nhỏ: claim nhắc cả hai âm tiết của một từ thì tài liệu chứa cả hai vẫn được BM25 cộng điểm gấp đôi. Và recall 80,3 % ở hạng 1 nói rằng cách này đủ dùng. Ghi lại vì đây là **hạn chế thật, đã đo chứ không phải bỏ qua** — nếu sau này cần hơn thì đây là chỗ cải thiện rẻ nhất.
+
+  **3. `evidence_id` băm từ nội dung câu, không đánh số theo thứ tự.** Giống `context_id` ở T09 và vì cùng lý do: nếu đánh số theo vị trí thì dựng lại kho từ dữ liệu sắp xếp khác đi sẽ đổi hết mã, và mọi thứ tham chiếu tới mã cũ thành sai âm thầm.
+
+  ### Một chi tiết nhỏ đã xử lý
+
+  **35 câu bằng chứng xuất hiện dưới nhiều hơn một bài Wikipedia.** Schema mục 8 chỉ có một cột `title` cho mỗi câu, nên phải chọn một: lấy bài xuất hiện nhiều nhất, hòa thì lấy tên đứng trước theo bảng chữ cái. Cách chọn phải tất định, nếu không dựng lại kho sẽ xáo chúng lung tung.
+
+  Cũng ghi thêm cột `n_claims` — số claim dùng câu đó làm bằng chứng, trung bình 5,5 và cao nhất 42. Một câu phục vụ 42 claim là một loại đối tượng khác hẳn một câu phục vụ đúng một claim, và E08 có thể cần biết.
+
+  ### Chuyển cho T27 (E08)
+
+  `EvidenceIndex.search` có sẵn tham số `exclude` để loại một số câu khỏi kết quả. Đó là cách E08 dựng được ngữ cảnh **cố tình không chứa** bằng chứng vàng — chính là tình huống mà ảo giác ngoại lai là câu trả lời trung thực duy nhất. Chưa viết `build_context` vì đó là việc của T27.
+
+  `ruff` sạch, `pytest` 340 ca xanh (thêm 26 ca).
+
+---
+
+**Hết giai đoạn 2.** Bốn bộ đã chuẩn hóa, chia tập, đo rò rỉ, chia chunk và dựng kho truy xuất. Từ T17 trở đi là các baseline, tức bắt đầu có số để so.
 
 ---
 
