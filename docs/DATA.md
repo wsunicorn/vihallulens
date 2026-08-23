@@ -69,7 +69,26 @@ Cột thực tế của từng file — dùng làm dấu hiệu nhận diện n�
 | ViFactCheck | `1` | `intrinsic` |
 | ViFactCheck | `2` | `extrinsic` |
 
-**Cảnh báo phải ghi vào báo cáo:** ánh xạ NEI sang `extrinsic` là gần đúng, không phải tương đương định nghĩa. NEI nghĩa là "không đủ thông tin để kết luận", còn ảo giác ngoại lai nghĩa là "chứa thông tin không có trong ngữ cảnh". Hai khái niệm giao nhau lớn nhưng không trùng. Task T13 yêu cầu kiểm tra thủ công 100 mẫu để báo cáo tỷ lệ khớp.
+**Cảnh báo phải ghi vào báo cáo:** ánh xạ NEI sang `extrinsic` là gần đúng, không phải tương đương định nghĩa. NEI nghĩa là "không đủ thông tin để kết luận", còn ảo giác ngoại lai nghĩa là "chứa thông tin không có trong ngữ cảnh". Hai khái niệm giao nhau lớn nhưng không trùng.
+
+**Đã đo ở T13 ngày 20/08/2026 trên 100 mẫu NEI của ViWikiFC, hai người gán độc lập:**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Hai người **cùng** cho là ngoại lai | **67/100** |
+| Lân cho là ngoại lai | 71/100 |
+| Minh cho là ngoại lai | 77/100 |
+| Tỷ lệ khớp thô | 79,0 % |
+| Cohen kappa | **0,505** (trung bình theo thang Landis–Koch) |
+| Dương tính giả trên mẫu đối chứng (cả hai) | 1/20 = 5 % |
+
+**Con số phải dùng khi viết báo cáo là 67 %**, tức **khoảng một phần ba nhãn NEI không phải ảo giác ngoại lai**. Đây là con số bảo thủ vì đòi cả hai người cùng đồng ý, và tỷ lệ dương tính giả đo trên 20 mẫu đối chứng chỉ 5 % nên phần sai sót còn sót lại là nhỏ.
+
+Phân rã 33 mẫu còn lại theo cách hiểu của Lân: 22 mẫu `khong` (phát biểu bám sát ngữ cảnh, chỉ là ngữ cảnh không đủ để xác nhận) và 7 mẫu `noi_tai` (phát biểu mâu thuẫn với ngữ cảnh, tức lẽ ra phải là nội tại chứ không phải ngoại lai). Nhóm thứ hai đáng lo hơn: ánh xạ không chỉ *yếu* mà đẩy mẫu sang **sai hẳn lớp**.
+
+**Ranh giới nội tại–ngoại lai là chỗ khó nhất, và khó với cả người:** 8/100 mẫu có một người gán `noi_tai` còn người kia gán `ngoai_lai`. Trên 20 mẫu đối chứng, cả hai đều gặp khó đúng ở đó — nhãn `Refutes` (đáp án đúng là `noi_tai`) chỉ đạt 7/10 và 5/10, trong khi nhãn `Supports` (đáp án `khong`) đạt 9/10 và 7/10.
+
+Cách dùng kết quả này: khi báo cáo số liệu trên ViWikiFC, **không được nói lớp `extrinsic` của bộ này là ảo giác ngoại lai thuần túy**. Phải ghi rõ nó là nhãn NEI ánh xạ sang, với khoảng một phần ba không khớp định nghĩa. Chi tiết cách gán và số liệu đầy đủ nằm ở phần T13 của `TASKS.md`; dữ liệu thô ở `results/nei_mapping_audit.csv`.
 
 ## 4. Số liệu kiểm tra đã xác nhận
 

@@ -414,6 +414,35 @@ def report(interim_dir: Path, results_dir: Path) -> int:
         print("  CẢNH BÁO: có người dưới 70 % trên mẫu đối chứng. Những dòng NEI của người đó")
         print("  cũng đáng ngờ theo — cân nhắc gán lại trước khi đưa số vào báo cáo.")
 
+    # Which way the control errors went. A control answered "ngoai_lai" is a false positive for
+    # the very thing being counted on the NEI rows, so its rate is what says how much the
+    # headline figure can be trusted — far more useful than the bare accuracy above.
+    print()
+    print("  Gán nhầm thành 'ngoai_lai' (đối chứng vốn KHÔNG phải ngoại lai):")
+    for who in ANNOTATORS:
+        wrong = int((controls[f"nhan_dinh_{who}"] == "ngoai_lai").sum())
+        print(f"    {who:<6}: {wrong}/{len(controls)}")
+    both_wrong = int(
+        (
+            (controls[f"nhan_dinh_{ANNOTATORS[0]}"] == "ngoai_lai")
+            & (controls[f"nhan_dinh_{ANNOTATORS[1]}"] == "ngoai_lai")
+        ).sum()
+    )
+    print(f"    cả hai: {both_wrong}/{len(controls)}  <- tỷ lệ dương tính giả của con số "
+          f"đồng thuận bên dưới")
+
+    print()
+    print("  Đúng theo từng loại đối chứng:")
+    for original, wanted in sorted(CONTROL_ANSWER.items()):
+        part = controls[controls["label_original"] == original]
+        if part.empty:
+            continue
+        scores = " | ".join(
+            f"{who} {int((part[f'nhan_dinh_{who}'] == wanted).sum())}/{len(part)}"
+            for who in ANNOTATORS
+        )
+        print(f"    {original:<24} (đáp án '{wanted}'): {scores}")
+
     # -- the actual question
     audit = merged[merged["vai_tro"] == "nei"].copy()
     audit["khop"] = audit[f"nhan_dinh_{ANNOTATORS[0]}"] == audit[f"nhan_dinh_{ANNOTATORS[1]}"]
@@ -435,7 +464,25 @@ def report(interim_dir: Path, results_dir: Path) -> int:
     print()
     print(f"  Hai người cùng cho là ngoại lai: {both_extrinsic}/{len(audit)} "
           f"({both_extrinsic / len(audit) * 100:.0f} %)")
-    print("  Đây là con số bảo thủ nhất, nên dùng nó khi viết báo cáo.")
+    print("  Đây là con số bảo thủ nhất, nên dùng nó khi viết báo cáo. Đòi hai người cùng")
+    print("  đồng ý lọc bớt sai sót riêng của từng người, và tỷ lệ dương tính giả đo trên")
+    print("  đối chứng ở trên cho biết phần còn sót lại là bao nhiêu.")
+
+    # Rows where one person saw a contradiction and the other saw new information are the
+    # boundary this whole audit exists to measure: they are the samples where "not settled by
+    # the context" and "brings in something new" genuinely come apart.
+    crossed = audit[
+        (
+            (audit[f"nhan_dinh_{ANNOTATORS[0]}"] == "ngoai_lai")
+            & (audit[f"nhan_dinh_{ANNOTATORS[1]}"] == "noi_tai")
+        )
+        | (
+            (audit[f"nhan_dinh_{ANNOTATORS[0]}"] == "noi_tai")
+            & (audit[f"nhan_dinh_{ANNOTATORS[1]}"] == "ngoai_lai")
+        )
+    ]
+    print(f"  Một người nội tại, người kia ngoại lai: {len(crossed)}/{len(audit)} "
+          f"— đây là ranh giới mà task này sinh ra để đo")
 
     stats = agreement(audit[f"nhan_dinh_{ANNOTATORS[0]}"], audit[f"nhan_dinh_{ANNOTATORS[1]}"])
     print()
