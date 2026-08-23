@@ -26,7 +26,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from probe_attention_hook import split_sentences  # noqa: E402
+from vihallulens.data.chunking import chunk_by_sentence  # noqa: E402
 from vihallulens.data.paths import find_raw_dir  # noqa: E402
 from vihallulens.extract.attention import AttentionExtractor  # noqa: E402
 
@@ -77,7 +77,7 @@ def extract_all(extractor, samples, dtype_name: str):
     results = []
     started = time.perf_counter()
     for index, (dataset, context, question, response) in enumerate(samples, start=1):
-        features = extractor.extract(context, question, response, split_sentences(context))
+        features = extractor.extract(context, question, response, chunk_by_sentence(context))
         results.append(
             {
                 "dataset": dataset,

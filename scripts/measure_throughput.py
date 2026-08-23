@@ -36,7 +36,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from probe_attention_hook import split_sentences  # noqa: E402
+from vihallulens.data.chunking import chunk_by_sentence  # noqa: E402
 from vihallulens.evaluation.logging import log_result  # noqa: E402
 from vihallulens.extract.prompt import render_prompt  # noqa: E402
 
@@ -347,7 +347,7 @@ def time_sample(extractor, sample: dict) -> dict:
     started = time.perf_counter()
     context = sample["context"]
     features = extractor.extract(
-        context, sample["question"], sample["response"], split_sentences(context)
+        context, sample["question"], sample["response"], chunk_by_sentence(context)
     )
     end_to_end_ms = (time.perf_counter() - started) * 1000
     return {
