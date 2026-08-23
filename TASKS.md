@@ -490,10 +490,60 @@
 
   Dữ liệu thô 100 dòng kèm cả hai cột gán nhãn và ghi chú: `results/nei_mapping_audit.csv`.
 
-- [ ] **T14** · M · Chia tập và báo cáo rò rỉ
+- [x] **T14** · M · Chia tập và báo cáo rò rỉ — hoàn thành 23/08/2026
   - Hiện thực `group_split`. Chia ViHallu và ISE-DSC01 80/10/10 seed 42. ViWikiFC và ViFactCheck giữ split gốc.
   - Sinh `results/leakage_report.md` với số liệu rò rỉ của cả bốn bộ.
-  - **Kiểm tra:** báo cáo khớp bảng mục 6 của `docs/DATA.md`; `group_split` raise khi cố tình truyền dữ liệu rò rỉ.
+  - **Kiểm tra:** báo cáo khớp bảng mục 6 của `docs/DATA.md` ✅ (cả bốn con số khớp chính xác); `group_split` raise khi cố tình truyền dữ liệu rò rỉ ✅.
+
+  **Task này để làm gì.** *Rò rỉ dữ liệu* (data leakage) là khi thứ đáng lẽ chỉ có ở tập test lại đã xuất hiện trong tập train. Ở đề tài này rò rỉ không xảy ra ở mức dòng mà ở mức **ngữ cảnh**: hai mẫu dùng chung một đoạn văn thì không độc lập với nhau — mô hình đã đọc một mẫu lúc huấn luyện thì cũng đã đọc gần hết vật liệu của mẫu kia. Nếu chúng nằm ở hai tập khác nhau, điểm trên test đo **trí nhớ** nhiều ngang đo **khả năng khái quát hóa**, và con số báo cáo đẹp hơn sự thật.
+
+  Nên đơn vị chia tập là `context_id` chứ không phải dòng. Đó là ý nghĩa của *group split*: xáo và chia **cả nhóm**, không bao giờ cắt một nhóm làm đôi.
+
+  **Đã làm.** Ba file mới:
+  - `src/vihallulens/data/splits.py` — `group_split`, `assert_no_leakage`, `leakage_between`.
+  - `src/vihallulens/data/loading.py` — `load_dataset(name, split)` theo mục 2.1 `docs/SPEC.md`, nợ từ T09 nay trả. Từ đây trở đi mọi thứ đọc dữ liệu qua hàm này chứ không tự mở `data/interim`.
+  - `scripts/split_data.py` — chia hai bộ cần chia rồi sinh `results/leakage_report.md` cho cả bốn.
+
+  ### Kết quả chia
+
+| Bộ | train | dev | test | Tổng |
+|---|---|---|---|---|
+| ViHallu | 5.598 (80,0 %) | 702 (10,0 %) | 700 (10,0 %) | 7.000 |
+| ISE-DSC01 | 29.082 (80,0 %) | 3.653 (10,0 %) | 3.634 (10,0 %) | 36.369 |
+
+  Tỷ lệ chỉ **xấp xỉ** 80/10/10 vì chia cả nhóm — một ngữ cảnh phải rơi trọn vào một tập. Sai lệch nhỏ tới mức làm tròn một chữ số thập phân thì ra đúng 80,0/10,0/10,0, vì nhóm nhỏ: nhóm lớn nhất của ViHallu 5 dòng, của ISE-DSC01 33 dòng, đều dưới 0,1 % cỡ bộ.
+
+  **Rò rỉ ở hai bộ này bằng 0**, và đó là bằng chứng chứ không phải kỳ vọng — `group_split` gọi `assert_no_leakage` trên chính kết quả nó vừa sinh, raise nếu có bất kỳ ngữ cảnh nào lọt vào hai tập.
+
+  ### Rò rỉ ở hai bộ giữ split gốc
+
+| Bộ | Tập | Theo ngữ cảnh | Theo dòng |
+|---|---|---|---|
+| ViWikiFC | dev | 836/838 (99,8 %) | 2.088/2.090 (99,9 %) |
+| ViWikiFC | test | **845/845 (100 %)** | **2.091/2.091 (100 %)** |
+| ViFactCheck | dev | 495/496 (99,8 %) | 721/723 (99,7 %) |
+| ViFactCheck | test | 753/758 (99,3 %) | 1.433/1.447 (99,0 %) |
+
+  Cả bốn con số của mục 6 `docs/DATA.md` **khớp chính xác** khi đo lại bằng một đường hoàn toàn khác (băm NFC của chuỗi ngữ cảnh). Ghi nhận của nhóm trước đây là đúng.
+
+  Hai bộ này giữ split gốc để so được với số đã công bố, nên phải nhận luôn phần rò rỉ. **Không sửa được, chỉ báo cáo được** — và hệ quả bắt buộc là không dùng chúng để kết luận về khả năng khái quát hóa.
+
+  ### Ba điều học được
+
+  1. **Báo cáo rò rỉ theo dòng, không chỉ theo ngữ cảnh.** Hai con số trả lời hai câu khác nhau: theo ngữ cảnh là "bao nhiêu vật liệu bị dùng lại", theo dòng là "bao nhiêu phần điểm số thật sự dựa lên đó". Con số theo dòng thường lớn hơn và mới là con số đáng lo. Bảng cũ ở mục 6 chỉ có cột ngữ cảnh; nay có cả hai.
+
+  2. **Split gốc của ban tổ chức cũng rò rỉ, nên tự chia không phải là tự làm khó mình.** File public test của ViHallu rò rỉ 713/919 (77,6 %), của ISE-DSC01 rò rỉ 1.004/1.319 (76,1 %). Nhóm không dùng hai file đó vì thiếu nhãn, nhưng con số này đáng ghi vào báo cáo: nó cho thấy quyết định tự chia theo nhóm là cần thiết chứ không phải cầu toàn.
+
+  3. **Chia theo nhóm và cân bằng nhãn là hai ràng buộc xung khắc — may là không cần ép.** Không thể vừa giữ trọn mỗi ngữ cảnh trong một tập vừa ép tỷ lệ nhãn bằng nhau giữa các tập. Nhóm không ép, và kiểm lại thì phân bố nhãn lệch **không quá 2 điểm phần trăm** so với toàn bộ ở cả hai bộ. Nếu sau này bộ nào lệch nhiều thì phải xử lý, nhưng ở đây thì không cần.
+
+  ### Hai cái bẫy đã chặn trước
+
+  Hai script chạy nối nhau nên có hai cách tự bắn vào chân, đều đã bịt và đều có kiểm chứng:
+
+  - **Chạy `split_data.py` hai lần** sẽ cắt 80 % của 80 %, âm thầm làm teo tập train mỗi lần chạy. Bịt bằng cách **gộp các tập lại trước rồi mới chia**. Đã kiểm bằng cách chạy hai lần rồi so mã băm danh sách `sample_id`: giống hệt nhau, tổng vẫn đủ 7.000 dòng.
+  - **Chạy lại `normalize_data.py` sau khi đã chia** sẽ ghi toàn bộ 7.000 dòng vào file train trong khi dev và test cũ vẫn nằm đó, tức cùng một dòng tồn tại ở hai file. Bịt bằng cách cho `normalize_data.py` **tự xóa file của những split nó không ghi**, kèm thông báo rõ ràng.
+
+  `ruff` sạch, `pytest` 277 ca xanh (thêm 33 ca).
 
 - [ ] **T15** · M · Chia chunk
   - Hiện thực `chunk_context` cả hai chiến lược và `locate_evidence_chunk`.
