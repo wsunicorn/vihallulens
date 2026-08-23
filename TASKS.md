@@ -394,7 +394,7 @@
 
   **Tổng 71.520 mẫu**, đúng bằng con số T08 dùng để dự báo giờ GPU.
 
-- [ ] **T13** · LM · Kiểm tra thủ công ánh xạ NEI sang ngoại lai — **công cụ đã sẵn sàng 20/08/2026, chờ hai người gán nhãn**
+- [x] **T13** · LM · Kiểm tra thủ công ánh xạ NEI sang ngoại lai — hoàn thành 20/08/2026
   - Lấy ngẫu nhiên 100 mẫu nhãn NEI từ ViWikiFC, hai người gán độc lập xem có đúng là "chứa thông tin ngoài ngữ cảnh" không.
   - **Kiểm tra:** file `results/nei_mapping_audit.csv` có 100 dòng, báo cáo tỷ lệ khớp và hệ số đồng thuận.
 
@@ -437,14 +437,58 @@
 
   Đã kiểm toàn tuyến bằng phiếu điền giả: `--report` chạy đúng, in đủ đối chứng, tỷ lệ ánh xạ, kappa, bảng chéo 4×4, và sinh `results/nei_mapping_audit.csv` 100 dòng. `ruff` sạch, `pytest` 244 ca xanh (thêm 30 ca).
 
-  ### Việc của Lân và Minh
+  ### Kết quả — Lân và Minh gán xong 120/120 dòng, 20/08/2026
 
-  1. Đọc `results/nei_mapping_audit_HUONGDAN.md`.
-  2. Mỗi người điền cột `nhan_dinh` trong file của mình, **độc lập, không bàn nhau**.
-  3. Chạy `python scripts/audit_nei_mapping.py --report`.
-  4. Dán output vào PR rồi tick task này.
+| Chỉ số | Giá trị |
+|---|---|
+| **Hai người cùng cho là ngoại lai** | **67/100** |
+| Lân cho là ngoại lai | 71/100 |
+| Minh cho là ngoại lai | 77/100 |
+| Tỷ lệ khớp thô | 79,0 % |
+| **Cohen kappa** | **0,505** — trung bình theo thang Landis–Koch |
+| Dương tính giả trên đối chứng (cả hai cùng sai) | 1/20 = 5 % |
 
-  Ngữ cảnh của bộ này ngắn — trung vị 124 từ, dài nhất 344 từ — nên 120 dòng ước chừng 60–90 phút mỗi người.
+  Bảng chéo, hàng là Lân cột là Minh:
+
+| | ngoai_lai | noi_tai | khong | khong_chac |
+|---|---|---|---|---|
+| **ngoai_lai** | **67** | 4 | 0 | 0 |
+| **noi_tai** | 4 | 3 | 0 | 0 |
+| **khong** | 6 | 6 | 9 | 1 |
+| **khong_chac** | 0 | 0 | 0 | 0 |
+
+  **Kết luận: chỉ khoảng 67 % nhãn NEI thật sự là ảo giác ngoại lai.** Một phần ba còn lại không khớp định nghĩa. Đây là con số **bảo thủ** vì đòi cả hai người cùng đồng ý; con số riêng của từng người là 71 % và 77 %.
+
+  Phân rã 33 mẫu còn lại theo cách hiểu của Lân: **22 mẫu `khong`** — phát biểu bám sát ngữ cảnh, chỉ là ngữ cảnh không đủ để xác nhận, tức đúng nghĩa NEI nhưng không phải ảo giác gì cả; và **7 mẫu `noi_tai`** — phát biểu mâu thuẫn với ngữ cảnh, tức lẽ ra là **nội tại**. Nhóm thứ hai đáng lo hơn nhiều: ánh xạ không chỉ *yếu* mà đẩy mẫu sang **sai hẳn lớp**, và với đề tài phân ba lớp thì đó là nhãn nhiễu trực tiếp.
+
+  ### Cảnh báo đối chứng đã bật — và vì sao con số vẫn dùng được
+
+  Minh đạt **12/20** trên mẫu đối chứng, dưới ngưỡng 70 % mà script đặt ra (Lân 16/20). Đây đúng là thứ mà 20 mẫu đối chứng sinh ra để bắt, nên phải xử lý chứ không lờ đi.
+
+  Truy vào thì sai sót **không phải ngẫu nhiên mà có hướng rõ ràng**:
+
+| Loại đối chứng | Đáp án đúng | Lân | Minh |
+|---|---|---|---|
+| `Supports` | `khong` | 9/10 | 7/10 |
+| `Refutes` | `noi_tai` | 7/10 | **5/10** |
+
+  Sai chính của Minh là **4 mẫu `Refutes` gán thành `ngoai_lai`** — tức đúng chỗ nhầm giữa nội tại và ngoại lai, cùng loại nhầm mà Lân hỏi giữa chừng và đã được làm rõ trong hướng dẫn. Hệ quả có hướng: nó **thổi phồng** số `ngoai_lai` của Minh, và đúng là Minh ra 77 % còn Lân ra 71 %.
+
+  Nhưng con số nộp là **con số đồng thuận**, và ở đó tình hình khác hẳn: trên 20 mẫu đối chứng, **cả hai cùng gán nhầm `ngoai_lai` chỉ 1 lần**. Lý do là sai sót của hai người phần lớn độc lập nhau, nên việc đòi cả hai cùng đồng ý lọc gần hết. Tỷ lệ dương tính giả 5 % này chính là thanh chắn cho con số 67 %, và nó có được **chỉ vì có mẫu đối chứng** — không có chúng thì không cách nào biết 67 % đáng tin tới đâu.
+
+  ### Ba điều học được
+
+  1. **Ranh giới nội tại–ngoại lai khó với cả người, không riêng máy.** 8/100 mẫu NEI có một người gán `noi_tai` còn người kia gán `ngoai_lai` — hai lớp đối lập nhau chứ không phải sát nhau. Trên đối chứng, cả hai đều tệ hơn ở `Refutes` (7/10 và 5/10) so với `Supports` (9/10 và 7/10). Điều này nên ghi vào chương đánh giá: **giới hạn trên của mọi mô hình phân biệt hai lớp này bị chặn bởi chính mức đồng thuận của người**, và ở đây mức đó là kappa 0,505.
+
+  2. **Ghi chú "chưa chắc" dự báo được bất đồng.** Lân đánh dấu 15 dòng NEI là chưa chắc. Trong đó **7 dòng lệch với Minh, tức 47 %**; còn 85 dòng không đánh dấu thì chỉ **14 dòng lệch, tức 16 %**. Gấp gần ba lần. Nghĩa là cảm giác "khó" của người gán không phải mơ hồ mà đo được, và nó chỉ đúng vào vùng ranh giới thật. Nếu sau này cần một tập con "sạch" để huấn luyện thì đây là cách rẻ để lọc.
+
+  3. **Kappa và tỷ lệ khớp thô nói hai chuyện khác nhau, phải in cả hai.** Khớp thô 79 % nghe cao, nhưng vì `ngoai_lai` chiếm đa số nên hai người chọn bừa cũng đã trùng nhau khá nhiều. Kappa 0,505 mới là phần đồng thuận vượt quá may rủi — vẫn là "trung bình", đủ để tin con số nhưng không đủ để gọi ánh xạ này là chắc chắn.
+
+  ### Cách dùng kết quả về sau
+
+  Khi báo cáo số liệu trên ViWikiFC, **không được gọi lớp `extrinsic` của bộ này là ảo giác ngoại lai thuần túy**. Phải ghi rõ nó là nhãn NEI ánh xạ sang, với khoảng một phần ba không khớp định nghĩa. Đã ghi vào mục 3 `docs/DATA.md` và mục 4 `CLAUDE.md`. Cùng cảnh báo áp cho ISE-DSC01, nơi NEI cũng ánh xạ sang `extrinsic` — nhưng bộ đó **không kiểm chứng được** vì nhãn NEI của nó không có bằng chứng.
+
+  Dữ liệu thô 100 dòng kèm cả hai cột gán nhãn và ghi chú: `results/nei_mapping_audit.csv`.
 
 - [ ] **T14** · M · Chia tập và báo cáo rò rỉ
   - Hiện thực `group_split`. Chia ViHallu và ISE-DSC01 80/10/10 seed 42. ViWikiFC và ViFactCheck giữ split gốc.
