@@ -42,6 +42,10 @@ from vihallulens.evaluation.metrics import (  # noqa: E402
     compute_metrics,
     summarise_runs,
 )
+from vihallulens.evaluation.telemetry import (  # noqa: E402
+    gpu_telemetry,
+    throttling_verdict,
+)
 
 MB = 1024**2
 
@@ -221,6 +225,16 @@ def main() -> int:
     data["train"] = (*data["train"][:2], labels_train)
     data["test"] = (*data["test"][:2], data["test"][2])
 
+    # Read once before anything runs, and again after each seed. Running the three encoders in
+    # one session is perfectly fine for the accuracy figures — throttling makes a card slower,
+    # not wrong — but it does distort ms/mẫu, so the run records enough to say whether it did.
+    readings = []
+    baseline = gpu_telemetry()
+    if baseline is not None:
+        readings.append(baseline)
+        print(f"  nhiệt độ trước khi chạy : {baseline['temperature_c']:.0f} °C, xung SM "
+              f"{baseline['sm_clock_mhz']:.0f}/{baseline['sm_clock_max_mhz']:.0f} MHz")
+
     runs = []
     for offset in range(args.seeds):
         seed = REQUIRED_SPLIT_SEED + offset
@@ -228,9 +242,13 @@ def main() -> int:
         print(f"  --- seed {seed} ({offset + 1}/{args.seeds}) ---")
         result = train_once(spec, data, seed, args.epochs, args.lr, device)
         runs.append(result)
+        after = gpu_telemetry()
+        if after is not None:
+            readings.append(after)
+        heat = f"   {after['temperature_c']:.0f} °C" if after is not None else ""
         print(f"      macro-F1 {result['metrics']['macro_f1']:.4f}   "
               f"huấn luyện {result['train_seconds'] / 60:.1f} phút   "
-              f"VRAM đỉnh {result['peak_vram_mb']:,.0f} MB")
+              f"VRAM đỉnh {result['peak_vram_mb']:,.0f} MB{heat}")
 
     across_seeds = summarise_runs([run["metrics"] for run in runs])
     # The seed closest to the average is the one whose predictions get the test-set interval:
@@ -261,6 +279,17 @@ def main() -> int:
     print(f"  VRAM đỉnh               : {peak_vram:,.0f} MB")
     print(f"  Tổng thời gian huấn luyện: {total_minutes:.1f} phút cho {args.seeds} seed")
 
+    throttled = False
+    if readings:
+        throttled, reason = throttling_verdict(readings)
+        print()
+        if throttled:
+            print(f"  CẢNH BÁO HẠ XUNG: {reason}.")
+            print("  Điểm số KHÔNG bị ảnh hưởng — hạ xung làm chậm chứ không làm sai. Nhưng")
+            print("  ms/mẫu của lần chạy này không so thẳng được với mô hình chạy ở phiên khác.")
+        else:
+            print(f"  Không thấy hạ xung: {reason}.")
+
     config = {
         "experiment": "E09",
         "dataset": {"name": args.dataset, "split_seed": REQUIRED_SPLIT_SEED},
@@ -280,6 +309,8 @@ def main() -> int:
         "train_minutes_total": total_minutes,
         "std_method": "độ lệch chuẩn qua seed; khoảng tin cậy từ bootstrap tập test",
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
+        "gpu_throttled": throttled,
+        "gpu_telemetry": readings,
     }
     record = log_result(f"e09_{args.model}", config, metrics, extra, path=args.results_path)
     print()

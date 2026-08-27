@@ -17,14 +17,13 @@ from measure_throughput import (  # noqa: E402
     assign_tier,
     format_duration,
     log_log_slope,
-    parse_telemetry,
     pick_tier_samples,
     project_seconds,
     spread,
-    throttling_verdict,
     tier_label,
     tiers_without_truncation,
 )
+from vihallulens.evaluation.telemetry import parse_telemetry, throttling_verdict
 
 
 def sample(n_tokens: int) -> dict:
