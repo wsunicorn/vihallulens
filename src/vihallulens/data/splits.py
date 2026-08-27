@@ -12,12 +12,33 @@ to be reported, which is what section 6 of docs/DATA.md is for.
 
 from __future__ import annotations
 
+import hashlib
+
 import numpy as np
 import pandas as pd
 
 DEFAULT_RATIOS = (0.8, 0.1, 0.1)
 SPLIT_NAMES = ("train", "dev", "test")
 GROUP_COLUMN = "context_id"
+
+
+def shuffle_order(groups, seed: int) -> list[str]:
+    """Deal the groups out in a fixed pseudo-random order that is the same everywhere.
+
+    Each group is sorted by a hash of ``seed`` and its own id, rather than by shuffling a list
+    with a random generator. The point is portability, and it was not a theoretical concern:
+    at T18 the same seed and the same data produced 5.598/702/700 on the development machine
+    and 5.632/706/662 on Kaggle, which runs a different Python and a different NumPy. A split
+    that changes with the library version is not a reproducible split, and every experiment
+    from here on rests on this one.
+
+    SHA-256 of a string is fixed by the standard rather than by a library version, and
+    ``sorted`` is stable, so this ordering depends on nothing but the seed and the ids.
+    """
+    return sorted(
+        (str(group) for group in groups),
+        key=lambda group: hashlib.sha256(f"{seed}:{group}".encode()).hexdigest(),
+    )
 
 
 def assert_no_leakage(
@@ -73,11 +94,7 @@ def group_split(
             f"chỉ có {len(sizes)} nhóm {group_col}, không đủ chia thành {len(SPLIT_NAMES)} tập"
         )
 
-    # Sorting before shuffling is what makes the seed enough: the group order must not depend
-    # on the order rows happened to arrive in.
-    order = np.asarray(sizes.index)
-    rng = np.random.default_rng(seed)
-    rng.shuffle(order)
+    order = shuffle_order(sizes.index, seed)
 
     targets = {name: ratio * len(df) for name, ratio in zip(SPLIT_NAMES, ratios, strict=True)}
     filled = dict.fromkeys(SPLIT_NAMES, 0)

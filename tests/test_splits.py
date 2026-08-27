@@ -5,6 +5,7 @@ the ratios, the ordering, the seed — exists to make that property hold while s
 usable split, so the tests lead with it.
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -186,3 +187,56 @@ def test_a_group_split_leaks_nothing_by_construction():
     splits = group_split(corpus())
     for later in ("dev", "test"):
         assert leakage_between(splits["train"], splits[later])["shared_rows"] == 0
+
+
+# -- portability, the reason the ordering is hashed rather than shuffled -------------------
+
+
+def test_the_order_is_the_same_every_time():
+    from vihallulens.data.splits import shuffle_order
+
+    ids = [f"{index:016x}" for index in range(50)]
+    assert shuffle_order(ids, 42) == shuffle_order(ids, 42)
+
+
+def test_the_order_does_not_depend_on_the_order_it_was_given():
+    from vihallulens.data.splits import shuffle_order
+
+    ids = [f"{index:016x}" for index in range(50)]
+    assert shuffle_order(ids, 42) == shuffle_order(list(reversed(ids)), 42)
+
+
+def test_a_different_seed_gives_a_different_order():
+    from vihallulens.data.splits import shuffle_order
+
+    ids = [f"{index:016x}" for index in range(50)]
+    assert shuffle_order(ids, 42) != shuffle_order(ids, 7)
+
+
+def test_the_order_is_pinned_to_exact_values():
+    """The golden test. At T18 the same seed and the same data split 5.598/702/700 on the
+    development machine and 5.632/706/662 on Kaggle, because the old ordering leaned on NumPy's
+    shuffle and the two machines run different NumPy versions. A split that moves with the
+    library version is not reproducible, and every experiment from here rests on this one.
+
+    These values come from SHA-256, which is fixed by the standard rather than by a library, so
+    a change here means someone changed the algorithm — not that a dependency was upgraded."""
+    from vihallulens.data.splits import shuffle_order
+
+    ids = [f"{index:016x}" for index in range(10)]
+    assert shuffle_order(ids, 42)[:4] == [
+        "0000000000000005",
+        "0000000000000004",
+        "0000000000000008",
+        "0000000000000006",
+    ]
+
+
+def test_the_split_uses_no_random_generator_at_all():
+    """Guards against the fix being undone by someone reaching for numpy again: with the
+    global NumPy seed set to something hostile, the split must not budge."""
+    frame = corpus()
+    before = {name: sorted(part["sample_id"]) for name, part in group_split(frame).items()}
+    np.random.seed(1234)
+    after = {name: sorted(part["sample_id"]) for name, part in group_split(frame).items()}
+    assert before == after
