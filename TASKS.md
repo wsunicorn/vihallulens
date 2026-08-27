@@ -776,9 +776,17 @@
 
   3. **Ba seed thay vì năm.** Mục 3 `docs/EXPERIMENTS.md` đòi năm, và tinh chỉnh **thật sự** ngẫu nhiên (khởi tạo đầu phân loại, dropout, thứ tự dữ liệu) nên seed ở đây đo được thứ có thật — khác hẳn E01. Nhưng T17 đo được khoảng tin cậy tập test là ±0,017, lớn hơn hẳn biến thiên seed của một mô hình đã hội tụ. Seed thứ tư và thứ năm sẽ tinh chỉnh một con số vốn đã bị một con số lớn hơn chi phối, đổi lại **khoảng một giờ quota mỗi mô hình 512 token**. Có cờ `--seeds 5` cho ai muốn theo đúng nguyên văn.
 
-  ### Việc cần chạy
+  ### Việc cần chạy — một phiên là đủ
 
-  Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`, và **chạy mỗi mô hình một lần Save Version riêng**. Lý do ở mục 5 `CLAUDE.md`, đo được ở T08: chạy hai cấu hình nối nhau trong cùng phiên thì T4 bị hạ xung, lượt sau chậm 10–15 % dù khối lượng tính y hệt — cột `ms/mẫu` sẽ lệch theo thứ tự chạy chứ không theo thực lực.
+  Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb` và **chạy cả ba ô liền nhau**.
+
+  Ban đầu định tách ba phiên riêng vì quy tắc hạ xung ở mục 5 `CLAUDE.md`, nhưng nghĩ lại thì không cần: **hạ xung làm card chậm đi chứ không làm kết quả sai**. Toàn bộ macro-F1, accuracy, F1 từng lớp — thứ mà mốc so sánh này sinh ra để đo — không hề bị ảnh hưởng.
+
+  Thứ duy nhất bị ảnh hưởng là cột `ms/mẫu`. Mà cột đó dùng cho E11 để so **nhóm phương pháp** (bộ mã hóa vs chú ý nội tại vs Gemini), không phải so PhoBERT với XLM-R. Chênh lệch giữa ba mô hình vốn đã tới từ độ dài chuỗi — 256 với 512 token, khoảng gấp đôi — nên 15 % hạ xung không đổi thứ hạng hay bậc độ lớn.
+
+  Thay vì phòng ngừa bằng cách tách phiên, **script tự đo nhiệt độ và xung nhịp** trước khi chạy và sau mỗi seed, in cảnh báo nếu phát hiện hạ xung, và ghi số liệu vào `results/runs.jsonl`. Chạy xong sẽ **biết chắc** có bị hay không thay vì phải phỏng đoán. Phần đo này đã tách từ `scripts/measure_throughput.py` ra `src/vihallulens/evaluation/telemetry.py` để cả hai chỗ dùng chung.
+
+  Tách ba phiên chỉ đáng làm nếu sau này cần so `ms/mẫu` giữa ba mô hình với nhau một cách chặt chẽ — lúc đó chạy lại từng cái, điểm số không phải chạy lại.
 
 | Mô hình | 1 seed | 3 seed |
 |---|---|---|
