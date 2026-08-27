@@ -28,6 +28,10 @@ dependencies = [
     "python-dotenv",
     # Truy xuất
     "rank-bm25",
+    # Tách từ tiếng Việt — PhoBERT được huấn luyện trên văn bản đã tách từ, đưa văn bản thô
+    # vào thì từ vựng không khớp lúc huấn luyện và điểm tụt. Chỉ PhoBERT cần; XLM-R và
+    # InfoXLM dùng SentencePiece nên không. Chốt ở T18. Thư viện nhẹ, chỉ một mô hình CRF.
+    "pyvi",
     # Dịch vụ
     "fastapi",
     "uvicorn",

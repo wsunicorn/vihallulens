@@ -744,9 +744,51 @@
 
   `ruff` sạch, `pytest` **402 ca xanh** (thêm 62 ca).
 
-- [ ] **T18** · M · E09 baseline bộ mã hóa
+- [ ] **T18** · M · E09 baseline bộ mã hóa — **công cụ đã sẵn sàng 27/08/2026, chờ chạy trên Kaggle**
   - Tinh chỉnh PhoBERT-large, XLM-R-large, InfoXLM-large ba lớp trên ViHallu.
   - **Kiểm tra:** ba dòng kết quả, kèm ms/mẫu và VRAM đỉnh.
+
+  **Task này để làm gì.** Đây là **mốc so sánh nghiêm túc nhất** của đề tài. Khác E01 chỉ dùng hai đặc trưng bề mặt, ba mô hình này thật sự **đọc** văn bản; khác E10 dùng Gemini, chúng **chạy cục bộ** không tốn API. Nếu phương pháp chú ý nội tại không vượt được chúng thì lập luận về chi phí ở câu hỏi CH2 không đứng vững.
+
+  **Đã chuẩn bị:** `src/vihallulens/data/segmentation.py`, `src/vihallulens/detect/encoder.py`, `scripts/train_encoder_baseline.py`, `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`. `pytest` **419 ca xanh** (thêm 17 ca).
+
+  ### Một quyết định về phụ thuộc, đã hỏi và được duyệt
+
+  **PhoBERT được huấn luyện trên văn bản đã tách từ.** Tiếng Việt viết mỗi âm tiết rời nhau, nên `Hà Nội` là hai mảnh của một từ; PhoBERT học trên dạng đã ghép `Hà_Nội`. Đưa văn bản thô vào là đặt nó trước một bộ từ vựng nó chưa từng thấy, và điểm tụt vì lý do **chẳng liên quan gì tới bài toán**.
+
+  Rủi ro nếu bỏ qua: báo cáo ghi "PhoBERT đạt X" rồi đề tài nói vượt PhoBERT; hội đồng hỏi "các em có tách từ không?" mà trả lời không thì **mốc so sánh đó bị bác bỏ**.
+
+  Theo mục 7 `CLAUDE.md` thì thêm phụ thuộc phải hỏi, nên đã hỏi và được duyệt thêm **`pyvi`** — thư viện nhẹ, chỉ một mô hình CRF vài MB, không kéo theo Java. Chỉ PhoBERT dùng; XLM-R và InfoXLM dùng SentencePiece trên văn bản thô nên **không được** đưa văn bản đã tách từ vào, dấu gạch dưới sẽ bị tokenize thành ký tự thường.
+
+  ### Một con số đo trước khi chạy, và nó đổi cách đọc kết quả
+
+  **Khoảng 50 % cặp của ViHallu vượt giới hạn 256 token của PhoBERT.** Ở mức 512 token của hai mô hình kia thì chỉ khoảng 1,4 %.
+
+  Đây không phải lựa chọn mà là **trần cứng**: PhoBERT không thể vượt 256 vị trí. Hệ quả: nếu PhoBERT thua thì phải ghi rõ nó thua **một phần vì không đọc hết được ngữ cảnh**, chứ không kết luận là mô hình yếu hơn. Script tự in tỷ lệ này trước mỗi lần chạy.
+
+  Đã cân nhắc ép cả ba xuống 256 token cho công bằng, nhưng bỏ: mục đích của mốc so sánh là **thứ mạnh nhất mà đề tài phải vượt**, nên mỗi mô hình được dùng cấu hình tốt nhất của nó, và tỷ lệ cắt được báo cáo kèm điểm số.
+
+  ### Ba quyết định thiết kế khác
+
+  1. **Viết vòng lặp huấn luyện bằng tay, không dùng `transformers.Trainer`.** Repo giải ra `transformers` 5.15, mà tham số của `Trainer` ở nhánh 5.x khác nhánh 4.x — nhánh mà gần như mọi ví dụ trên mạng dùng. Một vòng lặp bốn mươi dòng không đáng để đánh cược rủi ro phiên bản trên một lần chạy tốn quota GPU.
+
+  2. **Cặp đầu vào đúng theo mẫu prompt đã chốt ở T07:** vế trái là mọi thứ mô hình được cho (ngữ cảnh + câu hỏi), vế phải là văn bản cần chấm (phản hồi). Nhờ vậy so sánh với phương pháp chú ý là so **phương pháp**, không phải so xem ai được cho xem nhiều hơn.
+
+  3. **Ba seed thay vì năm.** Mục 3 `docs/EXPERIMENTS.md` đòi năm, và tinh chỉnh **thật sự** ngẫu nhiên (khởi tạo đầu phân loại, dropout, thứ tự dữ liệu) nên seed ở đây đo được thứ có thật — khác hẳn E01. Nhưng T17 đo được khoảng tin cậy tập test là ±0,017, lớn hơn hẳn biến thiên seed của một mô hình đã hội tụ. Seed thứ tư và thứ năm sẽ tinh chỉnh một con số vốn đã bị một con số lớn hơn chi phối, đổi lại **khoảng một giờ quota mỗi mô hình 512 token**. Có cờ `--seeds 5` cho ai muốn theo đúng nguyên văn.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`, và **chạy mỗi mô hình một lần Save Version riêng**. Lý do ở mục 5 `CLAUDE.md`, đo được ở T08: chạy hai cấu hình nối nhau trong cùng phiên thì T4 bị hạ xung, lượt sau chậm 10–15 % dù khối lượng tính y hệt — cột `ms/mẫu` sẽ lệch theo thứ tự chạy chứ không theo thực lực.
+
+| Mô hình | 1 seed | 3 seed |
+|---|---|---|
+| PhoBERT-large | ~7 phút | ~25 phút |
+| XLM-R-large | ~25 phút | ~80 phút |
+| InfoXLM-large | ~25 phút | ~80 phút |
+
+  Tổng khoảng **3 giờ**, trong hạn mức 30 giờ/tuần.
+
+  **Mốc phải vượt là 0,702** — cận trên khoảng tin cậy của E01, không phải 0,670. Và chỗ đáng nhìn nhất là **F1 của lớp `intrinsic`**: E01 chỉ đạt 0,523 và bắt đúng 45,2 %, nên bộ mã hóa cải thiện được bao nhiêu ở đó mới là phần nói lên điều gì.
 
 - [ ] **T19** · M · E10 baseline LLM giám khảo
   - Prompt Gemini free tier trên **tối đa 300 mẫu** tập test, có xử lý rate limit và cache kết quả ra file. Khóa đọc từ `.env`, không hardcode.
