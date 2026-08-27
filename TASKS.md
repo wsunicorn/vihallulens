@@ -979,11 +979,51 @@ ERROR: Package 'vihallulens' requires a different Python: 3.12.13 not in '<3.12,
 
   Vì cấu hình giống hệt XLM-R mà XLM-R chạy tốt, kết luận là **bất ổn riêng của checkpoint InfoXLM**, không phải của cấu hình. Ghi vào báo cáo như một kết quả về **độ ổn định** chứ không phải một ô trống — và chính nó là luận điểm cho CH2: phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
 
-  **Đang thử ở learning rate thấp hơn.** `notebooks/t18b_thu_infoxlm_lr_thap.ipynb` chạy hai lần thử rẻ — `5e-6` rồi `2e-6`, mỗi lần một seed một epoch, tổng khoảng 25 phút kể cả tải mô hình 2,24 GB. Rẻ hơn nhiều so với 90 phút của một lượt ba seed ba epoch, và đủ để biết hướng có đúng không.
+  ### Hạ learning rate không cứu được, và dữ liệu chỉ đúng hướng ngược lại
 
-  Vì sao hạ learning rate là hướng đúng chứ không phải đoán mò: loss của InfoXLM **không nằm im tuyệt đối** mà nảy quanh `ln(3)`, từ 1,0131 tới 1,1923. Đó là dáng của một mô hình đã rơi vào **nghiệm thoái hóa** — đoán theo tỷ lệ nền của ba lớp — chứ không phải dáng của một mô hình không được cập nhật gì. Hai dạng hỏng này trông giống nhau ở con số cuối nhưng khác nhau ở đây, và chúng đòi hai cách chữa ngược nhau: nghiệm thoái hóa thì **giảm** bước cập nhật, còn không được cập nhật thì phải **tăng**.
+  Thử hai mức thấp hơn, mỗi mức một seed một epoch, tổng 19 phút GPU:
 
-  Giới hạn tự đặt: **thử tối đa hai lần**. Cả hai hỏng thì dừng, ghi nhận đây là một kết quả về độ ổn định chứ không phải một ô trống cần lấp — quota GPU 30 giờ/tuần còn phải để cho T19 và T20.
+| lr | loss cuối epoch 1 | macro-F1 |
+|---|---|---|
+| `1e-5` | nảy 1,0131 – 1,1923 | 0,167 · 0,179 · 0,237 |
+| `5e-6` | 1,1055 | 0,1670 |
+| `2e-6` | **1,0992** | 0,1670 |
+
+  Giả thuyết ban đầu là **nghiệm thoái hóa do bước cập nhật quá lớn**, vì loss ở `1e-5` nảy quanh `ln(3)` chứ không nằm im. Nếu đúng thì hạ learning rate phải kéo loss **rời khỏi** `ln(3)`.
+
+  Kết quả ngược hẳn: càng hạ, loss càng **bám sát** `ln(3) = 1,0986`. Ở `2e-6` nó dừng ở 1,0992, tức lệch 0,0006. Đó là dáng của một mô hình **không nhúc nhích**, đúng dạng hỏng còn lại — dạng đòi cách chữa ngược lại, tức **tăng** bước cập nhật chứ không giảm.
+
+  Ghi lại vì đây là bài học có thể dùng lại: hai dạng hỏng cho cùng một con số cuối 0,167, và **cách phân biệt là nhìn loss hội tụ về đâu khi hạ learning rate**. Bám vào `ln(3)` là không nhúc nhích; rời ra rồi lại nảy về là thoái hóa.
+
+  ### Năm giả thuyết cơ học, kiểm hết bằng CPU, không tốn quota
+
+  Vì hai lượt GPU đã dùng hết hạn mức tự đặt, phần truy nguyên còn lại làm trên CPU. Cả bốn đều **bị bác bỏ**, và điều đó tự nó đáng ghi — nó khoanh vùng nguyên nhân lại rất hẹp.
+
+| Giả thuyết | Cách kiểm | Kết quả |
+|---|---|---|
+| Trọng số thân mô hình bị khởi tạo ngẫu nhiên trong im lặng | `output_loading_info=True` | **Bác bỏ.** Thân nạp đủ, chỉ thiếu 4 trọng số của đầu phân loại đúng như XLM-R |
+| Tên khóa trong checkpoint không khớp | Đọc chỉ mục file, không tải cả 2,24 GB | InfoXLM dùng tiền tố `embeddings.`/`encoder.` còn XLM-R dùng `roberta.` — nhưng `transformers` tự ánh xạ đúng, xác nhận ở dòng trên |
+| Cấu hình khác nhau ở chỗ nào đó | Tải hai `config.json` rồi so từng khóa | **Bác bỏ.** Giống hệt nhau, chỉ khác ba khóa không ảnh hưởng gì (`use_cache`, `position_embedding_type`, `transformers_version`) |
+| Tràn số float16 như lỗi lớp 27 ở T07 | Đo đỉnh `\|activation\|` từng lớp trên dữ liệu thật | **Bác bỏ.** Đỉnh 25,2 — bằng **0,04 %** trần 65.504 của float16. XLM-R còn cao hơn ở 32,1 |
+| Vector CLS thoái hóa, đầu phân loại nhận cùng một đầu vào | Khoảng cách cosin giữa các mẫu | **Bác bỏ, và ngược lại.** InfoXLM giãn cách 0,0261 so với 0,0020 của XLM-R — CLS của nó **phân biệt tốt hơn** |
+
+  Còn lại: cùng kiến trúc, cùng cấu hình, trọng số nạp đủ, biên độ an toàn, biểu diễn phân biệt tốt — mà vẫn không học. Nguyên nhân nằm ở chính bộ trọng số InfoXLM tương tác với vòng tinh chỉnh này, và **truy tiếp thì tốn hơn giá trị thu được**: XLM-R đã đạt 0,771 và đó mới là mốc đề tài phải vượt.
+
+  **Chốt: InfoXLM-large không tinh chỉnh được trên cấu hình này.** Ghi vào báo cáo như một kết quả về độ ổn định, kèm bảng trên để thấy đây là kết luận sau khi loại trừ, không phải một lần thử qua loa.
+
+  ### Hai thứ giữ lại được từ một thí nghiệm thất bại
+
+  **1. `scripts/check_checkpoint.py`** — soi một checkpoint trên CPU trước khi tốn quota GPU. Chạy cả bốn phép kiểm trên trong vài phút:
+
+```
+python scripts/check_checkpoint.py microsoft/infoxlm-large FacebookAI/xlm-roberta-large
+```
+
+  Dùng lại được cho ablation Sailor2 ở E13 và cho mọi nấc lùi mô hình ở mục 5 `CLAUDE.md`. Lần này mất nửa buổi để làm bằng tay bốn việc mà script làm trong hai phút.
+
+  **2. Báo cáo nạp trọng số, ngay trong vòng huấn luyện.** `transformers` vốn in ra bảng nói trọng số nào thiếu, nhưng T18 **tắt log** bằng `logging.set_verbosity_error()` để chặn dòng cảnh báo cắt chuỗi lặp lại mỗi batch — và tắt luôn đúng thông báo cần đọc. Vì thế giả thuyết "thân mô hình chưa bao giờ được nạp" sống sót lâu hơn mức đáng lẽ.
+
+  Nay `build_from_hub` tự đọc `output_loading_info`, in ra một dòng, và **ném lỗi ngay** nếu thân mô hình thiếu trọng số — thay vì để một mạng khởi tạo ngẫu nhiên mang tên nổi tiếng ngốn hết một phiên GPU. Tách thành `src/vihallulens/detect/loading_report.py` với 12 ca kiểm thử, gồm cả ca khẳng định đọc được cả `set` lẫn `list` vì hai phiên bản `transformers` trả về hai kiểu khác nhau.
 
   ### Một lỗi nữa: hai loại độ lệch dùng chung một tên khóa
 
@@ -1004,7 +1044,7 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   Cùng lúc, `docs/EXPERIMENTS.md` Bảng 1 đổi cột `±` thành **khoảng tin cậy 95 % của tập test** cho mọi hàng. Trước đó hàng E01 ghi sai số bootstrap còn hàng bộ mã hóa định ghi độ lệch qua seed — hai đại lượng khác nhau trong một cột, đúng cái nhầm vừa sửa trong code.
 
-  `pytest` **438 ca xanh**.
+  `pytest` **452 ca xanh**.
 
   ### Cách chạy — một phiên là đủ (đã chạy 27/08/2026)
 
