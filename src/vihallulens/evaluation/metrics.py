@@ -140,6 +140,12 @@ def bootstrap_ci(
 
     The reason is simply that 700 samples is not many. A method scoring 0,02 above another on
     this test set has not been shown to be better; the intervals overlap almost entirely.
+
+    The spread of the bootstrap distribution is returned as ``_se`` — a standard *error* — and
+    deliberately not as ``_std``, which :func:`summarise_runs` uses for the spread across seeds.
+    They answer different questions, and while they shared a name the merged record silently
+    kept whichever was written last: at T18 the E09 records went out carrying the bootstrap
+    number under the seed number's name, contradicting the table the same run had printed.
     """
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
@@ -164,5 +170,5 @@ def bootstrap_ci(
         low, high = np.percentile(values, [tail, 100 - tail])
         summary[f"{key}_lo"] = float(low)
         summary[f"{key}_hi"] = float(high)
-        summary[f"{key}_std"] = float(np.std(values, ddof=1))
+        summary[f"{key}_se"] = float(np.std(values, ddof=1))
     return summary
