@@ -318,3 +318,35 @@ def test_a_run_that_trained_normally_is_counted_as_learned():
 
     assert result["stopped_early"] is False
     assert result["learned"] is True
+
+
+# -- which run carries the confidence interval ---------------------------------------------
+
+
+def interval_run(scores):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from train_encoder_baseline import pick_interval_run
+
+    return pick_interval_run([{"metrics": {"macro_f1": score}} for score in scores])
+
+
+def test_the_interval_comes_from_the_most_ordinary_run():
+    """An interval around an outlier describes that run, not the method."""
+    assert interval_run([0.60, 0.75, 0.90]) == 1
+
+
+def test_two_survivors_do_not_hand_the_interval_to_the_better_one():
+    """Discarding a dead seed leaves an even number, and the earlier sorted-list version always
+    reached for the upper of the two. A model that lost a seed would then quietly report the
+    interval of its better half — a bias that grows precisely when the run went badly."""
+    # Two runs are equally far from their own mean, so the tie has to break on something
+    # unrelated to the score. It breaks on seed order: whichever ran first, high or low.
+    assert interval_run([0.7542, 0.7234]) == 0
+    assert interval_run([0.7234, 0.7542]) == 0
+
+
+def test_a_lone_survivor_carries_it():
+    assert interval_run([0.71]) == 0

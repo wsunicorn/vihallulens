@@ -754,7 +754,7 @@
 
   **Task này để làm gì.** Đây là **mốc so sánh nghiêm túc nhất** của đề tài. Khác E01 chỉ dùng hai đặc trưng bề mặt, ba mô hình này thật sự **đọc** văn bản; khác E10 dùng Gemini, chúng **chạy cục bộ** không tốn API. Nếu phương pháp chú ý nội tại không vượt được chúng thì lập luận về chi phí ở câu hỏi CH2 không đứng vững.
 
-  **Đã chuẩn bị:** `src/vihallulens/data/segmentation.py`, `src/vihallulens/detect/encoder.py`, `scripts/train_encoder_baseline.py`, `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`. `pytest` **432 ca xanh** (thêm 30 ca).
+  **Đã chuẩn bị:** `src/vihallulens/data/segmentation.py`, `src/vihallulens/detect/encoder.py`, `scripts/train_encoder_baseline.py`, `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`. `pytest` **435 ca xanh** (thêm 33 ca).
 
   ### Một quyết định về phụ thuộc, đã hỏi và được duyệt
 
@@ -906,11 +906,35 @@ ValueError: too many dimensions 'str'
 
   Thêm hai ca kiểm thử chạy trên CPU: một lần chạy với learning rate bằng 0 phải bị đánh dấu không học được, và một lần chạy trên bài toán đồ chơi **có tín hiệu thật** phải **không** bị dừng nhầm. Ca thứ hai quan trọng không kém: dừng sớm quá tay thì vứt mất seed tốt. `pytest` **432 ca xanh**.
 
-  **Số đúng của PhoBERT, tính tay từ hai seed học được:** macro-F1 **0,7388 ± 0,0154**. Khoảng tin cậy tập test lấy từ seed 43 sẽ hơi khác con số `[0,6887 – 0,7546]` đang in, vì bản in đó lấy từ seed 44 do seed chết còn nằm trong danh sách và làm lệch vị trí "ở giữa".
+  **Số đúng của PhoBERT, tính tay từ hai seed học được:** macro-F1 **0,7388 ± 0,0218** (độ lệch chuẩn mẫu, đúng quy ước `summarise_runs`). Khoảng tin cậy tập test sẽ lấy từ seed 43 chứ không phải seed 44 như bản in hỏng.
 
   **Không cần chạy lại PhoBERT.** Điểm của từng seed là số thật, đo trên mô hình thật; chỉ có phép tính gộp là sai. `results/runs.jsonl` đã lưu `macro_f1_per_seed` nên tính lại được mà không tốn GPU. Lượt chạy đang thực hiện cứ để chạy tiếp cho XLM-R và InfoXLM.
 
   **Một kết quả phụ đáng đưa vào báo cáo.** Ngay ở learning rate 1e-5, PhoBERT vẫn hỏng một trong ba lần. Tức bất ổn khi tinh chỉnh **giảm đi chứ chưa mất hẳn**, và đây là con số thật về chi phí vận hành của hướng bộ mã hóa trên phần cứng cấp T4: muốn có một mô hình dùng được thì phải chạy nhiều seed rồi bỏ bớt. Phương pháp chú ý nội tại **không tinh chỉnh gì cả** nên không có rủi ro này — một luận điểm cho câu hỏi CH2 mà lượt chạy hỏng vừa rồi tự nhiên cung cấp.
+
+  ### Ba chỗ sửa thêm trước khi chạy lại
+
+  Vì lượt chạy phải làm lại từ đầu, sửa luôn ba thứ đã biết là sai chứ không để dồn.
+
+  **1. Chọn seed mang khoảng tin cậy: lấy seed gần trung bình, không lấy theo vị trí.** Bootstrap lấy mẫu lại tập test nên nó mô tả **một** bộ dự đoán, phải chọn ra một lần chạy để làm đại diện — và nên chọn lần bình thường nhất, vì khoảng tin cậy quanh một giá trị dị biệt thì mô tả lần chạy đó chứ không mô tả phương pháp.
+
+  Cách cũ sắp xếp rồi lấy phần tử ở vị trí `len // 2`. Với **số chẵn** lần chạy — đúng thứ mà việc loại một seed chết để lại — nó luôn với sang cái **cao hơn** trong hai cái ở giữa. Nghĩa là mô hình nào mất một seed thì lặng lẽ được lấy khoảng tin cậy từ nửa tốt hơn của chính nó, và thiên lệch ấy lớn dần đúng vào lúc lượt chạy diễn ra tệ nhất.
+
+  Nay chọn lần chạy **gần trung bình nhất**. Hòa thì phân định theo thứ tự seed, tức theo thứ tự chạy — một tiêu chí không liên quan gì tới điểm số. Kèm ba ca kiểm thử. Với PhoBERT, khoảng tin cậy nay lấy từ seed 43 thay vì seed 44.
+
+  Bảng kết quả cũng **ghi rõ số seed của lần chạy mang khoảng tin cậy**, thay vì chỉ nói "seed ở giữa" — đọc báo cáo sau này sẽ biết ngay con số đó tới từ đâu.
+
+  **2. Nới `requires-python` thành `>=3.11`.** Mỗi phiên Kaggle đều in một dòng đỏ:
+
+```
+ERROR: Package 'vihallulens' requires a different Python: 3.12.13 not in '<3.12,>=3.11'
+```
+
+  Chặn trên không ngăn được gì — Kaggle chạy 3.12 và không cho đổi — mà chỉ làm `pip install -e .` hỏng, khiến gói phải nạp qua đường `sys.path` vòng vèo. Trọn bộ kiểm thử đã chạy xanh trên 3.12 của Kaggle, nên chặn trên chỉ tạo tiếng ồn. Mục 3 `CLAUDE.md` vẫn giữ 3.11 là phiên bản của máy phát triển; đây chỉ là nới **giới hạn cài đặt**.
+
+  **3. Notebook.** Sửa một câu tự mâu thuẫn còn sót ("đừng chạy cả ba trong một phiên" nằm ngay trên đoạn giải thích vì sao chạy một phiên là được), sửa chỗ ghi nhầm learning rate cũ là 1e-5 (đúng ra là 2e-5), thay ước tính thời gian bằng số đo thật, và ghi lại kết quả PhoBERT của lượt 27/08 để lần chạy sau có mốc đối chiếu.
+
+  `pytest` **435 ca xanh**.
 
   ### Việc cần chạy — một phiên là đủ
 
