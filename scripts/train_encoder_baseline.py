@@ -155,6 +155,7 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
 
     model.train()
     stepped = 0
+    stopped_early = False
     first_epoch_loss = []
     for epoch in range(epochs):
         for step, (ids, mask, target) in enumerate(train_loader, start=1):
@@ -189,6 +190,7 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
             if recent > NO_LEARNING_LOSS:
                 print(f"      DỪNG SỚM: hết một epoch mà loss vẫn {recent:.4f}, quanh "
                       f"ln(3) = 1,0986. Mô hình chưa rời điểm xuất phát.")
+                stopped_early = True
                 break
     train_seconds = time.perf_counter() - started
 
@@ -213,10 +215,16 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
+    # Two independent ways of catching a run that learned nothing, and a run needs to fail
+    # neither to count. Measured at T18: the loss test caught a PhoBERT seed the prediction test
+    # missed, because it answered `intrinsic` 699 times and something else once — two distinct
+    # classes, so nothing looked collapsed, while the loss had never moved off ln(3).
     return {
         "metrics": compute_metrics(data["test"][2], y_pred, y_proba, proba_labels=LABELS),
         "y_pred": y_pred,
+        "stopped_early": stopped_early,
         "collapsed": has_collapsed(y_pred),
+        "learned": not (stopped_early or has_collapsed(y_pred)),
         "n_steps": stepped,
         "n_params": n_params,
         "train_seconds": train_seconds,
@@ -307,11 +315,11 @@ def main() -> int:
               f"huấn luyện {result['train_seconds'] / 60:.1f} phút   "
               f"VRAM đỉnh {result['peak_vram_mb']:,.0f} MB{heat}")
 
-    # A collapsed run has no information in it, and averaging one in beside a run that worked
-    # produces a number describing neither. At T18 that mistake put PhoBERT's mean at 0,5672
-    # while its confidence interval read [0,7228 – 0,7860] — a mean outside its own interval,
-    # which is the shape of the error rather than a subtle bias.
-    good = [run for run in runs if not run["collapsed"]]
+    # A run that learned nothing has no information in it, and averaging one in beside a run
+    # that worked produces a number describing neither. The tell is always the same shape: at
+    # T18 this mistake twice put PhoBERT's mean *outside its own confidence interval*, because
+    # the mean used every seed while the interval came from one that had worked.
+    good = [run for run in runs if run["learned"]]
     dead = len(runs) - len(good)
 
     print()
@@ -320,7 +328,12 @@ def main() -> int:
     print("-" * 80)
     print("  macro-F1 từng seed:")
     for offset, run in enumerate(runs):
-        mark = "  ← SỤP ĐỔ, đoán một lớp cho tất cả" if run["collapsed"] else ""
+        if run["stopped_early"]:
+            mark = "  ← KHÔNG HỌC ĐƯỢC, loss đứng ở ln(3), đã loại"
+        elif run["collapsed"]:
+            mark = "  ← SỤP ĐỔ, đoán một lớp cho tất cả, đã loại"
+        else:
+            mark = ""
         print(f"    seed {REQUIRED_SPLIT_SEED + offset}: {run['metrics']['macro_f1']:.4f}"
               f"   ({run['n_steps']:,} bước thật){mark}")
 
@@ -333,7 +346,7 @@ def main() -> int:
 
     if dead:
         print()
-        print(f"  CẢNH BÁO: {dead}/{len(runs)} seed sụp đổ, đã LOẠI khỏi thống kê bên dưới.")
+        print(f"  CẢNH BÁO: {dead}/{len(runs)} seed không học được, đã LOẠI khỏi thống kê dưới.")
         print("  Con số dưới đây chỉ tính trên các seed học được, và phải ghi rõ điều đó")
         print("  trong báo cáo — một mốc so sánh sụp đổ ở một phần ba số lần chạy là kết quả")
         print("  về độ ổn định, không phải về chất lượng mô hình.")
@@ -345,7 +358,7 @@ def main() -> int:
     spread = bootstrap_ci(data["test"][2], good[middle]["y_pred"], seed=REQUIRED_SPLIT_SEED)
 
     print()
-    print(f"  Trung bình {len(good)} seed học được, khoảng tin cậy lấy từ seed ở giữa:")
+    print(f"  Trung bình {len(good)}/{len(runs)} seed học được, khoảng tin cậy từ seed ở giữa:")
     print(f"  {'Chỉ số':<14} {'Trung bình':>11} {'± seed':>9}   {'khoảng tin cậy 95 %':>21}")
     for key in ("macro_f1", "accuracy", *[f"f1_{label}" for label in LABELS]):
         print(f"  {key:<14} {across_seeds[key]:>11.4f} {across_seeds[f'{key}_std']:>9.4f}   "
@@ -393,8 +406,9 @@ def main() -> int:
         "peak_vram_mb": peak_vram,
         "n_params_trainable": n_params,
         "n_seeds": args.seeds,
-        "n_seeds_collapsed": dead,
+        "n_seeds_failed": dead,
         "macro_f1_per_seed": [run["metrics"]["macro_f1"] for run in runs],
+        "learned_per_seed": [run["learned"] for run in runs],
         "truncation_rate": cut,
         "train_minutes_total": total_minutes,
         "std_method": "độ lệch chuẩn qua seed; khoảng tin cậy từ bootstrap tập test",
