@@ -77,12 +77,14 @@ Nếu baseline này đạt macro-F1 cao, mọi phương pháp phức tạp hơn 
 
 | Chỉ số | Giá trị | ± lệch chuẩn | Khoảng tin cậy 95 % |
 |---|---|---|---|
-| **macro-F1** | **0,6696** | 0,0177 | **[0,6345 – 0,7024]** |
-| Accuracy | 0,6757 | 0,0180 | [0,6400 – 0,7086] |
-| F1 `no` | 0,7495 | 0,0223 | [0,7029 – 0,7907] |
-| F1 `intrinsic` | **0,5234** | 0,0291 | [0,4631 – 0,5784] |
-| F1 `extrinsic` | 0,7360 | 0,0227 | [0,6903 – 0,7805] |
-| ECE | 0,0611 | — | — |
+| **macro-F1** | **0,6562** | 0,0177 | **[0,6200 – 0,6891]** |
+| Accuracy | 0,6614 | 0,0178 | [0,6257 – 0,6957] |
+| F1 `no` | 0,7418 | 0,0226 | [0,6930 – 0,7830] |
+| F1 `intrinsic` | **0,5327** | 0,0293 | [0,4736 – 0,5852] |
+| F1 `extrinsic` | 0,6942 | 0,0239 | [0,6462 – 0,7394] |
+| ECE | 0,0613 | — | — |
+
+Chạy lại ngày 27/08/2026 sau khi T18 sửa cách chia tập cho tái lập được trên mọi máy. Con số cũ trên tập chia trước là 0,6696; lệch 0,013, **nằm gọn trong khoảng nhiễu ±0,018** — đúng minh họa cho quy tắc ở mục 3.
 
 Chín tham số phải huấn luyện, 0,001 ms mỗi mẫu, không cần GPU. Khoảng tin cậy lấy từ 2.000 lần lấy lại mẫu **tập test**, theo quy tắc ở mục 3.
 
@@ -90,7 +92,7 @@ Hai đặc trưng tái lập đúng bảng trên: độ dài trung bình ra **ch
 
 **Ba điều con số này quyết định:**
 
-1. **Ngưỡng thật để vượt là 0,702, không phải 0,328 mà cũng không phải 0,670.** PhoBERT công bố 32,83 %, nhưng hai đặc trưng bề mặt đã đạt gấp đôi con số đó. Và vì khoảng tin cậy của E01 chạm tới **0,702**, một phương pháp muốn nói là hơn hẳn E01 thì phải vượt mốc đó chứ không phải vượt 0,670 — vượt 0,68 chỉ là nằm trong khoảng nhiễu của cùng một kết quả.
+1. **Ngưỡng thật để vượt là 0,689, không phải 0,328 mà cũng không phải 0,656.** PhoBERT công bố 32,83 %, nhưng hai đặc trưng bề mặt đã đạt gấp đôi con số đó. Và vì khoảng tin cậy của E01 chạm tới **0,689**, một phương pháp muốn nói là hơn hẳn E01 thì phải vượt mốc đó chứ không phải vượt 0,656 — vượt 0,67 chỉ là nằm trong khoảng nhiễu của cùng một kết quả.
 2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Điều đó hợp lý: ảo giác nội tại là xáo trộn thông tin đã có trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và không lộ ra ở hai đặc trưng bề mặt. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh.
 3. **Chi phí gần bằng không** — 9 tham số, 0,001 ms/mẫu, không GPU. Cột chi phí của E11 vì thế có một mốc dưới rất khắc nghiệt.
 
@@ -147,7 +149,7 @@ Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **v�
 
 | Phương pháp | macro-F1 | Acc | F1 no | F1 intr | F1 extr | ms/mẫu | VRAM MB |
 |---|---|---|---|---|---|---|---|
-| Baseline tầm thường (E01) | **0,670** ±0,018 | 0,676 | 0,750 | 0,523 | 0,736 | 0,001 | 0 |
+| Baseline tầm thường (E01) | **0,656** ±0,018 | 0,661 | 0,742 | 0,533 | 0,694 | 0,001 | 0 |
 | PhoBERT tinh chỉnh (E09) | | | | | | | |
 | XLM-R large tinh chỉnh (E09) | | | | | | | |
 | InfoXLM large tinh chỉnh (E09) | | | | | | | |

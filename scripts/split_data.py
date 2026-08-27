@@ -145,7 +145,7 @@ def format_report(
         "|---|---|---|---|---|---|---|",
     ]
 
-    for name in TO_SPLIT:
+    for name in [item for item in TO_SPLIT if item in measured]:
         info = measured[name]
         total = sum(len(part) for part in info["splits"].values())
         for split in SPLIT_NAMES:
@@ -168,7 +168,7 @@ def format_report(
         "| Bộ | Tập | no | intrinsic | extrinsic |",
         "|---|---|---|---|---|",
     ]
-    for name in TO_SPLIT:
+    for name in [item for item in TO_SPLIT if item in measured]:
         for split in SPLIT_NAMES:
             counts = measured[name]["splits"][split]["label"].value_counts()
             total = int(counts.sum())
@@ -188,7 +188,7 @@ def format_report(
         "| Bộ | Tập | Dòng | Ngữ cảnh | Rò rỉ ngữ cảnh | Rò rỉ dòng |",
         "|---|---|---|---|---|---|",
     ]
-    for name in KEEP_ORIGINAL:
+    for name in [item for item in KEEP_ORIGINAL if item in measured]:
         info = measured[name]
         for row in info["leakage"]:
             part = info["splits"][row["split"]]
@@ -240,6 +240,13 @@ def main() -> int:
     parser.add_argument("--raw-dir", type=Path, default=None)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--report-only", action="store_true", help="không chia lại, chỉ đo")
+    parser.add_argument(
+        "--only",
+        nargs="+",
+        choices=[*TO_SPLIT, *KEEP_ORIGINAL],
+        help="chỉ xử lý những bộ này; mặc định làm cả bốn. Dùng khi chỉ cần một bộ, "
+             "ví dụ E09 chỉ cần vihallu",
+    )
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -252,8 +259,14 @@ def main() -> int:
     print("T14 — CHIA TẬP VÀ BÁO CÁO RÒ RỈ")
     print("=" * 80)
 
+    wanted = set(args.only) if args.only else {*TO_SPLIT, *KEEP_ORIGINAL}
+    to_split = [name for name in TO_SPLIT if name in wanted]
+    keep_original = [name for name in KEEP_ORIGINAL if name in wanted]
+    if args.only:
+        print(f"  chỉ xử lý           : {', '.join(sorted(wanted))}")
+
     measured: dict[str, dict] = {}
-    for name in TO_SPLIT:
+    for name in to_split:
         if args.report_only:
             splits = load_all_splits(name, args.interim_dir)
         else:
@@ -266,7 +279,7 @@ def main() -> int:
         )
         print(f"  {name:<12}: {sizes}  ({shares})  tổng {total:,}")
 
-    for name in KEEP_ORIGINAL:
+    for name in keep_original:
         splits = load_all_splits(name, args.interim_dir)
         measured[name] = {"splits": splits, "leakage": leakage_rows(splits)}
 
@@ -284,6 +297,8 @@ def main() -> int:
     raw_dir = find_raw_dir(args.raw_dir)
     public = {}
     for name, (train_file, test_file) in PUBLIC_TEST.items():
+        if name not in measured:
+            continue
         train_ids = raw_context_ids(raw_dir, train_file)
         test_ids = raw_context_ids(raw_dir, test_file)
         public[name] = (len(test_ids & train_ids), len(test_ids))
@@ -293,10 +308,15 @@ def main() -> int:
     for name, (shared, total) in public.items():
         print(f"    {name:<12} {shared:,}/{total:,}")
 
-    args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(format_report(measured, public, args.interim_dir), encoding="utf-8")
+    # A partial run must not overwrite the report covering all four corpora: mục 6
+    # docs/DATA.md points at that file by name, and half of it is worse than none of it.
+    report = args.report
+    if args.only:
+        report = report.with_name(f"{report.stem}_{'_'.join(sorted(wanted))}{report.suffix}")
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(format_report(measured, public, args.interim_dir), encoding="utf-8")
     print()
-    print(f"  Đã ghi {args.report}")
+    print(f"  Đã ghi {report}")
     return 0
 
 

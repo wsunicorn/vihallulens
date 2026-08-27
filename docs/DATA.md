@@ -148,8 +148,10 @@ Hàm `group_split` phải kiểm tra và raise nếu phát hiện `context_id` x
 
 | Bộ | train | dev | test |
 |---|---|---|---|
-| ViHallu | 5.598 (80,0 %) | 702 (10,0 %) | 700 (10,0 %) |
-| ISE-DSC01 | 29.082 (80,0 %) | 3.653 (10,0 %) | 3.634 (10,0 %) |
+| ViHallu | 5.600 (80,0 %) | 700 (10,0 %) | 700 (10,0 %) |
+| ISE-DSC01 | 29.077 (79,9 %) | 3.646 (10,0 %) | 3.646 (10,0 %) |
+
+**Số chia tập đã đổi ở T18 ngày 27/08/2026.** Cách xáo thứ tự nhóm cũ dựa vào bộ sinh số ngẫu nhiên của NumPy, và cùng seed 42 lại cho hai kết quả khác nhau trên hai máy chạy phiên bản thư viện khác nhau — 5.598/702/700 ở máy cá nhân, 5.632/706/662 trên Kaggle. Nay thứ tự lấy từ băm SHA-256 của `(seed, context_id)`, cố định theo chuẩn chứ không theo phiên bản thư viện. Chi tiết ở phần T18 của `TASKS.md`.
 
 Tỷ lệ chỉ **xấp xỉ** 80/10/10 vì chia cả nhóm chứ không chia dòng — một ngữ cảnh phải rơi trọn vào một tập. Sai lệch nhỏ vì nhóm nhỏ: nhóm lớn nhất của ViHallu có 5 dòng, của ISE-DSC01 có 33 dòng, đều dưới 0,1 % cỡ bộ.
 
