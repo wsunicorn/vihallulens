@@ -233,6 +233,23 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
     }
 
 
+def pick_interval_run(runs) -> int:
+    """Which surviving run the test-set confidence interval is bootstrapped from.
+
+    One run has to carry it — a bootstrap resamples the test set, so it describes a single set
+    of predictions — and it should be the most ordinary of the survivors, since an interval
+    around an outlier describes that run rather than the method.
+
+    Chosen as the run closest to the mean, not by position in a sorted list. With an even number
+    of survivors — which is exactly what discarding a dead seed leaves — the sorted-list version
+    always reached for the *upper* of the two middle runs, so a model that lost a seed would
+    quietly have its interval taken from its better half.
+    """
+    scores = [run["metrics"]["macro_f1"] for run in runs]
+    average = sum(scores) / len(scores)
+    return min(range(len(scores)), key=lambda index: abs(scores[index] - average))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="E09: tinh chỉnh bộ mã hóa làm mốc so sánh.")
     parser.add_argument("--model", required=True, choices=list(MODELS))
@@ -306,6 +323,7 @@ def main() -> int:
         print()
         print(f"  --- seed {seed} ({offset + 1}/{args.seeds}) ---")
         result = train_once(spec, data, seed, args.epochs, learning_rate, device)
+        result["seed"] = seed
         runs.append(result)
         after = gpu_telemetry()
         if after is not None:
@@ -327,14 +345,14 @@ def main() -> int:
     print(f"KẾT QUẢ — trên {len(data['test'][2]):,} mẫu test")
     print("-" * 80)
     print("  macro-F1 từng seed:")
-    for offset, run in enumerate(runs):
+    for run in runs:
         if run["stopped_early"]:
             mark = "  ← KHÔNG HỌC ĐƯỢC, loss đứng ở ln(3), đã loại"
         elif run["collapsed"]:
             mark = "  ← SỤP ĐỔ, đoán một lớp cho tất cả, đã loại"
         else:
             mark = ""
-        print(f"    seed {REQUIRED_SPLIT_SEED + offset}: {run['metrics']['macro_f1']:.4f}"
+        print(f"    seed {run['seed']}: {run['metrics']['macro_f1']:.4f}"
               f"   ({run['n_steps']:,} bước thật){mark}")
 
     if not good:
@@ -352,13 +370,12 @@ def main() -> int:
         print("  về độ ổn định, không phải về chất lượng mô hình.")
 
     across_seeds = summarise_runs([run["metrics"] for run in good])
-    # The seed closest to the middle of the successful ones carries the test-set interval: a
-    # bootstrap of an outlier would describe that run rather than the method.
-    middle = int(np.argsort([run["metrics"]["macro_f1"] for run in good])[len(good) // 2])
+    middle = pick_interval_run(good)
     spread = bootstrap_ci(data["test"][2], good[middle]["y_pred"], seed=REQUIRED_SPLIT_SEED)
 
     print()
-    print(f"  Trung bình {len(good)}/{len(runs)} seed học được, khoảng tin cậy từ seed ở giữa:")
+    print(f"  Trung bình {len(good)}/{len(runs)} seed học được; khoảng tin cậy 95 % là "
+          f"bootstrap tập test của riêng seed {good[middle]['seed']}:")
     print(f"  {'Chỉ số':<14} {'Trung bình':>11} {'± seed':>9}   {'khoảng tin cậy 95 %':>21}")
     for key in ("macro_f1", "accuracy", *[f"f1_{label}" for label in LABELS]):
         print(f"  {key:<14} {across_seeds[key]:>11.4f} {across_seeds[f'{key}_std']:>9.4f}   "
@@ -409,6 +426,7 @@ def main() -> int:
         "n_seeds_failed": dead,
         "macro_f1_per_seed": [run["metrics"]["macro_f1"] for run in runs],
         "learned_per_seed": [run["learned"] for run in runs],
+        "ci_from_seed": good[middle]["seed"],
         "truncation_rate": cut,
         "train_minutes_total": total_minutes,
         "std_method": "độ lệch chuẩn qua seed; khoảng tin cậy từ bootstrap tập test",
