@@ -17,12 +17,13 @@ nothing that cannot be recomputed.
 from __future__ import annotations
 
 import hashlib
-import re
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+
+from vihallulens.data.text import tokenize
 
 CORPUS_FILENAME = "viwikifc_evidence_corpus.parquet"
 COLUMNS = ("evidence_id", "text", "title", "link", "n_claims")
@@ -32,10 +33,6 @@ EXPECTED_SENTENCES = 3814
 EXPECTED_ARTICLES = 73
 
 EVIDENCE_ID_LENGTH = 16
-
-# Everything that is not a letter, a digit or whitespace. Vietnamese diacritics survive because
-# the class is defined by what it keeps, not by an ASCII range.
-_PUNCTUATION = re.compile(r"[^\w\s]", flags=re.UNICODE)
 
 
 def evidence_id(text: str) -> str:
@@ -47,20 +44,6 @@ def evidence_id(text: str) -> str:
     """
     canonical = unicodedata.normalize("NFC", text).strip()
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:EVIDENCE_ID_LENGTH]
-
-
-def tokenize(text: str) -> list[str]:
-    """Split text into the units BM25 counts.
-
-    Vietnamese words are written as separate syllables — "Hà Nội" is two whitespace-separated
-    pieces of one word — so splitting on whitespace yields syllables, not words. A proper word
-    segmenter would group them, but that means a new dependency, and for retrieval the cost is
-    small: BM25 scores a claim mentioning both syllables of a word higher anyway, because both
-    appear in the same document. Recorded here because it is a real limitation, measured at T16
-    rather than assumed away — see the recall figures in TASKS.md.
-    """
-    folded = unicodedata.normalize("NFC", text).lower()
-    return _PUNCTUATION.sub(" ", folded).split()
 
 
 @dataclass(frozen=True)

@@ -672,9 +672,59 @@
 
 ## Giai đoạn 3 — Các baseline (tuần 4–5)
 
-- [ ] **T17** · M · E01 baseline tầm thường
+- [x] **T17** · M · E01 baseline tầm thường — hoàn thành 27/08/2026
   - Hai đặc trưng: độ dài phản hồi và tỷ lệ trùng lặp từ vựng. Logistic regression, 5 seed.
-  - **Kiểm tra:** kết quả ghi vào `results/runs.jsonl`, điền Bảng 1 dòng đầu trong `docs/EXPERIMENTS.md`.
+  - **Kiểm tra:** kết quả ghi vào `results/runs.jsonl` ✅, điền Bảng 1 dòng đầu `docs/EXPERIMENTS.md` ✅.
+
+  **Task này để làm gì.** Mục 4 `docs/EXPERIMENTS.md` gọi E01 là *"thí nghiệm bắt buộc chạy sớm nhất, vì nó định nghĩa sàn thật sự"*. Ý tưởng: chỉ dùng hai con số ai cũng tính được — **phản hồi dài bao nhiêu từ**, và **bao nhiêu phần chữ trong phản hồi là chép lại từ ngữ cảnh** — rồi cho một mô hình tuyến tính đơn giản nhất phân loại. Nếu chừng đó đã đủ tốt, thì mọi phương pháp phức tạp hơn, **kể cả đóng góp của chính đề tài này**, phải chứng minh vượt được **nó**, chứ không phải vượt một con số bài báo khác công bố.
+
+  ### Kết quả — sàn cao hơn dự đoán
+
+| Chỉ số | Giá trị | ± lệch chuẩn |
+|---|---|---|
+| **macro-F1** | **0,6696** | 0,0038 |
+| Accuracy | 0,6757 | 0,0033 |
+| F1 `no` | 0,7495 | 0,0007 |
+| F1 `intrinsic` | **0,5234** | 0,0083 |
+| F1 `extrinsic` | 0,7360 | 0,0032 |
+| ECE | 0,0611 | 0,0044 |
+
+  Chín tham số phải huấn luyện, **0,001 ms mỗi mẫu**, không cần GPU.
+
+  Hai đặc trưng tái lập đúng bảng ở mục 4 `docs/EXPERIMENTS.md`: độ dài trung bình ra **chính xác** 32,9 / 39,5 / 45,9 từ cho ba nhãn. Tỷ lệ trùng lặp ra 0,827 / 0,671 / 0,574, cao hơn số cũ khoảng 0,02 vì cách đếm ở đây bỏ dấu câu và không phân biệt hoa thường; thứ tự và khoảng cách giữa ba nhãn giữ nguyên.
+
+  ### Ba điều con số này quyết định
+
+  1. **Ngưỡng thật để vượt là 0,670, không phải 0,328.** Bài PhoBERT công bố macro-F1 32,83 % trên bài toán này, và nếu lấy đó làm mốc thì mọi thứ đều trông như tiến bộ lớn. Nhưng hai đặc trưng bề mặt đã đạt **gấp đôi** con số đó. Từ nay mốc so sánh của đề tài là 0,670.
+
+  2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Và điều đó rất hợp lý: ảo giác nội tại là **xáo trộn thông tin vốn đã có** trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và *vẫn* dài vừa phải — hai đặc trưng bề mặt gần như mù với nó. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh. Nếu chunk-aware chỉ cải thiện `no` và `extrinsic` thì chưa nói lên gì.
+
+  3. **Chi phí gần bằng không.** 9 tham số, 0,001 ms/mẫu, chạy CPU. Cột chi phí của E11 vì thế có một mốc dưới rất khắc nghiệt: phương pháp nội tại tốn khoảng 420 ms/mẫu trên ViHallu (đo ở T08), tức **đắt hơn bốn trăm nghìn lần**. Nó phải đổi lại bằng độ chính xác tương xứng.
+
+  ### Một lỗi âm thầm suýt lọt
+
+  Lần chạy đầu cho **ECE = 0,42** — nghĩa là mô hình lệch tự tin tới 42 điểm phần trăm, vô lý với một mô hình đạt accuracy 0,68. Truy ra thì đây là lỗi thật, và là loại lỗi tệ nhất vì **mọi chỉ số khác vẫn đúng và vẫn trông hợp lý**.
+
+  *ECE* (expected calibration error) đo xem mô hình nói "tôi chắc 80 %" thì có đúng khoảng 80 % số lần không. Để tính nó phải biết **cột nào của ma trận xác suất ứng với lớp nào**. Mà scikit-learn sắp lớp theo **bảng chữ cái** — `extrinsic, intrinsic, no` — trong khi thứ tự báo cáo của dự án là `no, intrinsic, extrinsic`. Mình đã ngầm cho rằng hai thứ tự đó trùng nhau. Kiểm lại: chỉ **25,7 %** khớp.
+
+  Macro-F1 và F1 từng lớp **không** bị ảnh hưởng, vì chúng so trực tiếp chuỗi nhãn chứ không đụng tới ma trận xác suất. Sau khi sửa, ECE = **0,0611** — con số hợp lý.
+
+  Cách chặn để không tái diễn: `compute_metrics` nay **tự kiểm tra** rằng lớp có xác suất cao nhất phải trùng với lớp được dự đoán. Nếu không trùng thì raise kèm thông báo chỉ đúng cách sửa. Đây là bất biến luôn đúng với mọi bộ phân loại của sklearn, nên chốt chặn này bắt được lỗi ngay ở mẫu đầu tiên chứ không đợi ai đó thấy con số kỳ lạ.
+
+  ### Về yêu cầu "5 seed"
+
+  Mục 3 `docs/EXPERIMENTS.md` đòi mọi con số của bộ phân loại phải kèm độ lệch chuẩn qua 5 seed. Nhưng logistic regression giải bằng lbfgs trên bài toán lồi là **tất định**: đổi riêng `random_state` sẽ cho ra năm con số **y hệt nhau**, độ lệch chuẩn bằng 0, và yêu cầu trở thành hình thức.
+
+  Nên ở đây độ lệch chuẩn đo bằng **lấy mẫu lặp lại tập huấn luyện** (bootstrap): mỗi seed rút lại tập train có hoàn lại rồi huấn luyện. Nó trả lời câu hỏi có ý nghĩa hơn — *kết quả phụ thuộc bao nhiêu vào việc mẫu nào tình cờ rơi vào tập huấn luyện*. Con số chính vẫn lấy từ một lần huấn luyện trên toàn bộ tập train. Đã ghi rõ cách đo vào `results/runs.jsonl` ở trường `std_method`.
+
+  ### Đã dựng thêm ba module dùng chung cho mọi thí nghiệm sau
+
+  - `src/vihallulens/features/surface.py` — hai đặc trưng bề mặt.
+  - `src/vihallulens/evaluation/metrics.py` — `compute_metrics` theo mục 2.5 `docs/SPEC.md`, kèm ECE và `summarise_runs`.
+  - `src/vihallulens/detect/detector.py` — `LookbackDetector` theo mục 2.4 `docs/SPEC.md`. Mặc định tuyến tính, `class_weight="balanced"`, có chuẩn hóa thang đo vì hai đặc trưng lệch nhau khoảng bốn mươi lần.
+  - `src/vihallulens/data/text.py` — gom định nghĩa "từ" về một chỗ, để BM25 ở T16 và trùng lặp từ vựng ở T17 không dùng hai định nghĩa khác nhau.
+
+  `ruff` sạch, `pytest` **396 ca xanh** (thêm 56 ca).
 
 - [ ] **T18** · M · E09 baseline bộ mã hóa
   - Tinh chỉnh PhoBERT-large, XLM-R-large, InfoXLM-large ba lớp trên ViHallu.

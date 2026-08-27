@@ -55,6 +55,12 @@ src = ["src", "tests", "scripts"]
 # E/W pycodestyle, F pyflakes, I isort, UP pyupgrade, B bugbear, SIM simplify, N naming
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "N"]
 
+[tool.ruff.lint.per-file-ignores]
+# X for a feature matrix is the scikit-learn convention, and mục 2.4 docs/SPEC.md fixes the
+# signature as fit(self, X, y). Renaming it would make the code read differently from every
+# sklearn example a reader will compare it against.
+"src/vihallulens/detect/*.py" = ["N803", "N806"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["vihallulens"]
 
