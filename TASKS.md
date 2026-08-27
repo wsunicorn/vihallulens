@@ -858,6 +858,25 @@ ValueError: too many dimensions 'str'
 
   Sửa: lần chạy nào **chỉ đoán một lớp** sẽ bị phát hiện và **loại khỏi thống kê**, có cảnh báo rõ ràng, và macro-F1 của **từng seed** được in riêng. Bình quân một lần thành công với một lần thất bại cho ra con số không mô tả cái nào cả. Nếu **mọi** seed đều sụp thì script báo lỗi và **không báo cáo số nào** — thay vì in ra 0,167 như thể đó là một kết quả.
 
+  ### Bản vá đã kiểm chứng ngày 27/08/2026
+
+  Chạy thử rẻ trên mô hình khó nhất trước khi bỏ ra ba tiếng — một seed, một epoch, XLM-R:
+
+```
+  batch / epoch / lr    : 8 / 1 / 1e-05
+  macro-F1 0.7076   huấn luyện 9.2 phút   VRAM đỉnh 11,231 MB   76 °C
+  macro-F1 từng seed:
+    seed 42: 0.7076   (695 bước thật)
+```
+
+  Ba điều đọc được từ mười phút này:
+
+  1. **Cấu hình đã ổn.** Không sụp đổ, loss đã học, `f1_intrinsic = 0,591` — cao hơn hẳn 0,533 của E01.
+  2. **695 trên 700 bước thật.** Năm bước bị bỏ vì gradient float16 tràn số. Xác nhận chẩn đoán tràn số là đúng, và xác nhận bản vá scheduler đang chạy đúng — trước đây lịch learning rate vẫn đi tiếp trong lúc trọng số đứng yên.
+  3. **Một epoch đã vượt mốc.** 0,7076 lớn hơn 0,689, tức bộ mã hóa thật sự là mốc so sánh đáng gờm chứ không phải hình thức.
+
+  Vẫn chạy đủ **ba epoch** chứ không dừng ở một, dù một epoch đã vượt mốc: mục đích của mốc so sánh là **thứ mạnh nhất mà đề tài phải vượt**. Huấn luyện thiếu sẽ làm nó yếu đi một cách có lợi cho đề tài, và đó đúng là chỗ hội đồng dễ bác nhất.
+
   ### Việc cần chạy — một phiên là đủ
 
   Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb` và **chạy cả ba ô liền nhau**.
