@@ -129,6 +129,50 @@ Ngoài số tổng, mọi thí nghiệm chạy trên ViHallu phải báo thêm m
 
 Lý do: prompt `noisy` bị bỏ dấu tiếng Việt nên tokenize ra chuỗi token khác hẳn, làm thay đổi số token của câu hỏi và do đó thay đổi mẫu số của lookback ratio. Nếu không tách, không phân biệt được "mô hình phát hiện ảo giác" với "mô hình phát hiện prompt bị nhiễu". Đây cũng là một kết quả phụ có giá trị công bố: tín hiệu chú ý bền tới đâu khi đầu vào bị bỏ dấu — một dạng nhiễu rất đặc thù tiếng Việt.
 
+### E10 — Baseline LLM giám khảo
+
+Mốc so sánh thứ ba, và là mốc mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì, E09 đọc được nhưng phải tinh chỉnh trước, còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
+
+**Bộ tiêu chí chấm chép nguyên từ `results/nei_mapping_audit_HUONGDAN.md`** — bản hướng dẫn hai sinh viên đã gán nhãn tay ở T13 — chứ không viết lại. Đưa cho giám khảo một định nghĩa ba lớp khác với định nghĩa con người đã dùng thì Bảng 1 thành ra so **đề bài**, và người phản biện có quyền nói vậy.
+
+Hai chỗ cố ý khác bản hướng dẫn, ghi lại vì chúng ảnh hưởng cách đọc điểm:
+
+1. Con người được trả lời `khong_chac`. Giám khảo thì không: một mốc so sánh phải ra nhãn cho mọi mẫu, nếu không macro-F1 của nó tính trên một tập khác với mọi dòng còn lại.
+2. Giám khảo phải **nêu lý do trước rồi mới chốt nhãn**. `propertyOrdering` trong schema ép thứ tự đó, nên mô hình lần theo bằng chứng trước khi quyết, thay vì biện minh cho một nhãn đã trót đưa ra.
+
+#### Cỡ mẫu, và vì sao chỉ 300
+
+Mục 2 `CLAUDE.md` chỉ cho dùng free tier ở quy mô rất nhỏ. Tập con **300 trên 700 mẫu test** được chọn **tất định bằng SHA-256** đúng như cách chia tập, để cache không trượt và con số không nhúc nhích giữa hai lần chạy.
+
+Hệ quả phải nói rõ khi đọc Bảng 1: **dòng E10 đo trên tập con, các dòng khác đo trên cả 700 mẫu.** Không so thẳng bằng mắt được. Vì vậy script tính thêm **macro-F1 của E01 trên đúng 300 mẫu đó** làm neo — E01 chỉ là hai đặc trưng và một hồi quy logistic nên tính lại tốn một giây, và nó biến con số của giám khảo thành thứ người đọc đặt được vào đâu đó.
+
+#### Chọn mô hình bằng đo, không bằng danh tiếng
+
+Đo ở T19, và cả ba điều đều làm đổi thiết kế:
+
+| Điều đo được | Hệ quả |
+|---|---|
+| `gemini-2.5-flash` **đã bị gỡ** — API trả 404 kèm câu "no longer available to new users" | Tên mô hình là thứ phải kiểm trước mỗi lượt chạy. Thêm `scripts/list_judge_models.py` để hỏi thẳng API |
+| `gemini-3.6-flash` chỉ cho **20 lượt mỗi ngày** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier=20`) | 300 mẫu sẽ mất 15 ngày. Không dùng |
+| `gemini-3.5-flash-lite` trả lời tiếng Việt **mất hết dấu** | Không dùng |
+
+Chốt **`gemini-3.1-flash-lite`**: giữ nguyên dấu, cùng độ chính xác với flash-lite trên mẫu thử, khoảng 5 giây một lượt. Tên được **ghim cứng**, không dùng bí danh `-latest` — bí danh sẽ lặng lẽ thành mô hình khác giữa lượt chạy sinh ra Bảng 1 và lượt chạy kiểm lại nó.
+
+Đây không phải một sự nhân nhượng. Trần thật của free tier chính là thứ bảng đánh đổi ở E11 sinh ra để nói, nên chạy đúng mô hình mà free tier cho phép mới là phép đo trung thực.
+
+#### Hai loại hạn mức, hai cách xử lý ngược nhau
+
+Cùng mang mã 429 nhưng đòi hai phản ứng trái ngược:
+
+- **Hạn mức phút** — chờ rồi gọi lại. Nó tự hết.
+- **Hạn mức ngày** — dừng hẳn. Chờ không giúp được gì, và một script cứ thử lại sẽ biến một câu "mai chạy tiếp" gọn gàng thành một tiếng im lặng.
+
+Cache là thứ khiến việc dừng trở nên rẻ: mỗi câu trả lời được ghi xuống **ngay khi nhận được**, nên một lượt chạy bị hạn mức, bị rớt mạng hay bị Ctrl-C vẫn giữ nguyên mọi thứ đã trả tiền. Khóa cache gồm cả tên mô hình lẫn nguyên văn prompt: sửa tiêu chí thì câu trả lời cũ không khớp nữa, đúng như phải thế — chúng trả lời một câu hỏi khác.
+
+#### Độ tin cậy tự khai — để riêng, không trộn vào cột ECE
+
+Giám khảo tự khai một con số tin cậy, và nó được ghi lại. Nhưng nó **không** vào cột ECE của Bảng 1: ECE của E01 và E09 tính từ xác suất softmax, còn đây là con số mô hình tự nói về mình. Hai đại lượng khác nhau đặt chung một cột là đúng cái lỗi T18 đã phải sửa hai lần. Nó nằm ở khóa `ece_self_reported` trong `results/runs.jsonl`.
+
 ### E11 — Bảng đánh đổi
 
 Bảng trung tâm của chương 7. Mỗi dòng một phương pháp, cột gồm macro-F1, ms/mẫu, VRAM đỉnh, số tham số huấn luyện, và có cần API ngoài không.
@@ -155,13 +199,17 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 | PhoBERT tinh chỉnh (E09) | **0,742** [0,705–0,770] | 0,740 | 0,790 | 0,685 | 0,750 | 0,086 | 12,2 | 9.002 |
 | XLM-R large tinh chỉnh (E09) | **0,771** [0,747–0,808] | 0,770 | 0,836 | 0,722 | 0,754 | 0,114 | 24,8 | 11.231 |
 | InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | 11.231 |
-| Gemini free giám khảo (E10) | | | | | | | | |
+| Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,667 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
 | Lookback gộp (E02) | | | | | | | | |
 | **Chunk-aware (E05)** | | | | | | | | |
 
 Đo ngày 27/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,012 cho PhoBERT và 0,025 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`.
 
-Bốn điều bảng này nói:
+**†** Dòng E10 đo trên **300 trên 700 mẫu test**, các dòng khác đo trên cả 700 — không so thẳng bằng mắt được. Trên đúng 300 mẫu đó, baseline tầm thường E01 đạt **0,686**. Cột ECE để trống vì con số duy nhất có được là độ tin cậy mô hình **tự khai**, không phải xác suất softmax; nó nằm ở khóa `ece_self_reported` trong `results/runs.jsonl` và bằng 0,280. Cột ms/mẫu đã gồm cả thời gian **tự giữ nhịp** để không vượt hạn mức; riêng độ trễ gọi API là khoảng 5.000 ms.
+
+Năm điều bảng này nói:
+
+0. **Giám khảo LLM free tier không vượt nổi baseline tầm thường.** 0,664 so với 0,686 của E01 trên cùng 300 mẫu, và khoảng tin cậy [0,607–0,719] chứa cả hai nên chênh lệch nằm trong nhiễu. Diễn giải đúng không phải "Gemini kém" mà là **"những gì free tier cho phép không đủ để thay thế một phương pháp chuyên dụng"** — chính là điều bảng đánh đổi E11 sinh ra để nói.
 
 1. **Mốc phải vượt nay là 0,771 chứ không phải 0,689.** Khoảng tin cậy tập test của XLM-R chạm tới 0,807. Đây là đối thủ thật sự của phương pháp chú ý nội tại.
 2. **Lớp `intrinsic` vẫn khó nhất ở cả ba phương pháp**, nhưng bộ mã hóa cải thiện được nhiều: 0,533 → 0,722. Khoảng cách giữa lớp dễ nhất và khó nhất thu từ 0,209 xuống 0,114.
