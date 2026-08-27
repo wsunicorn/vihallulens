@@ -92,23 +92,43 @@ def make_loader(tokenizer, left, right, labels, max_length, batch_size, shuffle,
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, generator=generator)
 
 
-def train_once(spec, data, seed: int, epochs: int, lr: float, device: str) -> dict:
-    """Fine-tune one model with one seed and score it on the test split."""
-    import torch
-    from torch.amp import GradScaler, autocast
+def build_from_hub(spec):
+    """Default factory: tokenizer and freshly headed model straight from the hub."""
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    set_seed(seed)
-    tokenizer = AutoTokenizer.from_pretrained(spec["name"])
-    model = AutoModelForSequenceClassification.from_pretrained(
-        spec["name"], num_labels=len(LABELS)
-    ).to(device)
+    return (
+        AutoTokenizer.from_pretrained(spec["name"]),
+        AutoModelForSequenceClassification.from_pretrained(
+            spec["name"], num_labels=len(LABELS)
+        ),
+    )
 
+
+def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> dict:
+    """Fine-tune one model with one seed and score it on the test split.
+
+    ``build`` is injectable so the whole loop can be exercised on the CPU with a two-layer
+    randomly initialised model and no download — which is what tests/test_encoder.py does, and
+    what would have caught the label-encoding crash of the first Kaggle run before it cost a
+    GPU session.
+    """
+    import torch
+    from torch.amp import GradScaler, autocast
+
+    set_seed(seed)
+    tokenizer, model = build(spec)
+    model = model.to(device)
+
+    # Labels live in ``data`` as strings, because that is what compute_metrics scores against.
+    # The loaders need class ids, and encoding them here rather than upstream keeps one form of
+    # the labels in one place: the first run crashed by mixing the two.
     train_loader = make_loader(
-        tokenizer, *data["train"], spec["max_length"], spec["batch_size"], True, seed
+        tokenizer, data["train"][0], data["train"][1], encode_labels(data["train"][2]),
+        spec["max_length"], spec["batch_size"], True, seed,
     )
     test_loader = make_loader(
-        tokenizer, *data["test"], spec["max_length"], spec["batch_size"], False, seed
+        tokenizer, data["test"][0], data["test"][1], encode_labels(data["test"][2]),
+        spec["max_length"], spec["batch_size"], False, seed,
     )
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
@@ -190,7 +210,13 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     import torch
+    import transformers
     from transformers import AutoTokenizer
+
+    # The tokenizer repeats a note about overflowing tokens once per batch, hundreds of lines
+    # of it, and it buries anything that matters. Truncation is deliberate here and its rate is
+    # printed below.
+    transformers.logging.set_verbosity_error()
 
     spec = MODELS[args.model]
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -221,19 +247,18 @@ def main() -> int:
 
         print(f"  bộ đệm tách từ        : {cache_info()}")
 
-    labels_train = encode_labels(data["train"][2])
-    data["train"] = (*data["train"][:2], labels_train)
-    data["test"] = (*data["test"][:2], data["test"][2])
-
     # Read once before anything runs, and again after each seed. Running the three encoders in
     # one session is perfectly fine for the accuracy figures — throttling makes a card slower,
     # not wrong — but it does distort ms/mẫu, so the run records enough to say whether it did.
     readings = []
     baseline = gpu_telemetry()
     if baseline is not None:
-        readings.append(baseline)
+        # Printed but deliberately kept out of the verdict: an idle card down-clocks on purpose,
+        # so this reading is far below the loaded ones and would make every run look like it
+        # sped up. Only the post-seed readings, all taken under load, are comparable.
         print(f"  nhiệt độ trước khi chạy : {baseline['temperature_c']:.0f} °C, xung SM "
-              f"{baseline['sm_clock_mhz']:.0f}/{baseline['sm_clock_max_mhz']:.0f} MHz")
+              f"{baseline['sm_clock_mhz']:.0f}/{baseline['sm_clock_max_mhz']:.0f} MHz "
+              f"(lúc rảnh, không dùng để xét hạ xung)")
 
     runs = []
     for offset in range(args.seeds):
