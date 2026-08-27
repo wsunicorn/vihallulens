@@ -1068,9 +1068,98 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   **Mốc phải vượt là 0,689** — cận trên khoảng tin cậy của E01, không phải 0,656. Và chỗ đáng nhìn nhất là **F1 của lớp `intrinsic`**: E01 chỉ đạt 0,533, nên bộ mã hóa cải thiện được bao nhiêu ở đó mới là phần nói lên điều gì.
 
-- [ ] **T19** · M · E10 baseline LLM giám khảo
+- [x] **T19** · M · E10 baseline LLM giám khảo — **xong 27/08/2026**
   - Prompt Gemini free tier trên **tối đa 300 mẫu** tập test, có xử lý rate limit và cache kết quả ra file. Khóa đọc từ `.env`, không hardcode.
   - **Kiểm tra:** file cache tồn tại, chạy lại không gọi API thêm; kết quả ghi vào `runs.jsonl` kèm ghi chú cỡ mẫu.
+
+  **Task này để làm gì.** Mốc so sánh thứ ba, và là mốc mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì; E09 đọc được nhưng phải tinh chỉnh trước, tốn GPU và có lúc không tinh chỉnh nổi như InfoXLM; còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
+
+  **Đã làm:** `src/vihallulens/judge/` (prompt, client, cache), `scripts/run_judge_baseline.py`, `scripts/list_judge_models.py`. `pytest` **507 ca xanh**, toàn bộ phần gọi mạng chạy offline nhờ tiêm transport giả.
+
+  ### Kết quả — 300 mẫu, 41 phút, 0 lỗi
+
+| Chỉ số | Giá trị | Khoảng tin cậy 95 % |
+|---|---|---|
+| macro-F1 | **0,6637** | [0,6070 – 0,7191] |
+| accuracy | 0,6667 | [0,6133 – 0,7233] |
+| F1 `no` | 0,7527 | [0,6782 – 0,8182] |
+| F1 `intrinsic` | 0,5823 | [0,4878 – 0,6707] |
+| F1 `extrinsic` | 0,6562 | [0,5872 – 0,7212] |
+
+  **Trên đúng 300 mẫu đó, baseline tầm thường E01 đạt 0,6860.** Tức **giám khảo LLM không vượt nổi hai đặc trưng bề mặt**. Khoảng tin cậy [0,607–0,719] chứa cả hai con số nên chênh lệch nằm trong nhiễu, không kết luận được ai hơn ai — nhưng "không hơn nổi baseline tầm thường" tự nó đã là kết quả.
+
+  Diễn giải đúng **không phải** "Gemini kém". Mô hình được dùng là `gemini-3.1-flash-lite`, bậc nhỏ nhất, và lý do chọn nó nằm ở mục dưới. Kết luận đúng là: **những gì free tier cho phép không đủ để thay thế một phương pháp chuyên dụng** — chính là điều bảng đánh đổi E11 sinh ra để nói.
+
+  ### Ma trận nhầm lẫn, và một điều bất ngờ
+
+| thật \\ đoán | `no` | `intrinsic` | `extrinsic` | tổng |
+|---|---|---|---|---|
+| `no` | **70** | 9 | 32 | 111 |
+| `intrinsic` | 3 | **46** | **48** | 97 |
+| `extrinsic` | 2 | 6 | **84** | 92 |
+| tổng | 75 | 61 | **164** | 300 |
+
+  Recall: `extrinsic` **0,913**, `no` 0,631, `intrinsic` **0,474**.
+
+  Giám khảo đoán `extrinsic` **164 lần trong khi thực tế chỉ có 92** — vống lên 78 %. Và **48 trên 97 mẫu `intrinsic`, đúng một nửa, bị gọi thành `extrinsic`**.
+
+  Đọc lý do nó tự viết thì thấy đây **không phải lỗi hiểu bài** mà là lỗi **thứ tự ưu tiên**:
+
+> Câu trả lời cung cấp thông tin sai lệch về vị trí địa lý so với ngữ cảnh (đảo ngược các hướng) **và** đưa ra thông tin về bán cầu Tây không hề được đề cập trong ngữ cảnh.
+
+  Nó nhận ra **cả hai** dấu hiệu — vừa mâu thuẫn với ngữ cảnh (nội tại) vừa thêm thứ không có (ngoại lai) — rồi chọn ngoại lai. Mà theo đúng bộ tiêu chí T13, nó chọn **không sai**: `noi_tai` đòi *mọi* thông tin phải có trong ngữ cảnh, nên chỉ cần thêm một chi tiết là rơi sang `ngoai_lai`.
+
+  ### Điều đáng giá nhất: giám khảo hỏng đúng chỗ con người hỏng
+
+  Đây không phải một điểm yếu riêng của LLM. Đo ở T13 trên 20 mẫu đối chứng có đáp án, hai sinh viên gán nhãn tay cũng vấp đúng ranh giới đó: nhãn `Refutes` (đáp án đúng là `noi_tai`) chỉ đạt **7/10 và 5/10**, trong khi nhãn `Supports` (đáp án `khong`) đạt 9/10 và 7/10. Và 8/100 mẫu có một người gán `noi_tai` còn người kia gán `ngoai_lai`.
+
+| Người chấm | Recall trên lớp `intrinsic` |
+|---|---|
+| Sinh viên 1 (T13, 10 mẫu đối chứng) | 0,70 |
+| Sinh viên 2 (T13, 10 mẫu đối chứng) | 0,50 |
+| **Gemini 3.1 Flash Lite (T19, 97 mẫu)** | **0,474** |
+
+  Giám khảo LLM rơi đúng vào dải của con người, và **lệch cùng một hướng**: nội tại bị đọc thành ngoại lai. Kappa giữa hai người đo được ở T13 chỉ 0,505.
+
+  Đây là lập luận mạnh cho đề tài, và nên đưa vào phần bàn luận: **ranh giới nội tại–ngoại lai khó một cách nội tại**, chứ không phải khó vì phương pháp nào đó dở. Nó cũng lý giải vì sao lớp `intrinsic` là lớp yếu nhất ở *cả ba* mốc so sánh — E01 0,533, E09 XLM-R 0,722, E10 0,582 — và vì sao đó là chỗ `chunk-aware lookback ratio` phải chứng minh mình.
+
+  **Vì thế không sửa prompt cho giám khảo dễ thở hơn.** Thêm một quy tắc ưu tiên kiểu "vừa mâu thuẫn vừa thêm thì tính là nội tại" gần như chắc chắn nâng điểm, nhưng làm hỏng hai thứ: giám khảo sẽ nhận một đề bài **khác** với đề bài hai sinh viên đã nhận, nên mất luôn phép so sánh vừa nói ở trên; và quy tắc đó suy ra từ chính nhãn của tập test, tức là uốn prompt theo đáp án.
+
+  ### Ba điều đo được làm đổi thiết kế
+
+| Điều đo được | Hệ quả |
+|---|---|
+| `gemini-2.5-flash` **đã bị gỡ**, API trả 404 kèm "no longer available to new users" cho khóa mới | Tên mô hình là thứ phải kiểm trước mỗi lượt chạy, không phải thứ tin theo tài liệu. Thêm `scripts/list_judge_models.py` hỏi thẳng API |
+| `gemini-3.6-flash` chỉ cho **20 lượt mỗi NGÀY** — `GenerateRequestsPerDayPerProjectPerModel-FreeTier=20` | 300 mẫu sẽ mất 15 ngày. Không dùng |
+| `gemini-3.5-flash-lite` trả lời tiếng Việt **mất hết dấu** | Không dùng |
+
+  Chốt `gemini-3.1-flash-lite`: giữ nguyên dấu, cùng độ chính xác với flash-lite trên mẫu thử, khoảng 5 giây một lượt. Tên **ghim cứng**, không dùng bí danh `-latest` — bí danh sẽ lặng lẽ thành mô hình khác giữa lượt chạy sinh ra Bảng 1 và lượt chạy kiểm lại nó.
+
+  ### Độ tin cậy tự khai: sai về mức, nhưng vẫn mang tin
+
+  Trung bình giám khảo tự khai **0,904** trong khi thực tế đúng **0,667**. ECE 0,280. Nó tin mình hơn thực lực khoảng 24 điểm phần trăm.
+
+  Nhưng con số đó **không vô dụng**: 21 câu nó tự khai dưới 1/3 thì chỉ đúng **9/21 = 43 %**, so với 67 % của toàn bộ. Nghĩa là khi nó nói mình không chắc thì nên tin — dấu hiệu này dùng được để lọc, dù mức tuyệt đối thì lệch.
+
+  Con số này để ở khóa riêng `ece_self_reported`, **không** trộn vào cột ECE của Bảng 1: ECE của E01 và E09 tính từ xác suất softmax, còn đây là con số mô hình tự nói về mình. Hai đại lượng khác nhau đặt chung một cột là đúng cái lỗi T18 đã phải sửa hai lần.
+
+  ### Năm lỗi gặp khi dựng, đều đã sửa
+
+  1. **Một lần đọc timeout làm sập cả script.** `http_transport` chỉ bắt `HTTPError`, còn timeout của socket ném ra ngoài và kết thúc lượt chạy bằng traceback. Nay **mọi lỗi mạng trở thành một mã trạng thái** (599) để đi chung đường thử lại — vòng lặp thử lại là chỗ duy nhất quyết định phải làm gì với thất bại. Kèm hạ timeout từ 180 xuống 60 giây, vì một lượt gọi bình thường chỉ mất 4,3 giây.
+
+  2. **Hàm phân biệt hạn mức ngày với hạn mức phút đọc trên bản thân đã bị cắt còn 400 ký tự**, trong khi `quotaId` nằm ở khoảng ký tự 1.100. Hạn mức ngày vì thế bị hiểu thành hạn mức phút và thử lại vô ích. Nay phân loại trên **toàn bộ** thân, chỉ cắt phần đem hiển thị. Có ca kiểm thử khẳng định `quotaId` nằm sau ký tự thứ 400 mà vẫn nhận ra.
+
+  3. **Script báo 12 lỗi mà không nói lỗi gì.** Một lượt chạy hỏng ở mọi mẫu thì chỉ có một nguyên nhân, mà in ra mỗi con số đếm thì không có gì để lần. Nay lỗi **đầu tiên** được in nguyên văn — đúng cách lẽ ra phải phát hiện ngay tên mô hình đã bị gỡ.
+
+  4. **`--dry-run` không bao giờ trúng cache.** Đúng chỗ tiêu chí hoàn thành của task này nhắm tới, và chỉ lộ ra khi chạy thật phép kiểm đó. Khóa cache lấy tên mô hình từ *đối tượng* giám khảo, mà chế độ dry run thì không có đối tượng nào nên rơi vào nhánh dự phòng gán chuỗi `"dry-run"` — tính ra một khóa không thể khớp gì, rồi báo thiếu cả 300 mẫu trong một cache đang giữ đủ 300. Nay tên mô hình được **truyền vào** chứ không suy ra. Kèm ba ca kiểm thử, trong đó một ca khẳng định đổi mô hình thì **không** dùng lại câu trả lời cũ — hai mô hình trả lời cùng một prompt là hai phép đo, không phải một.
+
+  5. **Độ tin cậy dưới 1/3 làm lệch chính phép đo hiệu chỉnh.** Trải một độ tin cậy 0,2 cho lớp đã chọn thì hai lớp còn lại mỗi lớp được 0,4, và `argmax` sẽ trỏ sang lớp khác — tức ECE chấm một dự đoán **khác** với dự đoán đang báo cáo. Nay có sàn ngay trên 1/3, và số câu bị nâng sàn được đếm và in ra.
+
+  ### Cache: thứ khiến việc dừng trở nên rẻ
+
+  Mỗi câu trả lời ghi xuống **ngay khi nhận được**, không đợi lúc kết thúc. Một lượt chạy bị hạn mức ngày, bị rớt mạng hay bị Ctrl-C vẫn giữ nguyên mọi thứ đã trả tiền. Khóa cache gồm **cả tên mô hình lẫn nguyên văn prompt**: sửa tiêu chí thì câu trả lời cũ không khớp nữa, đúng như phải thế — chúng trả lời một câu hỏi khác, và dùng lại sẽ là cách âm thầm nhất để báo cáo một kết quả chưa từng xảy ra.
+
+  `results/judge_cache.jsonl` được commit. Nhờ vậy con số của E10 kiểm lại được **không tốn một lượt gọi API nào**: chạy `python scripts/run_judge_baseline.py --dry-run` là ra đúng bảng trên.
 
 - [ ] **T20** · L · E02 tái lập Lookback Lens gốc
   - Đọc mục 1 của `docs/REFERENCES.md` trước khi viết code. Tái lập **đúng công thức gốc**, không phải biến thể gần đúng.

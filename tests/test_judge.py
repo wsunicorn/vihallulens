@@ -453,3 +453,47 @@ def test_a_limit_stated_only_in_prose_is_still_reported():
 
     body = json.dumps({"error": {"message": "Quota exceeded for metric: x, limit: 20"}})
     assert describe_quota(body) == "hạn mức 20"
+
+
+# -- the dry run has to look in the same drawer ---------------------------------------------
+
+
+def test_a_dry_run_finds_what_a_real_run_stored(tmp_path):
+    """The completion check of T19 in TASKS.md is exactly this: re-running must make no API
+    call. The first version derived the model name from the judge object and fell back to the
+    string "dry-run" when there was none, so --dry-run computed a key that could never match
+    and reported all 300 samples missing from a cache that held all 300."""
+    from run_judge_baseline import judge_one
+
+    cache = JudgeCache(tmp_path / "cache.jsonl")
+    row = {"sample_id": "s1", "context": "Ngữ cảnh.", "response": "Phản hồi.", "question": ""}
+    client = judge()
+
+    stored, fresh = judge_one(client, cache, row, client.model)
+    assert fresh and stored["verdict"] == "noi_tai"
+
+    # No judge at all: the dry-run path.
+    replayed, fresh_again = judge_one(None, cache, row, client.model)
+    assert not fresh_again
+    assert replayed["verdict"] == "noi_tai"
+
+
+def test_a_dry_run_without_a_cached_answer_says_so(tmp_path):
+    from run_judge_baseline import judge_one
+
+    cache = JudgeCache(tmp_path / "cache.jsonl")
+    row = {"sample_id": "s1", "context": "Ngữ cảnh.", "response": "Phản hồi.", "question": ""}
+    record, fresh = judge_one(None, cache, row, "gemini-3.1-flash-lite")
+    assert not fresh and "chưa có trong cache" in record["error"]
+
+
+def test_a_different_model_does_not_reuse_the_first_one_s_answers(tmp_path):
+    """Two models answering the same prompt are two measurements, not one."""
+    from run_judge_baseline import judge_one
+
+    cache = JudgeCache(tmp_path / "cache.jsonl")
+    row = {"sample_id": "s1", "context": "Ngữ cảnh.", "response": "Phản hồi.", "question": ""}
+    client = judge()
+    judge_one(client, cache, row, "model-a")
+    record, _ = judge_one(None, cache, row, "model-b")
+    assert "chưa có trong cache" in record["error"]

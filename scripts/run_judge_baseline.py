@@ -7,7 +7,7 @@ round trip. If the attention method cannot beat a judge that costs nothing to bu
 has a problem; if it matches one while running locally, that is the argument.
 
 Usage:
-    python scripts/run_judge_baseline.py                 # 300 mẫu, gemini-2.5-flash
+    python scripts/run_judge_baseline.py                 # 300 mẫu, gemini-3.1-flash-lite
     python scripts/run_judge_baseline.py --limit 50      # thử nhỏ trước
     python scripts/run_judge_baseline.py --dry-run       # không gọi API, chỉ dùng cache
 
@@ -84,25 +84,30 @@ def choose_samples(frame, limit: int, seed: int = REQUIRED_SPLIT_SEED):
     return picked.sort_values("sample_id").reset_index(drop=True)
 
 
-def judge_one(judge, cache, row, dry_run: bool) -> tuple[dict, bool]:
-    """One verdict, from the cache when possible. Returns the record and whether it was fresh."""
+def judge_one(judge, cache, row, model: str) -> tuple[dict, bool]:
+    """One verdict, from the cache when possible. Returns the record and whether it was fresh.
+
+    ``model`` is passed in rather than read off ``judge``, because a dry run has no judge and
+    still has to look in the same drawer. The first version derived the name from the object and
+    fell back to the string ``"dry-run"``, so ``--dry-run`` computed a key that could never
+    match anything and reported all 300 samples as missing from a cache that held all 300.
+    """
     prompt = build_prompt(row["context"], row["response"], row.get("question", ""))
-    key = cache_key(judge.model if judge else "dry-run", prompt)
-    cached = cache.get(key)
+    cached = cache.get(cache_key(model, prompt))
     if cached is not None:
         return cached, False
-    if dry_run or judge is None:
+    if judge is None:
         return {"sample_id": row["sample_id"], "error": "chưa có trong cache"}, False
 
     answer = judge.ask(SYSTEM, prompt, RESPONSE_SCHEMA)
     record = {
         "sample_id": row["sample_id"],
-        "model": judge.model,
+        "model": model,
         "verdict": answer.get("nhan_dinh"),
         "confidence": clamp_confidence(answer.get("do_tin_cay")),
         "reason": str(answer.get("ly_do", ""))[:500],
     }
-    return cache.put(key, record), True
+    return cache.put(cache_key(model, prompt), record), True
 
 
 def surface_anchor(interim_dir: Path, dataset: str, chosen) -> float | None:
@@ -197,7 +202,7 @@ def main() -> int:
     stopped_early = None
     for position, row in enumerate(chosen.to_dict("records"), start=1):
         try:
-            record, is_fresh = judge_one(judge, cache, row, args.dry_run)
+            record, is_fresh = judge_one(judge, cache, row, args.model)
         except QuotaExhaustedError as error:
             stopped_early = str(error)
             break
