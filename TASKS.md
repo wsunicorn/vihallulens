@@ -766,7 +766,7 @@
 
   ### Một con số đo trước khi chạy, và nó đổi cách đọc kết quả
 
-  **Khoảng 50 % cặp của ViHallu vượt giới hạn 256 token của PhoBERT.** Ở mức 512 token của hai mô hình kia thì chỉ khoảng 1,4 %.
+**Đo thật trên Kaggle: 29,3 % cặp của ViHallu vượt giới hạn 256 token của PhoBERT**, còn ở mức 512 token của hai mô hình kia là **2,5 %**. (Ước lượng thô ban đầu của nhóm là 50 % và 1,4 %, tính bằng cách nhân số từ với 1,3; sai vì BPE của PhoBERT trên văn bản **đã tách từ** nén tốt hơn nhiều so với hệ số đó.)
 
   Đây không phải lựa chọn mà là **trần cứng**: PhoBERT không thể vượt 256 vị trí. Hệ quả: nếu PhoBERT thua thì phải ghi rõ nó thua **một phần vì không đọc hết được ngữ cảnh**, chứ không kết luận là mô hình yếu hơn. Script tự in tỷ lệ này trước mỗi lần chạy.
 
@@ -798,6 +798,25 @@
   Số chia mới: ViHallu **5.600 / 700 / 700**, ISE-DSC01 **29.077 / 3.646 / 3.646**. Rò rỉ vẫn bằng 0. Đã chạy lại E01 trên tập mới, kết quả ở phần T17.
 
   **Lỗi 2 — notebook gọi `split_data.py` khi mới chuẩn hóa một bộ.** Script xử lý cả bốn bộ nên dừng giữa chừng vì thiếu ISE-DSC01. Thêm cờ `--only` để chỉ xử lý bộ cần, và cho báo cáo rò rỉ của lần chạy một phần ghi ra **tên file khác**, để không đè lên bản đầy đủ mà mục 6 `docs/DATA.md` trỏ tới đích danh.
+
+  ### Lỗi thứ ba, phát hiện ở lượt chạy GPU đầu tiên
+
+  Cả ba mô hình đều **dừng ngay trước bước huấn luyện đầu tiên**, sau khi đã tải xong trọng số — tức đã tốn thời gian tải mà chưa học được gì.
+
+```
+ValueError: too many dimensions 'str'
+    torch.tensor(labels, dtype=torch.long)
+```
+
+  Nguyên nhân là một chỗ **nửa vời của chính mình**: trong `main()` mình mã hóa nhãn tập train thành số, nhưng **cố ý giữ nhãn tập test ở dạng chuỗi** vì `compute_metrics` chấm điểm bằng chuỗi. Rồi lại đưa chính chuỗi đó vào `make_loader` để dựng tensor.
+
+  Sửa bằng cách **cho nhãn chỉ tồn tại ở một dạng duy nhất** trong cấu trúc dữ liệu — chuỗi — và mã hóa thành số **ngay tại chỗ dựng loader**. Hai dạng nhãn nằm ở hai chỗ khác nhau thì sớm muộn cũng có chỗ dùng nhầm.
+
+  **Bài học đắt hơn: mình không có cách nào kiểm tra vòng lặp huấn luyện trước khi tốn quota.** Mục 5 `docs/SPEC.md` ghi "chỉ test phần không cần GPU", và mình đã hiểu câu đó thành "vòng lặp huấn luyện thì khỏi test" — sai. Vòng lặp *chạy được hay không* là chuyện của CPU; chỉ *chạy nhanh hay chậm* mới cần GPU.
+
+  Đã sửa: `train_once` nay nhận tham số `build` để tiêm mô hình vào, và có **hai ca kiểm thử chạy trọn vòng lặp trên CPU** với một Roberta hai lớp khởi tạo ngẫu nhiên, không tải gì. Chạy hết trong vài giây, và bắt đúng loại lỗi vừa xảy ra. Cũng bớt log rác: tokenizer của `transformers` lặp lại một dòng cảnh báo cắt chuỗi mỗi batch, hàng trăm dòng, che mất mọi thứ đáng đọc.
+
+  Một chỉnh nhỏ nữa: số đo nhiệt độ **lúc rảnh** trước khi chạy nay chỉ in ra chứ không đưa vào phán quyết hạ xung — card rảnh tự hạ xung xuống 300/1590 MHz, thấp hơn hẳn lúc chạy, nên đưa vào sẽ khiến mọi lượt chạy trông như đang *tăng* xung.
 
   ### Việc cần chạy — một phiên là đủ
 

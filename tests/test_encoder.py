@@ -146,3 +146,89 @@ def test_every_entry_carries_what_the_training_loop_needs():
     for name, spec in MODELS.items():
         assert set(spec) >= {"name", "max_length", "segment", "batch_size"}, name
         assert spec["batch_size"] >= 1
+
+
+# -- the whole training loop, on a CPU, with no download ----------------------------------
+
+
+def tiny_build(spec):
+    """A two-layer randomly initialised Roberta sharing nothing with the real checkpoints.
+
+    Enough to run the real loop end to end in a couple of seconds. The point is not to learn
+    anything but to prove the loop *runs*: the first Kaggle attempt at T18 crashed on
+    ``torch.tensor`` receiving label strings, after the model had already been downloaded and
+    the session had already been paid for.
+    """
+    from transformers import RobertaConfig, RobertaForSequenceClassification
+
+    config = RobertaConfig(
+        vocab_size=1000,
+        hidden_size=32,
+        num_hidden_layers=2,
+        num_attention_heads=2,
+        intermediate_size=64,
+        max_position_embeddings=64,
+        num_labels=len(LABELS),
+    )
+    return StubTokenizer(), RobertaForSequenceClassification(config)
+
+
+class StubTokenizer:
+    """Turns text pairs into fixed-width id tensors without any vocabulary file."""
+
+    def __call__(self, left, right=None, truncation=True, max_length=16,
+                 padding="max_length", return_tensors=None, add_special_tokens=True):
+        import torch
+
+        rows = []
+        for index in range(len(left)):
+            text = f"{left[index]} {right[index] if right else ''}"
+            ids = [abs(hash(word)) % 999 + 1 for word in text.split()][:max_length]
+            ids += [0] * (max_length - len(ids))
+            rows.append(ids)
+        ids_tensor = torch.tensor(rows, dtype=torch.long)
+        out = {"input_ids": ids_tensor, "attention_mask": (ids_tensor != 0).long()}
+        return out if return_tensors else {"input_ids": [row for row in rows]}
+
+
+def test_the_training_loop_runs_end_to_end_on_a_cpu():
+    """Would have caught the crash that cost a Kaggle session: labels reached the loader as
+    strings because the test split kept them in the form compute_metrics wants."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from train_encoder_baseline import train_once
+
+    labels = ["no", "intrinsic", "extrinsic"] * 4
+    data = {
+        "train": ([f"ngữ cảnh {i}" for i in range(12)],
+                  [f"phản hồi {i}" for i in range(12)], labels),
+        "test": ([f"ngữ cảnh {i}" for i in range(6)],
+                 [f"phản hồi {i}" for i in range(6)], labels[:6]),
+    }
+    spec = {"name": "tiny", "max_length": 16, "segment": False, "batch_size": 4}
+    result = train_once(spec, data, seed=42, epochs=1, lr=1e-3, device="cpu", build=tiny_build)
+
+    assert set(result) >= {"metrics", "y_pred", "n_params", "ms_per_sample"}
+    assert len(result["y_pred"]) == 6
+    assert set(result["y_pred"]) <= set(LABELS)
+    assert 0.0 <= result["metrics"]["macro_f1"] <= 1.0
+
+
+def test_the_loop_scores_against_the_string_labels_not_the_encoded_ones():
+    """The two forms have to stay separate: ids go to the loader, strings go to the scorer."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from train_encoder_baseline import train_once
+
+    labels = ["no", "intrinsic", "extrinsic"] * 4
+    data = {
+        "train": ([f"a {i}" for i in range(12)], [f"b {i}" for i in range(12)], labels),
+        "test": (["a 0", "a 1"], ["b 0", "b 1"], ["no", "extrinsic"]),
+    }
+    spec = {"name": "tiny", "max_length": 16, "segment": False, "batch_size": 4}
+    result = train_once(spec, data, seed=42, epochs=1, lr=1e-3, device="cpu", build=tiny_build)
+    assert all(isinstance(label, str) for label in result["y_pred"])
