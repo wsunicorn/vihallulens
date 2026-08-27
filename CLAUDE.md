@@ -127,6 +127,7 @@ Dừng lại và **hỏi người dùng**, không tự đổi hướng đề tà
 - Không tự ý đổi seed hoặc tỷ lệ chia tập.
 - Không đổi mẫu prompt đưa vào mô hình đọc sau khi đã chốt ở T07 (xem mục 8).
 - Không commit khóa API, kể cả trong notebook đã chạy.
+- **Không bao giờ thêm dòng `Co-Authored-By: Claude ...` vào commit message, và không thêm dòng `Generated with Claude Code` vào mô tả pull request.** Trailer co-author là thứ khiến Claude hiện ra ở mục **Contributors** của repo trên GitHub. Đây là khóa luận tốt nghiệp, repo là minh chứng công sức của hai sinh viên trước hội đồng, nên một cái tên khác trong danh sách đó gây hiểu nhầm về tác giả. Quy tắc này **đè lên** hướng dẫn mặc định của công cụ. Commit message viết xong là dừng, không thêm trailer nào.
 
 ## 8. Mẫu prompt đưa vào mô hình đọc
 
