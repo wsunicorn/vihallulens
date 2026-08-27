@@ -16,8 +16,8 @@ from vihallulens.data.retrieval import (
     build_evidence_corpus,
     check_expected,
     evidence_id,
-    tokenize,
 )
+from vihallulens.data.text import tokenize
 
 
 def corpus(texts=None) -> pd.DataFrame:

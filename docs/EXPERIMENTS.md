@@ -55,6 +55,27 @@ Mọi con số phải kèm độ lệch chuẩn qua 5 seed cho phần huấn luy
 
 Nếu baseline này đạt macro-F1 cao, mọi phương pháp phức tạp hơn phải chứng minh vượt nó chứ không phải vượt PhoBERT 32,83%.
 
+**Đã chạy ở T17 ngày 27/08/2026. Sàn cao hơn dự đoán: macro-F1 = 0,670.**
+
+| Chỉ số | Giá trị | ± lệch chuẩn |
+|---|---|---|
+| **macro-F1** | **0,6696** | 0,0038 |
+| Accuracy | 0,6757 | 0,0033 |
+| F1 `no` | 0,7495 | 0,0007 |
+| F1 `intrinsic` | **0,5234** | 0,0083 |
+| F1 `extrinsic` | 0,7360 | 0,0032 |
+| ECE | 0,0611 | 0,0044 |
+
+Chín tham số phải huấn luyện, 0,001 ms mỗi mẫu, không cần GPU. Độ lệch chuẩn đo bằng 5 lần lấy mẫu lặp lại tập huấn luyện — đổi riêng hạt giống thì lbfgs tất định nên cho ra năm con số y hệt nhau, không đo được gì.
+
+Hai đặc trưng tái lập đúng bảng trên: độ dài trung bình ra **chính xác** 32,9 / 39,5 / 45,9 từ. Tỷ lệ trùng lặp ra 0,827 / 0,671 / 0,574, cao hơn số cũ khoảng 0,02 vì cách đếm ở đây bỏ dấu câu và không phân biệt hoa thường trước khi so; thứ tự và khoảng cách giữa ba nhãn giữ nguyên.
+
+**Ba điều con số này quyết định:**
+
+1. **Ngưỡng thật để vượt là 0,670, không phải 0,328.** Bất kỳ phương pháp nào của đề tài, kể cả chunk-aware, mà không vượt được 0,670 thì không có đóng góp thực tế — dù nó vượt PhoBERT 32,83 % đã công bố.
+2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Điều đó hợp lý: ảo giác nội tại là xáo trộn thông tin đã có trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và không lộ ra ở hai đặc trưng bề mặt. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh.
+3. **Chi phí gần bằng không** — 9 tham số, 0,001 ms/mẫu, không GPU. Cột chi phí của E11 vì thế có một mốc dưới rất khắc nghiệt.
+
 ### E02 — Tái lập Lookback Lens gốc
 
 Đây là mốc so sánh nội bộ quan trọng nhất: nếu chunk-aware không hơn E02 thì đóng góp của đề tài không đứng vững. Vì vậy E02 phải tái lập **đúng** công thức gốc, không phải một biến thể gần đúng.
@@ -108,7 +129,7 @@ Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **v�
 
 | Phương pháp | macro-F1 | Acc | F1 no | F1 intr | F1 extr | ms/mẫu | VRAM MB |
 |---|---|---|---|---|---|---|---|
-| Baseline tầm thường (E01) | | | | | | | |
+| Baseline tầm thường (E01) | **0,670** ±0,004 | 0,676 | 0,750 | 0,523 | 0,736 | 0,001 | 0 |
 | PhoBERT tinh chỉnh (E09) | | | | | | | |
 | XLM-R large tinh chỉnh (E09) | | | | | | | |
 | InfoXLM large tinh chỉnh (E09) | | | | | | | |
