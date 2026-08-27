@@ -818,6 +818,46 @@ ValueError: too many dimensions 'str'
 
   Một chỉnh nhỏ nữa: số đo nhiệt độ **lúc rảnh** trước khi chạy nay chỉ in ra chứ không đưa vào phán quyết hạ xung — card rảnh tự hạ xung xuống 300/1590 MHz, thấp hơn hẳn lúc chạy, nên đưa vào sẽ khiến mọi lượt chạy trông như đang *tăng* xung.
 
+  ### Lượt chạy GPU đầu: sáu trên chín lần chạy không học được gì
+
+  Chạy hết 3,5 giờ, và kết quả **hỏng**:
+
+| Mô hình | macro-F1 từng seed | Học được |
+|---|---|---|
+| PhoBERT-large | 0,778 · **0,167** · 0,757 | 2/3 |
+| XLM-R-large | **0,167 · 0,167 · 0,167** | 0/3 |
+| InfoXLM-large | **0,167 · 0,167 · 0,167** | 0/3 |
+
+  Con số 0,167 không phải điểm kém mà là **dấu hiệu của việc không học gì cả**. Kiểm lại thì rõ: `f1_no = 0`, `f1_extrinsic = 0`, `f1_intrinsic = 0,5011` → macro = 0,167; và accuracy 0,3343 nhân 700 ra đúng **234 mẫu**, bằng đúng số mẫu `intrinsic` trong tập test. Tức **mô hình đoán `intrinsic` cho cả 700 mẫu**.
+
+  Xác nhận thêm bằng loss: entropy chéo của mô hình ba lớp chưa học gì là `ln(3) = 1,0986`. Loss của XLM-R dao động 1,02–1,27 suốt **2.100 bước** mà không hề giảm. Nó chưa từng rời điểm xuất phát.
+
+  **Nguyên nhân: tinh chỉnh không ổn định ở learning rate 2e-5.** Đây là vấn đề nổi tiếng của họ RoBERTa cỡ large, và ở đây nặng thêm vì T4 là kiến trúc Turing nên **không hỗ trợ bfloat16** — buộc phải dùng float16, kiểu số có dải hẹp hơn nhiều. Bằng chứng ủng hộ: PhoBERT ở cùng learning rate cũng sụp một trong ba lần, tức không phải lỗi riêng của mô hình nào.
+
+  ### Ba lớp phòng vệ đã thêm
+
+  1. **Hạ learning rate xuống 1e-5** cho cả ba, khai báo riêng trong `MODELS` chứ không dùng chung một hằng số. Kèm `eps=1e-6` cho AdamW — cách chữa tiêu chuẩn cho bất ổn của họ RoBERTa.
+
+  2. **Dừng sớm.** Hết một epoch mà loss vẫn quanh `ln(3)` thì script tự dừng. Sáu lần chạy chết ở lượt trước đốt **hai tiếng rưỡi** để in ra một hàng 0,167 giống hệt nhau; nay chúng dừng sau epoch đầu.
+
+  3. **Ô thử rẻ trong notebook.** Một seed, một epoch, trên mô hình khó nhất — mười phút thay vì ba tiếng rưỡi để biết cấu hình có ổn không.
+
+  Cũng sửa một lỗi thật trong vòng lặp mà PyTorch đã cảnh báo suốt lượt chạy: `GradScaler` **bỏ hẳn bước cập nhật** khi gradient float16 tràn số, nhưng `scheduler.step()` vẫn được gọi — tức lịch learning rate cứ chạy tiếp trong khi trọng số đứng yên. Nay chỉ bước scheduler khi optimizer thật sự đã bước, và số bước thật được in ra.
+
+  ### Một lỗi trong chính cách mình báo cáo
+
+  Bảng kết quả của PhoBERT in ra thế này:
+
+```
+  macro_f1            0.5672    0.3467   [0.7228, 0.7860]
+```
+
+  **Trung bình 0,5672 nằm NGOÀI khoảng tin cậy [0,7228 – 0,7860] của chính nó.** Vô lý, và là dấu hiệu của lỗi chứ không phải một sai lệch tinh vi.
+
+  Nguyên nhân: trung bình tính trên **cả ba seed** (gồm cả seed sụp đổ 0,167), còn khoảng tin cậy lấy từ **seed ở giữa** (0,757). Hai con số mô tả hai thứ khác nhau nhưng bị đặt cạnh nhau như thể cùng mô tả một thứ.
+
+  Sửa: lần chạy nào **chỉ đoán một lớp** sẽ bị phát hiện và **loại khỏi thống kê**, có cảnh báo rõ ràng, và macro-F1 của **từng seed** được in riêng. Bình quân một lần thành công với một lần thất bại cho ra con số không mô tả cái nào cả. Nếu **mọi** seed đều sụp thì script báo lỗi và **không báo cáo số nào** — thay vì in ra 0,167 như thể đó là một kết quả.
+
   ### Việc cần chạy — một phiên là đủ
 
   Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb` và **chạy cả ba ô liền nhau**.

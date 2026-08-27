@@ -20,26 +20,38 @@ from vihallulens.evaluation.metrics import LABELS
 # sense and weaker in another: the point of a baseline is to be the strongest thing the thesis
 # has to beat, so each model gets its best setting and the truncation rates are reported beside
 # the scores.
+# ``lr`` is per model, not shared. Measured at T18: at 2e-5 the two 512-token models collapsed
+# on 3 seeds out of 3 and PhoBERT on 1 of 3 — the loss sat at ln(3) and every sample came back
+# labelled ``intrinsic``. Large RoBERTa-family encoders are known to be unstable at that rate,
+# and this T4 cannot use bfloat16, so float16 makes it worse. 1e-5 is the standard remedy.
 MODELS = {
     "phobert": {
         "name": "vinai/phobert-large",
         "max_length": 256,
         "segment": True,
         "batch_size": 16,
+        "lr": 1e-5,
     },
     "xlmr": {
         "name": "FacebookAI/xlm-roberta-large",
         "max_length": 512,
         "segment": False,
         "batch_size": 8,
+        "lr": 1e-5,
     },
     "infoxlm": {
         "name": "microsoft/infoxlm-large",
         "max_length": 512,
         "segment": False,
         "batch_size": 8,
+        "lr": 1e-5,
     },
 }
+
+# A run that never learned predicts one class for everything. With three classes that is a
+# macro-F1 of exactly 1/3 of one class's F1 — about 0,167 here — and it must never be averaged
+# in beside runs that worked, because the mean of a success and a failure describes neither.
+COLLAPSE_MIN_CLASSES = 2
 
 
 def build_pairs(frame: pd.DataFrame, segment: bool) -> tuple[list[str], list[str]]:
@@ -103,3 +115,13 @@ def truncation_rate(tokenizer, left, right, max_length: int) -> float:
         list(left), list(right), truncation=False, add_special_tokens=True
     )["input_ids"]
     return sum(1 for ids in lengths if len(ids) > max_length) / len(lengths)
+
+
+def has_collapsed(y_pred) -> bool:
+    """Did this run give up and predict a single class for everything?
+
+    The signature of a fine-tune that never left its starting point. Detected by counting
+    distinct predictions rather than by thresholding the score, because the threshold would
+    depend on the class balance while this does not.
+    """
+    return len(set(y_pred)) < COLLAPSE_MIN_CLASSES
