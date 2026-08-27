@@ -169,7 +169,11 @@ Bốn điều bảng này nói:
 
 4. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,086 → 0,114. Bộ mã hóa tinh chỉnh đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
 
-**InfoXLM-large không tinh chỉnh được** trên cấu hình này: cả ba seed đều đứng ở `ln(3) = 1,0986` hết epoch đầu và bị cơ chế dừng sớm loại. Cùng kích thước và cùng learning rate với XLM-R, vốn chạy tốt 3/3 seed — nên đây là bất ổn riêng của checkpoint đó, không phải của cấu hình. Ghi lại như một kết quả về **độ ổn định**, và chính nó là luận điểm cho CH2: phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
+**InfoXLM-large không tinh chỉnh được** trên cấu hình này. Cả ba seed đứng ở `ln(3) = 1,0986` hết epoch đầu, và hai mức learning rate thấp hơn (`5e-6`, `2e-6`) cũng vậy — loss thậm chí **bám sát `ln(3)` hơn** khi hạ learning rate, tức mô hình không nhúc nhích chứ không phải bị đẩy quá đà.
+
+Đã loại trừ bốn nguyên nhân cơ học bằng CPU, không tốn quota GPU: trọng số thân nạp đủ; cấu hình giống hệt XLM-R; đỉnh activation chỉ bằng 0,04 % trần float16; vector CLS phân biệt các mẫu **tốt hơn** XLM-R. Công cụ kiểm nằm ở `scripts/check_checkpoint.py`, dùng lại được cho E13 và cho các nấc lùi mô hình.
+
+Ghi lại như một kết quả về **độ ổn định**, không phải một ô trống. Chính nó là luận điểm cho CH2: hướng bộ mã hóa đòi dò tham số riêng cho từng checkpoint, còn phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
 
 ### Bảng 2 — Định vị chú ý trên ISE-DSC01 (E06)
 

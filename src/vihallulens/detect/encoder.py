@@ -39,6 +39,10 @@ MODELS = {
         "batch_size": 8,
         "lr": 1e-5,
     },
+    # Kept registered but known not to fine-tune here: at T18 it sat on ln(3) for a whole
+    # epoch at 1e-5, 5e-6 and 2e-6 alike, while XLM-R-large — same size, same config, same rate
+    # — trained on 3 seeds out of 3. Five mechanical causes were ruled out on a CPU with
+    # scripts/check_checkpoint.py. Run it again only with a reason, not out of habit.
     "infoxlm": {
         "name": "microsoft/infoxlm-large",
         "max_length": 512,

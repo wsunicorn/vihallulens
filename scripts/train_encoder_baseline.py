@@ -36,6 +36,7 @@ from vihallulens.detect.encoder import (  # noqa: E402
     has_collapsed,
     truncation_rate,
 )
+from vihallulens.detect.loading_report import describe  # noqa: E402
 from vihallulens.evaluation.logging import log_result  # noqa: E402
 from vihallulens.evaluation.metrics import (  # noqa: E402
     LABELS,
@@ -98,15 +99,23 @@ def make_loader(tokenizer, left, right, labels, max_length, batch_size, shuffle,
 
 
 def build_from_hub(spec):
-    """Default factory: tokenizer and freshly headed model straight from the hub."""
+    """Default factory: tokenizer and freshly headed model straight from the hub.
+
+    The load is reported explicitly rather than left to the library's own log line, which
+    ``logging.set_verbosity_error()`` in main() suppresses along with the tokenizer spam. A
+    checkpoint whose body did not load trains like a randomly initialised network while still
+    answering to a famous name, and that has to stop the run rather than cost a GPU session.
+    """
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    return (
-        AutoTokenizer.from_pretrained(spec["name"]),
-        AutoModelForSequenceClassification.from_pretrained(
-            spec["name"], num_labels=len(LABELS)
-        ),
+    model, info = AutoModelForSequenceClassification.from_pretrained(
+        spec["name"], num_labels=len(LABELS), output_loading_info=True
     )
+    ok, message = describe(info)
+    print(f"      nạp trọng số: {message}")
+    if not ok:
+        raise RuntimeError(f"checkpoint {spec['name']} nạp không đúng — {message}")
+    return AutoTokenizer.from_pretrained(spec["name"]), model
 
 
 def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> dict:
