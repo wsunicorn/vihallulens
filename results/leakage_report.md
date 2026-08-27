@@ -1,6 +1,6 @@
 # Báo cáo rò rỉ ngữ cảnh
 
-Sinh tự động bởi `scripts/split_data.py` ngày 23/08/2026. Đừng sửa tay — chạy lại lệnh.
+Sinh tự động bởi `scripts/split_data.py` ngày 27/08/2026. Đừng sửa tay — chạy lại lệnh.
 
 ## Rò rỉ là gì và vì sao phải đo
 
@@ -22,12 +22,12 @@ theo thiết kế**; bảng dưới là bằng chứng chứ không phải kỳ 
 
 | Bộ | Tập | Dòng | Tỷ lệ | Ngữ cảnh | Rò rỉ ngữ cảnh | Rò rỉ dòng |
 |---|---|---|---|---|---|---|
-| vihallu | train | 5,598 | 80.0 % | 3,089 | — | — |
-| vihallu | dev | 702 | 10.0 % | 389 | 0/389 | 0/702 |
-| vihallu | test | 700 | 10.0 % | 387 | 0/387 | 0/700 |
-| isedsc01 | train | 29,082 | 80.0 % | 3,819 | — | — |
-| isedsc01 | dev | 3,653 | 10.0 % | 489 | 0/489 | 0/3653 |
-| isedsc01 | test | 3,634 | 10.0 % | 485 | 0/485 | 0/3634 |
+| vihallu | train | 5,600 | 80.0 % | 3,092 | — | — |
+| vihallu | dev | 700 | 10.0 % | 394 | 0/394 | 0/700 |
+| vihallu | test | 700 | 10.0 % | 379 | 0/379 | 0/700 |
+| isedsc01 | train | 29,077 | 79.9 % | 3,811 | — | — |
+| isedsc01 | dev | 3,646 | 10.0 % | 493 | 0/493 | 0/3646 |
+| isedsc01 | test | 3,646 | 10.0 % | 489 | 0/489 | 0/3646 |
 
 ### Phân bố nhãn sau khi chia
 
@@ -36,12 +36,12 @@ Chia theo nhóm ngữ cảnh thì **không** ép được cân bằng nhãn cùn
 
 | Bộ | Tập | no | intrinsic | extrinsic |
 |---|---|---|---|---|
-| vihallu | train | 1,798 (32.1 %) | 1,943 (34.7 %) | 1,857 (33.2 %) |
-| vihallu | dev | 227 (32.3 %) | 257 (36.6 %) | 218 (31.1 %) |
-| vihallu | test | 220 (31.4 %) | 248 (35.4 %) | 232 (33.1 %) |
-| isedsc01 | train | 10,269 (35.3 %) | 8,755 (30.1 %) | 10,058 (34.6 %) |
-| isedsc01 | dev | 1,278 (35.0 %) | 1,109 (30.4 %) | 1,266 (34.7 %) |
-| isedsc01 | test | 1,239 (34.1 %) | 1,136 (31.3 %) | 1,259 (34.6 %) |
+| vihallu | train | 1,780 (31.8 %) | 1,984 (35.4 %) | 1,836 (32.8 %) |
+| vihallu | dev | 225 (32.1 %) | 230 (32.9 %) | 245 (35.0 %) |
+| vihallu | test | 240 (34.3 %) | 234 (33.4 %) | 226 (32.3 %) |
+| isedsc01 | train | 10,193 (35.1 %) | 8,856 (30.5 %) | 10,028 (34.5 %) |
+| isedsc01 | dev | 1,291 (35.4 %) | 1,086 (29.8 %) | 1,269 (34.8 %) |
+| isedsc01 | test | 1,302 (35.7 %) | 1,058 (29.0 %) | 1,286 (35.3 %) |
 
 ## Tập giữ nguyên split gốc — ViWikiFC và ViFactCheck
 

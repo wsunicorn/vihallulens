@@ -508,8 +508,10 @@
 
 | Bộ | train | dev | test | Tổng |
 |---|---|---|---|---|
-| ViHallu | 5.598 (80,0 %) | 702 (10,0 %) | 700 (10,0 %) | 7.000 |
-| ISE-DSC01 | 29.082 (80,0 %) | 3.653 (10,0 %) | 3.634 (10,0 %) | 36.369 |
+| ViHallu | 5.600 (80,0 %) | 700 (10,0 %) | 700 (10,0 %) | 7.000 |
+| ISE-DSC01 | 29.077 (79,9 %) | 3.646 (10,0 %) | 3.646 (10,0 %) | 36.369 |
+
+  **Số này đã đổi ở T18** so với lần chạy đầu (5.598/702/700 và 29.082/3.653/3.634), vì cách xáo thứ tự nhóm cũ không tái lập được giữa các máy. Xem phần T18.
 
   Tỷ lệ chỉ **xấp xỉ** 80/10/10 vì chia cả nhóm — một ngữ cảnh phải rơi trọn vào một tập. Sai lệch nhỏ tới mức làm tròn một chữ số thập phân thì ra đúng 80,0/10,0/10,0, vì nhóm nhỏ: nhóm lớn nhất của ViHallu 5 dòng, của ISE-DSC01 33 dòng, đều dưới 0,1 % cỡ bộ.
 
@@ -682,22 +684,24 @@
 
 | Chỉ số | Giá trị | ± lệch chuẩn | Khoảng tin cậy 95 % |
 |---|---|---|---|
-| **macro-F1** | **0,6696** | 0,0177 | **[0,6345 – 0,7024]** |
-| Accuracy | 0,6757 | 0,0180 | [0,6400 – 0,7086] |
-| F1 `no` | 0,7495 | 0,0223 | [0,7029 – 0,7907] |
-| F1 `intrinsic` | **0,5234** | 0,0291 | [0,4631 – 0,5784] |
-| F1 `extrinsic` | 0,7360 | 0,0227 | [0,6903 – 0,7805] |
-| ECE | 0,0611 | — | — |
+| **macro-F1** | **0,6562** | 0,0177 | **[0,6200 – 0,6891]** |
+| Accuracy | 0,6614 | 0,0178 | [0,6257 – 0,6957] |
+| F1 `no` | 0,7418 | 0,0226 | [0,6930 – 0,7830] |
+| F1 `intrinsic` | **0,5327** | 0,0293 | [0,4736 – 0,5852] |
+| F1 `extrinsic` | 0,6942 | 0,0239 | [0,6462 – 0,7394] |
+| ECE | 0,0613 | — | — |
+
+  **Chạy lại ngày 27/08/2026** sau khi T18 sửa cách chia tập. Con số cũ trên tập chia trước là 0,6696; lệch 0,013 và **nằm gọn trong khoảng nhiễu ±0,018** — chính minh họa cho điều mục "yêu cầu 5 seed là rỗng" ở dưới nói.
 
   Chín tham số phải huấn luyện, **0,001 ms mỗi mẫu**, không cần GPU.
 
-  Ma trận nhầm lẫn cho thấy rõ vì sao `intrinsic` khó: nó chỉ được bắt đúng **45,2 %**, và phần trượt chia gần đều sang hai lớp kia — 73 mẫu bị gọi là `no`, 63 mẫu bị gọi là `extrinsic`. Không lệch hẳn về bên nào, tức hai đặc trưng bề mặt **không có tín hiệu nào** về lớp này chứ không phải có tín hiệu yếu.
+  Ma trận nhầm lẫn trên tập chia trước cho thấy rõ vì sao `intrinsic` khó: nó chỉ được bắt đúng **45,2 %**, và phần trượt chia gần đều sang hai lớp kia. Không lệch hẳn về bên nào, tức hai đặc trưng bề mặt **không có tín hiệu nào** về lớp này chứ không phải có tín hiệu yếu.
 
   Hai đặc trưng tái lập đúng bảng ở mục 4 `docs/EXPERIMENTS.md`: độ dài trung bình ra **chính xác** 32,9 / 39,5 / 45,9 từ cho ba nhãn. Tỷ lệ trùng lặp ra 0,827 / 0,671 / 0,574, cao hơn số cũ khoảng 0,02 vì cách đếm ở đây bỏ dấu câu và không phân biệt hoa thường; thứ tự và khoảng cách giữa ba nhãn giữ nguyên.
 
   ### Ba điều con số này quyết định
 
-  1. **Ngưỡng thật để vượt là 0,702 — không phải 0,328, mà cũng không phải 0,670.** Bài PhoBERT công bố macro-F1 32,83 %, lấy đó làm mốc thì mọi thứ đều trông như tiến bộ lớn; hai đặc trưng bề mặt đã đạt gấp đôi. Nhưng khoảng tin cậy của E01 chạm tới **0,702**, nên muốn nói một phương pháp *hơn hẳn* E01 thì phải vượt mốc đó. Vượt 0,68 chỉ là rơi vào khoảng nhiễu của cùng một kết quả.
+  1. **Ngưỡng thật để vượt là 0,689 — không phải 0,328, mà cũng không phải 0,656.** Bài PhoBERT công bố macro-F1 32,83 %, lấy đó làm mốc thì mọi thứ đều trông như tiến bộ lớn; hai đặc trưng bề mặt đã đạt gấp đôi. Nhưng khoảng tin cậy của E01 chạm tới **0,689**, nên muốn nói một phương pháp *hơn hẳn* E01 thì phải vượt mốc đó. Vượt 0,67 chỉ là rơi vào khoảng nhiễu của cùng một kết quả.
 
   2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Và điều đó rất hợp lý: ảo giác nội tại là **xáo trộn thông tin vốn đã có** trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và *vẫn* dài vừa phải — hai đặc trưng bề mặt gần như mù với nó. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh. Nếu chunk-aware chỉ cải thiện `no` và `extrinsic` thì chưa nói lên gì.
 
@@ -776,6 +780,25 @@
 
   3. **Ba seed thay vì năm.** Mục 3 `docs/EXPERIMENTS.md` đòi năm, và tinh chỉnh **thật sự** ngẫu nhiên (khởi tạo đầu phân loại, dropout, thứ tự dữ liệu) nên seed ở đây đo được thứ có thật — khác hẳn E01. Nhưng T17 đo được khoảng tin cậy tập test là ±0,017, lớn hơn hẳn biến thiên seed của một mô hình đã hội tụ. Seed thứ tư và thứ năm sẽ tinh chỉnh một con số vốn đã bị một con số lớn hơn chi phối, đổi lại **khoảng một giờ quota mỗi mô hình 512 token**. Có cờ `--seeds 5` cho ai muốn theo đúng nguyên văn.
 
+  ### Hai lỗi phát hiện khi chạy thử trên Kaggle, đã sửa
+
+  **Lỗi 1 — cách chia tập không tái lập được giữa các máy.** Đây là lỗi nghiêm trọng hơn nhiều so với vẻ ngoài của nó. Cùng seed 42, cùng dữ liệu, mà ra hai kết quả khác nhau:
+
+| Máy | train / dev / test |
+|---|---|
+| Máy cá nhân (Python 3.11) | 5.598 / 702 / 700 |
+| Kaggle (Python 3.12, torch 2.10) | **5.632 / 706 / 662** |
+
+  Nguyên nhân: `group_split` xáo thứ tự nhóm bằng `numpy.random.default_rng(seed).shuffle`. Đã loại trừ hai giả thuyết dễ nghĩ — ký tự xuống dòng trong dữ liệu (ViHallu không có ký tự nào), và kiểu dữ liệu của mảng đem xáo (thử object với `<U16` cho cùng hoán vị). Còn lại là chênh lệch phiên bản thư viện trên Kaggle.
+
+  **Không truy tiếp thư viện nào lệch, mà bỏ hẳn chỗ phụ thuộc vào nó.** Thứ tự nhóm nay lấy từ **băm SHA-256 của `(seed, context_id)`** rồi sắp xếp — SHA-256 cố định theo chuẩn chứ không theo phiên bản thư viện, và `sorted` thì ổn định. Kết quả chỉ phụ thuộc seed và các mã ngữ cảnh, không phụ thuộc gì khác.
+
+  Vì sao đáng làm tới mức đó: **mọi thí nghiệm từ đây trở đi đều đứng trên cách chia này**. Một cách chia đổi theo phiên bản thư viện thì hai người trong nhóm chạy cùng một lệnh sẽ ra hai con số khác nhau, và không ai biết vì sao. Thêm **một ca kiểm thử khóa cứng** bốn phần tử đầu của thứ tự xáo, cùng một ca đặt seed toàn cục của NumPy thành giá trị lạ rồi khẳng định cách chia không nhúc nhích — để lần sau ai đó lại với tay sang `numpy.random` là đỏ ngay.
+
+  Số chia mới: ViHallu **5.600 / 700 / 700**, ISE-DSC01 **29.077 / 3.646 / 3.646**. Rò rỉ vẫn bằng 0. Đã chạy lại E01 trên tập mới, kết quả ở phần T17.
+
+  **Lỗi 2 — notebook gọi `split_data.py` khi mới chuẩn hóa một bộ.** Script xử lý cả bốn bộ nên dừng giữa chừng vì thiếu ISE-DSC01. Thêm cờ `--only` để chỉ xử lý bộ cần, và cho báo cáo rò rỉ của lần chạy một phần ghi ra **tên file khác**, để không đè lên bản đầy đủ mà mục 6 `docs/DATA.md` trỏ tới đích danh.
+
   ### Việc cần chạy — một phiên là đủ
 
   Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb` và **chạy cả ba ô liền nhau**.
@@ -796,7 +819,7 @@
 
   Tổng khoảng **3 giờ**, trong hạn mức 30 giờ/tuần.
 
-  **Mốc phải vượt là 0,702** — cận trên khoảng tin cậy của E01, không phải 0,670. Và chỗ đáng nhìn nhất là **F1 của lớp `intrinsic`**: E01 chỉ đạt 0,523 và bắt đúng 45,2 %, nên bộ mã hóa cải thiện được bao nhiêu ở đó mới là phần nói lên điều gì.
+  **Mốc phải vượt là 0,689** — cận trên khoảng tin cậy của E01, không phải 0,656. Và chỗ đáng nhìn nhất là **F1 của lớp `intrinsic`**: E01 chỉ đạt 0,533, nên bộ mã hóa cải thiện được bao nhiêu ở đó mới là phần nói lên điều gì.
 
 - [ ] **T19** · M · E10 baseline LLM giám khảo
   - Prompt Gemini free tier trên **tối đa 300 mẫu** tập test, có xử lý rate limit và cache kết quả ra file. Khóa đọc từ `.env`, không hardcode.
