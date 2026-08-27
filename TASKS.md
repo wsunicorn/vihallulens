@@ -754,7 +754,7 @@
 
   **Task này để làm gì.** Đây là **mốc so sánh nghiêm túc nhất** của đề tài. Khác E01 chỉ dùng hai đặc trưng bề mặt, ba mô hình này thật sự **đọc** văn bản; khác E10 dùng Gemini, chúng **chạy cục bộ** không tốn API. Nếu phương pháp chú ý nội tại không vượt được chúng thì lập luận về chi phí ở câu hỏi CH2 không đứng vững.
 
-  **Đã chuẩn bị:** `src/vihallulens/data/segmentation.py`, `src/vihallulens/detect/encoder.py`, `scripts/train_encoder_baseline.py`, `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`. `pytest` **419 ca xanh** (thêm 17 ca).
+  **Đã chuẩn bị:** `src/vihallulens/data/segmentation.py`, `src/vihallulens/detect/encoder.py`, `scripts/train_encoder_baseline.py`, `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb`. `pytest` **432 ca xanh** (thêm 30 ca).
 
   ### Một quyết định về phụ thuộc, đã hỏi và được duyệt
 
@@ -876,6 +876,41 @@ ValueError: too many dimensions 'str'
   3. **Một epoch đã vượt mốc.** 0,7076 lớn hơn 0,689, tức bộ mã hóa thật sự là mốc so sánh đáng gờm chứ không phải hình thức.
 
   Vẫn chạy đủ **ba epoch** chứ không dừng ở một, dù một epoch đã vượt mốc: mục đích của mốc so sánh là **thứ mạnh nhất mà đề tài phải vượt**. Huấn luyện thiếu sẽ làm nó yếu đi một cách có lợi cho đề tài, và đó đúng là chỗ hội đồng dễ bác nhất.
+
+  ### Lượt chạy thứ hai: PhoBERT đạt mốc, và lưới lọc seed chết vẫn thủng
+
+  Ngày 27/08/2026, PhoBERT chạy xong ba seed:
+
+| Seed | macro-F1 | Bước thật | Ghi chú |
+|---|---|---|---|
+| 42 | **0,1696** | 346 | dừng sớm sau epoch 1, loss còn 1,1072 |
+| 43 | 0,7542 | 1.045 | học bình thường |
+| 44 | 0,7234 | 1.043 | học bình thường |
+
+  **Tin tốt: hạ learning rate có tác dụng.** Hai seed học được đều **vượt mốc 0,689**, và `f1_intrinsic` của bản tổng hợp là 0,625 so với 0,533 của E01 — cải thiện đúng ở lớp khó nhất. Cơ chế dừng sớm cũng chạy đúng: seed 42 dừng sau 4,6 phút thay vì đi hết 14 phút, tiết kiệm khoảng mười phút quota.
+
+  **Tin xấu: bảng tổng hợp lại in sai, đúng kiểu sai đã sửa lần trước.**
+
+```
+  Trung bình 3 seed học được, khoảng tin cậy lấy từ seed ở giữa:
+  macro_f1            0.5490    0.3290   [0.6887, 0.7546]
+```
+
+  Lại là **trung bình nằm ngoài khoảng tin cậy của chính nó**. Và kiểm lại thì `(0,1696 + 0,7542 + 0,7234) / 3 = 0,5490` — đúng bằng số in ra, tức **seed chết vẫn bị tính vào trung bình** dù lần trước đã thêm hẳn cơ chế loại nó.
+
+  **Vì sao lưới lọc thủng.** Cách phát hiện cũ là đếm số lớp khác nhau trong dự đoán: đoán một lớp cho tất cả thì coi như chết. Seed 42 lách qua được vì nó đoán `intrinsic` cho 699 mẫu và **một mẫu ra lớp khác** — hai lớp khác nhau, nên không có gì trông giống sụp đổ. Bằng chứng số học: đoán `intrinsic` cho cả 700 mẫu sẽ cho macro-F1 đúng **0,1670**, còn seed 42 ra **0,1696**, lệch một chút vì cái mẫu lẻ đó.
+
+  Bài học chung: **một dấu hiệu gián tiếp thì có kẽ hở**. Số lớp trong dự đoán chỉ là hệ quả của việc không học; nó gần đúng chứ không phải định nghĩa.
+
+  **Sửa: dùng thẳng dấu hiệu trực tiếp, và giữ cả hai lưới.** Script vốn đã biết seed 42 hỏng — chính nó in ra dòng `DỪNG SỚM`, dựa trên loss đứng ở `ln(3)`. Chỉ là kết luận đó không được truyền sang phần thống kê. Nay `train_once` trả về cờ `stopped_early`, và một lần chạy được tính là học được chỉ khi **không dừng sớm và cũng không sụp đổ**. Hai lưới độc lập: loss bắt được thứ dự đoán bỏ lọt, và ngược lại nếu có lần chạy đi hết ba epoch mà vẫn thoái hóa.
+
+  Thêm hai ca kiểm thử chạy trên CPU: một lần chạy với learning rate bằng 0 phải bị đánh dấu không học được, và một lần chạy trên bài toán đồ chơi **có tín hiệu thật** phải **không** bị dừng nhầm. Ca thứ hai quan trọng không kém: dừng sớm quá tay thì vứt mất seed tốt. `pytest` **432 ca xanh**.
+
+  **Số đúng của PhoBERT, tính tay từ hai seed học được:** macro-F1 **0,7388 ± 0,0154**. Khoảng tin cậy tập test lấy từ seed 43 sẽ hơi khác con số `[0,6887 – 0,7546]` đang in, vì bản in đó lấy từ seed 44 do seed chết còn nằm trong danh sách và làm lệch vị trí "ở giữa".
+
+  **Không cần chạy lại PhoBERT.** Điểm của từng seed là số thật, đo trên mô hình thật; chỉ có phép tính gộp là sai. `results/runs.jsonl` đã lưu `macro_f1_per_seed` nên tính lại được mà không tốn GPU. Lượt chạy đang thực hiện cứ để chạy tiếp cho XLM-R và InfoXLM.
+
+  **Một kết quả phụ đáng đưa vào báo cáo.** Ngay ở learning rate 1e-5, PhoBERT vẫn hỏng một trong ba lần. Tức bất ổn khi tinh chỉnh **giảm đi chứ chưa mất hẳn**, và đây là con số thật về chi phí vận hành của hướng bộ mã hóa trên phần cứng cấp T4: muốn có một mô hình dùng được thì phải chạy nhiều seed rồi bỏ bớt. Phương pháp chú ý nội tại **không tinh chỉnh gì cả** nên không có rủi ro này — một luận điểm cho câu hỏi CH2 mà lượt chạy hỏng vừa rồi tự nhiên cung cấp.
 
   ### Việc cần chạy — một phiên là đủ
 

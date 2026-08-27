@@ -267,3 +267,54 @@ def test_every_model_carries_its_own_learning_rate():
     for name, spec in MODELS.items():
         assert "lr" in spec, name
         assert 0 < spec["lr"] <= 5e-5
+
+
+def test_a_run_whose_loss_never_moved_is_not_counted_as_learned():
+    """The second net, and the one that caught what the first missed.
+
+    At T18 a PhoBERT seed answered `intrinsic` 699 times out of 700 and something else once.
+    Two distinct classes, so the collapse check saw nothing wrong, while its loss had sat on
+    ln(3) for a whole epoch and it had plainly learned nothing. It was averaged in anyway, and
+    dragged the reported mean to 0,5490 — outside its own confidence interval of
+    [0,6887 – 0,7546], which is the shape of a bug rather than of a noisy measurement.
+    """
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from train_encoder_baseline import train_once
+
+    labels = ["no", "intrinsic", "extrinsic"] * 28
+    data = {
+        "train": ([f"ngữ cảnh {i}" for i in range(84)],
+                  [f"phản hồi {i}" for i in range(84)], labels),
+        "test": ([f"ngữ cảnh {i}" for i in range(6)],
+                 [f"phản hồi {i}" for i in range(6)], labels[:6]),
+    }
+    spec = {"name": "tiny", "max_length": 16, "segment": False, "batch_size": 4}
+    # A learning rate of zero cannot learn, so the loss stays where it started.
+    result = train_once(spec, data, seed=42, epochs=3, lr=0.0, device="cpu", build=tiny_build)
+
+    assert result["stopped_early"] is True
+    assert result["learned"] is False
+
+
+def test_a_run_that_trained_normally_is_counted_as_learned():
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from train_encoder_baseline import train_once
+
+    # The toy task has to be learnable or the stop is right to fire, so the text here carries
+    # its own answer. On text with no signal in it, ln(3) *is* the correct final loss.
+    labels = ["no", "intrinsic", "extrinsic"] * 40
+    data = {
+        "train": ([f"dấu hiệu {label}" for label in labels], list(labels), labels),
+        "test": ([f"dấu hiệu {label}" for label in labels[:6]], list(labels[:6]), labels[:6]),
+    }
+    spec = {"name": "tiny", "max_length": 16, "segment": False, "batch_size": 4}
+    result = train_once(spec, data, seed=42, epochs=1, lr=5e-3, device="cpu", build=tiny_build)
+
+    assert result["stopped_early"] is False
+    assert result["learned"] is True
