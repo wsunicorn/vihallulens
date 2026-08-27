@@ -10,6 +10,7 @@ import pytest
 
 from vihallulens.evaluation.metrics import (
     LABELS,
+    bootstrap_ci,
     compute_metrics,
     expected_calibration_error,
     summarise_runs,
@@ -175,7 +176,7 @@ def test_a_smaller_test_set_gives_a_wider_interval():
     predicted = ["no", "intrinsic", "no"] * 40
     small = bootstrap_ci(truth[:30], predicted[:30], n_resamples=300, seed=42)
     large = bootstrap_ci(truth, predicted, n_resamples=300, seed=42)
-    assert small["macro_f1_std"] > large["macro_f1_std"]
+    assert small["macro_f1_se"] > large["macro_f1_se"]
 
 
 def test_perfect_predictions_give_a_degenerate_interval():
@@ -184,7 +185,7 @@ def test_perfect_predictions_give_a_degenerate_interval():
     truth = ["no", "intrinsic", "extrinsic"] * 20
     spread = bootstrap_ci(truth, truth, n_resamples=200, seed=42)
     assert spread["macro_f1_lo"] == pytest.approx(1.0)
-    assert spread["macro_f1_std"] == pytest.approx(0.0)
+    assert spread["macro_f1_se"] == pytest.approx(0.0)
 
 
 def test_the_interval_is_the_same_on_every_machine():
@@ -209,3 +210,36 @@ def test_mismatched_lengths_are_rejected_before_resampling():
 
     with pytest.raises(ValueError, match="phần tử"):
         bootstrap_ci(["no", "no"], ["no"])
+
+
+# -- two kinds of spread, two names --------------------------------------------------------
+
+
+def test_the_two_spreads_do_not_share_a_key():
+    """``summarise_runs`` measures spread across seeds; ``bootstrap_ci`` measures spread of the
+    test-set sampling distribution. Different questions, so different names.
+
+    While both used ``_std`` a merged record kept whichever was written last, and at T18 the two
+    E09 records went out carrying the bootstrap number under the seed number's name —
+    contradicting the table that the very same run had printed to the screen. Two hours of GPU
+    quota produced records whose numbers could not be trusted.
+    """
+    y_true = ["no", "intrinsic", "extrinsic"] * 20
+    y_pred = ["no", "intrinsic", "no"] * 20
+    across = summarise_runs([{"macro_f1": 0.70}, {"macro_f1": 0.75}])
+    spread = bootstrap_ci(y_true, y_pred, n_resamples=50)
+    assert not (set(across) & set(spread)), sorted(set(across) & set(spread))
+
+
+def test_the_bootstrap_reports_a_standard_error():
+    y_true = ["no", "intrinsic", "extrinsic"] * 20
+    y_pred = ["no", "intrinsic", "no"] * 20
+    spread = bootstrap_ci(y_true, y_pred, n_resamples=50)
+    assert "macro_f1_se" in spread
+    assert "macro_f1_std" not in spread
+
+
+def test_the_seed_summary_reports_a_standard_deviation():
+    across = summarise_runs([{"macro_f1": 0.70}, {"macro_f1": 0.75}])
+    assert "macro_f1_std" in across
+    assert "macro_f1_se" not in across

@@ -147,15 +147,29 @@ Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **v�
 
 ### Bảng 1 — Kết quả chính trên ViHallu (tập test tự chia theo ngữ cảnh)
 
-| Phương pháp | macro-F1 | Acc | F1 no | F1 intr | F1 extr | ms/mẫu | VRAM MB |
-|---|---|---|---|---|---|---|---|
-| Baseline tầm thường (E01) | **0,656** ±0,018 | 0,661 | 0,742 | 0,533 | 0,694 | 0,001 | 0 |
-| PhoBERT tinh chỉnh (E09) | | | | | | | |
-| XLM-R large tinh chỉnh (E09) | | | | | | | |
-| InfoXLM large tinh chỉnh (E09) | | | | | | | |
-| Gemini free giám khảo (E10) | | | | | | | |
-| Lookback gộp (E02) | | | | | | | |
-| **Chunk-aware (E05)** | | | | | | | |
+Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không phải độ lệch chuẩn qua seed. Đo ở T17: với 700 mẫu test, khoảng này rộng gấp đôi biến thiên seed và **nó mới là thứ quyết định** một phương pháp có thật sự hơn phương pháp khác hay không. Trộn hai loại độ lệch vào một cột là cách chắc chắn nhất để đọc nhầm bảng.
+
+| Phương pháp | macro-F1 [KTC 95 %] | Acc | F1 no | F1 intr | F1 extr | ECE | ms/mẫu | VRAM MB |
+|---|---|---|---|---|---|---|---|---|
+| Baseline tầm thường (E01) | **0,656** [0,620–0,689] | 0,661 | 0,742 | 0,533 | 0,694 | 0,061 | 0,001 | 0 |
+| PhoBERT tinh chỉnh (E09) | **0,742** [0,705–0,770] | 0,740 | 0,790 | 0,685 | 0,750 | 0,086 | 12,2 | 9.002 |
+| XLM-R large tinh chỉnh (E09) | **0,771** [0,747–0,808] | 0,770 | 0,836 | 0,722 | 0,754 | 0,114 | 24,8 | 11.231 |
+| InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | 11.231 |
+| Gemini free giám khảo (E10) | | | | | | | | |
+| Lookback gộp (E02) | | | | | | | | |
+| **Chunk-aware (E05)** | | | | | | | | |
+
+Đo ngày 27/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,012 cho PhoBERT và 0,025 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`.
+
+Bốn điều bảng này nói:
+
+1. **Mốc phải vượt nay là 0,771 chứ không phải 0,689.** Khoảng tin cậy tập test của XLM-R chạm tới 0,807. Đây là đối thủ thật sự của phương pháp chú ý nội tại.
+2. **Lớp `intrinsic` vẫn khó nhất ở cả ba phương pháp**, nhưng bộ mã hóa cải thiện được nhiều: 0,533 → 0,722. Khoảng cách giữa lớp dễ nhất và khó nhất thu từ 0,209 xuống 0,114.
+3. **Giá phải trả là chi phí suy luận.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,115 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ ra.
+
+4. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,086 → 0,114. Bộ mã hóa tinh chỉnh đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
+
+**InfoXLM-large không tinh chỉnh được** trên cấu hình này: cả ba seed đều đứng ở `ln(3) = 1,0986` hết epoch đầu và bị cơ chế dừng sớm loại. Cùng kích thước và cùng learning rate với XLM-R, vốn chạy tốt 3/3 seed — nên đây là bất ổn riêng của checkpoint đó, không phải của cấu hình. Ghi lại như một kết quả về **độ ổn định**, và chính nó là luận điểm cho CH2: phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
 
 ### Bảng 2 — Định vị chú ý trên ISE-DSC01 (E06)
 

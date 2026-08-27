@@ -748,7 +748,7 @@
 
   `ruff` sạch, `pytest` **402 ca xanh** (thêm 62 ca).
 
-- [ ] **T18** · M · E09 baseline bộ mã hóa — **công cụ đã sẵn sàng 27/08/2026, chờ chạy trên Kaggle**
+- [x] **T18** · M · E09 baseline bộ mã hóa — **xong 27/08/2026** (hai trên ba mô hình)
   - Tinh chỉnh PhoBERT-large, XLM-R-large, InfoXLM-large ba lớp trên ViHallu.
   - **Kiểm tra:** ba dòng kết quả, kèm ms/mẫu và VRAM đỉnh.
 
@@ -936,7 +936,73 @@ ERROR: Package 'vihallulens' requires a different Python: 3.12.13 not in '<3.12,
 
   `pytest` **435 ca xanh**.
 
-  ### Việc cần chạy — một phiên là đủ
+  ### Kết quả — lượt chạy sạch ngày 27/08/2026
+
+  2 giờ 48 phút GPU, commit `53d095d`. Cột macro-F1 kèm **khoảng tin cậy 95 % của tập test**, vì đo ở T17 thì khoảng này rộng gấp đôi biến thiên seed và chính nó quyết định một phương pháp có thật sự hơn phương pháp khác không.
+
+| Phương pháp | macro-F1 [KTC 95 %] | F1 `intrinsic` | ECE | ms/mẫu | VRAM |
+|---|---|---|---|---|---|
+| E01 bề mặt | 0,656 [0,620–0,689] | 0,533 | 0,061 | 0,001 | 0 |
+| PhoBERT-large | 0,742 [0,705–0,770] | 0,685 | 0,086 | 12,2 | 9.002 MB |
+| **XLM-R-large** | **0,771** [0,747–0,808] | **0,722** | 0,114 | 24,8 | 11.231 MB |
+| InfoXLM-large | *không tinh chỉnh được, 0/3 seed* | | | | 11.231 MB |
+
+  Độ lệch chuẩn **qua seed** là 0,012 và 0,025 — nhỏ hơn hẳn khoảng tin cậy tập test, đúng như T17 dự đoán. Cả ba seed của hai mô hình đầu đều học được.
+
+  **Mốc mà đề tài phải vượt nay là 0,771, không còn là 0,689.** Cận trên khoảng tin cậy của XLM-R chạm 0,807. Đây mới là đối thủ thật.
+
+  Bốn điều đọc được:
+
+  1. **Lớp `intrinsic` vẫn khó nhất, nhưng bộ mã hóa thu hẹp được nhiều.** 0,533 → 0,722. Khoảng cách giữa lớp dễ nhất (`no`) và khó nhất thu từ 0,209 xuống 0,114. Ảo giác nội tại — mâu thuẫn với chính ngữ cảnh — cần đọc và đối chiếu văn bản, đúng thứ hai đặc trưng bề mặt không làm được.
+
+  2. **Giá phải trả là chi phí.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,115 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ, và là chỗ phương pháp chú ý nội tại có cơ hội: nó dùng lại lượt đọc mà hệ RAG dù sao cũng phải chạy.
+
+  3. **Càng mạnh càng tự tin thái quá.** ECE đi **ngược chiều** macro-F1: 0,061 → 0,086 → 0,114. Bộ mã hóa đoán đúng hơn nhưng hiệu chỉnh xác suất *tệ hơn* hai đặc trưng bề mặt. ECE (expected calibration error) đo khoảng cách giữa mức tự tin mô hình công bố và tỷ lệ nó đúng thật; ECE 0,114 nghĩa là mức tự tin công bố lệch khỏi tỷ lệ đúng thật trung bình khoảng 11 điểm phần trăm. Với bài toán phát hiện ảo giác, nơi người dùng cần biết **mức độ tin** chứ không chỉ nhãn, đây là điểm yếu thật của mốc so sánh.
+
+  4. **PhoBERT thua XLM-R 0,029, và một phần vì bị cắt ngữ cảnh.** 29,3 % cặp vượt trần 256 token của PhoBERT so với 2,5 % ở mức 512. Hai khoảng tin cậy chồng nhau ([0,705–0,770] và [0,747–0,808]) nên **không kết luận được** PhoBERT yếu hơn về bản chất.
+
+  ### InfoXLM-large: cả ba seed đều không học được
+
+  Cùng kích thước, cùng độ dài, cùng learning rate với XLM-R — vốn chạy tốt 3/3 seed — nhưng cả ba seed của InfoXLM đứng nguyên ở `ln(3) = 1,0986` suốt epoch đầu:
+
+```
+    seed 42: 0.2371   (694 bước thật)  ← KHÔNG HỌC ĐƯỢC, loss đứng ở ln(3), đã loại
+    seed 43: 0.1786   (694 bước thật)  ← KHÔNG HỌC ĐƯỢC, loss đứng ở ln(3), đã loại
+    seed 44: 0.1670   (692 bước thật)  ← KHÔNG HỌC ĐƯỢC, loss đứng ở ln(3), đã loại
+
+  KHÔNG CÓ SEED NÀO HỌC ĐƯỢC. Không có kết quả để báo cáo.
+```
+
+  **Đây là lúc hai lưới lọc chứng minh mình đáng có.** Chú ý seed 42 ra 0,2371 và seed 43 ra 0,1786 — cả hai **không phải** 0,167, tức chúng đoán ra nhiều hơn một lớp và sẽ **lọt qua** lưới đếm số lớp. Chỉ có lưới loss bắt được. Đúng loại lỗi đã lọt hôm trước, lần này bị chặn.
+
+  Cơ chế dừng sớm tiết kiệm **một giờ**: mỗi seed chết mất 10,1 phút thay vì 30,3 phút.
+
+  Vì cấu hình giống hệt XLM-R mà XLM-R chạy tốt, kết luận là **bất ổn riêng của checkpoint InfoXLM**, không phải của cấu hình. Ghi vào báo cáo như một kết quả về **độ ổn định** chứ không phải một ô trống — và chính nó là luận điểm cho CH2: phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
+
+  Việc còn để ngỏ: thử `--model infoxlm --seeds 1 --epochs 1 --lr 5e-6`, khoảng 10 phút vì nếu vẫn hỏng thì dừng sớm cắt ngay. Chưa làm vì T19 và T20 quan trọng hơn, và hai mô hình đã đủ để mốc so sánh đứng vững.
+
+  ### Một lỗi nữa: hai loại độ lệch dùng chung một tên khóa
+
+  Bảng in ra màn hình đúng, nhưng bản ghi trong `results/runs.jsonl` **mâu thuẫn với chính nó**:
+
+```
+màn hình:  macro_f1   0.7416   0.0118   [0.7053, 0.7702]
+runs.jsonl: "macro_f1_std": 0.01623553635603956
+```
+
+  Nguyên nhân: `summarise_runs` đặt độ lệch chuẩn **qua seed** vào khóa `{chỉ_số}_std`, còn `bootstrap_ci` đặt sai số chuẩn của **phân bố bootstrap** vào đúng khóa đó. Script gộp hai từ điển bằng `{**across_seeds, **spread}` nên cái viết sau đè cái viết trước, và **độ lệch qua seed của mọi chỉ số biến mất** khỏi bản ghi.
+
+  Hai đại lượng khác nhau dùng chung một tên thì sớm muộn cũng có chỗ đè nhau. Sửa bằng cách **đặt tên khác nhau**: `_std` là độ lệch chuẩn qua seed, `_se` là sai số chuẩn từ bootstrap tập test. Thêm ca kiểm thử khẳng định hai từ điển **không có khóa nào chung** — chỉ một dòng, và nó chặn cả họ lỗi này chứ không riêng `macro_f1`.
+
+  Cũng ghi thêm `metrics_per_seed` vào bản ghi: giá trị **thô** của từng seed cho từng chỉ số. Bản ghi có số thô thì gộp lại được về sau; bản ghi chỉ có số đã gộp thì không. Hai bản ghi vừa mất độ lệch qua seed đã tốn hai tiếng quota.
+
+  Hai bản ghi của lượt 27/08 đã được dựng lại: `_se` lấy nguyên từ bản ghi gốc, `_std` lấy từ bảng chính lượt chạy đó in ra, riêng `macro_f1_std` tính lại đúng từ `macro_f1_per_seed` và khớp 0,0118 / 0,0249. Không con số nào bị bịa; có ghi chú `note` trong bản ghi nói rõ điều đó.
+
+  Cùng lúc, `docs/EXPERIMENTS.md` Bảng 1 đổi cột `±` thành **khoảng tin cậy 95 % của tập test** cho mọi hàng. Trước đó hàng E01 ghi sai số bootstrap còn hàng bộ mã hóa định ghi độ lệch qua seed — hai đại lượng khác nhau trong một cột, đúng cái nhầm vừa sửa trong code.
+
+  `pytest` **438 ca xanh**.
+
+  ### Cách chạy — một phiên là đủ (đã chạy 27/08/2026)
 
   Mở `notebooks/t18_baseline_bo_ma_hoa_t4.ipynb` và **chạy cả ba ô liền nhau**.
 

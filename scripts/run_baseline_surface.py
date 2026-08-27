@@ -95,9 +95,9 @@ def main() -> int:
     print("-" * 80)
     print(f"KẾT QUẢ TRÊN TẬP TEST — {len(y_test):,} mẫu")
     print("-" * 80)
-    print(f"  {'Chỉ số':<14} {'Giá trị':>9} {'± lệch chuẩn':>13}   {'khoảng tin cậy 95 %':>21}")
+    print(f"  {'Chỉ số':<14} {'Giá trị':>9} {'± sai số chuẩn':>15}   {'khoảng tin cậy 95 %':>21}")
     for key in ("macro_f1", "accuracy", *[f"f1_{label}" for label in LABELS]):
-        print(f"  {key:<14} {point[key]:>9.4f} {spread[f'{key}_std']:>13.4f}   "
+        print(f"  {key:<14} {point[key]:>9.4f} {spread[f'{key}_se']:>15.4f}   "
               f"[{spread[f'{key}_lo']:.4f}, {spread[f'{key}_hi']:.4f}]")
     print(f"  {'ece':<14} {point['ece']:>9.4f}")
 
