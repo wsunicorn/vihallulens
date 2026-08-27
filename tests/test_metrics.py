@@ -151,3 +151,61 @@ def test_a_single_run_has_no_spread():
 def test_summarising_nothing_is_rejected():
     with pytest.raises(ValueError, match="không có lần chạy"):
         summarise_runs([])
+
+
+# -- confidence intervals from resampling the test set ------------------------------------
+
+
+def test_the_interval_brackets_the_point_estimate():
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    truth = ["no"] * 40 + ["intrinsic"] * 40 + ["extrinsic"] * 40
+    predicted = truth[:100] + ["no"] * 20
+    point = compute_metrics(truth, predicted)["macro_f1"]
+    spread = bootstrap_ci(truth, predicted, n_resamples=300, seed=42)
+    assert spread["macro_f1_lo"] <= point <= spread["macro_f1_hi"]
+
+
+def test_a_smaller_test_set_gives_a_wider_interval():
+    """The whole reason this replaced the seed-based standard deviation: the dominant
+    uncertainty comes from how many samples the test set has, not from the classifier."""
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    truth = ["no", "intrinsic", "extrinsic"] * 40
+    predicted = ["no", "intrinsic", "no"] * 40
+    small = bootstrap_ci(truth[:30], predicted[:30], n_resamples=300, seed=42)
+    large = bootstrap_ci(truth, predicted, n_resamples=300, seed=42)
+    assert small["macro_f1_std"] > large["macro_f1_std"]
+
+
+def test_perfect_predictions_give_a_degenerate_interval():
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    truth = ["no", "intrinsic", "extrinsic"] * 20
+    spread = bootstrap_ci(truth, truth, n_resamples=200, seed=42)
+    assert spread["macro_f1_lo"] == pytest.approx(1.0)
+    assert spread["macro_f1_std"] == pytest.approx(0.0)
+
+
+def test_the_interval_is_the_same_on_every_machine():
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    truth = ["no", "intrinsic", "extrinsic"] * 20
+    predicted = ["no", "no", "extrinsic"] * 20
+    first = bootstrap_ci(truth, predicted, n_resamples=200, seed=42)
+    second = bootstrap_ci(truth, predicted, n_resamples=200, seed=42)
+    assert first == second
+
+
+def test_too_few_resamples_is_rejected():
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    with pytest.raises(ValueError, match="ít nhất 2 lần"):
+        bootstrap_ci(["no"], ["no"], n_resamples=1)
+
+
+def test_mismatched_lengths_are_rejected_before_resampling():
+    from vihallulens.evaluation.metrics import bootstrap_ci
+
+    with pytest.raises(ValueError, match="phần tử"):
+        bootstrap_ci(["no", "no"], ["no"])

@@ -37,7 +37,25 @@
 - `peak_vram_mb` — `torch.cuda.max_memory_allocated()` chia 1024²
 - `n_params_trainable` — số tham số phải huấn luyện
 
-Mọi con số phải kèm độ lệch chuẩn qua 5 seed cho phần huấn luyện bộ phân loại (rẻ). Phần trích đặc trưng chạy một lần vì tất định.
+**Quy tắc về độ bất định — sửa ở T17 ngày 27/08/2026.** Yêu cầu cũ là "độ lệch chuẩn qua 5 seed cho phần huấn luyện bộ phân loại". Đo thật thì yêu cầu đó **rỗng với mô hình tất định** và **bỏ sót nguồn biến thiên lớn nhất**:
+
+| Nguồn biến thiên | Độ lệch chuẩn của macro-F1 |
+|---|---|
+| Đổi riêng `random_state` của logistic regression | **0,000000** |
+| Lấy lại mẫu tập huấn luyện (bootstrap) | ±0,0036 |
+| **Lấy lại mẫu tập test (bootstrap)** | **±0,0174** |
+
+Lý do rất đơn giản: logistic regression giải bằng lbfgs trên bài toán lồi là tất định, đổi seed không làm gì cả. Còn tập test ViHallu chỉ có **700 mẫu**, nên bản thân việc mẫu nào rơi vào tập test đã làm macro-F1 xê dịch gấp gần năm lần biến thiên huấn luyện.
+
+Quy tắc mới, áp cho mọi thí nghiệm từ đây:
+
+1. **Con số bất định chính là khoảng tin cậy 95 % lấy từ 2.000 lần lấy lại mẫu tập test.** Đây là con số quyết định một phương pháp có thật sự hơn phương pháp khác hay không.
+2. **Vẫn chạy 5 seed với những mô hình có yếu tố ngẫu nhiên** — E09 tinh chỉnh bộ mã hóa (khởi tạo trọng số, dropout, thứ tự dữ liệu), hay LightGBM (lấy mẫu con). Với chúng, biến thiên do seed là thật và phải báo cáo.
+3. **Với mô hình tất định thì ghi thẳng là 0**, đừng bịa ra biến thiên. Logistic regression trên cùng một tập huấn luyện luôn cho đúng một kết quả.
+
+Hệ quả thực dụng phải nhớ khi so bảng: **hai phương pháp lệch nhau dưới 0,03 macro-F1 trên tập test 700 mẫu là chưa phân định được**, khoảng tin cậy của chúng chồng lên nhau gần hết.
+
+Phần trích đặc trưng chạy một lần vì tất định.
 
 ## 4. Chi tiết vài thí nghiệm quan trọng
 
@@ -57,22 +75,22 @@ Nếu baseline này đạt macro-F1 cao, mọi phương pháp phức tạp hơn 
 
 **Đã chạy ở T17 ngày 27/08/2026. Sàn cao hơn dự đoán: macro-F1 = 0,670.**
 
-| Chỉ số | Giá trị | ± lệch chuẩn |
-|---|---|---|
-| **macro-F1** | **0,6696** | 0,0038 |
-| Accuracy | 0,6757 | 0,0033 |
-| F1 `no` | 0,7495 | 0,0007 |
-| F1 `intrinsic` | **0,5234** | 0,0083 |
-| F1 `extrinsic` | 0,7360 | 0,0032 |
-| ECE | 0,0611 | 0,0044 |
+| Chỉ số | Giá trị | ± lệch chuẩn | Khoảng tin cậy 95 % |
+|---|---|---|---|
+| **macro-F1** | **0,6696** | 0,0177 | **[0,6345 – 0,7024]** |
+| Accuracy | 0,6757 | 0,0180 | [0,6400 – 0,7086] |
+| F1 `no` | 0,7495 | 0,0223 | [0,7029 – 0,7907] |
+| F1 `intrinsic` | **0,5234** | 0,0291 | [0,4631 – 0,5784] |
+| F1 `extrinsic` | 0,7360 | 0,0227 | [0,6903 – 0,7805] |
+| ECE | 0,0611 | — | — |
 
-Chín tham số phải huấn luyện, 0,001 ms mỗi mẫu, không cần GPU. Độ lệch chuẩn đo bằng 5 lần lấy mẫu lặp lại tập huấn luyện — đổi riêng hạt giống thì lbfgs tất định nên cho ra năm con số y hệt nhau, không đo được gì.
+Chín tham số phải huấn luyện, 0,001 ms mỗi mẫu, không cần GPU. Khoảng tin cậy lấy từ 2.000 lần lấy lại mẫu **tập test**, theo quy tắc ở mục 3.
 
 Hai đặc trưng tái lập đúng bảng trên: độ dài trung bình ra **chính xác** 32,9 / 39,5 / 45,9 từ. Tỷ lệ trùng lặp ra 0,827 / 0,671 / 0,574, cao hơn số cũ khoảng 0,02 vì cách đếm ở đây bỏ dấu câu và không phân biệt hoa thường trước khi so; thứ tự và khoảng cách giữa ba nhãn giữ nguyên.
 
 **Ba điều con số này quyết định:**
 
-1. **Ngưỡng thật để vượt là 0,670, không phải 0,328.** Bất kỳ phương pháp nào của đề tài, kể cả chunk-aware, mà không vượt được 0,670 thì không có đóng góp thực tế — dù nó vượt PhoBERT 32,83 % đã công bố.
+1. **Ngưỡng thật để vượt là 0,702, không phải 0,328 mà cũng không phải 0,670.** PhoBERT công bố 32,83 %, nhưng hai đặc trưng bề mặt đã đạt gấp đôi con số đó. Và vì khoảng tin cậy của E01 chạm tới **0,702**, một phương pháp muốn nói là hơn hẳn E01 thì phải vượt mốc đó chứ không phải vượt 0,670 — vượt 0,68 chỉ là nằm trong khoảng nhiễu của cùng một kết quả.
 2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Điều đó hợp lý: ảo giác nội tại là xáo trộn thông tin đã có trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và không lộ ra ở hai đặc trưng bề mặt. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh.
 3. **Chi phí gần bằng không** — 9 tham số, 0,001 ms/mẫu, không GPU. Cột chi phí của E11 vì thế có một mốc dưới rất khắc nghiệt.
 
@@ -129,7 +147,7 @@ Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **v�
 
 | Phương pháp | macro-F1 | Acc | F1 no | F1 intr | F1 extr | ms/mẫu | VRAM MB |
 |---|---|---|---|---|---|---|---|
-| Baseline tầm thường (E01) | **0,670** ±0,004 | 0,676 | 0,750 | 0,523 | 0,736 | 0,001 | 0 |
+| Baseline tầm thường (E01) | **0,670** ±0,018 | 0,676 | 0,750 | 0,523 | 0,736 | 0,001 | 0 |
 | PhoBERT tinh chỉnh (E09) | | | | | | | |
 | XLM-R large tinh chỉnh (E09) | | | | | | | |
 | InfoXLM large tinh chỉnh (E09) | | | | | | | |

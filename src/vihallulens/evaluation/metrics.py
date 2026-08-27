@@ -116,3 +116,53 @@ def summarise_runs(runs: list[dict]) -> dict:
         summary[key] = float(np.mean(values))
         summary[f"{key}_std"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
     return summary
+
+
+DEFAULT_RESAMPLES = 2000
+DEFAULT_CONFIDENCE = 0.95
+
+
+def bootstrap_ci(
+    y_true,
+    y_pred,
+    n_resamples: int = DEFAULT_RESAMPLES,
+    seed: int = 42,
+    labels=LABELS,
+    confidence: float = DEFAULT_CONFIDENCE,
+) -> dict:
+    """Confidence interval of every metric, from resampling the **test set**.
+
+    This is the uncertainty that decides whether one method really beats another, and it is
+    much larger than the one section 3 of docs/EXPERIMENTS.md originally asked for. Measured at
+    T17 on the 700-sample ViHallu test set: varying the classifier seed moves macro-F1 by
+    exactly nothing, resampling the training set moves it by ±0,004, and resampling the test set
+    moves it by ±0,017 — a 95 % interval 0,068 wide.
+
+    The reason is simply that 700 samples is not many. A method scoring 0,02 above another on
+    this test set has not been shown to be better; the intervals overlap almost entirely.
+    """
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    if len(y_true) != len(y_pred):
+        raise ValueError(f"y_true có {len(y_true)} phần tử, y_pred có {len(y_pred)}")
+    if n_resamples < 2:
+        raise ValueError(f"cần ít nhất 2 lần lấy lại mẫu, nhận {n_resamples}")
+
+    rng = np.random.default_rng(seed)
+    collected: dict[str, list[float]] = {}
+    for _ in range(n_resamples):
+        picked = rng.integers(0, len(y_true), size=len(y_true))
+        # A resample can miss a whole class; zero_division inside compute_metrics keeps that
+        # from raising, and such draws are part of the sampling distribution rather than an
+        # error to be discarded.
+        for key, value in compute_metrics(y_true[picked], y_pred[picked], labels=labels).items():
+            collected.setdefault(key, []).append(value)
+
+    tail = (1.0 - confidence) / 2 * 100
+    summary: dict[str, float] = {}
+    for key, values in collected.items():
+        low, high = np.percentile(values, [tail, 100 - tail])
+        summary[f"{key}_lo"] = float(low)
+        summary[f"{key}_hi"] = float(high)
+        summary[f"{key}_std"] = float(np.std(values, ddof=1))
+    return summary

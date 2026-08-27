@@ -680,22 +680,24 @@
 
   ### Kết quả — sàn cao hơn dự đoán
 
-| Chỉ số | Giá trị | ± lệch chuẩn |
-|---|---|---|
-| **macro-F1** | **0,6696** | 0,0038 |
-| Accuracy | 0,6757 | 0,0033 |
-| F1 `no` | 0,7495 | 0,0007 |
-| F1 `intrinsic` | **0,5234** | 0,0083 |
-| F1 `extrinsic` | 0,7360 | 0,0032 |
-| ECE | 0,0611 | 0,0044 |
+| Chỉ số | Giá trị | ± lệch chuẩn | Khoảng tin cậy 95 % |
+|---|---|---|---|
+| **macro-F1** | **0,6696** | 0,0177 | **[0,6345 – 0,7024]** |
+| Accuracy | 0,6757 | 0,0180 | [0,6400 – 0,7086] |
+| F1 `no` | 0,7495 | 0,0223 | [0,7029 – 0,7907] |
+| F1 `intrinsic` | **0,5234** | 0,0291 | [0,4631 – 0,5784] |
+| F1 `extrinsic` | 0,7360 | 0,0227 | [0,6903 – 0,7805] |
+| ECE | 0,0611 | — | — |
 
   Chín tham số phải huấn luyện, **0,001 ms mỗi mẫu**, không cần GPU.
+
+  Ma trận nhầm lẫn cho thấy rõ vì sao `intrinsic` khó: nó chỉ được bắt đúng **45,2 %**, và phần trượt chia gần đều sang hai lớp kia — 73 mẫu bị gọi là `no`, 63 mẫu bị gọi là `extrinsic`. Không lệch hẳn về bên nào, tức hai đặc trưng bề mặt **không có tín hiệu nào** về lớp này chứ không phải có tín hiệu yếu.
 
   Hai đặc trưng tái lập đúng bảng ở mục 4 `docs/EXPERIMENTS.md`: độ dài trung bình ra **chính xác** 32,9 / 39,5 / 45,9 từ cho ba nhãn. Tỷ lệ trùng lặp ra 0,827 / 0,671 / 0,574, cao hơn số cũ khoảng 0,02 vì cách đếm ở đây bỏ dấu câu và không phân biệt hoa thường; thứ tự và khoảng cách giữa ba nhãn giữ nguyên.
 
   ### Ba điều con số này quyết định
 
-  1. **Ngưỡng thật để vượt là 0,670, không phải 0,328.** Bài PhoBERT công bố macro-F1 32,83 % trên bài toán này, và nếu lấy đó làm mốc thì mọi thứ đều trông như tiến bộ lớn. Nhưng hai đặc trưng bề mặt đã đạt **gấp đôi** con số đó. Từ nay mốc so sánh của đề tài là 0,670.
+  1. **Ngưỡng thật để vượt là 0,702 — không phải 0,328, mà cũng không phải 0,670.** Bài PhoBERT công bố macro-F1 32,83 %, lấy đó làm mốc thì mọi thứ đều trông như tiến bộ lớn; hai đặc trưng bề mặt đã đạt gấp đôi. Nhưng khoảng tin cậy của E01 chạm tới **0,702**, nên muốn nói một phương pháp *hơn hẳn* E01 thì phải vượt mốc đó. Vượt 0,68 chỉ là rơi vào khoảng nhiễu của cùng một kết quả.
 
   2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Và điều đó rất hợp lý: ảo giác nội tại là **xáo trộn thông tin vốn đã có** trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và *vẫn* dài vừa phải — hai đặc trưng bề mặt gần như mù với nó. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh. Nếu chunk-aware chỉ cải thiện `no` và `extrinsic` thì chưa nói lên gì.
 
@@ -711,11 +713,27 @@
 
   Cách chặn để không tái diễn: `compute_metrics` nay **tự kiểm tra** rằng lớp có xác suất cao nhất phải trùng với lớp được dự đoán. Nếu không trùng thì raise kèm thông báo chỉ đúng cách sửa. Đây là bất biến luôn đúng với mọi bộ phân loại của sklearn, nên chốt chặn này bắt được lỗi ngay ở mẫu đầu tiên chứ không đợi ai đó thấy con số kỳ lạ.
 
-  ### Về yêu cầu "5 seed"
+  ### Yêu cầu "5 seed" là rỗng, và nó còn che mất nguồn biến thiên lớn nhất
 
-  Mục 3 `docs/EXPERIMENTS.md` đòi mọi con số của bộ phân loại phải kèm độ lệch chuẩn qua 5 seed. Nhưng logistic regression giải bằng lbfgs trên bài toán lồi là **tất định**: đổi riêng `random_state` sẽ cho ra năm con số **y hệt nhau**, độ lệch chuẩn bằng 0, và yêu cầu trở thành hình thức.
+  Mục 3 `docs/EXPERIMENTS.md` đòi mọi con số của bộ phân loại phải kèm độ lệch chuẩn qua 5 seed. Đo thật ba nguồn biến thiên:
 
-  Nên ở đây độ lệch chuẩn đo bằng **lấy mẫu lặp lại tập huấn luyện** (bootstrap): mỗi seed rút lại tập train có hoàn lại rồi huấn luyện. Nó trả lời câu hỏi có ý nghĩa hơn — *kết quả phụ thuộc bao nhiêu vào việc mẫu nào tình cờ rơi vào tập huấn luyện*. Con số chính vẫn lấy từ một lần huấn luyện trên toàn bộ tập train. Đã ghi rõ cách đo vào `results/runs.jsonl` ở trường `std_method`.
+| Nguồn | Độ lệch chuẩn của macro-F1 |
+|---|---|
+| Đổi riêng `random_state` — đúng nguyên văn yêu cầu | **0,000000** |
+| Lấy lại mẫu tập huấn luyện | ±0,0036 |
+| **Lấy lại mẫu tập test** | **±0,0174** |
+
+  Yêu cầu cũ **rỗng**: logistic regression giải bằng lbfgs trên bài toán lồi là tất định, năm seed cho ra năm con số y hệt nhau tới chữ số thứ sáu. Nhưng vấn đề lớn hơn là nó **che mất nguồn biến thiên chi phối**: tập test ViHallu chỉ có 700 mẫu, nên bản thân việc mẫu nào rơi vào tập test đã làm macro-F1 xê dịch **gấp 4,6 lần** biến thiên huấn luyện.
+
+  Nếu báo ±0,004 thì kết quả trông chính xác hơn thực tế **gần năm lần**, và mọi so sánh sau này sẽ kết luận sai: hai phương pháp lệch nhau 0,02 sẽ trông như khác biệt rõ ràng, trong khi thật ra khoảng tin cậy của chúng chồng lên nhau gần hết.
+
+  **Đã sửa quy tắc ở mục 3 `docs/EXPERIMENTS.md`**, áp cho mọi thí nghiệm từ đây:
+
+  1. Con số bất định chính là **khoảng tin cậy 95 % từ 2.000 lần lấy lại mẫu tập test**.
+  2. **Vẫn chạy 5 seed với mô hình có yếu tố ngẫu nhiên** — E09 tinh chỉnh bộ mã hóa (khởi tạo trọng số, dropout, thứ tự dữ liệu), LightGBM (lấy mẫu con). Với chúng biến thiên do seed là thật.
+  3. Với mô hình tất định thì **ghi thẳng là 0**, đừng bịa ra biến thiên.
+
+  Hệ quả phải nhớ khi đọc bảng kết quả: **hai phương pháp lệch nhau dưới 0,03 macro-F1 trên tập test 700 mẫu là chưa phân định được.**
 
   ### Đã dựng thêm ba module dùng chung cho mọi thí nghiệm sau
 
@@ -724,7 +742,7 @@
   - `src/vihallulens/detect/detector.py` — `LookbackDetector` theo mục 2.4 `docs/SPEC.md`. Mặc định tuyến tính, `class_weight="balanced"`, có chuẩn hóa thang đo vì hai đặc trưng lệch nhau khoảng bốn mươi lần.
   - `src/vihallulens/data/text.py` — gom định nghĩa "từ" về một chỗ, để BM25 ở T16 và trùng lặp từ vựng ở T17 không dùng hai định nghĩa khác nhau.
 
-  `ruff` sạch, `pytest` **396 ca xanh** (thêm 56 ca).
+  `ruff` sạch, `pytest` **402 ca xanh** (thêm 62 ca).
 
 - [ ] **T18** · M · E09 baseline bộ mã hóa
   - Tinh chỉnh PhoBERT-large, XLM-R-large, InfoXLM-large ba lớp trên ViHallu.
