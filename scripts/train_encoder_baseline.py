@@ -376,9 +376,10 @@ def main() -> int:
     print()
     print(f"  Trung bình {len(good)}/{len(runs)} seed học được; khoảng tin cậy 95 % là "
           f"bootstrap tập test của riêng seed {good[middle]['seed']}:")
-    print(f"  {'Chỉ số':<14} {'Trung bình':>11} {'± seed':>9}   {'khoảng tin cậy 95 %':>21}")
+    print(f"  {'Chỉ số':<14} {'Trung bình':>11} {'± qua seed':>11}   "
+          f"{'khoảng tin cậy 95 % của tập test':>32}")
     for key in ("macro_f1", "accuracy", *[f"f1_{label}" for label in LABELS]):
-        print(f"  {key:<14} {across_seeds[key]:>11.4f} {across_seeds[f'{key}_std']:>9.4f}   "
+        print(f"  {key:<14} {across_seeds[key]:>11.4f} {across_seeds[f'{key}_std']:>11.4f}   "
               f"[{spread[f'{key}_lo']:.4f}, {spread[f'{key}_hi']:.4f}]")
     print(f"  {'ece':<14} {across_seeds['ece']:>11.4f} {across_seeds['ece_std']:>9.4f}")
 
@@ -425,11 +426,14 @@ def main() -> int:
         "n_seeds": args.seeds,
         "n_seeds_failed": dead,
         "macro_f1_per_seed": [run["metrics"]["macro_f1"] for run in runs],
+        "metrics_per_seed": {
+            key: [run["metrics"][key] for run in runs] for key in runs[0]["metrics"]
+        },
         "learned_per_seed": [run["learned"] for run in runs],
         "ci_from_seed": good[middle]["seed"],
         "truncation_rate": cut,
         "train_minutes_total": total_minutes,
-        "std_method": "độ lệch chuẩn qua seed; khoảng tin cậy từ bootstrap tập test",
+        "std_method": "_std là độ lệch chuẩn qua seed; _lo/_hi/_se từ bootstrap tập test",
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
         "gpu_throttled": throttled,
         "gpu_telemetry": readings,
