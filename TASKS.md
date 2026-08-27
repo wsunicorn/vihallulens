@@ -979,7 +979,11 @@ ERROR: Package 'vihallulens' requires a different Python: 3.12.13 not in '<3.12,
 
   Vì cấu hình giống hệt XLM-R mà XLM-R chạy tốt, kết luận là **bất ổn riêng của checkpoint InfoXLM**, không phải của cấu hình. Ghi vào báo cáo như một kết quả về **độ ổn định** chứ không phải một ô trống — và chính nó là luận điểm cho CH2: phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
 
-  Việc còn để ngỏ: thử `--model infoxlm --seeds 1 --epochs 1 --lr 5e-6`, khoảng 10 phút vì nếu vẫn hỏng thì dừng sớm cắt ngay. Chưa làm vì T19 và T20 quan trọng hơn, và hai mô hình đã đủ để mốc so sánh đứng vững.
+  **Đang thử ở learning rate thấp hơn.** `notebooks/t18b_thu_infoxlm_lr_thap.ipynb` chạy hai lần thử rẻ — `5e-6` rồi `2e-6`, mỗi lần một seed một epoch, tổng khoảng 25 phút kể cả tải mô hình 2,24 GB. Rẻ hơn nhiều so với 90 phút của một lượt ba seed ba epoch, và đủ để biết hướng có đúng không.
+
+  Vì sao hạ learning rate là hướng đúng chứ không phải đoán mò: loss của InfoXLM **không nằm im tuyệt đối** mà nảy quanh `ln(3)`, từ 1,0131 tới 1,1923. Đó là dáng của một mô hình đã rơi vào **nghiệm thoái hóa** — đoán theo tỷ lệ nền của ba lớp — chứ không phải dáng của một mô hình không được cập nhật gì. Hai dạng hỏng này trông giống nhau ở con số cuối nhưng khác nhau ở đây, và chúng đòi hai cách chữa ngược nhau: nghiệm thoái hóa thì **giảm** bước cập nhật, còn không được cập nhật thì phải **tăng**.
+
+  Giới hạn tự đặt: **thử tối đa hai lần**. Cả hai hỏng thì dừng, ghi nhận đây là một kết quả về độ ổn định chứ không phải một ô trống cần lấp — quota GPU 30 giờ/tuần còn phải để cho T19 và T20.
 
   ### Một lỗi nữa: hai loại độ lệch dùng chung một tên khóa
 
