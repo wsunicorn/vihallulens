@@ -3,7 +3,10 @@ name = "vihallulens"
 version = "0.1.0"
 description = "Phát hiện ảo giác cho hệ thống RAG tiếng Việt bằng tín hiệu chú ý nội tại của LLM"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+# Máy phát triển của nhóm dùng đúng 3.11 theo mục 3 CLAUDE.md, nhưng Kaggle chạy 3.12 và
+# không cho đổi. Chặn trên khiến `pip install -e .` hỏng ở mọi phiên GPU, mà không ngăn được
+# gì: trọn bộ kiểm thử đã chạy xanh trên 3.12 của Kaggle ở T18.
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
     { name = "Nguyễn Ngọc Lân" },
