@@ -30,3 +30,7 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# Báo cáo rò rỉ của lần chạy một phần (--only) — sinh lại được, không cần commit
+results/leakage_report_*.md
+!results/leakage_report.md

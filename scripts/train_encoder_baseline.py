@@ -33,6 +33,7 @@ from vihallulens.detect.encoder import (  # noqa: E402
     build_pairs,
     decode_labels,
     encode_labels,
+    has_collapsed,
     truncation_rate,
 )
 from vihallulens.evaluation.logging import log_result  # noqa: E402
@@ -62,6 +63,10 @@ DEFAULT_EPOCHS = 3
 DEFAULT_LR = 2e-5
 WARMUP_RATIO = 0.1
 MAX_GRAD_NORM = 1.0
+
+# Cross-entropy of a three-class model that has learned nothing is ln(3) = 1,0986. Anything
+# still above this after a full epoch has not started learning, and will not.
+NO_LEARNING_LOSS = 1.08
 
 
 def set_seed(seed: int) -> None:
@@ -131,7 +136,9 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
         spec["max_length"], spec["batch_size"], False, seed,
     )
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    # eps raised from the 1e-8 default: the standard remedy for RoBERTa-family instability,
+    # and this run needs every bit of it — at T18 three of three 512-token runs collapsed.
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01, eps=1e-6)
     total_steps = len(train_loader) * epochs
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
@@ -147,6 +154,8 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
     started = time.perf_counter()
 
     model.train()
+    stepped = 0
+    first_epoch_loss = []
     for epoch in range(epochs):
         for step, (ids, mask, target) in enumerate(train_loader, start=1):
             ids, mask, target = ids.to(device), mask.to(device), target.to(device)
@@ -156,12 +165,31 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), MAX_GRAD_NORM)
+            before = scaler.get_scale()
             scaler.step(optimizer)
             scaler.update()
-            scheduler.step()
+            # The scaler skips the update entirely when float16 gradients overflowed, and a
+            # scheduler stepped anyway would walk the learning-rate schedule while the weights
+            # stood still. This is the warning PyTorch printed through the whole T18 run.
+            if scaler.get_scale() >= before:
+                scheduler.step()
+                stepped += 1
+            if epoch == 0:
+                first_epoch_loss.append(float(loss.item()))
             if step % 50 == 0:
                 print(f"      epoch {epoch + 1}/{epochs}  bước {step}/{len(train_loader)}  "
                       f"loss {loss.item():.4f}", end="\r")
+
+        # Fail fast. A fine-tune still sitting on ln(3) after a whole epoch will not move off it
+        # in the next two either, and each dead epoch of a 512-token model costs nine minutes of
+        # quota. At T18 six such runs burned two and a half hours between them and produced
+        # nothing but a row of identical 0,167 scores.
+        if epoch == 0 and len(first_epoch_loss) >= 20:
+            recent = sum(first_epoch_loss[-20:]) / 20
+            if recent > NO_LEARNING_LOSS:
+                print(f"      DỪNG SỚM: hết một epoch mà loss vẫn {recent:.4f}, quanh "
+                      f"ln(3) = 1,0986. Mô hình chưa rời điểm xuất phát.")
+                break
     train_seconds = time.perf_counter() - started
 
     model.eval()
@@ -188,6 +216,8 @@ def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> di
     return {
         "metrics": compute_metrics(data["test"][2], y_pred, y_proba, proba_labels=LABELS),
         "y_pred": y_pred,
+        "collapsed": has_collapsed(y_pred),
+        "n_steps": stepped,
         "n_params": n_params,
         "train_seconds": train_seconds,
         "ms_per_sample": inference_ms / len(y_pred),
@@ -201,7 +231,8 @@ def main() -> int:
     parser.add_argument("--dataset", default="vihallu")
     parser.add_argument("--seeds", type=int, default=DEFAULT_SEEDS)
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
-    parser.add_argument("--lr", type=float, default=DEFAULT_LR)
+    parser.add_argument("--lr", type=float, default=None,
+                        help="mặc định lấy từ MODELS, mỗi mô hình một giá trị riêng")
     parser.add_argument("--interim-dir", type=Path, default=DEFAULT_INTERIM_DIR)
     parser.add_argument("--results-path", type=Path, default=Path("results/runs.jsonl"))
     args = parser.parse_args()
@@ -219,6 +250,7 @@ def main() -> int:
     transformers.logging.set_verbosity_error()
 
     spec = MODELS[args.model]
+    learning_rate = args.lr if args.lr is not None else spec.get("lr", DEFAULT_LR)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     print()
@@ -228,7 +260,7 @@ def main() -> int:
     print(f"  mô hình               : {spec['name']}")
     print(f"  độ dài tối đa         : {spec['max_length']} token")
     print(f"  tách từ tiếng Việt    : {'có' if spec['segment'] else 'không'}")
-    print(f"  batch / epoch / lr    : {spec['batch_size']} / {args.epochs} / {args.lr}")
+    print(f"  batch / epoch / lr    : {spec['batch_size']} / {args.epochs} / {learning_rate}")
     print(f"  số seed               : {args.seeds}")
     print(f"  thiết bị              : {device}")
 
@@ -265,7 +297,7 @@ def main() -> int:
         seed = REQUIRED_SPLIT_SEED + offset
         print()
         print(f"  --- seed {seed} ({offset + 1}/{args.seeds}) ---")
-        result = train_once(spec, data, seed, args.epochs, args.lr, device)
+        result = train_once(spec, data, seed, args.epochs, learning_rate, device)
         runs.append(result)
         after = gpu_telemetry()
         if after is not None:
@@ -275,16 +307,45 @@ def main() -> int:
               f"huấn luyện {result['train_seconds'] / 60:.1f} phút   "
               f"VRAM đỉnh {result['peak_vram_mb']:,.0f} MB{heat}")
 
-    across_seeds = summarise_runs([run["metrics"] for run in runs])
-    # The seed closest to the average is the one whose predictions get the test-set interval:
-    # a bootstrap of an outlier run would describe that run rather than the method.
-    middle = int(np.argsort([run["metrics"]["macro_f1"] for run in runs])[len(runs) // 2])
-    spread = bootstrap_ci(data["test"][2], runs[middle]["y_pred"], seed=REQUIRED_SPLIT_SEED)
+    # A collapsed run has no information in it, and averaging one in beside a run that worked
+    # produces a number describing neither. At T18 that mistake put PhoBERT's mean at 0,5672
+    # while its confidence interval read [0,7228 – 0,7860] — a mean outside its own interval,
+    # which is the shape of the error rather than a subtle bias.
+    good = [run for run in runs if not run["collapsed"]]
+    dead = len(runs) - len(good)
 
     print()
     print("-" * 80)
-    print(f"KẾT QUẢ — trung bình {args.seeds} seed, trên {len(data['test'][2]):,} mẫu test")
+    print(f"KẾT QUẢ — trên {len(data['test'][2]):,} mẫu test")
     print("-" * 80)
+    print("  macro-F1 từng seed:")
+    for offset, run in enumerate(runs):
+        mark = "  ← SỤP ĐỔ, đoán một lớp cho tất cả" if run["collapsed"] else ""
+        print(f"    seed {REQUIRED_SPLIT_SEED + offset}: {run['metrics']['macro_f1']:.4f}"
+              f"   ({run['n_steps']:,} bước thật){mark}")
+
+    if not good:
+        print()
+        print("  KHÔNG CÓ SEED NÀO HỌC ĐƯỢC. Không có kết quả để báo cáo.")
+        print("  Loss đứng quanh ln(3) = 1,0986 nghĩa là mô hình chưa rời điểm xuất phát.")
+        print(f"  Thử lại với learning rate thấp hơn: --lr {learning_rate / 2:g}")
+        return 1
+
+    if dead:
+        print()
+        print(f"  CẢNH BÁO: {dead}/{len(runs)} seed sụp đổ, đã LOẠI khỏi thống kê bên dưới.")
+        print("  Con số dưới đây chỉ tính trên các seed học được, và phải ghi rõ điều đó")
+        print("  trong báo cáo — một mốc so sánh sụp đổ ở một phần ba số lần chạy là kết quả")
+        print("  về độ ổn định, không phải về chất lượng mô hình.")
+
+    across_seeds = summarise_runs([run["metrics"] for run in good])
+    # The seed closest to the middle of the successful ones carries the test-set interval: a
+    # bootstrap of an outlier would describe that run rather than the method.
+    middle = int(np.argsort([run["metrics"]["macro_f1"] for run in good])[len(good) // 2])
+    spread = bootstrap_ci(data["test"][2], good[middle]["y_pred"], seed=REQUIRED_SPLIT_SEED)
+
+    print()
+    print(f"  Trung bình {len(good)} seed học được, khoảng tin cậy lấy từ seed ở giữa:")
     print(f"  {'Chỉ số':<14} {'Trung bình':>11} {'± seed':>9}   {'khoảng tin cậy 95 %':>21}")
     for key in ("macro_f1", "accuracy", *[f"f1_{label}" for label in LABELS]):
         print(f"  {key:<14} {across_seeds[key]:>11.4f} {across_seeds[f'{key}_std']:>9.4f}   "
@@ -294,7 +355,9 @@ def main() -> int:
     # Counted inside the first run rather than by loading the model again: a second load of a
     # 355-million-parameter checkpoint costs a minute and a download for one integer.
     n_params = runs[0]["n_params"]
-    ms_per_sample = float(np.mean([run["ms_per_sample"] for run in runs]))
+    # Timing and throughput come from the runs that actually trained; peak memory from all of
+    # them, because a collapsed run still allocated everything a working one would.
+    ms_per_sample = float(np.mean([run["ms_per_sample"] for run in good]))
     peak_vram = float(max(run["peak_vram_mb"] for run in runs))
     total_minutes = sum(run["train_seconds"] for run in runs) / 60
 
@@ -321,7 +384,7 @@ def main() -> int:
         "encoder": {
             "name": spec["name"], "max_length": spec["max_length"],
             "segment": spec["segment"], "batch_size": spec["batch_size"],
-            "epochs": args.epochs, "lr": args.lr,
+            "epochs": args.epochs, "lr": learning_rate,
         },
     }
     metrics = {**across_seeds, **spread}
@@ -330,6 +393,8 @@ def main() -> int:
         "peak_vram_mb": peak_vram,
         "n_params_trainable": n_params,
         "n_seeds": args.seeds,
+        "n_seeds_collapsed": dead,
+        "macro_f1_per_seed": [run["metrics"]["macro_f1"] for run in runs],
         "truncation_rate": cut,
         "train_minutes_total": total_minutes,
         "std_method": "độ lệch chuẩn qua seed; khoảng tin cậy từ bootstrap tập test",

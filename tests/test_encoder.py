@@ -232,3 +232,38 @@ def test_the_loop_scores_against_the_string_labels_not_the_encoded_ones():
     spec = {"name": "tiny", "max_length": 16, "segment": False, "batch_size": 4}
     result = train_once(spec, data, seed=42, epochs=1, lr=1e-3, device="cpu", build=tiny_build)
     assert all(isinstance(label, str) for label in result["y_pred"])
+
+
+# -- collapse detection --------------------------------------------------------------------
+
+
+def test_a_run_predicting_one_class_for_everything_is_flagged():
+    """The signature of a fine-tune that never left its starting point. At T18 six runs out of
+    nine came back like this — every sample labelled `intrinsic`, macro-F1 exactly 0,167 — and
+    averaging them in beside the runs that worked put PhoBERT's mean outside its own confidence
+    interval."""
+    from vihallulens.detect.encoder import has_collapsed
+
+    assert has_collapsed(["intrinsic"] * 700)
+
+
+def test_a_run_using_more_than_one_class_is_not_flagged():
+    from vihallulens.detect.encoder import has_collapsed
+
+    assert not has_collapsed(["no", "intrinsic", "no", "extrinsic"])
+
+
+def test_collapse_is_detected_by_the_predictions_not_by_the_score():
+    """A score threshold would depend on the class balance; counting distinct predictions
+    does not."""
+    from vihallulens.detect.encoder import has_collapsed
+
+    assert has_collapsed(["no"] * 10)
+    assert not has_collapsed(["no"] * 9 + ["intrinsic"])
+
+
+def test_every_model_carries_its_own_learning_rate():
+    """Shared at 2e-5, the two 512-token models collapsed on three seeds out of three."""
+    for name, spec in MODELS.items():
+        assert "lr" in spec, name
+        assert 0 < spec["lr"] <= 5e-5
