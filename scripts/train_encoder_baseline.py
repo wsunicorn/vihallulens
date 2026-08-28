@@ -438,6 +438,12 @@ def main() -> int:
         "metrics_per_seed": {
             key: [run["metrics"][key] for run in runs] for key in runs[0]["metrics"]
         },
+        # Raw predictions, one list per seed. Any metric thought of later is then a calculation
+        # rather than another GPU session — which is not hypothetical: the binary score added
+        # after T19 could be computed for E01 and E10 from their records, but not for this
+        # experiment, because the run of 27/08/2026 kept only the summaries.
+        "y_pred_per_seed": [run["y_pred"] for run in runs],
+        "sample_ids": list(load_dataset(args.dataset, "test", args.interim_dir)["sample_id"]),
         "learned_per_seed": [run["learned"] for run in runs],
         "ci_from_seed": good[middle]["seed"],
         "truncation_rate": cut,

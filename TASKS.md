@@ -1148,7 +1148,9 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   Chỉ số nhị phân tính từ **dự đoán**, không tính được từ các con số đã gộp. E01 và E10 tính lại được ngay vì chạy trên CPU và trên cache. **E09 thì không** — lượt chạy ngày 27/08 không lưu `y_pred`, nên hai ô nhị phân của PhoBERT và XLM-R trong Bảng 1 phải để trống chờ lần chạy sau.
 
-  Đúng bài học đã học ở T18 với `metrics_per_seed`, gặp lại lần thứ hai: **bản ghi có số thô thì gộp lại được về sau, bản ghi chỉ có số đã gộp thì không.** Cả ba script nay đều ghi `y_pred` vào `results/runs.jsonl`. Chi phí là khoảng 10 KB mỗi bản ghi.
+  Đúng bài học đã học ở T18 với `metrics_per_seed`, gặp lại lần thứ hai: **bản ghi có số thô thì gộp lại được về sau, bản ghi chỉ có số đã gộp thì không.** Cả ba script nay đều ghi dự đoán thô vào `results/runs.jsonl` — `y_pred` cho E01 và E10, `y_pred_per_seed` cho E09. Chi phí khoảng 10 KB mỗi bản ghi, và 25 KB cho E09 vì nó lưu cả ba seed.
+
+  **Suýt nữa thì lượt chạy lại thành vô ích.** Lần sửa đầu chỉ thêm `y_pred` vào hai script chạy trên CPU, còn `train_encoder_baseline.py` thì bỏ sót — trong khi đó mới đúng là script cần chạy lại trên GPU. Nếu không kiểm trước khi bấm chạy thì 2 giờ 15 phút quota sẽ ra một bản ghi vẫn thiếu đúng thứ cần. Bài học: **sửa xong thì kiểm từng chỗ đã sửa, đừng tin câu tóm tắt của chính mình.**
 
   ### Ba điều đo được làm đổi thiết kế
 
