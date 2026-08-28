@@ -17,6 +17,21 @@ LABELS = ("no", "intrinsic", "extrinsic")
 
 DEFAULT_ECE_BINS = 10
 
+# The two classes that collapse into "there is a hallucination here", and the name they collapse
+# to. Added at T19, when three independent judgements — two students on ViWikiFC and Gemini on
+# ViHallu — all failed the same way: they read intrinsic hallucination as extrinsic. Cohen kappa
+# between the two students on that boundary was 0,505, and 8 of 100 samples had one of them say
+# intrinsic while the other said extrinsic.
+#
+# That confounds two questions inside one number. "Did the method notice the hallucination?" is
+# answered against labels nobody disputes. "Did it name the right kind?" is answered against a
+# boundary that humans do not agree on. A method can be strong at the first and weak at the
+# second, and macro-F1 over three classes reports the pair as one score with no way to tell
+# which half is failing.
+HALLUCINATION_LABELS = ("intrinsic", "extrinsic")
+HALLUCINATED = "hallucinated"
+BINARY_LABELS = ("no", HALLUCINATED)
+
 
 def expected_calibration_error(
     y_true, y_proba, proba_labels=LABELS, n_bins: int = DEFAULT_ECE_BINS
@@ -98,7 +113,39 @@ def compute_metrics(y_true, y_pred, y_proba=None, labels=LABELS, proba_labels=No
                 f"(sklearn sắp lớp theo bảng chữ cái, khác thứ tự báo cáo {tuple(labels)})."
             )
         metrics["ece"] = expected_calibration_error(y_true, y_proba, proba_labels=columns)
+    metrics.update(binary_metrics(y_true, y_pred))
     return metrics
+
+
+def to_binary(labels, hallucination=HALLUCINATION_LABELS):
+    """Collapse the three classes to "clean" against "hallucinated"."""
+    return np.where(np.isin(np.asarray(labels), list(hallucination)), HALLUCINATED, "no")
+
+
+def binary_metrics(y_true, y_pred) -> dict:
+    """The same predictions scored on the question everyone agrees how to answer.
+
+    Reported beside the three-class figures, never instead of them. Precision and recall are
+    those of the ``hallucinated`` class, because that is the one a deployed detector is judged
+    on: recall says how much hallucination gets caught, precision how much of the alarm is real.
+
+    Reading the pair: a method whose binary score is far above its three-class score is finding
+    hallucinations reliably and only stumbling on which kind. One where both are low has not
+    found them at all. The three-class number alone cannot separate those two situations, and
+    section 5 of the week-4 report to the supervisor turns on exactly that distinction.
+    """
+    true_binary, pred_binary = to_binary(y_true), to_binary(y_pred)
+    labels = list(BINARY_LABELS)
+    caught = (true_binary == HALLUCINATED) & (pred_binary == HALLUCINATED)
+    predicted_positive = int((pred_binary == HALLUCINATED).sum())
+    actual_positive = int((true_binary == HALLUCINATED).sum())
+    return {
+        "binary_macro_f1": float(f1_score(true_binary, pred_binary, labels=labels,
+                                          average="macro", zero_division=0)),
+        "binary_accuracy": float(accuracy_score(true_binary, pred_binary)),
+        "binary_precision": float(caught.sum() / predicted_positive) if predicted_positive else 0.0,
+        "binary_recall": float(caught.sum() / actual_positive) if actual_positive else 0.0,
+    }
 
 
 def summarise_runs(runs: list[dict]) -> dict:
