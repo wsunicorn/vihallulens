@@ -392,6 +392,17 @@ def main() -> int:
               f"[{spread[f'{key}_lo']:.4f}, {spread[f'{key}_hi']:.4f}]")
     print(f"  {'ece':<14} {across_seeds['ece']:>11.4f} {across_seeds['ece_std']:>9.4f}")
 
+    # The same predictions scored on the question nobody disputes. A large gap between this and
+    # macro_f1 says the model finds hallucinations reliably and only stumbles on which kind —
+    # the distinction section 3 of docs/EXPERIMENTS.md added after T19.
+    print()
+    print(f"  {'nhị phân':<14} {across_seeds['binary_macro_f1']:>11.4f} "
+          f"{across_seeds['binary_macro_f1_std']:>9.4f}   chỉ hỏi có ảo giác hay không")
+    print(f"  {'  bắt được':<14} {across_seeds['binary_recall']:>11.4f} "
+          f"{across_seeds['binary_recall_std']:>9.4f}")
+    print(f"  {'  báo đúng':<14} {across_seeds['binary_precision']:>11.4f} "
+          f"{across_seeds['binary_precision_std']:>9.4f}")
+
     # Counted inside the first run rather than by loading the model again: a second load of a
     # 355-million-parameter checkpoint costs a minute and a download for one integer.
     n_params = runs[0]["n_params"]

@@ -1125,6 +1125,33 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   **Vì thế không sửa prompt cho giám khảo dễ thở hơn.** Thêm một quy tắc ưu tiên kiểu "vừa mâu thuẫn vừa thêm thì tính là nội tại" gần như chắc chắn nâng điểm, nhưng làm hỏng hai thứ: giám khảo sẽ nhận một đề bài **khác** với đề bài hai sinh viên đã nhận, nên mất luôn phép so sánh vừa nói ở trên; và quy tắc đó suy ra từ chính nhãn của tập test, tức là uốn prompt theo đáp án.
 
+  ### Lượt chạy lại ngày 28/08: cùng seed, cùng cấu hình, khác kết quả
+
+  Chạy lại để lấy dự đoán thô. Điểm số tái lập tốt, **nhưng một seed đổi hẳn số phận**.
+
+| Mô hình | Lượt 27/08 | Lượt 28/08 |
+|---|---|---|
+| PhoBERT | 0,7416 ± 0,0118 — 3/3 seed | 0,7487 ± 0,0105 — 3/3 seed |
+| XLM-R | 0,7708 ± 0,0249 — 3/3 seed | 0,7762 ± 0,0173 — **2/3 seed** |
+
+  PhoBERT lệch 0,0071, nhỏ hơn cả độ lệch qua seed của chính nó. Tái lập tốt.
+
+  XLM-R thì khác: **seed 42 học được ở lượt trước (0,7772) và không học được ở lượt này (0,1702)**. Cùng hạt giống, cùng cấu hình, cùng commit. Thứ duy nhất khác là phép tính trên GPU không hoàn toàn tất định — cuDNN tự chọn thuật toán theo thời điểm, và phép cộng dồn trên GPU không giao hoán chính xác.
+
+  Đây là kết quả đáng giá hơn nó thoạt trông:
+
+  1. **Đặt seed cố định KHÔNG làm tinh chỉnh trở nên tất định trên GPU.** `set_seed` khóa được khởi tạo trọng số, dropout và thứ tự dữ liệu, nhưng không khóa được thứ tự cộng dồn số học. Với một quá trình vốn đã ở sát ranh giới học được và không học được, chừng đó nhiễu là đủ để lật.
+
+  2. **Con số "n trên 3 seed học được" tự nó cũng là số nhiễu.** Gộp cả hai lượt thì XLM-R có **5 trên 6 lượt seed học được**, và điểm của năm lượt đó là 0,7433 · 0,7639 · 0,7772 · 0,7885 · 0,7919 — trung bình **0,7730 ± 0,0199**. Đây là ước lượng đáng tin hơn bất kỳ lượt đơn lẻ nào.
+
+  3. **Lập luận độ ổn định cho CH2 mạnh hơn hẳn.** Trước đây chỉ nói được "hướng bộ mã hóa đòi dò tham số riêng cho từng checkpoint". Nay nói được thêm: **ngay cùng một checkpoint, cùng một seed, hai lượt chạy vẫn có thể ra một lượt học được và một lượt không.** Muốn có một mô hình dùng được thì phải chạy nhiều lần rồi chọn — và phải chạy lại để kiểm chứ không tin được một lượt. Phương pháp chú ý nội tại không tinh chỉnh gì nên không có rủi ro này.
+
+  Hai lưới lọc lại làm đúng việc: seed 42 bị dừng sớm sau một epoch và bị loại khỏi thống kê, tiết kiệm 20 phút. Nếu không có chúng thì 0,1702 sẽ bị bình quân vào và kéo XLM-R xuống 0,5742 — thấp hơn cả baseline tầm thường.
+
+  ### Con số dùng cho Bảng 1
+
+  Dùng lượt **28/08** vì nó có dự đoán thô, tức chỉ số nhị phân tính được. Ghi kèm hai điều: XLM-R chỉ 2/3 seed học được ở lượt này, và trung bình gộp cả hai lượt là 0,7730 trên 5 lượt seed thành công.
+
   ### Chỉ số nhị phân: tách "có phát hiện được không" khỏi "có gọi đúng tên không"
 
   Thêm sau khi thấy ma trận nhầm lẫn ở trên, và nó **đổi hẳn cách đọc E10**.
