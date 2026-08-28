@@ -102,6 +102,12 @@ def main() -> int:
     print(f"  {'ece':<14} {point['ece']:>9.4f}")
 
     print()
+    print(f"  {'nhị phân':<14} {point['binary_macro_f1']:>9.4f}   "
+          f"chỉ hỏi có ảo giác hay không, gộp nội tại và ngoại lai")
+    print(f"  {'  bắt được':<14} {point['binary_recall']:>9.4f}   số mẫu có ảo giác bị phát hiện")
+    print(f"  {'  báo đúng':<14} {point['binary_precision']:>9.4f}   số lần báo động là thật")
+
+    print()
     print(f"  Tham số phải huấn luyện : {detector.n_params_trainable}")
     print(f"  Thời gian suy luận      : {ms_per_sample:.4f} ms/mẫu")
     print("  Khoảng tin cậy lấy từ 2.000 lần lấy lại mẫu TẬP TEST. Đây mới là biến thiên")
@@ -128,6 +134,9 @@ def main() -> int:
         "n_test": len(y_test),
         "n_resamples": 2000,
         "std_method": "bootstrap tập test, 2.000 lần, khoảng tin cậy 95 %",
+        # Raw predictions, so a metric thought of later can be computed without running again.
+        # T19 needed exactly this and the E09 records did not have it.
+        "y_pred": list(predicted),
     }
     record = log_result(RUN_NAME, config, metrics, extra, path=args.results_path)
     print()

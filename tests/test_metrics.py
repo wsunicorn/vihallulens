@@ -243,3 +243,62 @@ def test_the_seed_summary_reports_a_standard_deviation():
     across = summarise_runs([{"macro_f1": 0.70}, {"macro_f1": 0.75}])
     assert "macro_f1_std" in across
     assert "macro_f1_se" not in across
+
+
+# -- the binary view: detection separated from classification -------------------------------
+
+
+def test_naming_the_wrong_kind_of_hallucination_still_counts_as_detected():
+    """The whole point. At T19 three independent judgements — two students on ViWikiFC and
+    Gemini on ViHallu — all read intrinsic hallucination as extrinsic. Under three-class
+    macro-F1 those samples are simply wrong; under the binary view they are caught, and the gap
+    between the two scores is what says the difficulty lives in the boundary."""
+    from vihallulens.evaluation.metrics import binary_metrics
+
+    scores = binary_metrics(["intrinsic"] * 10, ["extrinsic"] * 10)
+    assert scores["binary_recall"] == pytest.approx(1.0)
+    assert scores["binary_accuracy"] == pytest.approx(1.0)
+
+
+def test_calling_a_truthful_answer_hallucinated_still_counts_as_wrong():
+    from vihallulens.evaluation.metrics import binary_metrics
+
+    scores = binary_metrics(["no"] * 10, ["extrinsic"] * 10)
+    assert scores["binary_accuracy"] == pytest.approx(0.0)
+    assert scores["binary_precision"] == pytest.approx(0.0)
+
+
+def test_precision_and_recall_are_those_of_the_hallucinated_class():
+    """A deployed detector is judged on these two: how much hallucination it catches, and how
+    much of its alarm is real."""
+    from vihallulens.evaluation.metrics import binary_metrics
+
+    #        true:  no   no   intr extr extr
+    #        pred:  extr no   intr no   extr
+    scores = binary_metrics(["no", "no", "intrinsic", "extrinsic", "extrinsic"],
+                            ["extrinsic", "no", "intrinsic", "no", "extrinsic"])
+    assert scores["binary_recall"] == pytest.approx(2 / 3)
+    assert scores["binary_precision"] == pytest.approx(2 / 3)
+
+
+def test_the_binary_scores_ride_along_with_every_computation():
+    """Added inside compute_metrics rather than beside it, so every experiment — past scripts
+    included — reports the pair without anyone remembering to ask."""
+    scores = compute_metrics(["no", "intrinsic", "extrinsic"], ["no", "extrinsic", "extrinsic"])
+    wanted = {"binary_macro_f1", "binary_accuracy", "binary_precision", "binary_recall"}
+    assert wanted <= set(scores)
+
+
+def test_the_binary_score_is_never_below_the_three_class_one_on_this_kind_of_error():
+    """Collapsing two classes can only forgive confusions between them, never create new ones."""
+    truth = ["no"] * 20 + ["intrinsic"] * 20 + ["extrinsic"] * 20
+    muddled = ["no"] * 20 + ["extrinsic"] * 20 + ["intrinsic"] * 20
+    scores = compute_metrics(truth, muddled)
+    assert scores["binary_macro_f1"] > scores["macro_f1"]
+
+
+def test_collapsing_labels_keeps_the_clean_class_alone():
+    from vihallulens.evaluation.metrics import to_binary
+
+    assert list(to_binary(["no", "intrinsic", "extrinsic"])) == ["no", "hallucinated",
+                                                                "hallucinated"]
