@@ -1152,6 +1152,31 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   Dùng lượt **28/08** vì nó có dự đoán thô, tức chỉ số nhị phân tính được. Ghi kèm hai điều: XLM-R chỉ 2/3 seed học được ở lượt này, và trung bình gộp cả hai lượt là 0,7730 trên 5 lượt seed thành công.
 
+| Phương pháp | ba lớp [KTC 95 %] | nhị phân | bắt được | báo đúng | F1 `intrinsic` |
+|---|---|---|---|---|---|
+| E01 bề mặt | 0,656 [0,620–0,689] | 0,802 | 0,854 | 0,870 | 0,533 |
+| Gemini free | 0,664 [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,582 |
+| PhoBERT | 0,749 [0,714–0,778] | 0,851 | 0,921 | 0,883 | 0,693 |
+| **XLM-R** | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,729** |
+
+  **Mốc phải vượt là 0,776. Muốn nói *hơn hẳn* thì phải vượt 0,818**, cận trên khoảng tin cậy của XLM-R — cùng nguyên tắc đã dùng để đặt mốc 0,689 cho E01.
+
+  ### Cột nhị phân xác nhận giả thuyết
+
+  Cả bốn phương pháp đều **được thêm 0,10 tới 0,16 điểm** khi bỏ đòi hỏi gọi đúng tên loại. Phần khó nằm ở ranh giới nội tại–ngoại lai, không nằm ở việc phát hiện. Ba điều đọc thêm được:
+
+  1. **Chênh lệch lớn hơn ở hai phương pháp yếu** (+0,146 và +0,157) so với hai bộ mã hóa (+0,102 và +0,105). Nghĩa là bộ mã hóa không chỉ tốt hơn nói chung mà tốt hơn **đúng ở phần khó** — chúng thu hẹp được ranh giới chứ không chỉ đẩy điểm chung lên. Đây là mức mà `chunk-aware` phải so.
+
+  2. **Gemini bắt được nhiều nhất nhưng báo động sai nhiều nhất.** Recall 0,974 cao nhất bảng, precision 0,818 thấp nhất trong ba phương pháp mạnh — nó gọi nhầm 18 % câu trả lời trung thực thành có ảo giác. Khớp ma trận nhầm lẫn: 32 trên 111 mẫu `no` bị gán `extrinsic`.
+
+  3. **XLM-R cân bằng nhất**, recall 0,920 và precision 0,918 gần bằng nhau. Với hệ thống triển khai thật đây là hồ sơ dễ đặt ngưỡng nhất — nhưng đòi GPU và tinh chỉnh không ổn định.
+
+  ### Một lỗi tự gây ra khi kiểm chứng
+
+  Chạy `run_judge_baseline.py --dry-run` để kiểm tra tính tái lập đã **ghi đè `ms/mẫu` của E10 từ 8.194 xuống 0,03** — vì lượt dry run lấy hết từ cache nên đo thời gian tra cache chứ không đo lượt gọi API.
+
+  Phép kiểm mà làm hỏng thứ nó đang kiểm thì tự nó là lỗi. Nay script **không ghi vào `runs.jsonl` khi không có lượt gọi mới nào**: chế độ kiểm chứng in ra bảng để đối chiếu, chứ không có quyền viết lại bản ghi. Con số 8.194 đã khôi phục, kèm ghi chú rằng đó là đồng hồ treo tường có gồm thời gian tự giữ nhịp, còn độ trễ một lượt gọi là khoảng 5.000 ms.
+
   ### Chỉ số nhị phân: tách "có phát hiện được không" khỏi "có gọi đúng tên không"
 
   Thêm sau khi thấy ma trận nhầm lẫn ở trên, và nó **đổi hẳn cách đọc E10**.

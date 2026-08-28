@@ -204,31 +204,50 @@ Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **v�
 
 Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không phải độ lệch chuẩn qua seed. Đo ở T17: với 700 mẫu test, khoảng này rộng gấp đôi biến thiên seed và **nó mới là thứ quyết định** một phương pháp có thật sự hơn phương pháp khác hay không. Trộn hai loại độ lệch vào một cột là cách chắc chắn nhất để đọc nhầm bảng.
 
-| Phương pháp | macro-F1 [KTC 95 %] | Nhị phân | Bắt được | F1 no | F1 intr | F1 extr | ECE | ms/mẫu | VRAM MB |
-|---|---|---|---|---|---|---|---|---|---|
-| Baseline tầm thường (E01) | **0,656** [0,620–0,689] | 0,802 | 0,854 | 0,742 | 0,533 | 0,694 | 0,061 | 0,001 | 0 |
-| PhoBERT tinh chỉnh (E09) | **0,742** [0,705–0,770] | ‡ | ‡ | 0,790 | 0,685 | 0,750 | 0,086 | 12,2 | 9.002 |
-| XLM-R large tinh chỉnh (E09) | **0,771** [0,747–0,808] | ‡ | ‡ | 0,836 | 0,722 | 0,754 | 0,114 | 24,8 | 11.231 |
-| InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | 11.231 |
-| Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
-| Lookback gộp (E02) | | | | | | | | | |
-| **Chunk-aware (E05)** | | | | | | | | | |
+| Phương pháp | macro-F1 [KTC 95 %] | Nhị phân | Bắt được | Báo đúng | F1 no | F1 intr | F1 extr | ECE | ms/mẫu | VRAM MB |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Baseline tầm thường (E01) | **0,656** [0,620–0,689] | 0,802 | 0,854 | 0,870 | 0,742 | 0,533 | 0,694 | 0,061 | 0,001 | 0 |
+| PhoBERT tinh chỉnh (E09) | **0,749** [0,714–0,778] | 0,851 | 0,921 | 0,883 | 0,800 | 0,693 | 0,754 | 0,081 | 12,3 | 9.002 |
+| XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | 0,844 | **0,729** | 0,756 | 0,097 | 25,2 | 11.231 |
+| InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | | 11.231 |
+| Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
+| Lookback gộp (E02) | | | | | | | | | | |
+| **Chunk-aware (E05)** | | | | | | | | | | |
 
-Đo ngày 27/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,012 cho PhoBERT và 0,025 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`.
+Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
 
-**‡** Hai ô này trống vì lượt chạy E09 ngày 27/08/2026 **không lưu dự đoán thô**, mà chỉ số nhị phân thì tính từ dự đoán chứ không tính được từ các con số đã gộp. Cả ba script nay đều ghi `y_pred` vào `results/runs.jsonl`, nên đây là lần cuối cùng gặp chuyện này; hai ô sẽ được điền ở lần chạy E09 kế tiếp. Bài học giống hệt bài học của `metrics_per_seed` ở T18: **bản ghi có số thô thì tính lại được, bản ghi chỉ có số đã gộp thì không.**
+**§** XLM-R chỉ **2 trên 3 seed học được** ở lượt chạy này; seed 42 đứng ở `ln(3)` và bị loại. Chính seed đó **học được** ở lượt 27/08 với cùng cấu hình — xem phần T18 của `TASKS.md`. Gộp cả hai lượt thì 5 trên 6 lượt seed thành công, trung bình **0,7730 ± 0,0199**, và đó là ước lượng đáng tin hơn bất kỳ lượt đơn lẻ nào. Bảng này dùng lượt 28/08 cho mọi cột vì chỉ lượt đó có dự đoán thô để tính chỉ số nhị phân.
 
 **†** Dòng E10 đo trên **300 trên 700 mẫu test**, các dòng khác đo trên cả 700 — không so thẳng bằng mắt được. Trên đúng 300 mẫu đó, baseline tầm thường E01 đạt **0,686**. Cột ECE để trống vì con số duy nhất có được là độ tin cậy mô hình **tự khai**, không phải xác suất softmax; nó nằm ở khóa `ece_self_reported` trong `results/runs.jsonl` và bằng 0,280. Cột ms/mẫu đã gồm cả thời gian **tự giữ nhịp** để không vượt hạn mức; riêng độ trễ gọi API là khoảng 5.000 ms.
 
 Năm điều bảng này nói:
 
-0. **Giám khảo LLM là bộ phát hiện tốt và bộ phân loại kém, và con số ba lớp che mất điều đó.** Trên cùng 300 mẫu: ba lớp 0,664 so với 0,686 của E01 — thua; nhị phân 0,821 so với 0,814 — hơn; và **bắt được 97,4 % số mẫu có ảo giác so với 88,9 %**. Nghĩa là nó gần như không bỏ sót ảo giác nào, chỉ gọi sai tên loại. Đây là lý do chỉ số nhị phân được thêm vào mục 3: nếu chỉ nhìn con số ba lớp thì kết luận sẽ là "Gemini không hơn hai đặc trưng bề mặt", mà kết luận đó bỏ sót phần quan trọng nhất.
+1. **Giám khảo LLM là bộ phát hiện tốt và bộ phân loại kém, và con số ba lớp che mất điều đó.** Trên cùng 300 mẫu: ba lớp 0,664 so với 0,686 của E01 — thua; nhị phân 0,821 so với 0,814 — hơn; và **bắt được 97,4 % số mẫu có ảo giác so với 88,9 %**. Nghĩa là nó gần như không bỏ sót ảo giác nào, chỉ gọi sai tên loại. Đây là lý do chỉ số nhị phân được thêm vào mục 3: nếu chỉ nhìn con số ba lớp thì kết luận sẽ là "Gemini không hơn hai đặc trưng bề mặt", mà kết luận đó bỏ sót phần quan trọng nhất.
 
-1. **Mốc phải vượt nay là 0,771 chứ không phải 0,689.** Khoảng tin cậy tập test của XLM-R chạm tới 0,807. Đây là đối thủ thật sự của phương pháp chú ý nội tại.
-2. **Lớp `intrinsic` vẫn khó nhất ở cả ba phương pháp**, nhưng bộ mã hóa cải thiện được nhiều: 0,533 → 0,722. Khoảng cách giữa lớp dễ nhất và khó nhất thu từ 0,209 xuống 0,114.
-3. **Giá phải trả là chi phí suy luận.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,115 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ ra.
+2. **Mốc phải vượt nay là 0,776 chứ không phải 0,689.** Và muốn nói *hơn hẳn* XLM-R thì phải vượt **0,818**, cận trên khoảng tin cậy của nó — cùng nguyên tắc đã dùng để đặt mốc 0,689 cho E01.
+3. **Lớp `intrinsic` vẫn khó nhất ở cả bốn phương pháp**, nhưng bộ mã hóa cải thiện được nhiều: 0,533 → 0,729. Khoảng cách giữa lớp dễ nhất và khó nhất thu từ 0,209 xuống 0,115.
+4. **Giá phải trả là chi phí suy luận.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,120 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ ra.
 
-4. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,086 → 0,114. Bộ mã hóa tinh chỉnh đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
+5. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,081 → 0,097. Bộ mã hóa tinh chỉnh đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
+
+### Cột nhị phân nói gì
+
+Cả bốn phương pháp đều **được thêm 0,10 tới 0,16 điểm** khi bỏ đòi hỏi gọi đúng tên loại ảo giác. Đó là bằng chứng số học cho điều mục 3 nêu: phần khó nằm ở **ranh giới nội tại–ngoại lai**, không nằm ở việc phát hiện.
+
+| Phương pháp | ba lớp | nhị phân | chênh | bắt được | báo đúng |
+|---|---|---|---|---|---|
+| E01 bề mặt | 0,656 | 0,802 | **+0,146** | 0,854 | 0,870 |
+| Gemini free | 0,664 | 0,821 | **+0,157** | **0,974** | 0,818 |
+| PhoBERT | 0,749 | 0,851 | +0,102 | 0,921 | 0,883 |
+| XLM-R | 0,776 | **0,881** | +0,105 | 0,920 | **0,918** |
+
+Ba điều đọc thêm được:
+
+1. **Chênh lệch LỚN HƠN ở hai phương pháp yếu** (+0,146 và +0,157) so với hai bộ mã hóa (+0,102 và +0,105). Nghĩa là bộ mã hóa không chỉ tốt hơn nói chung, mà tốt hơn **đúng ở phần khó** — chúng thu hẹp được ranh giới chứ không chỉ đẩy điểm chung lên.
+
+2. **Gemini bắt được nhiều nhất nhưng báo động sai nhiều nhất.** Recall 0,974 là cao nhất bảng, precision 0,818 là thấp nhất trong ba phương pháp mạnh. Nó gần như không bỏ sót ảo giác nào, đổi lại gọi nhầm 18 % câu trả lời trung thực thành có ảo giác — khớp với ma trận nhầm lẫn, nơi 32 trên 111 mẫu `no` bị gán thành `extrinsic`.
+
+3. **XLM-R cân bằng nhất:** recall 0,920 và precision 0,918 gần bằng nhau. Với một hệ thống triển khai thật, đây là hồ sơ dễ đặt ngưỡng nhất — nhưng nó đòi GPU và tinh chỉnh không ổn định, còn Gemini thì đòi hạn mức API.
 
 **InfoXLM-large không tinh chỉnh được** trên cấu hình này. Cả ba seed đứng ở `ln(3) = 1,0986` hết epoch đầu, và hai mức learning rate thấp hơn (`5e-6`, `2e-6`) cũng vậy — loss thậm chí **bám sát `ln(3)` hơn** khi hạ learning rate, tức mô hình không nhúc nhích chứ không phải bị đẩy quá đà.
 
