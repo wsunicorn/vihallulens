@@ -327,6 +327,17 @@ def main() -> int:
         "sample_ids": list(chosen["sample_id"]),
         "std_method": "_lo/_hi/_se từ bootstrap tập con; không có seed nào để lấy _std",
     }
+    if not fresh:
+        # A run served entirely from cache measured cache lookups, not the API. Writing it would
+        # overwrite the cost columns of Bảng 1 with a number three orders of magnitude too small
+        # — which is exactly what happened once: a verification dry run replaced 8.194 ms/mẫu
+        # with 0,03. Verification prints the table; it does not get to rewrite the record.
+        print()
+        print("  Không ghi vào runs.jsonl: lượt này lấy hết từ cache nên không đo được chi phí")
+        print("  thật. Bản ghi của lượt gọi API vẫn giữ nguyên, và bảng trên khớp với nó là")
+        print("  đúng thứ cần kiểm.")
+        return 0
+
     record = log_result(RUN_NAME, config, {**point, **spread}, extra, path=args.results_path)
     print()
     print(f"  Đã ghi {args.results_path} — config_hash {record['config_hash']}")
