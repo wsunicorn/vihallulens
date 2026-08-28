@@ -117,6 +117,26 @@ class LookbackDetector:
         return model.predict_proba(self._prepare(X))
 
     @property
+    def feature_weights(self) -> np.ndarray:
+        """How hard the fitted model leans on each input feature.
+
+        The largest absolute coefficient across the classes, one number per feature. Added at
+        T20, where the reproduction has 756 inputs — one per layer-head pair — and one of the
+        paper's findings is that a few heads carry most of the signal. Weight spread evenly over
+        all of them is the shape of a reproduction that fitted noise, so it has to be visible.
+
+        Public rather than reached for through ``_model`` because E13 asks the same question of
+        a different reading model, and a private attribute would make that comparison a matter
+        of remembering an implementation detail.
+        """
+        model = self._model
+        if model is None:
+            raise RuntimeError("chưa huấn luyện: gọi fit trước")
+        if not hasattr(model, "coef_"):
+            raise NotImplementedError(f"{self.detector_type} không phải mô hình tuyến tính")
+        return np.abs(np.asarray(model.coef_)).max(axis=0)
+
+    @property
     def n_params_trainable(self) -> int:
         """Number of fitted parameters, for the cost column of experiment E11.
 

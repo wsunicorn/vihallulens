@@ -1,0 +1,38 @@
+# E02 — tái lập Lookback Lens gốc trên ViHallu. Task T20.
+#
+# Công thức và bốn điểm dễ làm sai nằm ở mục 1 của docs/REFERENCES.md. Mốc phải vượt là
+# macro-F1 0,656 của baseline tầm thường E01; không vượt thì lỗi gần như chắc chắn ở khâu
+# trích đặc trưng chứ không ở phương pháp, xem tiêu chí hoàn thành của T20 trong TASKS.md.
+
+run_name: e02_lookback_lens_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42          # cố định theo mục 3 CLAUDE.md, đổi là raise
+
+chunking:
+  # E02 gộp toàn bộ ngữ cảnh nên không dùng tới cách chia đoạn. Vẫn phải khai vì bộ trích
+  # tính luôn cả phần theo đoạn từ cùng một ma trận, và khai đúng thì hash cấu hình phân biệt
+  # được lượt chạy này với lượt của E03 vốn thật sự phụ thuộc vào nó.
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]    # lớp 27 tràn số ở float16 trên 20/20 mẫu, đo ở T07
+
+features:
+  # Đúng một nhóm: tỷ lệ lookback gộp toàn bộ ngữ cảnh. Không có chunk_aware ở đây — đó là
+  # phần đóng góp của đề tài và phải được so với chính lượt chạy này.
+  groups: [basic]
+  # Nối đủ lớp nhân đầu rồi mới đưa vào bộ phân loại, đúng điểm 2 mục 1 docs/REFERENCES.md.
+  # Gộp trung bình qua các đầu sẽ vứt mất chính cấu trúc mà bài gốc tìm thấy tín hiệu.
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
