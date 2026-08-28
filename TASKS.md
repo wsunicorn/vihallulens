@@ -1240,11 +1240,49 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   `results/judge_cache.jsonl` được commit. Nhờ vậy con số của E10 kiểm lại được **không tốn một lượt gọi API nào**: chạy `python scripts/run_judge_baseline.py --dry-run` là ra đúng bảng trên.
 
-- [ ] **T20** · L · E02 tái lập Lookback Lens gốc
+- [ ] **T20** · L · E02 tái lập Lookback Lens gốc — **công cụ sẵn sàng 28/08/2026, chờ chạy trên Kaggle**
   - Đọc mục 1 của `docs/REFERENCES.md` trước khi viết code. Tái lập **đúng công thức gốc**, không phải biến thể gần đúng.
   - Trích đặc trưng lookback gộp, huấn luyện `LogisticRegression`.
   - Ba điểm phải tự kiểm trước khi báo kết quả: (a) lookback ratio là **trung bình chú ý theo token**, chia cho số token ngữ cảnh và số token đã sinh, không phải tổng; (b) véc-tơ đặc trưng nối đủ `L × H` giá trị rồi mới lấy trung bình qua các bước trong span; (c) span ở đây là **toàn bộ phản hồi** vì nhãn của ViHallu ở mức phản hồi, khác thiết lập sliding-window-8 của bài gốc — ghi khác biệt này vào PR.
   - **Kiểm tra:** kết quả cao hơn baseline tầm thường E01; nếu không thì dừng lại rà soát cách trích đặc trưng, lỗi gần như chắc chắn ở khâu trích chứ không ở phương pháp.
+
+  **Task này để làm gì.** Đây là mốc so sánh **nội bộ** quan trọng nhất, vì đóng góp của đề tài là một sửa đổi trực tiếp trên phương pháp này. Nếu `chunk-aware` chỉ vượt được một bản tái lập **yếu** thì phép so sánh không chứng minh được gì — và người phản biện sẽ hỏi đúng câu đó.
+
+  **Đã chuẩn bị:** `src/vihallulens/features/lookback.py`, `scripts/extract_features.py`, `scripts/run_lookback_baseline.py`, `configs/e02_lookback_vihallu.yaml`, `notebooks/t20_lookback_lens_t4.ipynb`. `pytest` **534 ca xanh** (thêm 21).
+
+  ### Phần tính toán đã có sẵn từ T07
+
+  Không phải viết lại gì cả. `lookback_from_layer` trong `src/vihallulens/extract/attention.py` đã tính đúng công thức gốc từ T07, gồm cả chỗ dễ sai nhất là chia cho `N` và `t-1` thay vì lấy tổng. Việc của T20 là ba bước còn lại: gộp qua các bước trong span, nối thành véc-tơ, và huấn luyện bộ phân loại.
+
+  ### Ba chỗ dễ làm sai, mỗi chỗ một ca kiểm thử
+
+  Mục 1 `docs/REFERENCES.md` liệt kê bốn điểm. Điều đáng sợ ở cả bốn là **làm sai vẫn ra một ma trận đầy đủ trông rất hợp lý** — không có gì báo lỗi, chỉ có kết luận sai.
+
+  1. **Trung bình theo token, không phải tổng.** Lấy tổng thì đặc trưng biến thành thứ đại diện cho độ dài phản hồi, và bộ phân loại sẽ học đúng cái đó thay vì học gì về chú ý.
+  2. **Nối đủ lớp nhân đầu rồi mới trung bình qua các bước.** Gộp trung bình qua các đầu trước sẽ vứt mất chính cấu trúc mà bài gốc tìm thấy tín hiệu — rằng chỉ vài đầu mang phần lớn thông tin.
+  3. **Tên đặc trưng phải mang số lớp thật của mô hình.** Bỏ lớp 27 thì mảng còn 27 lát nhưng chúng là lớp 0 tới 26. Đặt tên `l26` cho lát đang giữ lớp 24 sẽ làm mọi khẳng định về vị trí đầu chú ý thành sai — mà E13 lại hỏi đúng câu "các đầu có ích nằm ở đâu".
+
+  ### Chạy dở nối lại được, vì 50 phút là dài
+
+  Mỗi mẫu ghi xuống **ngay khi tính xong**, và chạy lại bỏ qua phần đã có. Một lượt bị đứt phiên, hết hạn mức hay bấm nhầm Ctrl+C vẫn giữ nguyên phần đã trả tiền. Cùng lý do với cache của T19, và bộ kiểm thử có ca khẳng định **thứ tự ghi không làm đổi ma trận đọc ra** — nếu không thì một lượt bị ngắt rồi nối lại sẽ âm thầm cho kết quả khác một lượt chạy liền mạch.
+
+  Tên file chứa **hash cấu hình**, nên đổi mô hình đọc hay đổi trần token là ra file khác. Dùng chung tên sẽ khiến một lượt chạy với thiết lập mới lặng lẽ dùng lại số cũ.
+
+  ### Script tự kiểm trước khi tin con số
+
+  Trước khi in điểm, script in một khối kiểm tra đặc trưng. Quan trọng nhất là **tỷ lệ giá trị nằm trong đoạn `[0, 1]`**: theo định nghĩa thì lookback ratio phải nằm trong đó, nên con số này không xấp xỉ 100 % nghĩa là **công thức sai**, chứ không phải mô hình kém. Đây là loại lỗi mà điểm số vẫn có thể trông đẹp.
+
+  Và script tự chấm tiêu chí hoàn thành: không vượt được 0,6562 của E01 thì nó **nói thẳng là không đạt**, in ra ba chỗ phải soi, và trả mã lỗi — thay vì để con số đó lọt vào báo cáo.
+
+  ### Ghi chú cho task sau
+
+  `scripts/extract_features.py` hiện chỉ lưu véc-tơ lookback gộp, vì T20 chỉ cần thế. T21 tới T23 cần thêm phần theo đoạn, tính từ **cùng một ma trận** nhưng chưa lưu. Lúc đó sẽ mở rộng script này và chạy lại một lượt GPU nữa — khoảng 50 phút, chấp nhận được. Không làm trước theo mục 6 quy tắc 5 `CLAUDE.md`.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t20_lookback_lens_t4.ipynb`, attach dataset, bật GPU T4, Save Version. Khoảng **50 phút**: 39 phút cho tập train, 5 phút cho tập test, phần còn lại là tải mô hình 7B.
+
+  Nhớ tải cả `data/processed/*.jsonl` về — T21 dùng lại được phần đặc trưng gộp mà không phải chạy lại GPU.
 
 ---
 
