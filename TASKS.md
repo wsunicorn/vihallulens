@@ -1074,7 +1074,7 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   **Task này để làm gì.** Mốc so sánh thứ ba, và là mốc mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì; E09 đọc được nhưng phải tinh chỉnh trước, tốn GPU và có lúc không tinh chỉnh nổi như InfoXLM; còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
 
-  **Đã làm:** `src/vihallulens/judge/` (prompt, client, cache), `scripts/run_judge_baseline.py`, `scripts/list_judge_models.py`. `pytest` **507 ca xanh**, toàn bộ phần gọi mạng chạy offline nhờ tiêm transport giả.
+  **Đã làm:** `src/vihallulens/judge/` (prompt, client, cache), `scripts/run_judge_baseline.py`, `scripts/list_judge_models.py`. `pytest` **513 ca xanh**, toàn bộ phần gọi mạng chạy offline nhờ tiêm transport giả.
 
   ### Kết quả — 300 mẫu, 41 phút, 0 lỗi
 
@@ -1124,6 +1124,31 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
   Đây là lập luận mạnh cho đề tài, và nên đưa vào phần bàn luận: **ranh giới nội tại–ngoại lai khó một cách nội tại**, chứ không phải khó vì phương pháp nào đó dở. Nó cũng lý giải vì sao lớp `intrinsic` là lớp yếu nhất ở *cả ba* mốc so sánh — E01 0,533, E09 XLM-R 0,722, E10 0,582 — và vì sao đó là chỗ `chunk-aware lookback ratio` phải chứng minh mình.
 
   **Vì thế không sửa prompt cho giám khảo dễ thở hơn.** Thêm một quy tắc ưu tiên kiểu "vừa mâu thuẫn vừa thêm thì tính là nội tại" gần như chắc chắn nâng điểm, nhưng làm hỏng hai thứ: giám khảo sẽ nhận một đề bài **khác** với đề bài hai sinh viên đã nhận, nên mất luôn phép so sánh vừa nói ở trên; và quy tắc đó suy ra từ chính nhãn của tập test, tức là uốn prompt theo đáp án.
+
+  ### Chỉ số nhị phân: tách "có phát hiện được không" khỏi "có gọi đúng tên không"
+
+  Thêm sau khi thấy ma trận nhầm lẫn ở trên, và nó **đổi hẳn cách đọc E10**.
+
+  Vấn đề: macro-F1 ba lớp đang trộn hai câu hỏi vào một con số. Câu thứ nhất — *có phát hiện được ảo giác không* — chấm trên ranh giới không ai tranh cãi. Câu thứ hai — *có gọi đúng tên loại không* — chấm trên ranh giới mà **chính hai người gán nhãn cũng chỉ đồng thuận ở mức kappa 0,505**. Một phương pháp mạnh ở câu đầu mà yếu ở câu sau sẽ ra **cùng một điểm** với một phương pháp yếu ở cả hai.
+
+  Cách tách: gộp `intrinsic` và `extrinsic` thành một lớp `hallucinated`, rồi chấm lại chính những dự đoán đã có. Không tốn thêm thí nghiệm nào. Trên **cùng 300 mẫu**:
+
+| | macro-F1 ba lớp | macro-F1 nhị phân | bắt được | báo đúng |
+|---|---|---|---|---|
+| E01 bề mặt | **0,6860** | 0,8144 | 0,8889 | — |
+| Gemini | 0,6637 | **0,8208** | **0,9735** | 0,8178 |
+
+  **Gemini thua ở ba lớp nhưng hơn ở nhị phân, và bắt được 97,4 % số mẫu có ảo giác.** Nó gần như không bỏ sót ảo giác nào — chỉ gọi sai tên loại.
+
+  Nếu chỉ nhìn con số ba lớp thì kết luận sẽ là "giám khảo LLM không hơn hai đặc trưng bề mặt", và kết luận đó **bỏ sót phần quan trọng nhất**. Đây đúng là thứ mục 5 báo cáo tuần đề xuất, và nay nó không còn là đề xuất mà là số đo.
+
+  Bốn khóa mới: `binary_macro_f1`, `binary_accuracy`, `binary_precision`, `binary_recall`. Đặt **bên trong** `compute_metrics` chứ không đặt cạnh, nên mọi thí nghiệm — kể cả các script viết trước — tự có mà không ai phải nhớ gọi thêm.
+
+  ### Một hệ quả: bản ghi phải giữ dự đoán thô
+
+  Chỉ số nhị phân tính từ **dự đoán**, không tính được từ các con số đã gộp. E01 và E10 tính lại được ngay vì chạy trên CPU và trên cache. **E09 thì không** — lượt chạy ngày 27/08 không lưu `y_pred`, nên hai ô nhị phân của PhoBERT và XLM-R trong Bảng 1 phải để trống chờ lần chạy sau.
+
+  Đúng bài học đã học ở T18 với `metrics_per_seed`, gặp lại lần thứ hai: **bản ghi có số thô thì gộp lại được về sau, bản ghi chỉ có số đã gộp thì không.** Cả ba script nay đều ghi `y_pred` vào `results/runs.jsonl`. Chi phí là khoảng 10 KB mỗi bản ghi.
 
   ### Ba điều đo được làm đổi thiết kế
 

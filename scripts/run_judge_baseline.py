@@ -110,13 +110,17 @@ def judge_one(judge, cache, row, model: str) -> tuple[dict, bool]:
     return cache.put(cache_key(model, prompt), record), True
 
 
-def surface_anchor(interim_dir: Path, dataset: str, chosen) -> float | None:
-    """E01's macro-F1 on exactly the samples the judge saw.
+def surface_anchor(interim_dir: Path, dataset: str, chosen) -> dict | None:
+    """E01 scored on exactly the samples the judge saw.
 
     Without it the judge's score floats free: every other row of Bảng 1 is measured on all 700
     test samples, and a number from a different 300 cannot be compared with them by eye. E01 is
     two features and a logistic regression, so recomputing it on the subset costs a second and
     turns the judge's row into something a reader can place.
+
+    The whole metric set is returned, not just macro-F1, so the binary view of both methods is
+    compared on the same 300 samples too. Comparing a binary score from 300 against one from
+    700 would repeat the very mistake this anchor exists to prevent.
     """
     try:
         train = load_dataset(dataset, "train", interim_dir)
@@ -126,7 +130,7 @@ def surface_anchor(interim_dir: Path, dataset: str, chosen) -> float | None:
         surface_features(train), train["label"].to_numpy()
     )
     predicted = detector.predict(surface_features(chosen))
-    return compute_metrics(chosen["label"].to_numpy(), predicted)["macro_f1"]
+    return compute_metrics(chosen["label"].to_numpy(), predicted)
 
 
 def as_probabilities(y_pred, confidence) -> tuple[np.ndarray, int]:
@@ -279,12 +283,23 @@ def main() -> int:
     print("  ECE trên KHÔNG so thẳng được với ECE của E01 và E09: đó là xác suất softmax,")
     print("  còn đây là con số mô hình tự khai. Hai đại lượng khác nhau, để riêng.")
 
+    print()
+    print("-" * 80)
+    print("CHỈ CÒN HỎI CÓ ẢO GIÁC HAY KHÔNG — gộp nội tại và ngoại lai làm một")
+    print("-" * 80)
+    print(f"  macro-F1 nhị phân : {point['binary_macro_f1']:.4f}  "
+          f"(so với {point['macro_f1']:.4f} khi phải gọi đúng tên loại)")
+    print(f"  bắt được          : {point['binary_recall']:.4f} số mẫu có ảo giác")
+    print(f"  báo đúng          : {point['binary_precision']:.4f} số lần báo động là thật")
+
     anchor = surface_anchor(args.interim_dir, args.dataset, chosen)
     if anchor is not None:
         print()
         print(f"  Neo so sánh trên ĐÚNG {len(chosen):,} mẫu này:")
-        print(f"    E01 bề mặt   {anchor:.4f}")
-        print(f"    Gemini       {point['macro_f1']:.4f}")
+        print(f"  {'':<14}{'ba lớp':>9}{'nhị phân':>11}{'bắt được':>11}")
+        for label, scores in (("E01 bề mặt", anchor), ("Gemini", point)):
+            print(f"  {label:<14}{scores['macro_f1']:>9.4f}{scores['binary_macro_f1']:>11.4f}"
+                  f"{scores['binary_recall']:>11.4f}")
         print("  Các dòng khác của Bảng 1 đo trên cả 700 mẫu test nên không so thẳng được;")
         print("  neo này để biết con số trên hơn hay kém baseline tầm thường trên cùng mẫu.")
 
@@ -305,7 +320,11 @@ def main() -> int:
         "confidence_mean": float(np.mean(confidence)),
         "ece_self_reported": ece_self,
         "n_confidence_floored": floored,
-        "e01_macro_f1_same_subset": anchor,
+        "e01_same_subset": anchor,
+        # Raw predictions, so any metric thought of later can be computed without paying for
+        # the run again. T19 needed exactly this and E09 did not have it.
+        "y_pred": list(y_pred),
+        "sample_ids": list(chosen["sample_id"]),
         "std_method": "_lo/_hi/_se từ bootstrap tập con; không có seed nào để lấy _std",
     }
     record = log_result(RUN_NAME, config, {**point, **spread}, extra, path=args.results_path)
