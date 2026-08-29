@@ -27,21 +27,31 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vihallulens.config import config_hash, load_config  # noqa: E402
+from vihallulens.config import extraction_hash, load_config  # noqa: E402
 from vihallulens.data.chunking import chunk_context  # noqa: E402
 from vihallulens.data.loading import DEFAULT_INTERIM_DIR, load_dataset  # noqa: E402
+from vihallulens.features.chunk_aware import (  # noqa: E402
+    CHUNK_FEATURE_NAMES,
+    chunk_features,
+)
 from vihallulens.features.lookback import DENOMINATORS, pool_over_tokens  # noqa: E402
 
 DEFAULT_PROCESSED_DIR = Path("data/processed")
 PROGRESS_EVERY = 25
 
+# Every column family one pass writes. Both are computed from the same attention matrix, so
+# splitting them into two runs would pay for the reading model twice to learn nothing new.
+FEATURE_BLOCKS = tuple(f"lookback_{name}" for name in DENOMINATORS) + CHUNK_FEATURE_NAMES
+
 
 def shard_path(processed_dir: Path, run: str, dataset: str, split: str) -> Path:
-    """One file per (config, dataset, split).
+    """One file per (extraction, dataset, split).
 
-    The config hash is in the name because features extracted with a different reading model or
-    a different token budget are different features. Sharing a filename between them would let
-    a re-run with new settings silently reuse the old numbers.
+    ``run`` is the *extraction* hash, not the whole config: features extracted with a different
+    reading model, token budget or chunking are different features, but two experiments that
+    differ only in which of those features they feed to the classifier share one extraction.
+    Hashing the whole config would spend fifty minutes of GPU again for E03 after E02, for a
+    difference the GPU never sees.
     """
     return processed_dir / f"{dataset}_{split}_{run}.jsonl"
 
@@ -66,7 +76,12 @@ def load_done(path: Path) -> dict[str, dict]:
 
 
 def to_record(sample_id: str, label: str, features, elapsed_ms: float) -> dict:
-    """One sample's row: the pooled vectors plus everything needed to audit them later."""
+    """One sample's row: the pooled vectors plus everything needed to audit them later.
+
+    Both families are written in one pass. The chunk-aware statistics are computed from the same
+    attention matrix as the lookback ratio, so extracting them separately would pay for the
+    reading model twice to learn nothing new.
+    """
     row = {
         "sample_id": sample_id,
         "label": label,
@@ -82,6 +97,8 @@ def to_record(sample_id: str, label: str, features, elapsed_ms: float) -> dict:
     for name in DENOMINATORS:
         pooled = pool_over_tokens(getattr(features, f"lookback_{name}"))
         row[f"lookback_{name}"] = [round(float(value), 6) for value in pooled.reshape(-1)]
+    for name, value in chunk_features(features.lookback_per_chunk).items():
+        row[name] = [round(float(item), 6) for item in value.reshape(-1)]
     return row
 
 
@@ -98,7 +115,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     cfg = load_config(args.config)
-    run = config_hash(cfg)
+    run = extraction_hash(cfg)
     frame = load_dataset(cfg.dataset.name, args.split, args.interim_dir)
     if args.limit:
         frame = frame.head(args.limit)
@@ -119,6 +136,7 @@ def main() -> int:
     print(f"  trần token ngữ cảnh   : {cfg.extractor.max_context_tokens:,}")
     print(f"  chia đoạn             : {cfg.chunking.strategy}")
     print(f"  bộ dữ liệu            : {cfg.dataset.name}/{args.split}, {len(frame):,} mẫu")
+    print(f"  khối đặc trưng ghi ra : {', '.join(FEATURE_BLOCKS)}")
     print(f"  đã có sẵn             : {len(done):,} mẫu trong {path.name}")
 
     todo = [row for row in frame.to_dict("records") if row["sample_id"] not in done]

@@ -174,3 +174,23 @@ def hash_config_dict(payload: dict[str, Any], length: int = 12) -> str:
 def config_hash(cfg: ExperimentConfig, length: int = 12) -> str:
     """Short, stable hash of everything in the config that can change a result."""
     return hash_config_dict(cfg.to_dict(), length=length)
+
+
+# What the extracted attention features actually depend on. Which feature groups are fed to the
+# classifier, and how heads are aggregated, are decisions made *after* the model has run.
+EXTRACTION_KEYS = ("dataset", "chunking", "extractor")
+
+
+def extraction_hash(cfg: ExperimentConfig, length: int = 12) -> str:
+    """Hash of only the parts that decide what comes out of the reading model.
+
+    Separate from :func:`config_hash` so that experiments differing only in which features they
+    use — E02 against E03, or an ablation over feature groups — **share one extraction**. Each
+    pass over ViHallu costs about fifty minutes of GPU, and hashing the whole config would spend
+    that again for every experiment, including ones that change nothing the GPU does.
+
+    Chunking is included because the per-chunk features depend on where the boundaries fall, so
+    the sentence and token-window variants of E03 and E04 genuinely are different extractions.
+    """
+    payload = {key: cfg.to_dict()[key] for key in EXTRACTION_KEYS}
+    return hash_config_dict(payload, length=length)
