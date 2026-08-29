@@ -208,13 +208,15 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 |---|---|---|---|---|---|---|---|---|---|---|
 | Baseline tầm thường (E01) | **0,656** [0,620–0,689] | 0,802 | 0,854 | 0,870 | 0,742 | 0,533 | 0,694 | 0,061 | 0,001 | 0 |
 | PhoBERT tinh chỉnh (E09) | **0,749** [0,714–0,778] | 0,851 | 0,921 | 0,883 | 0,800 | 0,693 | 0,754 | 0,081 | 12,3 | 9.002 |
-| XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | 0,844 | **0,729** | 0,756 | 0,097 | 25,2 | 11.231 |
+| XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,844** | 0,729 | **0,756** | 0,097 | 25,2 | 11.231 |
 | InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | | 11.231 |
 | Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
-| Lookback gộp (E02) | | | | | | | | | | |
+| **Lookback gộp (E02)** ¶ | **0,746** [0,713–0,777] | 0,844 | 0,896 | 0,892 | 0,795 | **0,731** | 0,714 | 0,108 | 464 | 8.428 |
 | **Chunk-aware (E05)** | | | | | | | | | | |
 
 Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
+
+**¶** Cột `ms/mẫu` của E02 là **thời gian chạy mô hình đọc để lấy ma trận chú ý**, không phải thời gian của bộ phân loại — bộ phân loại chỉ có 2.271 tham số và chạy trong micro giây. VRAM lấy từ phép đo T08 trên đúng cấu hình này. Con số 464 ms là chi phí **tuyệt đối**; lập luận của đề tài là chi phí **biên** trong một hệ RAG thật gần bằng 0 vì lượt đọc đó dù sao cũng phải chạy — nhưng thí nghiệm này **không đo** điều đó, nên phải nói rõ khi trình bày.
 
 **§** XLM-R chỉ **2 trên 3 seed học được** ở lượt chạy này; seed 42 đứng ở `ln(3)` và bị loại. Chính seed đó **học được** ở lượt 27/08 với cùng cấu hình — xem phần T18 của `TASKS.md`. Gộp cả hai lượt thì 5 trên 6 lượt seed thành công, trung bình **0,7730 ± 0,0199**, và đó là ước lượng đáng tin hơn bất kỳ lượt đơn lẻ nào. Bảng này dùng lượt 28/08 cho mọi cột vì chỉ lượt đó có dự đoán thô để tính chỉ số nhị phân.
 
@@ -229,6 +231,32 @@ Năm điều bảng này nói:
 4. **Giá phải trả là chi phí suy luận.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,120 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ ra.
 
 5. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,081 → 0,097. Bộ mã hóa tinh chỉnh đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
+
+### E02 tái lập được, và nó nói đúng điều đề tài cần nghe
+
+Chạy ngày 28/08/2026: 43,3 phút trích đặc trưng tập train, 5,4 phút tập test, **0 lỗi trên 6.300 mẫu**. Ba phép tự kiểm đều sạch: 100 % giá trị hữu hạn, 100 % nằm trong đoạn `[0, 1]` đúng như định nghĩa đòi hỏi, 0 trên 756 đặc trưng bị hằng số. Không mẫu nào bị cắt ngữ cảnh, không lớp nào tràn số.
+
+| Phương pháp | ba lớp | F1 `intrinsic` | Tham số phải huấn luyện |
+|---|---|---|---|
+| E01 bề mặt | 0,656 | 0,533 | 9 |
+| Gemini free | 0,664 | 0,582 | 0 |
+| **E02 Lookback gộp** | **0,746** | **0,731** | **2.271** |
+| PhoBERT-large | 0,749 | 0,693 | 369.166.339 |
+| XLM-R-large | 0,776 | 0,729 | 559.893.507 |
+
+Ba điều, và điều thứ hai là quan trọng nhất từ đầu đề tài tới giờ:
+
+1. **Một bộ phân loại tuyến tính trên 756 con số chú ý ngang với một bộ mã hóa 369 triệu tham số đã tinh chỉnh.** 0,746 so với 0,749 của PhoBERT — lệch 0,002, nằm sâu trong nhiễu. Đây chính là phát hiện chủ đạo của bài Lookback Lens, **tái lập được trên tiếng Việt**: tín hiệu chú ý mang gần như toàn bộ thông tin mà việc tinh chỉnh cả mô hình moi ra được. Với **162.557 lần ít tham số hơn**.
+
+2. **Trên lớp `intrinsic` — lớp khó nhất — E02 vượt PhoBERT và ngang XLM-R.** 0,731 so với 0,693 và 0,729. Nghĩa là tín hiệu chú ý mạnh **đúng ở chỗ mọi phương pháp dựa trên văn bản đều yếu**. Đây là bằng chứng trực tiếp cho cơ chế mà đề tài dựa vào: ảo giác nội tại là mô hình *có đọc* ngữ cảnh rồi nói sai, còn ngoại lai là *không đọc* mà tự bịa — hai dấu vết chú ý khác nhau, trong khi phần văn bản đọc được thì giống nhau.
+
+   Đáng chú ý hơn: E02 thắng ở `intrinsic` (+0,038 so với PhoBERT) nhưng **thua ở `extrinsic`** (0,714 so với 0,754). Hai hướng bù trừ nhau ra tổng gần bằng. Nếu chỉ nhìn macro-F1 thì kết luận là "ngang nhau"; nhìn từng lớp mới thấy **chúng mạnh yếu ở hai chỗ khác nhau**, và đó là chỗ đề tài đứng.
+
+3. **Tín hiệu dồn vào một số ít đầu, đúng như bài gốc.** Hai đầu dẫn đầu cách hẳn phần còn lại: `l5_h7` trọng số 0,970 và `l17_h4` 0,898, so với 0,54 của đầu thứ mười. Các đầu có ích trải khắp độ sâu — lớp 0, 1, 2, 5, 9, 17, 20, 24 — chứ không dồn về cuối. Đây là số liệu vào thẳng E13, thí nghiệm hỏi liệu các đầu đó có nằm ở cùng vị trí trong một mô hình đọc khác không.
+
+**Điều E02 KHÔNG chứng minh, phải nói rõ.** Nó chưa vượt XLM-R: 0,746 so với 0,776, và hai khoảng tin cậy chồng nhau nhiều ([0,713–0,777] và [0,757–0,818]) nên cũng chưa kết luận được XLM-R hơn hẳn. Và chi phí tuyệt đối cao hơn — 464 ms mỗi mẫu so với 25 ms. Lập luận chi phí của đề tài dựa trên chi phí **biên** trong hệ RAG thật, thứ thí nghiệm này không đo.
+
+**Và đây mới là mốc thật của phần đóng góp.** `chunk-aware` phải vượt **0,746**, không phải vượt 0,656 của E01 — vì nó là cùng một họ phương pháp, chỉ khác cách chia mẫu số. Vượt E01 thì chỉ chứng minh chú ý có ích; vượt E02 mới chứng minh **chia theo đoạn** có ích.
 
 ### Cột nhị phân nói gì
 
