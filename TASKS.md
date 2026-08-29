@@ -1240,7 +1240,7 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   `results/judge_cache.jsonl` được commit. Nhờ vậy con số của E10 kiểm lại được **không tốn một lượt gọi API nào**: chạy `python scripts/run_judge_baseline.py --dry-run` là ra đúng bảng trên.
 
-- [ ] **T20** · L · E02 tái lập Lookback Lens gốc — **công cụ sẵn sàng 28/08/2026, chờ chạy trên Kaggle**
+- [x] **T20** · L · E02 tái lập Lookback Lens gốc — **xong 28/08/2026**
   - Đọc mục 1 của `docs/REFERENCES.md` trước khi viết code. Tái lập **đúng công thức gốc**, không phải biến thể gần đúng.
   - Trích đặc trưng lookback gộp, huấn luyện `LogisticRegression`.
   - Ba điểm phải tự kiểm trước khi báo kết quả: (a) lookback ratio là **trung bình chú ý theo token**, chia cho số token ngữ cảnh và số token đã sinh, không phải tổng; (b) véc-tơ đặc trưng nối đủ `L × H` giá trị rồi mới lấy trung bình qua các bước trong span; (c) span ở đây là **toàn bộ phản hồi** vì nhãn của ViHallu ở mức phản hồi, khác thiết lập sliding-window-8 của bài gốc — ghi khác biệt này vào PR.
@@ -1277,6 +1277,66 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
   ### Ghi chú cho task sau
 
   `scripts/extract_features.py` hiện chỉ lưu véc-tơ lookback gộp, vì T20 chỉ cần thế. T21 tới T23 cần thêm phần theo đoạn, tính từ **cùng một ma trận** nhưng chưa lưu. Lúc đó sẽ mở rộng script này và chạy lại một lượt GPU nữa — khoảng 50 phút, chấp nhận được. Không làm trước theo mục 6 quy tắc 5 `CLAUDE.md`.
+
+  ### Kết quả — chạy ngày 28/08/2026, 48,7 phút GPU
+
+  Trích đặc trưng sạch hoàn toàn: **0 lỗi trên 6.300 mẫu**, 0 mẫu bị cắt ngữ cảnh, 0 lớp tràn số. Ba phép tự kiểm đều qua — 100 % giá trị hữu hạn, 100 % nằm trong đoạn `[0, 1]` đúng như định nghĩa đòi, 0 trên 756 đặc trưng bị hằng số. Tốc độ 464 ms/mẫu, khớp sát ước lượng 420 ms từ T08.
+
+| Chỉ số | Giá trị | KTC 95 % |
+|---|---|---|
+| macro-F1 | **0,7465** | [0,7128 – 0,7773] |
+| accuracy | 0,7471 | [0,7143 – 0,7786] |
+| F1 `no` | 0,7950 | [0,7554 – 0,8314] |
+| **F1 `intrinsic`** | **0,7308** | [0,6841 – 0,7745] |
+| F1 `extrinsic` | 0,7137 | [0,6649 – 0,7591] |
+| nhị phân | 0,8443 | [0,8158 – 0,8710] |
+| ECE | 0,1081 | |
+
+  **ĐẠT tiêu chí hoàn thành:** 0,7465 vượt xa 0,6562 của E01, hơn **0,090 điểm**.
+
+  ### Ba điều rút ra, điều thứ hai quan trọng nhất từ đầu đề tài
+
+| Phương pháp | ba lớp | F1 `intrinsic` | F1 `extrinsic` | Tham số huấn luyện |
+|---|---|---|---|---|
+| E01 bề mặt | 0,656 | 0,533 | 0,694 | 9 |
+| Gemini free | 0,664 | 0,582 | 0,656 | 0 |
+| **E02 Lookback** | **0,746** | **0,731** | 0,714 | **2.271** |
+| PhoBERT-large | 0,749 | 0,693 | 0,754 | 369.166.339 |
+| XLM-R-large | 0,776 | 0,729 | 0,756 | 559.893.507 |
+
+  **1. Bộ phân loại tuyến tính trên 756 con số chú ý NGANG một bộ mã hóa 369 triệu tham số đã tinh chỉnh.** 0,746 so với 0,749 — lệch 0,002, nằm sâu trong nhiễu. Đây đúng là phát hiện chủ đạo của bài Lookback Lens và nó **tái lập được trên tiếng Việt**, với **162.557 lần ít tham số hơn**. Thêm nữa: E02 không cần tinh chỉnh gì nên không dính vào chuyện một seed học được lượt này và không học được lượt sau như XLM-R gặp ở T18.
+
+  **2. Trên lớp `intrinsic` — lớp khó nhất — E02 VƯỢT PhoBERT và NGANG XLM-R.** 0,731 so với 0,693 và 0,729. Tín hiệu chú ý mạnh **đúng ở chỗ mọi phương pháp dựa trên văn bản đều yếu**.
+
+  Đây là bằng chứng trực tiếp đầu tiên cho cơ chế mà cả đề tài dựa vào: ảo giác nội tại là mô hình **có đọc** ngữ cảnh rồi nói sai, ảo giác ngoại lai là mô hình **không đọc** mà tự bịa. Hai thứ đó để lại hai dấu vết chú ý khác nhau, trong khi phần văn bản đọc được thì giống nhau ở chỗ đều không khớp ngữ cảnh — nên phương pháp đọc văn bản mù ở đúng chỗ này. Ba phép đo độc lập ở T13 và T19 đã cho thấy con người và LLM đều vấp ranh giới đó; nay có một phương pháp không vấp.
+
+  Chi tiết đáng nói hơn nữa: E02 **thắng ở `intrinsic` nhưng thua ở `extrinsic`** (0,714 so với 0,754 của PhoBERT). Hai hướng bù trừ ra tổng gần bằng nhau. Chỉ nhìn macro-F1 thì kết luận là "ngang nhau"; nhìn từng lớp mới thấy chúng **mạnh yếu ở hai chỗ khác nhau** — và chỗ E02 mạnh chính là chỗ đề tài nhắm vào.
+
+  **3. Tín hiệu dồn vào một số ít đầu, đúng như bài gốc.** Hai đầu dẫn đầu cách hẳn phần còn lại:
+
+```
+    lookback_total_l5_h7      0.9700
+    lookback_total_l17_h4     0.8980
+    lookback_total_l24_h3     0.7215
+    lookback_total_l20_h13    0.7146
+    ...
+    lookback_total_l2_h9      0.5425   ← đầu thứ mười
+```
+
+  Đây là dấu hiệu đã tái lập **tín hiệu** chứ không phải nhiễu — trọng số trải đều khắp 756 đặc trưng mới là điều đáng lo. Các đầu có ích trải khắp độ sâu mô hình (lớp 0, 1, 2, 5, 9, 17, 20, 24) chứ không dồn về cuối. Số liệu này vào thẳng E13, thí nghiệm hỏi liệu các đầu đó có nằm ở cùng vị trí trong Sailor2 không.
+
+  ### Điều E02 KHÔNG chứng minh
+
+  Phải nói rõ, vì hội đồng sẽ hỏi:
+
+  - **Chưa vượt XLM-R.** 0,746 so với 0,776. Nhưng hai khoảng tin cậy chồng nhau nhiều — [0,713–0,777] và [0,757–0,818] — nên cũng **chưa kết luận được XLM-R hơn hẳn**. Cả hai chỉ nói được là ngang ngửa.
+  - **Chi phí tuyệt đối cao hơn:** 464 ms mỗi mẫu so với 25 ms của XLM-R. Lập luận chi phí của đề tài dựa trên chi phí **biên** trong một hệ RAG thật — lượt đọc đó dù sao cũng phải chạy — nhưng **thí nghiệm này không đo điều đó**. Không được nói tắt.
+
+  ### Mốc thật của phần đóng góp nay là 0,746
+
+  Không phải 0,656 của E01. `chunk-aware` và `lookback` gộp là **cùng một họ phương pháp**, chỉ khác cách chia mẫu số: một bên gộp toàn bộ ngữ cảnh thành một khối, một bên tách theo đoạn.
+
+  Vượt E01 chỉ chứng minh **chú ý có ích**. Vượt E02 mới chứng minh **chia theo đoạn có ích** — mà đó mới là đóng góp của đề tài. Và muốn nói *hơn hẳn* thì phải vượt **0,777**, cận trên khoảng tin cậy của E02.
 
   ### Việc cần chạy
 
