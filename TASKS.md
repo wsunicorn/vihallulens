@@ -1348,9 +1348,64 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
 ## Giai đoạn 4 — Phương pháp cốt lõi (tuần 6–7)
 
-- [ ] **T21** · L · Đặc trưng chunk-aware
+- [x] **T21** · L · Đặc trưng chunk-aware — **xong 29/08/2026**
   - Hiện thực `chunk_entropy`, `chunk_max_share`, `chunk_gini`, `top1_top2_gap`, `chunk_drift`.
   - **Kiểm tra:** `pytest tests/test_features.py` xanh với đầu vào đã biết đáp án.
+
+  **Task này để làm gì.** Đây là **phần đóng góp của đề tài**. Lookback Lens hỏi ma trận chú ý đúng một câu: *bao nhiêu phần chú ý rơi vào ngữ cảnh*. Năm đặc trưng này hỏi câu thứ hai: **phần đó trải ra trên các đoạn ngữ cảnh như thế nào**.
+
+  Giả thuyết đang kiểm: hình dạng của phân bố tách được hai loại ảo giác, thứ mà tỷ lệ gộp không tách được.
+
+  - **Nội tại** — mô hình **có đọc** ngữ cảnh rồi nói ngược. Chú ý rơi vào một chỗ cụ thể, phân bố nhọn.
+  - **Ngoại lai** — mô hình **không đọc** mà tự bịa. Không có gì cụ thể để nhìn, chú ý tản ra.
+
+  Cả hai đều sinh ra văn bản không khớp ngữ cảnh, nên mọi phương pháp dựa trên văn bản ở Bảng 1 đều lẫn chúng. T20 đã cho thấy riêng tỷ lệ gộp đạt 0,731 trên lớp `intrinsic`, vượt PhoBERT; năm đặc trưng này để kiểm xem **hình dạng** có thêm được gì trên **lượng** hay không.
+
+  **Đã làm:** `src/vihallulens/features/chunk_aware.py`, `tests/test_chunk_features.py`. `pytest` **565 ca xanh** (thêm 31). Mọi giá trị kỳ vọng trong test đều tính được bằng tay, nên đổi hành vi là đổi định nghĩa chứ không phải một con số trôi đi mà không ai kiểm được.
+
+  ### Hai quyết định chuẩn hóa, và vì sao chúng quan trọng ngang công thức
+
+  Cả hai đều thuộc đúng loại lỗi "lấy tổng thay vì lấy trung bình" của công thức gốc: làm sai vẫn ra một ma trận đầy đủ trông rất hợp lý, còn bộ phân loại thì lặng lẽ học **độ dài ngữ cảnh** thay vì học hình dạng chú ý.
+
+  **1. Chuẩn hóa mật độ thành phân bố, đúng một lần.** Bộ trích trả về **mật độ** chú ý trên mỗi đoạn — đã chia cho số token của đoạn nên đoạn dài không thắng nhờ dài, nhưng tổng **không** bằng 1 vì mẫu số là toàn bộ ngữ cảnh. Bốn thống kê đầu đều mô tả hình dạng của một phân bố, nên phép chuẩn hóa đặt ở một chỗ chứ không để bốn hàm tự giả định.
+
+  Hệ quả kiểm được: một đầu chú ý mạnh gấp đôi ở **mọi** đoạn phải cho cùng kết quả — nếu không thì đặc trưng đang đo *lượng*, tức đo lại việc E02 đã làm xong.
+
+  **2. Chia entropy cho chính giá trị cực đại của nó, `ln(n_chunks)`.** Entropy thô đạt trần ở `ln(n_chunks)`, nên một ngữ cảnh cắt thành 23 đoạn sẽ luôn ăn điểm cao hơn một ngữ cảnh cắt thành 5 đoạn **bất kể chú ý trải thế nào**. Mà số đoạn chênh nhau rất lớn: đo ở T15, ViHallu trung bình **5,3 đoạn** còn ISE-DSC01 **22,8 đoạn**.
+
+  Không chuẩn hóa thì đặc trưng này phần lớn mã hóa **ngữ cảnh dài bao nhiêu** — đúng cái bẫy mà công thức gốc tránh bằng cách lấy trung bình theo token. Chia xong thì mọi mẫu về cùng thang `[0, 1]`: 0 là dồn hết vào một đoạn, 1 là trải hoàn toàn đều.
+
+  Hệ số Gini bị đúng vấn đề đó: thô thì trần là `(n-1)/n`. Nhân với `n/(n-1)` — hiệu chỉnh mẫu nhỏ tiêu chuẩn — đưa trần về 1 cho mọi `n`.
+
+  ### Vì sao giữ cả entropy lẫn Gini
+
+  Hai cái cùng đo độ tập trung nhưng cân khác nhau: entropy bị chi phối bởi **có bao nhiêu đoạn nhận được chút ít** chú ý, Gini bởi **mức chia không đều** giữa chúng. Một phân bố có một đoạn lớn kèm đuôi dài các đoạn nhỏ cho hai điểm khác nhau — có ca kiểm thử khẳng định chúng **xếp hạng ngược nhau** trên hai phân bố cụ thể. Giữ cả hai chỉ đáng tốn cột nếu chúng có thể bất đồng.
+
+  ### `chunk_drift` là đặc trưng duy nhất nhìn theo trục token
+
+  Bốn cái kia gộp trung bình qua các bước sinh; `drift` đo **khoảng cách biến phân toàn phần** giữa phân bố của hai bước liên tiếp, rồi lấy trung bình. Con số đọc thẳng ra là "bao nhiêu phần khối lượng chú ý đã chuyển sang đoạn khác".
+
+  Mô hình đang lần theo một mẩu bằng chứng thì cứ nhìn mãi một đoạn nên trôi ít; mô hình không có gì bấu víu thì lang thang. Có ca kiểm thử dựng hai phản hồi **cùng độ trải trung bình** — một đứng yên, một đảo qua đảo lại — mà bốn đặc trưng kia không phân biệt được còn `drift` thì có.
+
+  ### Trường hợp biên đều xử lý rõ, không để thành `nan`
+
+| Tình huống | Cách xử lý | Vì sao |
+|---|---|---|
+| Ngữ cảnh chỉ có **một đoạn** | entropy 0, Gini 0, `max_share` 1, `gap` 1 | `ln(1) = 0` sẽ thành phép chia 0/0. Một đoạn nghĩa là chỉ có một chỗ để nhìn, nên độ tập trung là cao nhất có thể. **Không hiếm: 15,3 % ngữ cảnh ViWikiFC**, đo ở T15 |
+| Một đầu chú ý **không nhìn đoạn nào** | đọc là trải đều | Không nhìn gì thì không ưu tiên gì. Trả `nan` sẽ đầu độc cả mẫu qua bước chuẩn hóa của bộ phân loại |
+| Phản hồi chỉ có **một token được chấm** | `drift` = 0 | Không có cặp liên tiếp nào, tức **không quan sát được chuyển động** — khác với "chuyển động chưa rõ bao nhiêu", và 0 nói điều thứ nhất còn `nan` nói điều thứ hai |
+
+  Kèm một ca kiểm thử khẳng định **mọi giá trị của cả năm đặc trưng đều nằm trong `[0, 1]`** trên đầu vào ngẫu nhiên thưa. Cả năm đều là tỷ trọng, entropy đã chuẩn hóa, Gini đã hiệu chỉnh hoặc khoảng cách biến phân — ra ngoài đoạn đó nghĩa là công thức sai, không phải mẫu lạ. Cùng loại phép kiểm mà script E02 chạy trước khi tin bất kỳ điểm số nào.
+
+  ### Kích thước véc-tơ, và một điều để ngỏ cho T22
+
+  Năm đặc trưng × 27 lớp × 28 đầu = **3.780 chiều**, so với 756 của E02. Với 5.600 mẫu huấn luyện thì đây là tỷ lệ đáng lo, và mục 2.3 `docs/SPEC.md` đã lường trước bằng ba chế độ gộp đầu chú ý: `all`, `mean_over_heads`, `topk_heads`. T21 chỉ hiện thực năm đặc trưng đúng như phạm vi task; **chọn chế độ gộp là việc của T22**, và phải chọn trên tập dev chứ không phải tập test.
+
+  Thứ tự xếp véc-tơ là **đặc trưng trước, rồi lớp, rồi đầu**, nên khối của một thống kê nằm liền nhau — E12 ablation theo nhóm đặc trưng khi đó là một phép cắt lát chứ không phải phép gom rải rác.
+
+  ### Việc còn thiếu để chạy được
+
+  `scripts/extract_features.py` hiện **chưa lưu** mảng theo đoạn — T20 không cần nên không lưu, đúng mục 6 quy tắc 5 `CLAUDE.md`. T22 sẽ mở rộng script đó và chạy lại một lượt GPU khoảng 50 phút.
 
 - [ ] **T22** · L · E03 chunk-aware chia theo câu
 - [ ] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256
