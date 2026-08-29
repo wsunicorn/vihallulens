@@ -1407,7 +1407,59 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   `scripts/extract_features.py` hiện **chưa lưu** mảng theo đoạn — T20 không cần nên không lưu, đúng mục 6 quy tắc 5 `CLAUDE.md`. T22 sẽ mở rộng script đó và chạy lại một lượt GPU khoảng 50 phút.
 
-- [ ] **T22** · L · E03 chunk-aware chia theo câu
+- [ ] **T22** · L · E03 chunk-aware chia theo câu — **công cụ sẵn sàng 29/08/2026, chờ chạy trên Kaggle**
+
+  **Task này để làm gì.** Đây là thí nghiệm mà cả đề tài tồn tại vì nó. E02 đạt 0,7465 bằng cách hỏi ma trận chú ý *bao nhiêu* phần rơi vào ngữ cảnh; E03 hỏi phần đó **trải trên các đoạn thế nào**.
+
+  **Đã chuẩn bị:** `src/vihallulens/features/assemble.py`, `scripts/run_chunk_aware.py`, `configs/e03_chunk_sentence_vihallu.yaml`, `notebooks/t22_chunk_aware_cau_t4.ipynb`, và phần mở rộng của `scripts/extract_features.py`. `pytest` **592 ca xanh** (thêm 27).
+
+  ### Mốc phải vượt là 0,7465, không phải 0,6562
+
+  Chunk-aware và lookback gộp là **cùng một họ phương pháp**, chỉ khác cách chia mẫu số. Vượt E01 chỉ chứng minh *chú ý có ích* — E02 đã làm xong việc đó rồi. Vượt **E02** mới chứng minh *chia theo đoạn có ích*, mà đó mới là đóng góp. Muốn nói **hơn hẳn** thì phải vượt **0,7773**, cận trên khoảng tin cậy của E02.
+
+  Script tự chấm mốc này ở cuối và **trả mã lỗi nếu chưa vượt**, kèm câu nhắc đừng trình bày như một cải tiến.
+
+  ### Sửa một chỗ trong T20 để khỏi tốn GPU hai lần
+
+  Tên file đặc trưng vốn băm theo **toàn bộ** cấu hình. Nhưng `features.groups` và `head_aggregation` là quyết định **sau khi GPU đã chạy xong** — chúng không đổi một bit nào của thứ mô hình đọc sinh ra. Băm cả cấu hình thì E03 sẽ phải trích lại 50 phút cho một khác biệt mà GPU không hề thấy.
+
+  Nay có `extraction_hash` băm đúng ba phần quyết định lượt chạy GPU: `dataset`, `chunking`, `extractor`. Kết quả: **E02 và E03 dùng chung một lượt trích**, nhưng vẫn là hai bản ghi thí nghiệm riêng vì `config_hash` vẫn khác nhau. Có ca kiểm thử khẳng định cả hai điều đó.
+
+  `chunking` nằm trong hash vì đặc trưng theo đoạn phụ thuộc vào chỗ cắt — nên bản chia theo câu (E03) và bản chia theo cửa sổ (E04) **thật sự** là hai lượt trích khác nhau.
+
+  ### Cách gộp đầu chú ý chọn trên tập dev, không đụng tập test
+
+  Sáu khối đặc trưng × 27 lớp × 28 đầu = **4.536 cột** trên 5.600 hàng huấn luyện. Phải giảm chiều, nhưng chọn cách giảm nào **theo điểm test** thì con số báo cáo sẽ không ai tái lập được nếu chưa biết trước đáp án.
+
+  Script thử sáu ứng viên — `all`, `mean_over_heads`, và `topk_heads` với k thuộc {8, 16, 32, 64} — chấm tất cả **trên dev**, rồi chấm test **đúng một lần** bằng cái thắng.
+
+  Thứ hạng đầu chú ý lấy từ mô hình khớp trên **train**: đó là thông tin huấn luyện dùng trên dữ liệu huấn luyện, được phép. Dev chỉ quyết **giữ bao nhiêu đầu**, và có nên giữ từng đầu riêng thay vì gộp trung bình.
+
+  **Hòa điểm thì chọn ma trận hẹp hơn.** Nhiều bề rộng cùng điểm trên 700 mẫu dev là chuyện thường, và nó nói rằng các cột thêm vào không mua được gì; lấy bản rộng nhất khi đó là mang rủi ro quá khớp vào điểm test mà không đổi lấy gì đo được. Quy tắc này viết thẳng vào code chứ không để phụ thuộc thứ tự duyệt.
+
+  ### Một đầu chú ý sống hoặc chết cho cả sáu khối
+
+  `topk_heads` giữ nguyên các cột của những cặp (lớp, đầu) được chọn, áp dụng **giống nhau cho mọi khối**. Chọn đầu khác nhau cho từng thống kê sẽ làm các cột sống sót khó diễn giải, và nhân số lượng quyết định đưa ra dựa trên tập dev lên nhiều lần.
+
+  Điểm của một cặp là **trọng số lớn nhất** trong các khối nó xuất hiện, không phải trung bình — để một đầu chỉ hữu ích cho một thống kê không bị năm thống kê còn lại bỏ phiếu loại.
+
+  ### `basic` giữ lại trong E03, có chủ ý
+
+  Cấu hình E03 là `[basic, chunk_aware, stability]`, tức **có** cả tỷ lệ lookback gộp. Câu hỏi được kiểm vì thế là *"thêm hình dạng vào lượng có tốt hơn không"*, chứ không phải *"hình dạng một mình có hơn lượng một mình không"*. Câu thứ hai thú vị nhưng không phải câu đề tài đặt ra, và nó là việc của ablation E12.
+
+  Hệ quả: phải nhìn **trọng số chia theo khối** chứ không chỉ nhìn điểm. Nếu `lookback_total` chiếm gần hết trọng số thì bộ phân loại thực chất đang dùng lại E02, và điểm nhỉnh hơn chỉ là nhiễu. Script in sẵn bảng đó — đây là phép kiểm về **cơ chế**, tách khỏi phép kiểm về điểm số.
+
+  ### Chạy thử trọn đường ống trên dữ liệu giả trước khi tốn GPU
+
+  Dựng ba shard giả với tín hiệu cấy sẵn vào vài đầu, rồi chạy `run_chunk_aware.py` thật. Bắt được đủ thứ mà không tốn một giây GPU nào: bảng chọn cách gộp in đúng, tên cột khớp số cột, bảng trọng số theo khối chạy được, bản ghi ghi ra được. Cùng bài học của T18, nơi một lỗi kiểu dữ liệu đã đốt một phiên GPU vì vòng lặp huấn luyện chưa từng chạy trên CPU.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t22_chunk_aware_cau_t4.ipynb`, khoảng **55 phút**: 43 phút tập train, 5 phút dev, 5 phút test, còn lại là tải mô hình.
+
+  Phải trích lại vì lượt T20 chưa lưu mảng theo đoạn. Nhưng từ lượt này trở đi thì **E04, E05, E12 dùng lại được** — trừ E04 vốn đổi cách chia đoạn nên phải trích riêng.
+
+  Notebook có thêm **ô 8 chạy lại E02 trên chính lượt trích này**, để hai thí nghiệm khác nhau đúng một biến là nhóm đặc trưng, không lẫn khác biệt nào từ một lượt GPU khác. Con số phải khớp 0,7465; lệch nhiều nghĩa là có gì đó đã đổi ngoài ý muốn.
 - [ ] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256
 - [ ] **T24** · L · E05 chốt cách chia chunk
   - **Kiểm tra:** Bảng 3 trong `docs/EXPERIMENTS.md` được điền đầy đủ, có kết luận chọn cấu hình nào và lý do.
