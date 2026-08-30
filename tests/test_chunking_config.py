@@ -172,3 +172,47 @@ def test_dev_only_reports_every_class_not_just_the_average():
     })
     assert record["dev_f1_intrinsic"] == 0.7
     assert {"dev_f1_no", "dev_f1_intrinsic", "dev_f1_extrinsic"} <= set(record)
+
+
+# -- the T24 control: same density, no overlap, arbitrary boundaries -----------------------------
+
+
+def control_config():
+    return load_config("configs/e05_control_window48_vihallu.yaml")
+
+
+def test_the_control_does_not_overlap():
+    """The whole point of it. With stride equal to the window the chunks tile the context the way
+    sentences do, so the only thing left separating it from sentence chunking is whether the
+    boundaries mean anything."""
+    chunking = control_config().chunking
+    assert chunking.stride == chunking.window_size == 48
+
+
+def test_the_control_is_its_own_extraction():
+    """Different boundaries, different per-chunk array — it cannot reuse any earlier shard."""
+    others = {
+        extraction_hash(load_config(f"configs/{name}.yaml"))
+        for name in ("e03_chunk_sentence_vihallu", "e04_chunk_window64_vihallu",
+                     "e04_chunk_window128_vihallu", "e04_chunk_window256_vihallu")
+    }
+    assert extraction_hash(control_config()) not in others
+
+
+def test_the_control_differs_from_e03_only_in_the_cutting():
+    """A control that also changed the reading model or the feature groups would answer a
+    different question than the one T23 left open."""
+    e03 = load_config("configs/e03_chunk_sentence_vihallu.yaml")
+    control = control_config()
+    assert control.extractor.model_dump() == e03.extractor.model_dump()
+    assert control.features.groups == e03.features.groups
+    assert control.detector.model_dump() == e03.detector.model_dump()
+    assert control.dataset.model_dump() == e03.dataset.model_dump()
+
+
+def test_the_control_window_matches_sentence_density():
+    """Measured on CPU at T24: window 48 tiling gives 5,56 chunks against 5,29 for sentences, so
+    the comparison holds chunk count roughly fixed. The first idea — window 128 with stride 128 —
+    gives only 2,43 and would have confounded density back in, which is why the size was measured
+    rather than guessed. This test pins the size that measurement produced."""
+    assert control_config().chunking.window_size == 48
