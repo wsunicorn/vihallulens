@@ -1338,6 +1338,85 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   Vượt E01 chỉ chứng minh **chú ý có ích**. Vượt E02 mới chứng minh **chia theo đoạn có ích** — mà đó mới là đóng góp của đề tài. Và muốn nói *hơn hẳn* thì phải vượt **0,777**, cận trên khoảng tin cậy của E02.
 
+  ### Kết quả — vượt E02 ở tổng, nhưng câu chuyện nằm ở từng lớp
+
+  Chạy 29/08/2026, 71 phút GPU, **0 lỗi trên 7.000 mẫu**. E02 được chạy lại trên **chính lượt trích này** nên hai bên khác nhau đúng một biến; nó cho 0,7451 so với 0,7465 của lượt T20 — lệch 0,0014, hai lượt trích nhất quán.
+
+| | ba lớp | nhị phân | `no` | `intrinsic` | `extrinsic` | ECE |
+|---|---|---|---|---|---|---|
+| E02 lượng | 0,7451 | 0,8426 | 0,7925 | **0,7308** | 0,7121 | 0,1090 |
+| **E03 lượng + hình dạng** | **0,7567** | **0,8636** | **0,8228** | 0,6858 | **0,7615** | **0,0441** |
+| chênh | **+0,0116** | +0,0210 | +0,0303 | **−0,0450** | **+0,0494** | −0,0649 |
+
+  **Đạt tiêu chí hoàn thành** — 0,7567 vượt 0,7465. Nhưng phải nói ngay điều quan trọng hơn.
+
+  ### Chunk-aware thắng ở `extrinsic` đúng chừng nào thì thua ở `intrinsic` chừng ấy
+
+  +0,049 và −0,045. Hai chiều gần như triệt tiêu, còn lại +0,012 ở tổng — mà khoảng tin cậy [0,724–0,789] chồng gần hết lên [0,711–0,776] của E02. **Vượt điểm, chưa hơn hẳn.**
+
+  Đây là **một nửa giả thuyết được xác nhận, một nửa bị bác**:
+
+  - Nửa *"ngoại lai thì chú ý tản"* — **đúng rõ ràng**. Nhận diện ngoại lai cải thiện mạnh nhất trong mọi thay đổi đo được từ đầu đề tài.
+  - Nửa *"nội tại thì chú ý nhọn"* — **không thêm được gì**, vì tỷ lệ gộp đã nắm phần đó rồi. 0,7308 của E02 là con số cao nhất cả Bảng 1 trên lớp này, cao hơn cả XLM-R.
+
+  Nói cách khác: thứ đề tài tưởng mình sẽ đóng góp và thứ nó thật sự đóng góp **không trùng nhau**. Phải viết vào báo cáo đúng như vậy.
+
+  ### Hai phép đối chứng, cả hai đều bác giả thuyết của chính mình
+
+  **1. Hình dạng một mình chỉ đạt 0,6054**, thua cả 0,6562 của hai đặc trưng bề mặt E01. Trên lớp `intrinsic` chỉ 0,5055, gần sàn. Năm đặc trưng chunk **không phải bộ phát hiện độc lập** — chúng là tín hiệu **bổ sung**, chỉ có giá trị khi đứng cạnh tỷ lệ gộp. Bản ghi ở `results/runs.jsonl` dưới tên `e03_hinh_dang_khong_luong`.
+
+  **2. Cách chọn đầu chú ý không phải thủ phạm.** Nghi ngờ đầu tiên là `topk_heads k=32` chỉ giữ 32 trong 756 cột lookback, nên phần tụt ở `intrinsic` có thể do **mất cột** chứ không do đặc trưng chunk. Kiểm hai cách:
+
+  - Chạy E02 qua **cùng quy trình chọn**: dev chọn `all` với đủ 756 cột (0,7607, so với 0,7502 của k=64). Nghĩa là 32 đầu không phải handicap áp đặt mà là thứ dev chọn riêng cho bộ đặc trưng rộng.
+  - **Thêm hẳn một ứng viên mới** `mixed_all_basic_topk_rest`: giữ **nguyên vẹn** khối lookback, chỉ tỉa các khối rộng. Bốn biến thể đều thua — tốt nhất 0,7645 so với 0,7768 của `topk k=32`.
+
+  Không gian tìm kiếm nay **chứa E02 như một trường hợp riêng**, và dev vẫn không chọn nó. Chênh lệch từng lớp là thật, không phải hiện vật của cách giảm chiều.
+
+  Ứng viên `mixed` được thêm **sau khi** thấy chênh lệch từng lớp — phải ghi rõ điều đó. Nhưng nó được chấm trên dev như mọi ứng viên khác, không chọn vì đẹp trên test, và con số của lượt chạy đầu được giữ nguyên bên cạnh chứ không thay thế.
+
+  ### Ba điều E03 làm được, ghi rõ để khỏi bị con số tổng che
+
+  1. **Hiệu chỉnh xác suất tốt nhất cả Bảng 1.** ECE 0,0441 so với 0,1090 của E02 và 0,0969 của XLM-R — **giảm hơn một nửa**. Đây là kết quả đứng riêng được, và nó **đi ngược** xu hướng "càng mạnh càng tự tin thái quá" mà ba mốc kia đều theo. Với bài toán mà người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đó là điều đáng nói.
+
+  2. **Chỉ số nhị phân 0,8636**, cao thứ hai cả bảng sau XLM-R, với `báo đúng` 0,9154 — cao nhất bảng.
+
+  3. **Năm đặc trưng mới chiếm 87 % trọng số**: `chunk_entropy` 26,8 %, `chunk_max_share` 22,6 %, `top1_top2_gap` 15,5 %, `chunk_gini` 15,0 %, `chunk_drift` 7,2 %, so với 12,9 % của `lookback_total`. Bộ phân loại **không** dùng lại E02 rồi ăn may — nó thật sự dựa vào hình dạng phân bố. Đây là phép kiểm về **cơ chế**, tách khỏi phép kiểm về điểm số, và nó qua.
+
+  ### Bảng chọn cách gộp — dáng của một lựa chọn thật
+
+```
+  all                              4.536 chiều   0,7048
+  mean_over_heads                    162 chiều   0,7138
+  topk_heads k=8                      48 chiều   0,7339
+  topk_heads k=16                     96 chiều   0,7492
+  topk_heads k=32                    192 chiều   0,7768  ← chọn
+  topk_heads k=64                    384 chiều   0,7546
+  mixed_all_basic_topk_rest k=8      796 chiều   0,7645
+  mixed_all_basic_topk_rest k=16     836 chiều   0,7561
+  mixed_all_basic_topk_rest k=32     916 chiều   0,7497
+  mixed_all_basic_topk_rest k=64   1.076 chiều   0,7296
+```
+
+  Đỉnh rõ ở k=32 rồi tụt cả hai phía — dáng của một lựa chọn thật chứ không phải nhiễu. Và `all` với 4.536 chiều **tệ nhất**, đúng như lo ngại về tỷ lệ chiều trên mẫu ở T21.
+
+  ### Một lỗi tôi gây ra ở T22 và chỉ lộ ra ở phút thứ 71
+
+  Ô so sánh E02 hỏng:
+
+```
+Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c7816.jsonl
+```
+
+  T22 tách `extraction_hash` khỏi `config_hash` để E02 và E03 dùng chung một lượt GPU, nhưng `run_lookback_baseline.py` **vẫn gọi hàm cũ** nên đi tìm một file không còn tồn tại. Sửa xong thêm ca kiểm thử khẳng định hai script cùng đi tìm một tên file.
+
+  May là hỏng ở khâu rẻ: phần đắt đã xong và chạy lại E02 trên CPU chỉ mất vài giây. Nếu lỗi nằm ở khâu trích thì đã mất cả 71 phút.
+
+  ### Còn phải làm gì trước khi kết luận về đóng góp
+
+  E03 mới là **một** cách chia đoạn. Chia theo câu cho trung bình 5,3 đoạn mỗi ngữ cảnh — có thể quá thô để hình dạng nói lên điều gì trên lớp `intrinsic`. T23 quét cửa sổ token 64/128/256, T24 chốt.
+
+  Và **E06 mới là phép kiểm trực tiếp của cơ chế**: định vị chú ý so với đoạn bằng chứng vàng trên ISE-DSC01, thay vì suy ra từ điểm phân loại. Nếu chú ý thật sự rơi đúng đoạn bằng chứng thì cơ chế đứng vững kể cả khi điểm ba lớp chưa bật lên.
+
   ### Việc cần chạy
 
   Mở `notebooks/t20_lookback_lens_t4.ipynb`, attach dataset, bật GPU T4, Save Version. Khoảng **50 phút**: 39 phút cho tập train, 5 phút cho tập test, phần còn lại là tải mô hình 7B.
@@ -1407,7 +1486,7 @@ runs.jsonl: "macro_f1_std": 0.01623553635603956
 
   `scripts/extract_features.py` hiện **chưa lưu** mảng theo đoạn — T20 không cần nên không lưu, đúng mục 6 quy tắc 5 `CLAUDE.md`. T22 sẽ mở rộng script đó và chạy lại một lượt GPU khoảng 50 phút.
 
-- [ ] **T22** · L · E03 chunk-aware chia theo câu — **công cụ sẵn sàng 29/08/2026, chờ chạy trên Kaggle**
+- [x] **T22** · L · E03 chunk-aware chia theo câu — **xong 29/08/2026**
 
   **Task này để làm gì.** Đây là thí nghiệm mà cả đề tài tồn tại vì nó. E02 đạt 0,7465 bằng cách hỏi ma trận chú ý *bao nhiêu* phần rơi vào ngữ cảnh; E03 hỏi phần đó **trải trên các đoạn thế nào**.
 
