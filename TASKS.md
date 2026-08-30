@@ -1700,6 +1700,72 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   kiểu lỗi mà `--dry-run` của T19 từng gây ra khi ghi đè 8.194 ms của E10 thành 0,03. Mọi khóa
   chỉ số đều mang tiền tố `dev_` để không thể bị nhặt nhầm thành điểm test.
 
+  ### Chấm lại tại chỗ, và một phát hiện ngoài dự kiến
+
+  Sau khi chạy xong mới nhận ra `--dev-only` dừng trước khi ghi `results/runs.jsonl`, nên bốn số
+  của Bảng 3 chỉ là chữ chép tay từ output notebook. Sửa xong thì tải sáu shard về và chấm lại
+  trên CPU — vừa sinh bản ghi, vừa kiểm số đã gõ. Việc kiểm ấy tìm ra thứ không ai đi tìm.
+
+  **Số dev không tái lập giữa hai môi trường.** Cùng shard, cùng code, cùng seed 42:
+
+```
+                                  Kaggle   máy cá nhân   chênh
+  Cửa sổ 64, topk k=16            0,7587      0,7662     +0,0075
+  Cửa sổ 64, all                  0,7030      0,6961     −0,0069
+  Cửa sổ 128, topk k=32           0,7655      0,7683     +0,0028
+  Câu (E03), mean_over_heads      0,7153      0,7138     −0,0015
+  Câu (E03), topk k=32            0,7768      0,7768          0
+```
+
+  Chạy hai lần **trên cùng một máy** thì trùng từng chữ số, nên đây không phải ngẫu nhiên giữa
+  các lượt mà là khác biệt **giữa hai môi trường**: Kaggle chạy Python 3.12, máy cá nhân 3.11,
+  và `LogisticRegression` với lbfgs hội tụ tới điểm hơi khác nhau tùy phiên bản thư viện số và
+  BLAS. Dữ liệu vào giống hệt — đúng file shard tải về.
+
+  Ba hệ quả:
+
+  1. **Trôi tới 0,0075**, và ở cửa sổ 64 đủ để **đổi cấu hình mà dev chọn** từ `topk k=32` sang
+     `topk k=16`. Hai ứng viên cách nhau 0,002 thì thứ tự của chúng không bền theo môi trường.
+  2. **Chỉ so những cấu hình chấm trên cùng một máy.** Bảng 3 vì thế chấm lại cả bốn dòng tại
+     chỗ, thay vì ghép số Kaggle của E04 với số cũ của E03 — đúng cái bẫy suýt mắc.
+  3. **Thứ tự thì bền**: cả hai môi trường đều cho `câu > cửa sổ 128 > cửa sổ 64 > cửa sổ 256`.
+     Kết luận của T23 dựa vào thứ tự chứ không vào giá trị tuyệt đối.
+
+  Là họ hàng của phát hiện ở T18, nơi seed cố định không làm việc tinh chỉnh trên GPU tái lập
+  được. Lần này nhẹ hơn nhiều — một hồi quy logistic chứ không phải mạng nơ-ron — nhưng cùng bài
+  học: **"đã cố định seed" không đồng nghĩa với "tái lập được".** Phải viết vào phần hạn chế của
+  báo cáo, vì mọi bảng dev trong khóa luận đều mang biên độ này.
+
+  ### Khoảng cách nhỏ hơn tôi trình bày lúc đầu
+
+  Chấm cùng một máy thì chia theo câu hơn cửa sổ 128 đúng **0,0085**, không phải 0,0113 như con
+  số ghép hai môi trường. So với biên độ trôi 0,0075 và 700 mẫu dev, đây là **một thứ tự nhất
+  quán chứ chưa phải chiến thắng có ý nghĩa thống kê**.
+
+  Thứ làm kết luận đáng tin không phải độ lớn mà là **hình dạng**: thứ tự giống nhau ở hai môi
+  trường, và tính không đơn điệu theo số đoạn thì nhiễu không dựng ra được một cách tự nhiên.
+  Phải viết đúng như vậy, không đẩy lên thành "hơn hẳn".
+
+  ### Cửa sổ 128 thắng `intrinsic`
+
+  F1 từng lớp trên dev, giờ mới có vì `--dev-only` trước đó chỉ in macro:
+
+```
+                     macro   nhị phân      no    intr    extr
+  Câu (E03)         0,7768    0,8943   0,8596  0,7202  0,7505
+  Cửa sổ 128        0,7683    0,8864   0,8493  0,7325  0,7230
+  Cửa sổ 64         0,7662    0,8902   0,8528  0,7158  0,7300
+  Cửa sổ 256        0,7589    0,8670   0,8210  0,7149  0,7407
+```
+
+  Cửa sổ 128 đạt **0,7325** trên `intrinsic`, hơn chia theo câu 0,012 — **đúng lớp mà T22 cho
+  thấy chunk-aware thua lookback gộp**. Chia theo câu bù lại ở `no` và `extrinsic` nên thắng
+  tổng, nhưng chi tiết này đáng giữ: ranh giới đoạn thô hơn có ích riêng cho lớp khó nhất.
+
+  Chênh 0,012 trên 700 mẫu thì nhỏ và nằm trong biên độ trôi, nên **không đảo kết luận của T24**.
+  Nhưng nó là một manh mối cho hướng phát triển: có thể cách chia tốt nhất không giống nhau cho
+  cả ba lớp.
+
   ### Một quan sát về chi phí, ghi lại chứ chưa làm
 
   Cả bốn cách chia đều báo `bị cắt ngữ cảnh: 0/5.600`. Nghĩa là `_fit_to_budget` chưa bao giờ

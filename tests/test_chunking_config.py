@@ -146,13 +146,29 @@ def test_dev_only_never_reports_a_cost_it_did_not_measure():
 
 
 def test_dev_only_metrics_cannot_be_mistaken_for_a_test_score():
-    """Every key in the metrics it writes carries a dev_ prefix, so a later reader of runs.jsonl
-    cannot pick one up as a test result and put it in Bảng 1."""
-    import re
+    """Every key it writes carries a dev_ prefix, so a later reader of runs.jsonl cannot pick one
+    up as a test result and put it in Bảng 1. Called rather than read out of the source, because
+    a source-scraping version of this test passed while looking at the wrong block."""
+    from run_chunk_aware import dev_metrics_record
 
-    block = dev_only_record_block()
-    metrics = re.search(r'\{"dev_[^}]*\}', block)
-    assert metrics, "không tìm thấy dict chỉ số của --dev-only"
-    keys = re.findall(r'"([a-z_0-9]+)":', metrics.group(0))
-    assert keys
-    assert all(key.startswith("dev_") for key in keys), keys
+    record = dev_metrics_record({
+        "dev_macro_f1": 0.75,
+        "dev_binary_macro_f1": 0.86,
+        "dev_per_class": {"no": 0.8, "intrinsic": 0.7, "extrinsic": 0.75},
+    })
+    assert record
+    assert all(key.startswith("dev_") for key in record), sorted(record)
+
+
+def test_dev_only_reports_every_class_not_just_the_average():
+    """T22 found chunk-aware wins `extrinsic` and loses `intrinsic`. A sweep that reports only the
+    macro average cannot say whether the token-window variants share that shape."""
+    from run_chunk_aware import dev_metrics_record
+
+    record = dev_metrics_record({
+        "dev_macro_f1": 0.75,
+        "dev_binary_macro_f1": 0.86,
+        "dev_per_class": {"no": 0.8, "intrinsic": 0.7, "extrinsic": 0.75},
+    })
+    assert record["dev_f1_intrinsic"] == 0.7
+    assert {"dev_f1_no", "dev_f1_intrinsic", "dev_f1_extrinsic"} <= set(record)

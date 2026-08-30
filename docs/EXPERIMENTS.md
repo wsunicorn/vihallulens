@@ -333,19 +333,64 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 Ba cột đầu đo trên CPU ở T23 bằng `scripts/probe_chunking.py`, trên cả 7.000 ngữ cảnh ViHallu.
 Cột cuối cần GPU và được điền ở T23 (dev) rồi chốt ở T24.
 
-| Chiến lược | Tham số | TB số đoạn | Chỉ 1 đoạn | Cách gộp đầu dev chọn | macro-F1 dev |
-|---|---|---|---|---|---|
-| **Câu** | min_words=5 | 5,3 | 1,1 % | `topk k=32`, 192 chiều | **0,7768** |
-| Cửa sổ | 128 / stride 64 | 3,3 | 0,1 % | `topk k=32`, 192 chiều | 0,7655 |
-| Cửa sổ | 64 / stride 32 | 7,1 | 0,0 % | `topk k=32`, 192 chiều | 0,7624 |
-| Cửa sổ | 256 / stride 128 | 1,4 | 66,5 % | `mixed k=16`, 836 chiều | 0,7574 |
+Cả bốn dòng chấm lại **trên cùng một máy** ngày 30/08/2026, từ chính sáu shard mà GPU sinh ra.
+Lý do phải làm vậy nằm ở mục "Số dev không tái lập giữa hai môi trường" ngay dưới bảng.
 
-Chạy 30/08/2026, 6 lượt trích, **0 lỗi trên 18.900 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số. Cột
-"chỉ 1 đoạn" đo trên tập train; con số 66,5 % khớp 67,2 % mà `probe_chunking.py` đo trên cả
-7.000 ngữ cảnh.
+| Chiến lược | Tham số | TB đoạn | Chỉ 1 đoạn | Cách gộp dev chọn | macro-F1 dev | Nhị phân | `no` | `intrinsic` | `extrinsic` |
+|---|---|---|---|---|---|---|---|---|---|
+| **Câu** | min_words=5 | 5,3 | 1,3 % | `topk k=32`, 192 | **0,7768** | **0,8943** | **0,8596** | 0,7202 | **0,7505** |
+| Cửa sổ | 128 / stride 64 | 3,3 | 0,1 % | `topk k=32`, 192 | 0,7683 | 0,8864 | 0,8493 | **0,7325** | 0,7230 |
+| Cửa sổ | 64 / stride 32 | 7,1 | 0,0 % | `topk k=16`, 96 | 0,7662 | 0,8902 | 0,8528 | 0,7158 | 0,7300 |
+| Cửa sổ | 256 / stride 128 | 1,4 | 66,5 % | `mixed k=32`, 916 | 0,7589 | 0,8670 | 0,8210 | 0,7149 | 0,7407 |
 
-**Chia theo câu thắng cả ba cỡ cửa sổ.** Và kết quả **không đơn điệu theo số đoạn** — đó mới là
-phần đáng nói.
+Sáu lượt trích trên Kaggle, **0 lỗi trên 18.900 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số. Cột "chỉ
+1 đoạn" đo trên tập train; 66,5 % khớp 67,2 % mà `probe_chunking.py` đếm trên cả 7.000 ngữ cảnh.
+
+**Cửa sổ 128 thắng `intrinsic`.** 0,7325 so với 0,7202 của chia theo câu — chính lớp mà T22 cho
+thấy chunk-aware bị thua so với lookback gộp. Chia theo câu bù lại ở `no` và `extrinsic` nên
+thắng ở tổng, nhưng chi tiết này đáng giữ: nó nói rằng ranh giới đoạn thô hơn có ích riêng cho
+lớp khó nhất. Chênh lệch 0,012 trên 700 mẫu dev thì nhỏ, chưa đủ để đảo kết luận, nhưng đủ để
+không bị bỏ quên khi bàn hướng phát triển.
+
+### Số dev không tái lập giữa hai môi trường — phát hiện ngoài dự kiến của T23
+
+Chấm lại trên máy cá nhân từ chính sáu shard của Kaggle, dùng cùng code và cùng seed 42, cho
+**số khác**:
+
+| | Kaggle | máy cá nhân | chênh |
+|---|---|---|---|
+| Cửa sổ 64, `topk k=16` | 0,7587 | 0,7662 | **+0,0075** |
+| Cửa sổ 64, `all` | 0,7030 | 0,6961 | −0,0069 |
+| Cửa sổ 128, `topk k=32` | 0,7655 | 0,7683 | +0,0028 |
+| Câu (E03), `mean_over_heads` | 0,7153 | 0,7138 | −0,0015 |
+| Câu (E03), `topk k=32` | 0,7768 | 0,7768 | 0 |
+
+Chạy hai lần **trên cùng một máy** thì trùng từng chữ số, nên đây không phải ngẫu nhiên giữa các
+lượt mà là khác biệt **giữa hai môi trường**: Kaggle chạy Python 3.12, máy cá nhân 3.11, và
+`LogisticRegression` với lbfgs hội tụ tới điểm hơi khác nhau tùy phiên bản thư viện số và BLAS.
+Dữ liệu vào giống hệt — chính là file shard tải về.
+
+Hệ quả phải nhớ khi đọc mọi bảng dev về sau:
+
+1. **Biên độ trôi lên tới 0,0075**, và ở cửa sổ 64 nó đủ để **đổi cấu hình mà dev chọn** từ
+   `topk k=32` sang `topk k=16`. Lựa chọn thắng sát nhau thì không bền theo môi trường.
+2. **Chỉ so các cấu hình được chấm trên cùng một máy.** Bảng trên vì thế chấm lại cả bốn dòng
+   tại chỗ, thay vì ghép số Kaggle của E04 với số cũ của E03.
+3. **Thứ tự thì bền.** Cả hai môi trường đều cho `câu > cửa sổ 128 > cửa sổ 64 > cửa sổ 256`.
+   Kết luận của T23 dựa vào thứ tự này chứ không vào giá trị tuyệt đối.
+
+Đây là họ hàng của phát hiện ở T18, nơi seed cố định không làm cho việc tinh chỉnh trên GPU tái
+lập được. Lần này nhẹ hơn nhiều — một hồi quy logistic chứ không phải mạng nơ-ron — nhưng cùng
+một bài học: **"đã cố định seed" không đồng nghĩa với "tái lập được".**
+
+**Chia theo câu thắng cả ba cỡ cửa sổ**, ở cả hai môi trường. Và kết quả **không đơn điệu theo
+số đoạn** — đó mới là phần đáng nói.
+
+Nói ngay về độ lớn: khoảng cách tới cửa sổ 128 là **0,0085** trên 700 mẫu dev, so với biên độ
+trôi giữa hai môi trường đo được tới **0,0075**. Nghĩa là đây là **một thứ tự nhất quán chứ chưa
+phải một chiến thắng có ý nghĩa thống kê**. Điều làm nó đáng tin không phải độ lớn mà là hình
+dạng: thứ tự giống nhau ở hai môi trường, và tính không đơn điệu dưới đây không thể sinh ra từ
+nhiễu theo cách nào tự nhiên.
 
 ### Không phải độ phân giải, mà là ranh giới ngữ nghĩa
 
@@ -354,10 +399,10 @@ thứ quyết định là độ phân giải; nếu chia theo câu thắng ở m
 giới ngữ nghĩa**. Số liệu trả lời dứt khoát.
 
 Cửa sổ 64 cho **7,1** đoạn, cửa sổ 128 cho **3,3** — chênh **2,15 lần** — mà điểm chỉ lệch
-**0,0031**. Trong khi đó chia theo câu nằm **giữa** hai cỡ ấy ở 5,3 đoạn và hơn cả hai
-**0,011–0,014**. Sắp theo số đoạn thì thứ tự điểm là 7,1 → 5,3 → 3,3 → 1,4 ứng với
-0,7624 → **0,7768** → 0,7655 → 0,7574: đỉnh rơi vào chia theo câu chứ không vào một đầu nào của
-thang phân giải.
+**0,0021**. Trong khi đó chia theo câu nằm **giữa** hai cỡ ấy ở 5,3 đoạn và hơn cả hai
+**0,0085–0,0106**. Sắp theo số đoạn thì thứ tự điểm là 7,1 → 5,3 → 3,3 → 1,4 ứng với
+0,7662 → **0,7768** → 0,7683 → 0,7589: đỉnh rơi vào chia theo câu chứ không vào một đầu nào của
+thang phân giải. Hình dạng này giống hệt ở lượt chấm trên Kaggle.
 
 Nếu độ phân giải quyết định, câu ở 5,3 đoạn phải nằm **giữa** cửa sổ 64 và 128 về điểm số. Nó
 không. Kết luận: **ranh giới câu mang thông tin mà cửa sổ token tùy tiện không có** — chunk-aware
@@ -378,20 +423,26 @@ Ghi vào đây như một việc còn nợ chứ không lờ đi.
 với một đoạn thì entropy bằng 0, tỷ trọng lớn nhất bằng 1 và độ dịch chuyển bằng 0, bất kể mô
 hình đọc làm gì. Ở đó chunk-aware thoái hóa đúng về lookback gộp.
 
-Dự báo trước khi chạy là cửa sổ 256 sẽ rơi về gần E02. E02 chấm qua **cùng quy trình chọn** ở
-T22 cho dev **0,7607**; cửa sổ 256 cho **0,7574** — lệch 0,0033. Dự báo đúng, và vì nó đúng nên
-đường ống được xác nhận chứ không phải một ô trống trong bảng.
+Dự báo trước khi chạy là cửa sổ 256 sẽ rơi về gần E02. E02 chấm qua **cùng quy trình chọn** cho
+dev **0,7607**; cửa sổ 256 cho **0,7589** — lệch 0,0018. Dự báo đúng, và vì nó đúng nên đường
+ống được xác nhận chứ không phải một ô trống trong bảng.
 
 ### Cửa sổ 256 tự khai ra sự thoái hóa qua cách gộp đầu nó chọn
 
-Ba cấu hình còn lại đều chọn `topk_heads k=32`, đúng cái E03 đã chọn — **lựa chọn này ổn định
-qua mọi cách chia đoạn**, nên là tham số chốt được chứ không phải thứ phải dò lại mỗi lần.
+Chia theo câu và cửa sổ 128 đều chọn `topk_heads k=32`, cửa sổ 64 chọn `topk_heads k=16` — cùng
+một họ, chỉ khác bề rộng. **Họ `topk_heads` ổn định qua mọi cách chia đoạn không thoái hóa**, nên
+chốt được như một quyết định; còn con số k cụ thể thì nhạy và phải để dev chọn từng lần.
 
-Cửa sổ 256 là ngoại lệ duy nhất: nó chọn `mixed_all_basic_topk_rest k=16`, 836 chiều. Đây chính
-là ứng viên được thêm ở T22 để **giữ nguyên vẹn khối lookback** và chỉ tỉa các khối rộng — nó đã
-thua ở E03, và giờ thắng đúng ở chỗ lý thuyết nói nó phải thắng: khi đặc trưng hình dạng là hằng
-số trên 66,5 % mẫu, bộ chọn tự động quay về dựa vào tỷ lệ lookback đầy đủ. **Cách gộp đầu được
-chọn tự nó chẩn đoán ra sự thoái hóa**, không cần ai nói trước.
+Cửa sổ 256 là ngoại lệ **duy nhất và bền qua cả hai môi trường**: nó chọn họ
+`mixed_all_basic_topk_rest` — Kaggle chọn k=16, máy cá nhân chọn k=32, nhưng luôn là họ ấy chứ
+không phải `topk_heads`. Đây chính là ứng viên được thêm ở T22 để **giữ nguyên vẹn khối
+lookback** và chỉ tỉa các khối rộng; nó đã **thua** ở E03, và giờ **thắng** đúng chỗ lý thuyết
+nói nó phải thắng: khi đặc trưng hình dạng là hằng số trên 66,5 % mẫu, bộ chọn tự quay về dựa
+vào tỷ lệ lookback đầy đủ. **Cách gộp đầu được chọn tự nó chẩn đoán ra sự thoái hóa**, không cần
+ai nói trước.
+
+Cửa sổ 64 thì đổi giữa `topk k=32` và `topk k=16` tùy môi trường — hai ứng viên chỉ cách nhau
+0,002 nên việc chúng đảo chỗ là biểu hiện của độ trôi ở trên, không phải của cấu trúc nào.
 
 ### Chi phí không phụ thuộc cách chia đoạn — số cho E11
 
