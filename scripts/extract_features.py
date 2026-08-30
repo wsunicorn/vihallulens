@@ -56,6 +56,29 @@ def shard_path(processed_dir: Path, run: str, dataset: str, split: str) -> Path:
     return processed_dir / f"{dataset}_{split}_{run}.jsonl"
 
 
+def chunking_arguments(chunking, tokenizer) -> dict:
+    """Everything :func:`chunk_context` needs, read off the config.
+
+    Written as its own function because of the bug it exists to prevent. Until T23 the caller
+    passed only ``strategy`` and ``min_words``, which is all the sentence strategy wants — so
+    E02 and E03 ran fine and nothing looked wrong. ``token_window`` needs a tokenizer and a
+    window, and without them it raises on the very first sample: a failure that would have cost
+    a whole Kaggle session to discover, at the far end of a fifty-minute model load.
+
+    ``chunk_context`` takes ``**kwargs`` and ignores what a strategy does not use, so a missing
+    key is silently accepted rather than refused. That is why the mapping lives here, in one
+    place a CPU test can check, instead of being spelled out at the call site.
+    """
+    if chunking.strategy == "token_window":
+        return {
+            "strategy": "token_window",
+            "tokenizer": tokenizer,
+            "window_size": chunking.window_size,
+            "stride": chunking.stride,
+        }
+    return {"strategy": chunking.strategy, "min_words": chunking.min_words}
+
+
 def load_done(path: Path) -> dict[str, dict]:
     """Read back what a previous run already computed, tolerating a truncated last line."""
     done: dict[str, dict] = {}
@@ -134,7 +157,10 @@ def main() -> int:
           f"{cfg.extractor.compute_dtype}")
     print(f"  bỏ lớp                : {cfg.extractor.exclude_layers or 'không bỏ lớp nào'}")
     print(f"  trần token ngữ cảnh   : {cfg.extractor.max_context_tokens:,}")
-    print(f"  chia đoạn             : {cfg.chunking.strategy}")
+    cutting = cfg.chunking.strategy
+    if cfg.chunking.window_size:
+        cutting += f", cửa sổ {cfg.chunking.window_size} bước {cfg.chunking.stride}"
+    print(f"  chia đoạn             : {cutting}")
     print(f"  bộ dữ liệu            : {cfg.dataset.name}/{args.split}, {len(frame):,} mẫu")
     print(f"  khối đặc trưng ghi ra : {', '.join(FEATURE_BLOCKS)}")
     print(f"  đã có sẵn             : {len(done):,} mẫu trong {path.name}")
@@ -155,16 +181,17 @@ def main() -> int:
         exclude_layers=cfg.extractor.exclude_layers,
         compute_dtype=cfg.extractor.compute_dtype,
     )
+    # After the extractor, because token_window chunks are cut with the reading model's own
+    # tokenizer: the windows are meant to line up with attention positions, and those are the
+    # positions this tokenizer produces.
+    chunking_kwargs = chunking_arguments(cfg.chunking, extractor.tokenizer)
 
     started = time.perf_counter()
     written, failed, truncated, nonfinite = 0, 0, 0, 0
     first_error = None
     with path.open("a", encoding="utf-8") as handle:
         for position, row in enumerate(todo, start=1):
-            chunks = chunk_context(
-                row["context"], strategy=cfg.chunking.strategy,
-                min_words=cfg.chunking.min_words,
-            )
+            chunks = chunk_context(row["context"], **chunking_kwargs)
             began = time.perf_counter()
             try:
                 features = extractor.extract(

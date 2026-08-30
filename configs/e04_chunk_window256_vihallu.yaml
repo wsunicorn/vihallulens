@@ -1,0 +1,46 @@
+# E04 — chunk-aware chia theo cửa sổ 256 token, bước 128. Task T23.
+#
+# Cùng năm đặc trưng hình dạng của E03, chỉ đổi ranh giới đoạn. Ba cấu hình cửa sổ 64/128/256
+# quét theo mục E05 của docs/EXPERIMENTS.md; T24 chốt một cái và giữ nguyên cho mọi thí nghiệm
+# sau. Mốc so sánh vẫn là 0,7451 của E02 và 0,7567 của E03 chia theo câu.
+#
+# Đo trên CPU trước khi chạy GPU (scripts/probe_chunking.py): cửa sổ này cho trung bình
+# 1,4 đoạn mỗi ngữ cảnh ViHallu, 67.2 % số mẫu chỉ có đúng một đoạn.
+#
+# CẢNH BÁO — cửa sổ này lớn hơn phần lớn ngữ cảnh ViHallu (trung vị 218 token),
+# nên với đa số mẫu 'chia đoạn' không chia gì cả và năm đặc trưng hình dạng trở thành
+# hằng số (0, 1, 0, 1, 0). Vẫn chạy để điền Bảng 3 bằng số đo chứ không bằng suy luận,
+# nhưng kết quả gần E02 là điều đã biết trước, không phải phát hiện.
+
+run_name: e04_chunk_aware_window256_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: token_window
+  window_size: 256
+  # Nửa cửa sổ, chốt ở mục E05 docs/EXPERIMENTS.md. Các đoạn vì thế CHỒNG LẤN nhau: một token
+  # nằm trong overlap được đếm cho cả hai đoạn, nên véc-tơ theo đoạn không còn là một phân bố
+  # theo nghĩa chặt. Entropy và Gini vẫn tính được sau khi chuẩn hóa, nhưng phải đọc là "chú ý
+  # tản trên các cửa sổ" chứ không phải "tản trên các phần rời nhau của ngữ cảnh".
+  stride: 128
+
+extractor:
+  # Giống hệt E02 và E03 ở mọi khóa khác. Nhưng chunking nằm trong hash trích đặc trưng, nên
+  # mỗi cỡ cửa sổ vẫn phải chạy GPU riêng — ranh giới đoạn đổi thì mảng theo đoạn đổi theo.
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
