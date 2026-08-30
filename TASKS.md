@@ -1814,8 +1814,82 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
   Ranh giới đoạn nằm trong `extraction_hash` nên **ba cỡ không dùng chung lượt trích được** —
   khác với E02 và E03 vốn chỉ khác nhau ở nhóm đặc trưng nên chia nhau một lượt GPU.
-- [ ] **T24** · L · E05 chốt cách chia chunk
+- [ ] **T24** · L · E05 chốt cách chia chunk — **công cụ đối chứng sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
   - **Kiểm tra:** Bảng 3 trong `docs/EXPERIMENTS.md` được điền đầy đủ, có kết luận chọn cấu hình nào và lý do.
+
+  ### Vì sao cần thêm một lượt GPU nữa
+
+  Bảng 3 đã đủ số để chọn: chia theo câu thắng cả ba cỡ cửa sổ. Nhưng T23 để lại một câu hỏi mà
+  chính nó không trả lời được, và câu trả lời quyết định **phần đóng góp của đề tài được viết
+  thế nào**.
+
+  Ba cỡ cửa sổ ở T23 đều **chồng lấn** (bước bằng nửa), còn chia theo câu thì **phủ kín không đè**.
+  Nên "câu thắng" có hai cách giải thích:
+
+  1. **Ngữ nghĩa** — ranh giới câu mang thông tin mà ranh giới token tùy tiện không có.
+  2. **Chồng lấn** — token trong vùng chồng bị đếm hai lần nên véc-tơ theo đoạn không còn là một
+     phân bố theo nghĩa chặt, và chính điều đó làm hỏng đặc trưng hình dạng.
+
+  Nếu là (2) thì đóng góp không phải "chia theo đơn vị nghĩa" mà chỉ là "đừng chia chồng lấn" —
+  một câu yếu hơn hẳn, và phải viết lại chương kết quả.
+
+  ### Cỡ cửa sổ của đối chứng phải đo, không được đoán
+
+  Phương án nghĩ tới đầu tiên là cửa sổ 128 **bước 128**. Đo trên CPU thì nó cho **2,43** đoạn
+  mỗi ngữ cảnh, trong khi chia theo câu cho 5,29 — tức bỏ được biến chồng lấn nhưng **lôi biến số
+  đoạn vào**. Đó là một đối chứng hỏng, và nó hỏng theo đúng kiểu mà T23 vừa mới cảnh báo.
+
+  Quét cỡ cửa sổ với bước bằng chính nó:
+
+```
+  cửa sổ = bước   TB đoạn   trung vị   lệch so với câu
+             32      8,08          7        +2,79
+             40      6,57          6        +1,28
+             44      6,02          5        +0,73
+             48      5,56          5        +0,27   ← chọn
+             56      4,83          4        −0,46
+             64      4,29          4        −1,00
+            128      2,43          2        −2,86
+```
+
+  **Cửa sổ 48 bước 48**: 5,56 đoạn so với 5,29, trung vị trùng khít ở 5. Hai cấu hình đem so vì
+  thế khác nhau **đúng một thứ**:
+
+| | TB đoạn | trung vị | chồng lấn | ranh giới |
+|---|---|---|---|---|
+| Chia theo câu (E03) | 5,29 | 5 | không | **ngữ nghĩa** |
+| Cửa sổ 48, bước 48 | 5,56 | 5 | không | tùy tiện |
+
+  ### Đọc kết quả thế nào — viết trước khi thấy số
+
+  Mốc so là **0,7768**, điểm dev của E03 chấm trên cùng máy sẽ chấm lượt này. Notebook có ô 7b
+  chấm lại E03 tại chỗ, vì T23 đã cho thấy ghép số giữa hai môi trường là sai.
+
+  - **Câu vẫn hơn rõ** → kết luận **ngữ nghĩa**, đóng góp đứng vững như đang viết.
+  - **Chênh dưới ~0,008** → **không kết luận được**. Biên độ trôi giữa hai môi trường đo ở T23 đã
+    là 0,0075 và dev chỉ có 700 mẫu. Phải viết là "không phân biệt được", không được chọn cách
+    đọc có lợi hơn.
+  - **Cửa sổ 48 hơn** → khoảng cách ở T23 là do **chồng lấn**. Phải sửa phần đóng góp trong báo
+    cáo, và T24 chọn cửa sổ 48 chứ không chọn chia theo câu — lúc đó cần thêm ~7 phút GPU trích
+    tập test cho nó.
+
+  Trường hợp thứ ba bất lợi nhất cho đề tài. Ghi ra trước khi chạy để sau không đọc trại đi.
+
+  ### Ba cải tiến đã nợ từ T23, nay có trong notebook
+
+  1. Ô 9 copy **cả `results/runs.jsonl`**, không chỉ đặc trưng.
+  2. Ô 8 **kiểm toàn vẹn shard** trước khi rời phiên — đủ dòng, id không trùng, đủ 7 khối. Chỉ
+     kiểm đúng hai shard của lượt này, tìm theo hash trích, vì quét cả thư mục sẽ báo động giả
+     trên shard T20 vốn chỉ có 2 khối. Đã chạy thử tại chỗ.
+  3. `--dev-only` in **F1 từng lớp**, thêm ở lượt sửa cuối T23.
+
+  Cộng một ô nữa: ô 4 xác nhận cỡ 48 thật sự khớp mật độ đoạn, và `assert` dừng luôn nếu lệch quá
+  0,5 đoạn — tiền đề của cả thí nghiệm, sai thì không nên tốn GPU chạy tiếp.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t24_doi_chung_khong_chong_lan_t4.ipynb`, khoảng **64 phút**: 57 phút train,
+  7 phút dev. Chấm điểm chạy CPU.
 
 - [ ] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01
   - Đo hit@1, hit@3, MRR so với sàn ngẫu nhiên; đo entropy của nhãn NEI so với hai nhãn kia.
