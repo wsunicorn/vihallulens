@@ -1700,6 +1700,40 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   kiểu lỗi mà `--dry-run` của T19 từng gây ra khi ghi đè 8.194 ms của E10 thành 0,03. Mọi khóa
   chỉ số đều mang tiền tố `dev_` để không thể bị nhặt nhầm thành điểm test.
 
+  ### Một quan sát về chi phí, ghi lại chứ chưa làm
+
+  Cả bốn cách chia đều báo `bị cắt ngữ cảnh: 0/5.600`. Nghĩa là `_fit_to_budget` chưa bao giờ
+  kích hoạt trên ViHallu, nên **prompt đưa vào mô hình giống hệt nhau từng byte ở cả bốn lượt** —
+  chỉ khác ở chỗ ma trận chú ý được quy về đoạn nào. Bốn lượt forward pass tính lại cùng một
+  thứ; đúng ra một lượt cộng vài phép cộng theo đoạn là đủ.
+
+  Nếu bộ trích nhận **nhiều cách chia cùng lúc**, T23 đã tốn ~50 phút thay vì 3,3 giờ.
+
+  **Chưa làm, vì hai lý do.** Thứ nhất, mục 6 quy tắc 5 `CLAUDE.md`: không viết code cho task
+  chưa tới. Thứ hai, và quan trọng hơn, **tính chất này không mang sang ISE-DSC01 được**: ngữ
+  cảnh ở đó dài 21–73 câu nên cắt ngắn sẽ kích hoạt, mà cắt ngắn **bỏ nguyên từng đoạn** — phần
+  ngữ cảnh sống sót vì thế phụ thuộc cách chia, và prompt sẽ khác nhau giữa các cách chia. Muốn
+  dùng lại một lượt trích ở E07 thì phải cắt ngắn theo một quy tắc **chung** cho mọi cách chia,
+  tức đổi thiết kế bộ trích — thuộc diện phải hỏi theo mục 6 quy tắc 4.
+
+  Chỉ đáng làm nếu có thêm một lượt quét cách chia nữa. Một phép đối chứng lẻ (cửa sổ không
+  chồng lấn ở T24, ~57 phút) thì không bõ.
+
+  ### Ba chỗ cải thiện cho notebook sau, không sửa ngược vào T23
+
+  Notebook T23 đã chạy nay là **minh chứng đã commit**, sửa vào đó là xóa mất output. Ba điểm
+  dưới đây áp dụng cho notebook của T24 trở đi:
+
+  1. **Ô lấy kết quả về phải copy cả `results/runs.jsonl`.** Ô 14 của T23 chỉ copy
+     `data/processed/*.jsonl`. Từ T23 `--dev-only` đã ghi bản ghi vào `runs.jsonl`, nên lượt
+     chạy sau sẽ mất nó.
+  2. **Thêm một ô kiểm tính toàn vẹn sau khi trích.** Sau 3,3 giờ mà không có gì khẳng định sáu
+     shard đủ dòng, đọc được, không NaN. Một ô CPU ~20 giây chạy trước khi rời phiên sẽ bắt được
+     shard cụt lúc còn kịp chạy lại.
+  3. **In thêm F1 từng lớp trên dev ở `--dev-only`.** T22 cho thấy chunk-aware thắng `extrinsic`
+     và thua `intrinsic`; hiện chưa biết ba cỡ cửa sổ có cùng dáng ấy không, vì `--dev-only` chỉ
+     in macro-F1.
+
   ### T24 gần như không cần GPU
 
   Cấu hình thắng trên dev là **chia theo câu**, mà E03 đã chấm test đủ ở T22: macro-F1 0,7567
