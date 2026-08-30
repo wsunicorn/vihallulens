@@ -1,0 +1,44 @@
+# E06 — định vị chú ý so với đoạn bằng chứng vàng, trên ISE-DSC01. Task T25.
+#
+# Thí nghiệm quyết định CH1. Mọi kết quả khác suy ra cơ chế từ điểm phân loại; riêng cái này đọc
+# thẳng: đoạn được chú ý nhiều nhất CÓ PHẢI đoạn chứa bằng chứng không.
+#
+# Đo trên CPU trước khi đặt lịch GPU (400 mẫu train):
+#   ngữ cảnh 794 token trung bình, p95 1.671, lớn nhất 2.313 — 0 % vượt trần 4.096
+#   chia theo câu cho 21,7 đoạn trung bình, trung vị 19, lớn nhất 63
+#   định vị được đoạn bằng chứng 400/400
+#   sàn ngẫu nhiên trung bình 1/n = 0,0614 — hit@1 vì thế rất dễ phân biệt với ngẫu nhiên
+#   vị trí tương đối của đoạn vàng: trung bình 0,504 — RẢI ĐỀU, không có mẹo vị trí nào ăn được
+#
+# Điểm cuối quan trọng: nếu đoạn vàng dồn về đầu hay cuối ngữ cảnh thì một bộ đoán "luôn chọn
+# đoạn đầu" đã thắng sàn, và hit@1 cao sẽ không chứng minh được gì. Nó rải đều nên không có.
+
+run_name: e06_localization_isedsc01
+
+dataset:
+  name: isedsc01
+  split_seed: 42
+
+chunking:
+  # Chốt ở T24 sau khi quét bốn cách chia trên ViHallu và chạy một phép đối chứng không chồng
+  # lấn. Giữ nguyên cho mọi thí nghiệm còn lại, kể cả bộ dữ liệu khác.
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  # Không dùng ở E06 — thí nghiệm này không huấn luyện bộ phân loại nào, nó đọc thẳng mảng theo
+  # đoạn. Vẫn phải khai vì schema cấu hình đòi, và khai đúng thì T26 dùng lại được lượt trích này.
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
