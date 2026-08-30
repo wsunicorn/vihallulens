@@ -333,27 +333,74 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 Ba cột đầu đo trên CPU ở T23 bằng `scripts/probe_chunking.py`, trên cả 7.000 ngữ cảnh ViHallu.
 Cột cuối cần GPU và được điền ở T23 (dev) rồi chốt ở T24.
 
-| Chiến lược | Tham số | TB số đoạn | Trung vị | Chỉ 1 đoạn | macro-F1 dev |
+| Chiến lược | Tham số | TB số đoạn | Chỉ 1 đoạn | Cách gộp đầu dev chọn | macro-F1 dev |
 |---|---|---|---|---|---|
-| Câu | min_words=5 | 5,3 | 5 | 1,1 % | **0,7768** |
-| Cửa sổ | 64 / stride 32 | 7,1 | 6 | 0,0 % | |
-| Cửa sổ | 128 / stride 64 | 3,3 | 3 | 0,1 % | |
-| Cửa sổ | 256 / stride 128 | 1,4 | 1 | 67,2 % | |
+| **Câu** | min_words=5 | 5,3 | 1,1 % | `topk k=32`, 192 chiều | **0,7768** |
+| Cửa sổ | 128 / stride 64 | 3,3 | 0,1 % | `topk k=32`, 192 chiều | 0,7655 |
+| Cửa sổ | 64 / stride 32 | 7,1 | 0,0 % | `topk k=32`, 192 chiều | 0,7624 |
+| Cửa sổ | 256 / stride 128 | 1,4 | 66,5 % | `mixed k=16`, 836 chiều | 0,7574 |
+
+Chạy 30/08/2026, 6 lượt trích, **0 lỗi trên 18.900 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số. Cột
+"chỉ 1 đoạn" đo trên tập train; con số 66,5 % khớp 67,2 % mà `probe_chunking.py` đo trên cả
+7.000 ngữ cảnh.
+
+**Chia theo câu thắng cả ba cỡ cửa sổ.** Và kết quả **không đơn điệu theo số đoạn** — đó mới là
+phần đáng nói.
+
+### Không phải độ phân giải, mà là ranh giới ngữ nghĩa
+
+Trước khi chạy, Bảng 3 được dựng để phân biệt hai giả thuyết: nếu điểm đi theo **số đoạn** thì
+thứ quyết định là độ phân giải; nếu chia theo câu thắng ở mật độ đoạn tương đương thì là **ranh
+giới ngữ nghĩa**. Số liệu trả lời dứt khoát.
+
+Cửa sổ 64 cho **7,1** đoạn, cửa sổ 128 cho **3,3** — chênh **2,15 lần** — mà điểm chỉ lệch
+**0,0031**. Trong khi đó chia theo câu nằm **giữa** hai cỡ ấy ở 5,3 đoạn và hơn cả hai
+**0,011–0,014**. Sắp theo số đoạn thì thứ tự điểm là 7,1 → 5,3 → 3,3 → 1,4 ứng với
+0,7624 → **0,7768** → 0,7655 → 0,7574: đỉnh rơi vào chia theo câu chứ không vào một đầu nào của
+thang phân giải.
+
+Nếu độ phân giải quyết định, câu ở 5,3 đoạn phải nằm **giữa** cửa sổ 64 và 128 về điểm số. Nó
+không. Kết luận: **ranh giới câu mang thông tin mà cửa sổ token tùy tiện không có** — chunk-aware
+không chỉ là "chia nhỏ ngữ cảnh ra" mà là "chia theo đơn vị nghĩa".
+
+### Một điều chưa tách được, phải nói rõ
+
+Cửa sổ **chồng lấn** (bước bằng nửa), câu thì **phủ kín và không đè lên nhau**. Nên "câu thắng"
+vẫn còn hai cách giải thích: ranh giới ngữ nghĩa, hoặc đơn giản là không chồng lấn. Lập luận về
+số đoạn ở trên nghiêng về cách thứ nhất nhưng **không loại trừ** cách thứ hai.
+
+Tách dứt điểm cần thêm một cấu hình cửa sổ 128 **bước 128** (không chồng), khoảng 57 phút GPU.
+Ghi vào đây như một việc còn nợ chứ không lờ đi.
+
+### Cửa sổ 256 rơi đúng chỗ đã dự báo — đó là phép kiểm đường ống
 
 **Cột "chỉ 1 đoạn" là phần dữ liệu mà năm đặc trưng hình dạng trở thành hằng số** `(0, 1, 0, 1, 0)`:
 với một đoạn thì entropy bằng 0, tỷ trọng lớn nhất bằng 1 và độ dịch chuyển bằng 0, bất kể mô
 hình đọc làm gì. Ở đó chunk-aware thoái hóa đúng về lookback gộp.
 
-Vì thế **cửa sổ 256 gần như chắc chắn không thắng trên ViHallu**, và điều đó đã biết trước khi
-đặt lịch GPU: ngữ cảnh ViHallu chỉ dài trung vị 218 token, nên một cửa sổ 256 token thường là
-cả ngữ cảnh. Vẫn chạy đủ ba cỡ, vì Bảng 3 phải được điền bằng số đo chứ không bằng suy luận —
-và vì nếu cửa sổ 256 *không* rơi về gần E02 thì đó là dấu hiệu đường ống sai, không phải một
-phát hiện.
+Dự báo trước khi chạy là cửa sổ 256 sẽ rơi về gần E02. E02 chấm qua **cùng quy trình chọn** ở
+T22 cho dev **0,7607**; cửa sổ 256 cho **0,7574** — lệch 0,0033. Dự báo đúng, và vì nó đúng nên
+đường ống được xác nhận chứ không phải một ô trống trong bảng.
 
-Con số đáng chờ là **64 so với 128**: 7,1 đoạn so với 3,3 đoạn, trong khi chia theo câu cho 5,3.
-Nếu điểm đi theo số đoạn thì thứ quyết định là **độ phân giải**; nếu chia theo câu thắng cả hai
-cỡ cửa sổ ở mật độ đoạn tương đương thì thứ quyết định là **ranh giới ngữ nghĩa**. Hai kết luận
-khác hẳn nhau về mặt cơ chế, và Bảng 3 phân biệt được chúng.
+### Cửa sổ 256 tự khai ra sự thoái hóa qua cách gộp đầu nó chọn
+
+Ba cấu hình còn lại đều chọn `topk_heads k=32`, đúng cái E03 đã chọn — **lựa chọn này ổn định
+qua mọi cách chia đoạn**, nên là tham số chốt được chứ không phải thứ phải dò lại mỗi lần.
+
+Cửa sổ 256 là ngoại lệ duy nhất: nó chọn `mixed_all_basic_topk_rest k=16`, 836 chiều. Đây chính
+là ứng viên được thêm ở T22 để **giữ nguyên vẹn khối lookback** và chỉ tỉa các khối rộng — nó đã
+thua ở E03, và giờ thắng đúng ở chỗ lý thuyết nói nó phải thắng: khi đặc trưng hình dạng là hằng
+số trên 66,5 % mẫu, bộ chọn tự động quay về dựa vào tỷ lệ lookback đầy đủ. **Cách gộp đầu được
+chọn tự nó chẩn đoán ra sự thoái hóa**, không cần ai nói trước.
+
+### Chi phí không phụ thuộc cách chia đoạn — số cho E11
+
+Bốn cách chia, đo trên cùng T4: câu **528** ms/mẫu, cửa sổ 64 **538**, cửa sổ 128 **541**, cửa
+sổ 256 **540**. Số đoạn chênh nhau 5 lần mà chi phí chênh 2,5 %. Toàn bộ giá nằm ở forward pass
+của mô hình đọc; phần quy kết chú ý theo đoạn gần như miễn phí.
+
+Hệ quả cho E11: **chunk-aware không đắt hơn Lookback Lens gộp một cách có ý nghĩa**, nên nếu nó
+chính xác hơn thì không phải trả giá gì để lấy phần chính xác đó.
 
 ### Một chỗ phải cẩn thận khi đọc entropy của cửa sổ chồng lấn
 

@@ -241,6 +241,37 @@ def main() -> int:
         print("-" * 80)
         print(f"  chọn                  : {best['label']}, {best['n_features']:,} chiều")
         print(f"  macro-F1 trên DEV     : {best['dev_macro_f1']:.4f}")
+        # Written even though there is no test score, because Bảng 3 of docs/EXPERIMENTS.md is
+        # made entirely of these dev numbers. Without this the sweep's only record would be the
+        # notebook's printed text, and a table in the thesis would have nothing machine-readable
+        # behind it. The metrics dict carries a dev_ prefix so nothing here can ever be mistaken
+        # for a test result when the file is read back.
+        record = log_result(
+            run_name,
+            {**cfg.to_dict(), "experiment": run_name.split("_")[0].upper()},
+            {"dev_macro_f1": best["dev_macro_f1"]},
+            {
+                "n_train": len(records["train"]),
+                "n_dev": len(records["dev"]),
+                "n_features": best["n_features"],
+                "head_aggregation_chosen": best["label"],
+                "head_selection_trials": [
+                    {key: trial[key] for key in ("label", "n_features", "dev_macro_f1")}
+                    for trial in trials
+                ],
+                "mean_chunks": float(np.mean(chunks)),
+                "single_chunk_rate": single / len(chunks),
+                # None, not 0.0: the cost was never measured on this path, and a zero here
+                # would quietly become a "free method" row in E11's cost table. Same mistake
+                # the --dry-run of T19 made against E10.
+                "ms_per_sample": None,
+                "peak_vram_mb": 0.0,
+                "dev_only": True,
+                "selection_note": "chỉ chấm dev; tập test để dành cho cấu hình thắng ở T24",
+            },
+            path=args.results_path,
+        )
+        print(f"  Đã ghi {args.results_path} — config_hash {record['config_hash']}")
         print("  Dừng ở đây theo --dev-only. Tập test để dành cho cấu hình thắng ở T24.")
         return 0
 
