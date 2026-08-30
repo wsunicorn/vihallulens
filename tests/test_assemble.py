@@ -248,3 +248,18 @@ def test_a_tie_on_dev_goes_to_the_narrower_matrix():
     top = max(trial["dev_macro_f1"] for trial in trials)
     tied = [trial for trial in trials if trial["dev_macro_f1"] == top]
     assert best["n_features"] == min(trial["n_features"] for trial in tied)
+
+
+def test_both_scripts_look_for_the_same_shard():
+    """The bug this test exists for. T22 split the extraction hash out of the config hash so E02
+    and E03 could share one GPU pass, but ``run_lookback_baseline.py`` kept calling the old one
+    and could no longer find its own features — which only showed up as a failure at the end of
+    a fifty-minute Kaggle run."""
+    from extract_features import shard_path as extract_shard
+    from run_chunk_aware import load_split  # noqa: F401  (imports the same helper)
+    from run_lookback_baseline import main  # noqa: F401  (import proves the module loads)
+
+    cfg = load_config("configs/e02_lookback_vihallu.yaml")
+    wanted = extract_shard(Path("data/processed"), extraction_hash(cfg), "vihallu", "train")
+    assert wanted.name == f"vihallu_train_{extraction_hash(cfg)}.jsonl"
+    assert extraction_hash(cfg) != config_hash(cfg)
