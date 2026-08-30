@@ -1,0 +1,46 @@
+# E05 đối chứng — cửa sổ 48 token, bước 48, KHÔNG chồng lấn. Task T24.
+#
+# Sinh ra để tách một câu hỏi mà T23 không trả lời được. Chia theo câu thắng cả ba cỡ cửa sổ,
+# nhưng cửa sổ ở T23 đều CHỒNG LẤN (bước bằng nửa) còn câu thì phủ kín không đè. Nên "câu thắng"
+# còn hai cách giải thích: ranh giới ngữ nghĩa, hoặc chỉ đơn giản là không chồng lấn.
+#
+# Cấu hình này khóa cả hai biến gây nhiễu lại:
+#
+#   chia theo câu       5,29 đoạn, trung vị 5, phủ kín, ranh giới NGỮ NGHĨA
+#   cửa sổ 48 bước 48   5,56 đoạn, trung vị 5, phủ kín, ranh giới TÙY TIỆN
+#
+# Khác nhau đúng một thứ. Câu vẫn thắng thì kết luận là ngữ nghĩa; hòa hoặc thua thì khoảng cách
+# ở T23 là do chồng lấn và mật độ, không phải do ranh giới câu — và phần đóng góp của đề tài phải
+# viết lại cho đúng.
+#
+# Cỡ 48 chọn bằng đo trên CPU chứ không đoán. Cửa sổ 128 bước 128 — phương án nghĩ tới đầu tiên —
+# chỉ cho 2,43 đoạn, tức lại lẫn số đoạn vào, nên là một đối chứng hỏng.
+
+run_name: e05_control_window48_tiling_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: token_window
+  window_size: 48
+  # Bằng đúng cửa sổ: các đoạn phủ kín và KHÔNG đè lên nhau, giống chia theo câu. Đây là lý do
+  # cấu hình này tồn tại, không phải một giá trị chọn cho tiện.
+  stride: 48
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
