@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from extract_features import DEFAULT_PROCESSED_DIR, load_matrix, shard_path  # noqa: E402
-from vihallulens.config import REQUIRED_SPLIT_SEED, config_hash, load_config  # noqa: E402
+from vihallulens.config import REQUIRED_SPLIT_SEED, extraction_hash, load_config  # noqa: E402
 from vihallulens.detect.detector import LookbackDetector  # noqa: E402
 from vihallulens.evaluation.logging import log_result  # noqa: E402
 from vihallulens.evaluation.metrics import (  # noqa: E402
@@ -71,7 +71,10 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     cfg = load_config(args.config)
-    run = config_hash(cfg)
+    # The *extraction* hash, matching what extract_features.py names its shards. T22 split this
+    # from the full config hash so E02 and E03 could share one GPU pass; this script kept
+    # asking for the old name and could no longer find its own features.
+    run = extraction_hash(cfg)
 
     parts = {}
     for split in ("train", "test"):
