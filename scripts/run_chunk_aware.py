@@ -136,10 +136,16 @@ def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_d
         train_matrix = matrix_for(records["train"], groups, n_layers, n_heads, mode, keep)
         dev_matrix = matrix_for(records["dev"], groups, n_layers, n_heads, mode, keep)
         model = LookbackDetector(seed=seed).fit(train_matrix, y_train)
-        score = compute_metrics(y_dev, model.predict(dev_matrix))["macro_f1"]
+        scored = compute_metrics(y_dev, model.predict(dev_matrix))
         label = mode if keep is None else f"{mode} k={len(keep)}"
+        # Per-class dev is kept, not just the macro average. T22 found chunk-aware wins
+        # `extrinsic` and loses `intrinsic`; without this the sweep cannot say whether the
+        # token-window variants have that same shape or a different one.
         trials.append({"mode": mode, "keep": keep, "label": label,
-                       "n_features": train_matrix.shape[1], "dev_macro_f1": float(score)})
+                       "n_features": train_matrix.shape[1],
+                       "dev_macro_f1": float(scored["macro_f1"]),
+                       "dev_per_class": {lb: float(scored[f"f1_{lb}"]) for lb in LABELS},
+                       "dev_binary_macro_f1": float(scored["binary_macro_f1"])})
         del train_matrix, dev_matrix, model
 
     # Ties go to the narrower matrix. Several widths scoring the same on 700 dev samples is
@@ -148,6 +154,20 @@ def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_d
     # than leaving it to the order the candidates happen to be listed in.
     best = min(trials, key=lambda trial: (-trial["dev_macro_f1"], trial["n_features"]))
     return best, trials
+
+
+def dev_metrics_record(best: dict) -> dict:
+    """The metrics ``--dev-only`` writes to results/runs.jsonl.
+
+    Every key carries a ``dev_`` prefix on purpose: this record has no test score in it, and a
+    bare ``macro_f1`` here could later be read back into Bảng 1 as though the test set had been
+    scored. Its own function so the guarantee can be tested by calling it.
+    """
+    record = {"dev_macro_f1": float(best["dev_macro_f1"]),
+              "dev_binary_macro_f1": float(best["dev_binary_macro_f1"])}
+    record.update({f"dev_f1_{label}": float(value)
+                   for label, value in best["dev_per_class"].items()})
+    return record
 
 
 def main() -> int:
@@ -241,6 +261,9 @@ def main() -> int:
         print("-" * 80)
         print(f"  chọn                  : {best['label']}, {best['n_features']:,} chiều")
         print(f"  macro-F1 trên DEV     : {best['dev_macro_f1']:.4f}")
+        print(f"  nhị phân trên DEV     : {best['dev_binary_macro_f1']:.4f}")
+        per_class = "   ".join(f"{lb} {best['dev_per_class'][lb]:.4f}" for lb in LABELS)
+        print(f"  F1 từng lớp trên DEV  : {per_class}")
         # Written even though there is no test score, because Bảng 3 of docs/EXPERIMENTS.md is
         # made entirely of these dev numbers. Without this the sweep's only record would be the
         # notebook's printed text, and a table in the thesis would have nothing machine-readable
@@ -249,7 +272,7 @@ def main() -> int:
         record = log_result(
             run_name,
             {**cfg.to_dict(), "experiment": run_name.split("_")[0].upper()},
-            {"dev_macro_f1": best["dev_macro_f1"]},
+            dev_metrics_record(best),
             {
                 "n_train": len(records["train"]),
                 "n_dev": len(records["dev"]),
