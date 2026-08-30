@@ -1539,7 +1539,95 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   Phải trích lại vì lượt T20 chưa lưu mảng theo đoạn. Nhưng từ lượt này trở đi thì **E04, E05, E12 dùng lại được** — trừ E04 vốn đổi cách chia đoạn nên phải trích riêng.
 
   Notebook có thêm **ô 8 chạy lại E02 trên chính lượt trích này**, để hai thí nghiệm khác nhau đúng một biến là nhóm đặc trưng, không lẫn khác biệt nào từ một lượt GPU khác. Con số phải khớp 0,7465; lệch nhiều nghĩa là có gì đó đã đổi ngoài ý muốn.
-- [ ] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256
+- [ ] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256 — **công cụ sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
+
+  ### Task này để làm gì
+
+  E03 đã cho thấy hình dạng phân bố chú ý mang tín hiệu, nhưng nó mới là **một** cách cắt ngữ
+  cảnh: theo câu. Nếu đóng góp của đề tài là "chia đoạn thì tốt hơn gộp", thì phải trả lời được
+  chia **thế nào** — nếu không, con số 0,7567 của E03 chỉ là một cấu hình may mắn chứ không phải
+  một phương pháp. T23 quét cách cắt thứ hai, cửa sổ token cố định, ở ba cỡ; T24 chốt một cái và
+  giữ nguyên cho mọi thí nghiệm còn lại.
+
+  ### Đo trên CPU trước, và phép đo ấy đã thay đổi cách đọc kết quả
+
+  Trước khi đặt lịch GPU, `scripts/probe_chunking.py` đếm số đoạn thật sự trên cả 7.000 ngữ cảnh.
+  Mất một phút CPU:
+
+```
+  độ dài ngữ cảnh: trung bình 243 token, trung vị 218, p95 423, lớn nhất 2.347
+
+  cách chia                    TB  trung vị    p95    max    1 đoạn   ≤2 đoạn
+  câu, min_words=5            5,3         5      9     42     1,1 %     5,8 %
+  cửa sổ 64, bước 32          7,1         6     13     73     0,0 %     0,0 %
+  cửa sổ 128, bước 64         3,3         3      6     36     0,1 %    34,5 %
+  cửa sổ 256, bước 128        1,4         1      3     18    67,2 %    92,7 %
+```
+
+  **Cửa sổ 256 thoái hóa trên 67 % dữ liệu.** Ngữ cảnh ViHallu dài trung vị 218 token, nên một
+  cửa sổ 256 token thường *là* cả ngữ cảnh — không chia gì cả. Với đúng một đoạn, năm đặc trưng
+  hình dạng thành hằng số `(0, 1, 0, 1, 0)`: entropy bằng 0, tỷ trọng lớn nhất bằng 1, độ dịch
+  chuyển bằng 0, bất kể mô hình đọc làm gì. Đã kiểm bằng một ca test rằng chúng vẫn hữu hạn,
+  không có NaN nào lọt vào bộ phân loại — nhưng hữu hạn không có nghĩa là mang thông tin.
+
+  **Vẫn chạy đủ ba cỡ.** Bảng 3 phải điền bằng số đo chứ không bằng suy luận, và biết trước hình
+  dạng kết quả là một phép kiểm chứ không phải cái cớ để bỏ: nếu cửa sổ 256 **không** rơi về gần
+  E02 thì đường ống sai ở đâu đó, chứ không phải vừa có phát hiện mới.
+
+  Con số đáng chờ là **64 so với 128**. Cửa sổ 64 cho 7,1 đoạn, cửa sổ 128 cho 3,3 đoạn, còn chia
+  theo câu cho 5,3 — tức chia theo câu nằm *giữa* hai cỡ này về mật độ. Nếu điểm đi theo số đoạn
+  thì thứ quyết định là **độ phân giải**; nếu chia theo câu thắng cả hai ở mật độ tương đương thì
+  thứ quyết định là **ranh giới ngữ nghĩa**. Hai kết luận khác hẳn nhau về cơ chế, và quét ba cỡ
+  là cách duy nhất phân biệt được chúng.
+
+  ### Một lỗi sẽ giết lượt chạy ở mẫu đầu tiên, bắt được trên CPU
+
+  `extract_features.py` gọi bộ chia đoạn như thế này, từ T20 tới hết T22:
+
+```python
+  chunks = chunk_context(row["context"], strategy=cfg.chunking.strategy,
+                         min_words=cfg.chunking.min_words)
+```
+
+  Đúng cho chiến lược `sentence`, và **im lặng sai** cho `token_window`: chiến lược cửa sổ cần
+  tokenizer, `window_size` và `stride`, không cái nào được truyền. `chunk_context` nhận `**kwargs`
+  nên thiếu khóa không bị từ chối — nó chỉ raise ở trong, tại mẫu đầu tiên, sau khi đã nạp xong
+  mô hình 7B. Nghĩa là mất công nạp mô hình rồi mới biết, ba lần liên tiếp.
+
+  Sửa bằng cách tách hẳn một hàm `chunking_arguments(chunking, tokenizer)` để phép ánh xạ cấu
+  hình sang tham số chia đoạn nằm ở **một chỗ mà test CPU kiểm được**, thay vì nằm rải ở chỗ gọi.
+  Bốn ca test mới khẳng định tokenizer tới nơi, cỡ cửa sổ và bước tới nơi, và chiến lược `sentence`
+  không đổi hành vi — vì E02 và E03 đã trích xong, đổi cách cắt của chúng là làm hỏng shard cũ.
+
+  Đây đúng bài học đã ghi ở T22 và ở T18: **thứ chỉ chạy trên GPU thì phải có một mảnh chạy được
+  trên CPU, nếu không lỗi sẽ tìm thấy mình ở phút thứ năm mươi.**
+
+  ### Thêm `--dev-only`, vì T23 không được đụng tập test
+
+  T23 chỉ cần cột `macro-F1 dev` của Bảng 3. Ba cỡ cửa sổ thì hai cỡ sẽ bị loại ở T24, và trích
+  tập test cho chúng vừa tốn 7 phút GPU mỗi cỡ vừa đặt ba điểm số test lên bàn trước khi lựa chọn
+  được đưa ra.
+
+  `--dev-only` dừng ngay sau bảng chọn cách gộp đầu. Nhờ vậy **"chọn trên dev" thành một sự thật
+  về thứ đã được tính, chứ không phải một lời hứa về thứ đã không nhìn** — kiểu ràng buộc mà máy
+  giữ hộ thì chắc hơn là người tự nhớ.
+
+  ### Chạy thử trọn đường ống trên dữ liệu giả, đúng nếp T22
+
+  Dựng shard giả ở cả ba hash trích, với `n_chunks` bằng 7, 3 và 1 để mô phỏng ba cỡ cửa sổ, rồi
+  chạy `run_chunk_aware.py` thật. Bắt được hai lỗi trình bày mà chỉ nhìn code thì không thấy:
+  banner in `E03_CHUNK_AWARE` cho cả cấu hình E04 (mã thí nghiệm ghi vào `results/runs.jsonl` lấy
+  từ đó, nên bốn lượt sẽ lẫn vào nhau không phân biệt được), và nhãn `mixed_all_basic_topk_rest`
+  dài hơn cột 22 ký tự làm lệch cả bảng sẽ dán vào báo cáo.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t23_chunk_aware_cua_so_t4.ipynb`, khoảng **3,2 giờ**: ba cỡ cửa sổ × (57 phút
+  train + 7 phút dev), cộng thời gian nạp mô hình. Mỗi ô chạy lại được nên chia làm hai phiên
+  cũng được.
+
+  Ranh giới đoạn nằm trong `extraction_hash` nên **ba cỡ không dùng chung lượt trích được** —
+  khác với E02 và E03 vốn chỉ khác nhau ở nhóm đặc trưng nên chia nhau một lượt GPU.
 - [ ] **T24** · L · E05 chốt cách chia chunk
   - **Kiểm tra:** Bảng 3 trong `docs/EXPERIMENTS.md` được điền đầy đủ, có kết luận chọn cấu hình nào và lý do.
 

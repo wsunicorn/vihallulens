@@ -1,0 +1,118 @@
+"""Task T23: the config's cutting parameters actually reaching the chunker.
+
+Every test here runs on CPU and exists because the failure it catches would otherwise only show
+up on a T4, after a fifty-minute model load, on the first sample of a run that had already been
+queued behind two others.
+"""
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+
+from extract_features import chunking_arguments
+from vihallulens.config import extraction_hash, load_config
+from vihallulens.data.chunking import chunk_context
+from vihallulens.features.chunk_aware import CHUNK_FEATURE_NAMES, chunk_features
+
+WINDOWS = (64, 128, 256)
+
+
+def window_config(size):
+    return load_config(f"configs/e04_chunk_window{size}_vihallu.yaml")
+
+
+class FakeTokenizer:
+    """Enough of a tokenizer for the window strategy: offsets for whitespace-separated words."""
+
+    def __call__(self, text, **kwargs):
+        offsets, start = [], 0
+        for word in text.split(" "):
+            offsets.append((start, start + len(word)))
+            start += len(word) + 1
+        return {"input_ids": list(range(len(offsets))), "offset_mapping": offsets}
+
+
+# -- the bug this file was written for -----------------------------------------------------------
+
+
+def test_the_window_strategy_is_handed_a_tokenizer():
+    """The T23 bug. ``chunk_context`` takes ``**kwargs`` and quietly ignores keys a strategy does
+    not use, so the caller that passed only ``strategy`` and ``min_words`` was correct for the
+    sentence strategy and silently wrong for the window one."""
+    arguments = chunking_arguments(window_config(128).chunking, FakeTokenizer())
+    assert arguments["tokenizer"] is not None
+
+
+@pytest.mark.parametrize("size", WINDOWS)
+def test_the_configured_window_and_stride_are_handed_over(size):
+    """Passing a tokenizer but no window would fall back to ``chunk_context``'s default of 128,
+    so all three configs would produce the same chunks and the sweep would compare nothing."""
+    arguments = chunking_arguments(window_config(size).chunking, FakeTokenizer())
+    assert arguments["window_size"] == size
+    assert arguments["stride"] == size // 2
+
+
+def test_the_sentence_strategy_does_not_grow_a_tokenizer_argument():
+    """E02 and E03 must keep cutting exactly as they did before T23, or their stored shards stop
+    matching the code that would rebuild them."""
+    arguments = chunking_arguments(load_config("configs/e03_chunk_sentence_vihallu.yaml").chunking,
+                                   FakeTokenizer())
+    assert arguments == {"strategy": "sentence", "min_words": 5}
+
+
+def test_the_arguments_actually_drive_the_chunker():
+    """The end the mapping exists for: feed it straight to ``chunk_context`` and get windows."""
+    text = " ".join(f"w{i}" for i in range(300))
+    chunks = chunk_context(text, **chunking_arguments(window_config(64).chunking, FakeTokenizer()))
+    assert len(chunks) > 1
+    assert all(chunk.token_start is not None for chunk in chunks)
+
+
+# -- the three configs are three experiments -----------------------------------------------------
+
+
+def test_each_window_size_gets_its_own_extraction():
+    """Chunk boundaries decide the per-chunk array, so the three windows cannot share a shard the
+    way E02 and E03 do — each one is a separate GPU pass."""
+    hashes = {size: extraction_hash(window_config(size)) for size in WINDOWS}
+    assert len(set(hashes.values())) == len(WINDOWS)
+
+
+def test_the_windows_do_not_share_the_sentence_extraction():
+    sentence = extraction_hash(load_config("configs/e03_chunk_sentence_vihallu.yaml"))
+    assert sentence not in {extraction_hash(window_config(size)) for size in WINDOWS}
+
+
+@pytest.mark.parametrize("size", WINDOWS)
+def test_the_windows_ask_for_the_same_feature_groups_as_e03(size):
+    """E04 has to differ from E03 in the cutting and nothing else, or the sweep confounds the
+    chunk size with the feature set."""
+    e03 = load_config("configs/e03_chunk_sentence_vihallu.yaml")
+    assert window_config(size).features.groups == e03.features.groups
+
+
+# -- what a window wider than the context does ---------------------------------------------------
+
+
+def test_a_single_chunk_makes_the_five_features_constant():
+    """Measured on ViHallu at T23: a 256-token window leaves 67 % of contexts in one piece. The
+    features stay finite — no NaN reaches the classifier — but they carry no information, which
+    is the reason the probe runs before the GPU rather than after."""
+    single = np.random.default_rng(0).random((2, 3, 5, 1)).astype(np.float16)
+    values = chunk_features(single)
+    assert set(values) == set(CHUNK_FEATURE_NAMES)
+    assert all(np.isfinite(value).all() for value in values.values())
+    constants = {"chunk_entropy": 0.0, "chunk_max_share": 1.0, "chunk_gini": 0.0,
+                 "top1_top2_gap": 1.0, "chunk_drift": 0.0}
+    for name, expected in constants.items():
+        assert values[name] == pytest.approx(expected), name
+
+
+def test_two_chunks_still_carry_signal():
+    """The boundary case that says the constants above are about n=1 and not a broken formula."""
+    values = chunk_features(np.random.default_rng(0).random((2, 3, 5, 2)).astype(np.float16))
+    assert values["chunk_entropy"].std() > 0
