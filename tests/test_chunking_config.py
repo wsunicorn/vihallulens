@@ -116,3 +116,43 @@ def test_two_chunks_still_carry_signal():
     """The boundary case that says the constants above are about n=1 and not a broken formula."""
     values = chunk_features(np.random.default_rng(0).random((2, 3, 5, 2)).astype(np.float16))
     assert values["chunk_entropy"].std() > 0
+
+
+# -- what --dev-only records ---------------------------------------------------------------------
+
+
+def dev_only_record_block() -> str:
+    """The source of the record ``--dev-only`` writes.
+
+    Anchored on ``"dev_only": True`` rather than on ``if args.dev_only:`` — that condition appears
+    twice, once for a banner line, and splitting on the first one silently returned the wrong
+    block."""
+    import inspect
+
+    import run_chunk_aware
+
+    source = inspect.getsource(run_chunk_aware.main)
+    assert '"dev_only": True' in source
+    return source.split("log_result(")[1].split("path=args.results_path")[0]
+
+
+def test_dev_only_never_reports_a_cost_it_did_not_measure():
+    """Bảng 3 is made of dev numbers, so ``--dev-only`` writes a record — but it must not write
+    a *cost*. A 0.0 there would read as a free method in E11's accuracy-versus-cost table, which
+    is how the T19 dry-run once overwrote E10's real 8.194 ms with 0.03."""
+    block = dev_only_record_block()
+    assert '"ms_per_sample": None' in block
+    assert '"ms_per_sample": 0.0' not in block
+
+
+def test_dev_only_metrics_cannot_be_mistaken_for_a_test_score():
+    """Every key in the metrics it writes carries a dev_ prefix, so a later reader of runs.jsonl
+    cannot pick one up as a test result and put it in Bảng 1."""
+    import re
+
+    block = dev_only_record_block()
+    metrics = re.search(r'\{"dev_[^}]*\}', block)
+    assert metrics, "không tìm thấy dict chỉ số của --dev-only"
+    keys = re.findall(r'"([a-z_0-9]+)":', metrics.group(0))
+    assert keys
+    assert all(key.startswith("dev_") for key in keys), keys

@@ -1539,7 +1539,7 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   Phải trích lại vì lượt T20 chưa lưu mảng theo đoạn. Nhưng từ lượt này trở đi thì **E04, E05, E12 dùng lại được** — trừ E04 vốn đổi cách chia đoạn nên phải trích riêng.
 
   Notebook có thêm **ô 8 chạy lại E02 trên chính lượt trích này**, để hai thí nghiệm khác nhau đúng một biến là nhóm đặc trưng, không lẫn khác biệt nào từ một lượt GPU khác. Con số phải khớp 0,7465; lệch nhiều nghĩa là có gì đó đã đổi ngoài ý muốn.
-- [ ] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256 — **công cụ sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
+- [x] **T23** · L · E04 chunk-aware chia theo cửa sổ token, quét 64/128/256 — **xong 30/08/2026**
 
   ### Task này để làm gì
 
@@ -1619,6 +1619,92 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   banner in `E03_CHUNK_AWARE` cho cả cấu hình E04 (mã thí nghiệm ghi vào `results/runs.jsonl` lấy
   từ đó, nên bốn lượt sẽ lẫn vào nhau không phân biệt được), và nhãn `mixed_all_basic_topk_rest`
   dài hơn cột 22 ký tự làm lệch cả bảng sẽ dán vào báo cáo.
+
+  ### Kết quả — chia theo câu thắng cả ba cỡ cửa sổ
+
+  Chạy 30/08/2026, 3,3 giờ GPU, 6 lượt trích, **0 lỗi trên 18.900 mẫu**, 0 cắt ngữ cảnh, 0 lớp
+  tràn số.
+
+| Chiến lược | TB đoạn | chỉ 1 đoạn | cách gộp dev chọn | macro-F1 dev |
+|---|---|---|---|---|
+| **Câu, min_words=5 (E03)** | 5,3 | 1,1 % | `topk k=32`, 192 chiều | **0,7768** |
+| Cửa sổ 128 / bước 64 | 3,3 | 0,1 % | `topk k=32`, 192 chiều | 0,7655 |
+| Cửa sổ 64 / bước 32 | 7,1 | 0,0 % | `topk k=32`, 192 chiều | 0,7624 |
+| Cửa sổ 256 / bước 128 | 1,4 | 66,5 % | `mixed k=16`, 836 chiều | 0,7574 |
+
+  ### Phép kiểm dựng trước khi chạy, và câu trả lời của nó
+
+  Notebook ghi sẵn: nếu điểm đi theo **số đoạn** thì thứ quyết định là độ phân giải; nếu chia
+  theo câu thắng ở mật độ đoạn tương đương thì là **ranh giới ngữ nghĩa**. Đặt câu hỏi trước khi
+  thấy số là cách duy nhất để câu trả lời không bị uốn theo kết quả.
+
+  Số liệu trả lời dứt khoát. Cửa sổ 64 cho **7,1** đoạn, cửa sổ 128 cho **3,3** — chênh **2,15
+  lần** — mà điểm chỉ lệch **0,0031**. Chia theo câu nằm **giữa** hai cỡ ấy ở 5,3 đoạn và hơn cả
+  hai **0,011–0,014**. Sắp theo số đoạn: 7,1 → 5,3 → 3,3 → 1,4 cho
+  0,7624 → **0,7768** → 0,7655 → 0,7574.
+
+  **Không đơn điệu.** Nếu độ phân giải quyết định, câu ở 5,3 đoạn phải nằm giữa hai cỡ cửa sổ về
+  điểm số — nó không. Vậy **ranh giới câu mang thông tin mà cửa sổ token tùy tiện không có**.
+
+  Đây là luận điểm cho đóng góp của đề tài: chunk-aware không phải "chia nhỏ ngữ cảnh ra" mà là
+  "chia theo đơn vị nghĩa". Nếu cửa sổ token thắng thì đóng góp chỉ còn là một thủ thuật kỹ
+  thuật; nó thua nên phần ngữ nghĩa mới là thứ mang tín hiệu.
+
+  ### Một điều chưa tách được — ghi nợ, không lờ đi
+
+  Cửa sổ **chồng lấn** (bước bằng nửa), câu thì **phủ kín không đè**. Nên "câu thắng" còn hai
+  cách giải thích: ranh giới ngữ nghĩa, **hoặc** chỉ đơn giản là không chồng lấn. Lập luận về số
+  đoạn nghiêng về cách thứ nhất nhưng không loại trừ cách thứ hai.
+
+  Tách dứt điểm cần một cấu hình cửa sổ 128 **bước 128**, khoảng 57 phút GPU. Quyết ở T24.
+
+  ### Cửa sổ 256 rơi đúng chỗ đã dự báo, và đó là điểm mạnh chứ không phải ô trống
+
+  Trước khi đặt lịch GPU đã dự báo: cỡ 256 để 67 % ngữ cảnh nguyên một đoạn, năm đặc trưng hình
+  dạng thành hằng số, nên nó phải rơi về gần E02. E02 chấm qua **cùng quy trình chọn** ở T22 cho
+  dev **0,7607**; cửa sổ 256 cho **0,7574** — lệch 0,0033.
+
+  Dự báo đúng nghĩa là **đường ống được xác nhận**. Nếu cỡ 256 bỗng cao hơn hẳn thì mới phải
+  dừng lại tìm lỗi, vì không có cơ chế nào giải thích được điều đó.
+
+  Tỷ lệ một đoạn đo trên train là 66,5 %, khớp 67,2 % mà `probe_chunking.py` đo trên cả 7.000
+  ngữ cảnh — hai phép đếm độc lập cho cùng một con số.
+
+  ### Cách gộp đầu tự khai ra sự thoái hóa
+
+  Ba cấu hình còn lại đều chọn `topk_heads k=32`, đúng cái E03 đã chọn. **Lựa chọn này ổn định
+  qua mọi cách chia đoạn**, nên chốt được như một tham số chứ không phải thứ phải dò lại.
+
+  Cửa sổ 256 là ngoại lệ duy nhất: nó chọn `mixed_all_basic_topk_rest k=16`. Đây chính là ứng
+  viên thêm vào ở T22 để giữ **nguyên vẹn** khối lookback và chỉ tỉa các khối rộng — nó **thua**
+  ở E03, và giờ **thắng** đúng chỗ lý thuyết nói nó phải thắng: khi hình dạng là hằng số trên
+  66,5 % mẫu, bộ chọn tự quay về dựa vào tỷ lệ lookback đầy đủ.
+
+  Nghĩa là **cách gộp đầu được chọn tự nó chẩn đoán ra sự thoái hóa**, không cần ai nói trước.
+  Một ứng viên thêm vào để bác giả thuyết của chính mình ở T22 hóa ra còn làm được việc thứ hai.
+
+  ### Chi phí không phụ thuộc cách chia đoạn — số dành cho E11
+
+  Câu **528** ms/mẫu, cửa sổ 64 **538**, cửa sổ 128 **541**, cửa sổ 256 **540**. Số đoạn chênh 5
+  lần mà chi phí chênh 2,5 %. Toàn bộ giá nằm ở forward pass của mô hình đọc; phần quy kết chú ý
+  theo đoạn gần như miễn phí. Hệ quả: **chunk-aware không đắt hơn Lookback Lens gộp**.
+
+  ### Một lỗ hổng truy vết tự phát hiện sau khi chạy
+
+  `--dev-only` dừng trước khi ghi `results/runs.jsonl`, nên bốn con số của Bảng 3 chỉ tồn tại
+  trong text của notebook — một bảng trong khóa luận mà không có gì đọc được bằng máy đứng sau.
+  Đã sửa: `--dev-only` giờ ghi một bản ghi gồm bảng chọn cách gộp đầy đủ và điểm dev.
+
+  Bản ghi ấy để `ms_per_sample` là `None` chứ **không** phải `0.0`. Đường này không đo chi phí,
+  và một số 0 ở đó sẽ thành một dòng "phương pháp miễn phí" trong bảng đánh đổi của E11 — đúng
+  kiểu lỗi mà `--dry-run` của T19 từng gây ra khi ghi đè 8.194 ms của E10 thành 0,03. Mọi khóa
+  chỉ số đều mang tiền tố `dev_` để không thể bị nhặt nhầm thành điểm test.
+
+  ### T24 gần như không cần GPU
+
+  Cấu hình thắng trên dev là **chia theo câu**, mà E03 đã chấm test đủ ở T22: macro-F1 0,7567
+  [0,7242; 0,7885]. Cùng quy trình, cùng lượt trích. Nên T24 chỉ còn việc viết kết luận vào
+  Bảng 3 — trừ khi quyết chạy thêm phép đối chứng cửa sổ không chồng lấn ở trên.
 
   ### Việc cần chạy
 
