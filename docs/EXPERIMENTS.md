@@ -330,21 +330,66 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
-Ba cột đầu đo trên CPU ở T23 bằng `scripts/probe_chunking.py`, trên cả 7.000 ngữ cảnh ViHallu.
-Cột cuối cần GPU và được điền ở T23 (dev) rồi chốt ở T24.
+**Kết luận: chọn chia theo câu, `min_words=5`.** Giữ nguyên cấu hình này cho mọi thí nghiệm
+còn lại. Lý do ở ngay dưới bảng.
 
-Cả bốn dòng chấm lại **trên cùng một máy** ngày 30/08/2026, từ chính sáu shard mà GPU sinh ra.
-Lý do phải làm vậy nằm ở mục "Số dev không tái lập giữa hai môi trường" ngay dưới bảng.
+Cả năm dòng chấm **trên cùng một máy**, từ chính các shard mà GPU sinh ra. Lý do bắt buộc phải
+làm vậy nằm ở mục "Số dev không tái lập giữa hai môi trường".
 
-| Chiến lược | Tham số | TB đoạn | Chỉ 1 đoạn | Cách gộp dev chọn | macro-F1 dev | Nhị phân | `no` | `intrinsic` | `extrinsic` |
+| Chiến lược | Tham số | Chồng lấn | TB đoạn | Cách gộp dev chọn | macro-F1 dev | Nhị phân | `no` | `intrinsic` | `extrinsic` |
 |---|---|---|---|---|---|---|---|---|---|
-| **Câu** | min_words=5 | 5,3 | 1,3 % | `topk k=32`, 192 | **0,7768** | **0,8943** | **0,8596** | 0,7202 | **0,7505** |
-| Cửa sổ | 128 / stride 64 | 3,3 | 0,1 % | `topk k=32`, 192 | 0,7683 | 0,8864 | 0,8493 | **0,7325** | 0,7230 |
-| Cửa sổ | 64 / stride 32 | 7,1 | 0,0 % | `topk k=16`, 96 | 0,7662 | 0,8902 | 0,8528 | 0,7158 | 0,7300 |
-| Cửa sổ | 256 / stride 128 | 1,4 | 66,5 % | `mixed k=32`, 916 | 0,7589 | 0,8670 | 0,8210 | 0,7149 | 0,7407 |
+| **Câu** ← chọn | min_words=5 | không | 5,29 | `topk k=32`, 192 | **0,7768** | **0,8943** | **0,8596** | 0,7202 | **0,7505** |
+| Cửa sổ | 128 / stride 64 | có | 3,29 | `topk k=32`, 192 | 0,7683 | 0,8864 | 0,8493 | **0,7325** | 0,7230 |
+| Cửa sổ | 64 / stride 32 | có | 7,08 | `topk k=16`, 96 | 0,7662 | 0,8902 | 0,8528 | 0,7158 | 0,7300 |
+| **Cửa sổ đối chứng** | 48 / stride 48 | **không** | **5,56** | `topk k=32`, 192 | 0,7649 | 0,8930 | 0,8584 | 0,7111 | 0,7254 |
+| Cửa sổ | 256 / stride 128 | có | 1,43 | `mixed k=32`, 916 | 0,7589 | 0,8670 | 0,8210 | 0,7149 | 0,7407 |
 
-Sáu lượt trích trên Kaggle, **0 lỗi trên 18.900 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số. Cột "chỉ
-1 đoạn" đo trên tập train; 66,5 % khớp 67,2 % mà `probe_chunking.py` đếm trên cả 7.000 ngữ cảnh.
+Bảy lượt trích trên Kaggle, **0 lỗi trên 25.200 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số.
+
+### Phép đối chứng bác bỏ cách giải thích "chồng lấn"
+
+T23 để lại một câu hỏi: chia theo câu thắng vì **ranh giới ngữ nghĩa**, hay chỉ vì nó **không
+chồng lấn** trong khi ba cỡ cửa sổ đều chồng lấn nửa cửa sổ? Hai kết luận rất khác nhau — vế sau
+thu đóng góp của đề tài xuống thành "đừng chia chồng lấn".
+
+Dòng đối chứng khóa cả hai biến lại: cửa sổ 48 bước 48 **phủ kín không đè**, và cho **5,56** đoạn
+so với 5,29 của chia theo câu. Khác chia theo câu đúng một thứ là ranh giới có theo câu hay không.
+
+**Kết quả: 0,7649 — thấp hơn cả hai cỡ cửa sổ chồng lấn** (0,7683 và 0,7662), chứ không cao hơn.
+Bỏ chồng lấn đi **không giúp được gì**.
+
+Vậy chồng lấn chưa bao giờ là lời giải thích. Bốn cấu hình cửa sổ nằm gọn trong dải
+**0,7589–0,7683** bất kể chồng lấn hay phủ kín, bất kể 1,4 hay 7,1 đoạn mỗi ngữ cảnh. Chia theo
+câu đứng trên **cả bốn**. Cách giải thích còn lại là **ranh giới ngữ nghĩa**.
+
+### Độ lớn: nhỏ, nhưng hướng thì nhất quán 8 trên 8
+
+Phải nói thẳng về biên độ. Chia theo câu hơn cửa sổ tốt nhất **0,0085**, hơn đối chứng **0,0119**
+— trên 700 mẫu dev, với biên độ trôi giữa hai môi trường đo được tới 0,0075. **Không đủ để gọi là
+có ý nghĩa thống kê.**
+
+Thứ nâng nó lên khỏi mức ngẫu nhiên là tính nhất quán. Bốn cấu hình cửa sổ × hai môi trường là
+**tám phép so, cả tám đều cho chia theo câu đứng trên**:
+
+```
+                      máy cá nhân   Kaggle
+  Câu                    0,7768     0,7768
+  Cửa sổ 128 chồng lấn   0,7683     0,7655
+  Cửa sổ 64 chồng lấn    0,7662     0,7624
+  Cửa sổ 48 phủ kín      0,7649     0,7604
+  Cửa sổ 256 chồng lấn   0,7589     0,7574
+```
+
+Và quan trọng hơn cả: **phép đối chứng được dựng riêng để kiểm cách giải thích cạnh tranh, rồi
+cho kết quả chống lại chính cách giải thích ấy.** Đó là bằng chứng mạnh hơn một khoảng cách lớn
+mà chưa ai thử bác.
+
+### Cách gộp đầu lại đảo chỗ giữa hai môi trường
+
+Đối chứng chọn `mixed k=8` trên Kaggle (0,7604) và `topk k=32` trên máy cá nhân (0,7649). Bảng
+chọn của nó rất phẳng ở đỉnh — ba ứng viên đầu cách nhau 0,002 — nên đây là biểu hiện của độ trôi
+đã ghi ở T23, lần thứ ba liên tiếp. Củng cố kết luận: **con số `k` phải để dev chọn từng lần, chỉ
+họ `topk_heads` là chốt được.**
 
 **Cửa sổ 128 thắng `intrinsic`.** 0,7325 so với 0,7202 của chia theo câu — chính lớp mà T22 cho
 thấy chunk-aware bị thua so với lookback gộp. Chia theo câu bù lại ở `no` và `extrinsic` nên

@@ -1656,7 +1656,10 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   cách giải thích: ranh giới ngữ nghĩa, **hoặc** chỉ đơn giản là không chồng lấn. Lập luận về số
   đoạn nghiêng về cách thứ nhất nhưng không loại trừ cách thứ hai.
 
-  Tách dứt điểm cần một cấu hình cửa sổ 128 **bước 128**, khoảng 57 phút GPU. Quyết ở T24.
+  Tách dứt điểm cần một cấu hình cửa sổ **không chồng lấn**, khoảng 57 phút GPU. **Đã làm ở
+  T24 và câu trả lời là ngữ nghĩa** — xem phần T24. Cỡ cửa sổ ban đầu định dùng là 128 bước
+  128, nhưng đo ra nó chỉ cho 2,43 đoạn nên sẽ lôi biến số đoạn vào; cỡ đúng là **48 bước 48**
+  với 5,56 đoạn, khớp mật độ của chia theo câu.
 
   ### Cửa sổ 256 rơi đúng chỗ đã dự báo, và đó là điểm mạnh chứ không phải ô trống
 
@@ -1814,7 +1817,7 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
   Ranh giới đoạn nằm trong `extraction_hash` nên **ba cỡ không dùng chung lượt trích được** —
   khác với E02 và E03 vốn chỉ khác nhau ở nhóm đặc trưng nên chia nhau một lượt GPU.
-- [ ] **T24** · L · E05 chốt cách chia chunk — **công cụ đối chứng sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
+- [x] **T24** · L · E05 chốt cách chia chunk — **xong 30/08/2026**
   - **Kiểm tra:** Bảng 3 trong `docs/EXPERIMENTS.md` được điền đầy đủ, có kết luận chọn cấu hình nào và lý do.
 
   ### Vì sao cần thêm một lượt GPU nữa
@@ -1885,6 +1888,82 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
   Cộng một ô nữa: ô 4 xác nhận cỡ 48 thật sự khớp mật độ đoạn, và `assert` dừng luôn nếu lệch quá
   0,5 đoạn — tiền đề của cả thí nghiệm, sai thì không nên tốn GPU chạy tiếp.
+
+  ### Kết quả — chốt chia theo câu, và phép đối chứng bác cách giải thích cạnh tranh
+
+  Chạy 30/08/2026, 57,5 phút GPU, **0 lỗi trên 6.300 mẫu**. Năm dòng chấm trên cùng một máy:
+
+| Chiến lược | Chồng lấn | TB đoạn | macro-F1 dev | `no` | `intrinsic` | `extrinsic` |
+|---|---|---|---|---|---|---|
+| **Câu, min_words=5** ← chọn | không | 5,29 | **0,7768** | **0,8596** | 0,7202 | **0,7505** |
+| Cửa sổ 128 / bước 64 | có | 3,29 | 0,7683 | 0,8493 | **0,7325** | 0,7230 |
+| Cửa sổ 64 / bước 32 | có | 7,08 | 0,7662 | 0,8528 | 0,7158 | 0,7300 |
+| **Cửa sổ 48 / bước 48** (đối chứng) | **không** | **5,56** | 0,7649 | 0,8584 | 0,7111 | 0,7254 |
+| Cửa sổ 256 / bước 128 | có | 1,43 | 0,7589 | 0,8210 | 0,7149 | 0,7407 |
+
+  ### Đối chứng trả lời: ngữ nghĩa, không phải chồng lấn
+
+  Câu hỏi T23 để lại: chia theo câu thắng vì **ranh giới ngữ nghĩa**, hay chỉ vì nó **không chồng
+  lấn** trong khi ba cỡ cửa sổ đều chồng nửa? Vế sau thu đóng góp của đề tài xuống thành "đừng
+  chia chồng lấn" — yếu hơn hẳn.
+
+  Đối chứng khóa cả hai biến: phủ kín không đè, 5,56 đoạn so với 5,29 của chia theo câu.
+
+  **Kết quả 0,7649 — thấp hơn cả hai cỡ cửa sổ chồng lấn**, chứ không cao hơn. Bỏ chồng lấn đi
+  không giúp được gì. Bốn cấu hình cửa sổ nằm gọn trong dải **0,7589–0,7683** bất kể chồng lấn hay
+  phủ kín, bất kể 1,4 hay 7,1 đoạn. Chia theo câu đứng trên cả bốn.
+
+  Cách giải thích còn lại là **ranh giới ngữ nghĩa**. Đóng góp của đề tài giữ nguyên như đang
+  viết: chunk-aware không phải "chia nhỏ ngữ cảnh ra" mà là "chia theo đơn vị nghĩa".
+
+  ### Vì sao tin được, dù khoảng cách nhỏ
+
+  Nói thẳng biên độ: hơn cửa sổ tốt nhất **0,0085**, hơn đối chứng **0,0119**, trên 700 mẫu dev,
+  với độ trôi giữa hai môi trường tới 0,0075. **Không đủ gọi là có ý nghĩa thống kê.**
+
+  Ba thứ nâng nó lên khỏi mức ngẫu nhiên:
+
+  1. **Tám trên tám.** Bốn cấu hình cửa sổ × hai môi trường, cả tám phép so đều cho chia theo câu
+     đứng trên.
+  2. **Không đơn điệu theo số đoạn** (T23): 7,08 → 5,29 → 3,29 → 1,43 cho
+     0,7662 → **0,7768** → 0,7683 → 0,7589. Đỉnh rơi vào chia theo câu chứ không vào đầu nào của
+     thang phân giải. Nhiễu không dựng ra hình dạng này một cách tự nhiên.
+  3. **Đối chứng được dựng riêng để kiểm cách giải thích cạnh tranh, rồi cho kết quả chống lại
+     chính cách giải thích ấy.** Mạnh hơn một khoảng cách lớn mà chưa ai thử bác.
+
+  ### Một lỗi thiết kế của tôi trong notebook
+
+  Ô 7b định chấm lại E03 trên cùng máy Kaggle để hai số so được với nhau. Nó hỏng:
+
+```
+Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417f1.jsonl
+```
+
+  Phiên Kaggle mới thì `data/processed` rỗng — shard của E03 nằm ở máy cá nhân, không phải trên
+  Kaggle. Tôi viết ô ấy mà quên mất điều đó.
+
+  Hậu quả suýt nghiêm trọng: con số duy nhất còn lại để so là đối chứng trên Kaggle (0,7604) với
+  E03 trên máy cá nhân (0,7768) — **đúng kiểu so xuyên môi trường mà chính T23 vừa dạy là không
+  được làm**, và nó lại đang nghiêng về phía tôi mong. Nên đã dừng, tải shard về, chấm lại tại chỗ
+  (0,7649) rồi mới kết luận.
+
+  **Bài học cho notebook sau:** ô nào cần shard của thí nghiệm cũ thì phải chạy trên máy cá nhân,
+  không phải trên Kaggle. Phiên Kaggle chỉ có thứ nó vừa tự sinh ra.
+
+  ### Cách gộp đầu đảo chỗ lần thứ ba
+
+  Đối chứng chọn `mixed k=8` trên Kaggle (0,7604) và `topk k=32` trên máy cá nhân (0,7649). Bảng
+  chọn rất phẳng ở đỉnh — ba ứng viên đầu cách nhau 0,002. Củng cố kết luận T23: **chỉ họ
+  `topk_heads` là chốt được, con số `k` phải để dev chọn từng lần.**
+
+  ### T24 không tốn thêm GPU nào cho phần quyết định
+
+  Cấu hình thắng là chia theo câu, mà E03 đã chấm test đủ ở T22: macro-F1 **0,7567**
+  [0,7242; 0,7885]. Cùng quy trình, cùng lượt trích. Dòng "Chunk-aware câu (E03)" trong Bảng 1
+  vì thế là kết quả chốt của E05, không phải một biến thể chờ thay.
+
+  57,5 phút GPU của T24 chi hết cho phép đối chứng — tức chi để biết **viết phần đóng góp thế
+  nào**, không phải để chọn cấu hình.
 
   ### Việc cần chạy
 
