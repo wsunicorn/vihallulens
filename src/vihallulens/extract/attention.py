@@ -89,6 +89,12 @@ class AttentionFeatures:
     truncated: bool
     peak_vram_mb: float
     elapsed_ms: float
+    # The chunks the arrays above are actually indexed by — the ones that SURVIVED truncation,
+    # re-indexed to stay contiguous. Needed by experiment E06, which has to find which chunk
+    # holds the gold evidence: locating it in the original chunk list would name an index that
+    # no longer exists, or worse, points at a different chunk. Empty on records written before
+    # T25, so a reader has to treat it as optional.
+    chunks: list = field(default_factory=list)
     layer_indices: list[int] = field(default_factory=list)
     # Layers whose attention matrix was not finite. A model overflowing in float16 still
     # runs to completion and still fills these arrays, only with nan, so it is recorded.
@@ -502,6 +508,7 @@ class AttentionExtractor:
             self_attention=np.stack([item[3] for item in order]).astype(np.float16),
             n_chunks=len(chunks),
             truncated=truncated,
+            chunks=list(chunks),
             peak_vram_mb=peak,
             elapsed_ms=elapsed_ms,
             layer_indices=list(self.layer_indices),

@@ -1970,9 +1970,98 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   Mở `notebooks/t24_doi_chung_khong_chong_lan_t4.ipynb`, khoảng **64 phút**: 57 phút train,
   7 phút dev. Chấm điểm chạy CPU.
 
-- [ ] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01
+- [ ] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01 — **công cụ sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
   - Đo hit@1, hit@3, MRR so với sàn ngẫu nhiên; đo entropy của nhãn NEI so với hai nhãn kia.
   - **Kiểm tra:** Bảng 2 được điền, có kiểm định thống kê cho phần entropy. **Đây là thí nghiệm quyết định CH1.**
+
+  ### Vì sao task này khác mọi task trước
+
+  Mọi kết quả đến giờ suy ra cơ chế từ **điểm phân loại**: đặc trưng chunk-aware giúp ích, vậy chú
+  ý hẳn phải rơi vào chỗ có nghĩa. Đó là suy luận gián tiếp, và nó có một lỗ hổng — một bộ phát
+  hiện có thể ăn điểm nhờ bất kỳ thứ gì tương quan với ảo giác, không nhất thiết vì nó *đọc đúng
+  chỗ*.
+
+  E06 đọc thẳng. ISE-DSC01 có **bằng chứng nguyên văn** cho nhãn SUPPORTED và REFUTED, nên hỏi
+  được: đoạn được chú ý nhiều nhất **có phải** đoạn chứa bằng chứng không. Không cần bộ phân loại
+  nào, không có gì để huấn luyện, không có siêu tham số nào để dò.
+
+  ### Bốn phép đo trên CPU, và phép thứ tư mới là điều kiện tiên quyết
+
+  Chạy trước khi đặt lịch GPU, trên 400 mẫu train rồi kiểm lại trên toàn tập dev:
+
+```
+  ngữ cảnh            794 token trung bình, p95 1.671, lớn nhất 2.313
+  vượt trần 4.096     0,0 %
+  số đoạn (dev)       22,7 trung bình, trung vị 19, lớn nhất 161
+  định vị bằng chứng  2.377/2.377 trên tập dev, không sót mẫu nào
+  sàn ngẫu nhiên      1/n trung bình = 0,0614
+  vị trí đoạn vàng    trung bình 0,519, 45,6 % nằm ở nửa đầu
+```
+
+  1. **Không mẫu nào bị cắt ngữ cảnh.** Trái với dự đoán ở mục 5 `CLAUDE.md`, ISE-DSC01 sau chuẩn
+     hóa không chạm trần 4.096 token — dài nhất 2.313. Nhánh cắt ngắn **vẫn chưa được thử thật**
+     sau sáu lượt trích. Ghi lại vì nó là rủi ro còn treo, không phải rủi ro đã qua.
+  2. **22,7 đoạn mỗi ngữ cảnh**, gấp bốn ViHallu. Đây mới là chỗ chunk-aware có đất diễn.
+  3. **Sàn ngẫu nhiên 0,0614**, so với 0,19 nếu chạy trên ViHallu. Ngữ cảnh càng nhiều đoạn thì
+     hit@1 càng dễ phân biệt với đoán mò.
+  4. **Đoạn vàng rải đều.** Đây là điều kiện tiên quyết chứ không phải một con số phụ: nếu bằng
+     chứng dồn về đầu hay cuối ngữ cảnh thì một bộ đoán "luôn chọn đoạn đầu" đã thắng sàn, và
+     hit@1 cao sẽ **không chứng minh được gì**. Vị trí tương đối trung bình 0,519 với 45,6 % ở
+     nửa đầu, nên không có mẹo vị trí nào ăn được. Notebook có `assert` dừng nếu điều này hỏng.
+
+  ### Ba quyết định thiết kế
+
+  **Hạng của đoạn vàng tính ngay trong lúc trích**, không tính sau. Nó cần hai thứ chỉ khâu trích
+  mới có: mảng theo đoạn trước khi bị gộp mất, và — chỗ dễ sai — danh sách chunk **sống sót sau
+  cắt ngắn**. Cắt ngắn bỏ nguyên từng đoạn rồi đánh số lại, nên một chỉ số tìm trong danh sách
+  gốc sẽ âm thầm trỏ vào đoạn khác và hit@1 thành ra đo nhầm. Vì thế `AttentionFeatures` nay trả
+  về cả danh sách chunk sống sót.
+
+  **Hòa khi xếp hạng tính bi quan.** Một đầu chú ý trải đều tuyệt đối thì hòa với mọi đoạn; luật
+  lạc quan sẽ chấm nó hit@1 dù nó không hề tỏ ra ưu tiên gì. Ở `float16` hòa không hiếm. Bộ kiểm
+  thử bắt được đúng lỗi này: bản đầu tiên tôi viết dùng `>` nên lạc quan, trong khi docstring nói
+  bi quan — nó sẽ thổi phồng hit@1 mà không ai thấy.
+
+  **Sàn ngẫu nhiên tính theo từng mẫu rồi mới trung bình.** Số đoạn chạy từ 3 tới 161, và
+  `1/trung bình(n)` khác `trung bình(1/n)` rất nhiều ở độ tản ấy. Dùng cái đầu sẽ làm đẹp kết quả
+  một cách âm thầm.
+
+  ### Kiểm định thống kê: p không phải con số đáng đọc
+
+  Hai nhóm có 1.269 và 2.377 mẫu. Ở cỡ đó, một khác biệt nhỏ tới mức vô nghĩa vẫn ra p < 0,001.
+  Nên script in **cỡ ảnh hưởng rank-biserial** cạnh p và bắt đọc nó trước. Có một ca kiểm thử
+  dựng đúng tình huống ấy — hai nhóm lệch nhau một phần hai mươi độ lệch chuẩn, n = 20.000 — để
+  khóa lại rằng p nhỏ mà cỡ ảnh hưởng vẫn "không đáng kể".
+
+  Kiểm định là Mann-Whitney U, **tự viết bằng numpy** thay vì gọi `scipy`. Entropy bị chặn trong
+  [0, 1] và dồn về trần trên ngữ cảnh ngắn nên hoàn toàn không chuẩn, kiểm định t sẽ trả lời một
+  câu hỏi về trung bình mà dữ liệu không đỡ nổi. Viết tay thì `scipy` không phải thành phụ thuộc
+  khai báo của cả dự án cho đúng một hàm — hiện nó chỉ vào gián tiếp qua scikit-learn.
+
+  Entropy đem kiểm là **trung bình mọi đầu**, không phải đầu tách nhãn tốt nhất. Chọn đầu sau khi
+  thấy dữ liệu là chọn thống kê kiểm định theo kết quả, và p sẽ mất hết ý nghĩa.
+
+  ### Chạy thử trọn đường ống trên shard giả
+
+  Dựng shard giả có **cấy sẵn một đầu định vị** ở lớp 5 đầu 11 với xác suất 0,55, rồi chạy
+  `run_localization.py` thật. Nó tìm lại đúng lớp 5 đầu 11, hit@1 ra 0,5500 khớp xác suất đã cấy,
+  sàn 0,0535 và bội số 10,28 lần. Trung bình mọi đầu ra 0,0550, tức gần đúng sàn — đúng như phải
+  thế khi chỉ một đầu được cấy tín hiệu.
+
+  ### Một chỗ cố ý không làm
+
+  Bảng 2 trong `docs/EXPERIMENTS.md` có sẵn dòng "Cửa sổ 128 token" cạnh "Chia theo câu". Kế
+  hoạch ấy viết **trước** khi T24 chốt cách chia. Giờ chia theo câu đã là cấu hình chốt, nên chạy
+  thêm 70 phút GPU cho cách chia đã bị loại là tiêu hạn mức để điền một ô không ai dùng. Bảng 3
+  đã trả lời câu hỏi so sánh cách chia rồi.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t25_dinh_vi_chu_y_t4.ipynb`, khoảng **70 phút**: chỉ tập dev, 3.646 mẫu ở
+  ~1,1 giây mỗi mẫu. Không chạy train vì E06 không huấn luyện gì; không chạy test để dành cho
+  E07 và E16.
+
+  Lượt trích này **T26 dùng lại được** cho E07 nên nhớ tải shard về.
 
 - [ ] **T26** · L · E07 chunk-aware trên ngữ cảnh dài ISE-DSC01
 - [ ] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16
