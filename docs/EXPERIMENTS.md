@@ -208,10 +208,11 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 |---|---|---|---|---|---|---|---|---|---|---|
 | Baseline tầm thường (E01) | **0,656** [0,620–0,689] | 0,802 | 0,854 | 0,870 | 0,742 | 0,533 | 0,694 | 0,061 | 0,001 | 0 |
 | PhoBERT tinh chỉnh (E09) | **0,749** [0,714–0,778] | 0,851 | 0,921 | 0,883 | 0,800 | 0,693 | 0,754 | 0,081 | 12,3 | 9.002 |
-| XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,844** | 0,729 | **0,756** | 0,097 | 25,2 | 11.231 |
+| XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,844** | 0,729 | 0,756 | 0,097 | 25,2 | 11.231 |
 | InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | | 11.231 |
 | Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
-| **Lookback gộp (E02)** ¶ | **0,746** [0,713–0,777] | 0,844 | 0,896 | 0,892 | 0,795 | **0,731** | 0,714 | 0,108 | 464 | 8.428 |
+| **Lookback gộp (E02)** ¶ | **0,745** [0,711–0,776] | 0,843 | 0,896 | 0,890 | 0,793 | **0,731** | 0,712 | 0,109 | 464 | 8.428 |
+| **Chunk-aware câu (E03)** ¶ | 0,757 [0,724–0,789] | 0,864 | 0,894 | 0,915 | 0,823 | 0,686 | **0,762** | **0,044** | 528 | 8.428 |
 | **Chunk-aware (E05)** | | | | | | | | | | |
 
 Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
@@ -257,6 +258,43 @@ Ba điều, và điều thứ hai là quan trọng nhất từ đầu đề tài
 **Điều E02 KHÔNG chứng minh, phải nói rõ.** Nó chưa vượt XLM-R: 0,746 so với 0,776, và hai khoảng tin cậy chồng nhau nhiều ([0,713–0,777] và [0,757–0,818]) nên cũng chưa kết luận được XLM-R hơn hẳn. Và chi phí tuyệt đối cao hơn — 464 ms mỗi mẫu so với 25 ms. Lập luận chi phí của đề tài dựa trên chi phí **biên** trong hệ RAG thật, thứ thí nghiệm này không đo.
 
 **Và đây mới là mốc thật của phần đóng góp.** `chunk-aware` phải vượt **0,746**, không phải vượt 0,656 của E01 — vì nó là cùng một họ phương pháp, chỉ khác cách chia mẫu số. Vượt E01 thì chỉ chứng minh chú ý có ích; vượt E02 mới chứng minh **chia theo đoạn** có ích.
+
+### E03 vượt E02 ở tổng, nhưng câu chuyện nằm ở từng lớp
+
+Chạy ngày 29/08/2026. E02 được chạy lại trên **chính lượt trích của E03** để hai bên khác nhau đúng một biến; nó cho 0,7451 so với 0,7465 của lượt T20, lệch 0,0014 nên hai lượt trích nhất quán.
+
+| | ba lớp | nhị phân | `no` | `intrinsic` | `extrinsic` | ECE |
+|---|---|---|---|---|---|---|
+| E02 lượng | 0,7451 | 0,8426 | 0,7925 | **0,7308** | 0,7121 | 0,1090 |
+| E03 lượng + hình dạng | **0,7567** | **0,8636** | **0,8228** | 0,6858 | **0,7615** | **0,0441** |
+| chênh | **+0,0116** | +0,0210 | +0,0303 | **−0,0450** | **+0,0494** | −0,0649 |
+
+**Chunk-aware thắng ở `extrinsic` đúng chừng nào thì thua ở `intrinsic` chừng ấy.** Hai chiều gần như triệt tiêu, còn lại +0,012 ở tổng — mà khoảng tin cậy [0,724–0,789] chồng gần hết lên [0,711–0,776] của E02. **Vượt điểm, chưa hơn hẳn.**
+
+Đây là **một nửa giả thuyết được xác nhận, một nửa bị bác**. Giả thuyết nói phân bố chú ý tách được hai loại: nội tại thì nhọn vì mô hình *có đọc*, ngoại lai thì tản vì *không đọc*. Nửa "ngoại lai thì tản" đúng rõ ràng. Nửa "nội tại thì nhọn" thì không thêm được gì — vì tỷ lệ gộp **đã** nắm phần đó rồi: 0,7308 của E02 là con số cao nhất cả bảng trên lớp này.
+
+### Hai phép đối chứng, cả hai đều bác giả thuyết của chính tôi
+
+**Hình dạng một mình chỉ đạt 0,6054** — thua cả 0,6562 của hai đặc trưng bề mặt E01. Năm đặc trưng chunk **không phải bộ phát hiện độc lập**; chúng là tín hiệu bổ sung, chỉ có giá trị khi đứng cạnh tỷ lệ gộp. Trên lớp `intrinsic` chúng đạt 0,5055, gần sàn.
+
+**Cách chọn đầu chú ý không phải thủ phạm.** Nghi ngờ đầu tiên là `topk_heads k=32` chỉ giữ 32 trong 756 cột lookback, nên phần tụt ở `intrinsic` có thể do mất cột chứ không do đặc trưng chunk. Đã kiểm hai cách:
+
+- Chạy E02 qua **cùng quy trình chọn**: dev chọn `all` với đủ 756 cột. Nghĩa là 32 đầu không phải handicap áp đặt, mà là thứ dev chọn cho riêng bộ đặc trưng rộng.
+- Thêm hẳn một ứng viên `mixed_all_basic_topk_rest` — giữ **nguyên vẹn** khối lookback, chỉ tỉa các khối rộng — rồi chấm lại trên dev. Bốn biến thể của nó đều **thua**: tốt nhất 0,7645 so với 0,7768 của `topk k=32`.
+
+Không gian tìm kiếm vì thế đã chứa E02 như một trường hợp riêng, và dev vẫn không chọn nó. **Chênh lệch từng lớp là thật.**
+
+### Ba điều E03 làm được, ghi rõ để khỏi bị con số tổng che
+
+1. **Hiệu chỉnh xác suất tốt nhất cả bảng.** ECE 0,044 so với 0,109 của E02 và 0,097 của XLM-R — giảm hơn một nửa. Với bài toán mà người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là kết quả đứng riêng được, và nó đi ngược xu hướng "càng mạnh càng tự tin thái quá" của ba mốc kia.
+2. **Chỉ số nhị phân 0,8636**, cao thứ hai cả bảng sau XLM-R, với `báo đúng` 0,915 — cao nhất.
+3. **Năm đặc trưng mới chiếm 87 % trọng số** (`chunk_entropy` 26,8 %, `chunk_max_share` 22,6 %, `top1_top2_gap` 15,5 %, `chunk_gini` 15,0 %, `chunk_drift` 7,2 %) so với 12,9 % của `lookback_total`. Bộ phân loại không dùng lại E02 rồi ăn may — nó thật sự dựa vào hình dạng.
+
+### Còn phải làm gì trước khi kết luận về đóng góp
+
+E03 mới là **một** cách chia đoạn. T23 quét cách chia theo cửa sổ token 64/128/256, T24 chốt. Chia theo câu cho trung bình 5,3 đoạn mỗi ngữ cảnh, có thể là quá thô để hình dạng phân bố nói lên điều gì trên lớp `intrinsic`.
+
+Và E06 — định vị chú ý so với đoạn bằng chứng vàng trên ISE-DSC01 — mới là phép kiểm **trực tiếp** của cơ chế, thay vì suy ra từ điểm phân loại.
 
 ### Cột nhị phân nói gì
 

@@ -39,6 +39,7 @@ from vihallulens.evaluation.metrics import (  # noqa: E402
     compute_metrics,
 )
 from vihallulens.features.assemble import (  # noqa: E402
+    GROUP_BLOCKS,
     blocks_for,
     build_feature_matrix,
     column_names,
@@ -56,6 +57,17 @@ E02_MACRO_F1 = 0.7465
 # with six blocks, wide enough to keep more than a handful of heads.
 TOPK_GRID = (8, 16, 32, 64)
 
+# A seventh candidate, added after the first E03 run exposed a gap in the search space. Keeping
+# k heads shrinks *every* block, including the single narrow one — so the chosen k=32 gave the
+# aggregate lookback ratio 32 columns where E02 had 756, and E03 lost 0,045 on the intrinsic
+# class that those columns carried.
+#
+# The search space simply did not contain "keep the cheap block whole and thin the wide ones",
+# which means E03 could not be guaranteed to contain E02 as a special case. It can now. The
+# candidate is scored on dev like every other one; it is not chosen because it looked good on
+# test, and the first run's numbers are reported alongside rather than replaced.
+MIXED = "mixed_all_basic_topk_rest"
+
 
 def load_split(processed_dir: Path, run: str, dataset: str, split: str):
     """Records for one split, sorted by sample id so a resumed extraction gives one matrix."""
@@ -64,6 +76,40 @@ def load_split(processed_dir: Path, run: str, dataset: str, split: str):
         return None, path
     records = sorted(load_done(path).values(), key=lambda record: record["sample_id"])
     return records, path
+
+
+def split_groups(groups) -> tuple[list[str], list[str]]:
+    """Separate the aggregate lookback group from the chunk-shape ones."""
+    wide = [group for group in groups if group != "basic"]
+    return (["basic"] if "basic" in groups else []), wide
+
+
+def build_mixed(records, groups, n_layers, n_heads, keep):
+    """All heads for ``basic``, only the chosen ones for the wide blocks."""
+    narrow, wide = split_groups(groups)
+    parts = []
+    if narrow:
+        parts.append(build_feature_matrix(records, narrow, n_layers, n_heads, "all"))
+    if wide:
+        parts.append(build_feature_matrix(records, wide, n_layers, n_heads, "topk_heads", keep))
+    return np.hstack(parts)
+
+
+def mixed_names(groups, layer_indices, n_heads, keep) -> list[str]:
+    narrow, wide = split_groups(groups)
+    names = []
+    if narrow:
+        names += column_names(blocks_for(narrow), layer_indices, n_heads, "all")
+    if wide:
+        names += column_names(blocks_for(wide), layer_indices, n_heads, "topk_heads", keep)
+    return names
+
+
+def matrix_for(records, groups, n_layers, n_heads, mode, keep):
+    """One entry point for every candidate, mixed included."""
+    if mode == MIXED:
+        return build_mixed(records, groups, n_layers, n_heads, keep)
+    return build_feature_matrix(records, groups, n_layers, n_heads, mode, keep)
 
 
 def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_dev, seed):
@@ -77,15 +123,19 @@ def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_d
     full = LookbackDetector(seed=seed).fit(x_train, y_train)
     order = rank_heads(full.feature_weights, n_blocks, n_layers, n_heads)
 
+    candidates = [("all", None), ("mean_over_heads", None),
+                  *[("topk_heads", order[:k]) for k in TOPK_GRID]]
+    # Only worth trying when there is a narrow block to keep whole and wide ones to thin.
+    if len(GROUP_BLOCKS.get("basic", ())) and "basic" in groups and len(groups) > 1:
+        candidates += [(MIXED, order[:k]) for k in TOPK_GRID]
+
     trials = []
-    for mode, keep in [("all", None), ("mean_over_heads", None),
-                       *[("topk_heads", order[:k]) for k in TOPK_GRID]]:
-        train_matrix = build_feature_matrix(records["train"], groups, n_layers, n_heads,
-                                            mode, keep)
-        dev_matrix = build_feature_matrix(records["dev"], groups, n_layers, n_heads, mode, keep)
+    for mode, keep in candidates:
+        train_matrix = matrix_for(records["train"], groups, n_layers, n_heads, mode, keep)
+        dev_matrix = matrix_for(records["dev"], groups, n_layers, n_heads, mode, keep)
         model = LookbackDetector(seed=seed).fit(train_matrix, y_train)
         score = compute_metrics(y_dev, model.predict(dev_matrix))["macro_f1"]
-        label = mode if keep is None else f"topk_heads k={len(keep)}"
+        label = mode if keep is None else f"{mode} k={len(keep)}"
         trials.append({"mode": mode, "keep": keep, "label": label,
                        "n_features": train_matrix.shape[1], "dev_macro_f1": float(score)})
         del train_matrix, dev_matrix, model
@@ -174,11 +224,11 @@ def main() -> int:
     # -- the chosen model, scored once on test --------------------------------------------
     keep = best["keep"]
     matrices = {
-        split: build_feature_matrix(records[split], groups, n_layers, n_heads,
-                                    best["mode"], keep)
+        split: matrix_for(records[split], groups, n_layers, n_heads, best["mode"], keep)
         for split in ("train", "test")
     }
-    names = column_names(blocks, layer_indices, n_heads, best["mode"], keep)
+    names = (mixed_names(groups, layer_indices, n_heads, keep) if best["mode"] == MIXED
+             else column_names(blocks, layer_indices, n_heads, best["mode"], keep))
     detector = LookbackDetector(
         detector_type=cfg.detector.type,
         class_weight=cfg.detector.class_weight,
@@ -216,9 +266,9 @@ def main() -> int:
     # Which family the weight actually sits in. If the contribution is real, the chunk blocks
     # should carry a share of it well above what a null contribution would give them.
     per_block = {}
-    width = len(names) // len(blocks)
-    for position, block in enumerate(blocks):
-        per_block[block] = float(weights[position * width:(position + 1) * width].sum())
+    for block in blocks:
+        columns = [index for index, name in enumerate(names) if name.startswith(f"{block}_l")]
+        per_block[block] = float(weights[columns].sum())
     total = sum(per_block.values()) or 1.0
     print()
     print("  Trọng số chia theo khối đặc trưng:")
