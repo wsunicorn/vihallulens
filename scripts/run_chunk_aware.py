@@ -46,7 +46,9 @@ from vihallulens.features.assemble import (  # noqa: E402
     rank_heads,
 )
 
-RUN_NAME = "e03_chunk_aware"
+# Falls back to the config's own run_name, so the four E04 window runs do not all report
+# themselves as E03 in results/runs.jsonl and become impossible to tell apart afterwards.
+RUN_NAME = None
 
 # The number to beat, measured at T20. Not E01's 0,6562: chunk-aware and aggregate lookback are
 # the same family of method differing only in how the denominator is split, so clearing E01
@@ -151,20 +153,31 @@ def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_d
 def main() -> int:
     parser = argparse.ArgumentParser(description="E03/E04: bộ phát hiện chunk-aware.")
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--run-name", default=RUN_NAME)
+    parser.add_argument("--run-name", default=RUN_NAME,
+                        help="mặc định lấy run_name trong file cấu hình")
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED_DIR)
     parser.add_argument("--results-path", type=Path, default=Path("results/runs.jsonl"))
+    parser.add_argument(
+        "--dev-only", action="store_true",
+        help="dừng sau khi chấm dev, không đụng tập test — dùng cho lượt quét E04 của T23",
+    )
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     cfg = load_config(args.config)
+    run_name = args.run_name or cfg.run_name
     run = extraction_hash(cfg)
     groups = list(cfg.features.groups)
 
+    # T23 sweeps three window sizes and only one of them survives into T24, so the losers
+    # never need a test shard: not extracting it saves seven GPU minutes each, and more to
+    # the point it makes "the choice was made on dev" a fact about what was computed rather
+    # than a promise about what was looked at.
+    wanted = ("train", "dev") if args.dev_only else ("train", "dev", "test")
     records, labels = {}, {}
-    for split in ("train", "dev", "test"):
+    for split in wanted:
         rows, path = load_split(args.processed_dir, run, cfg.dataset.name, split)
         if rows is None:
             print(f"\nThiếu đặc trưng của tập {split}: {path}")
@@ -181,7 +194,7 @@ def main() -> int:
 
     print()
     print("=" * 80)
-    print(f"{args.run_name.upper()} — BỘ PHÁT HIỆN CHUNK-AWARE")
+    print(f"{run_name.upper()} — BỘ PHÁT HIỆN CHUNK-AWARE")
     print("=" * 80)
     print(f"  cấu hình              : {args.config}  (trích {run})")
     cutting = cfg.chunking.strategy
@@ -190,8 +203,10 @@ def main() -> int:
     print(f"  chia đoạn             : {cutting}")
     print(f"  nhóm đặc trưng        : {', '.join(groups)}")
     print(f"  khối                  : {', '.join(blocks)}")
-    print(f"  train / dev / test    : {len(records['train']):,} / {len(records['dev']):,} / "
-          f"{len(records['test']):,} mẫu")
+    sizes = " / ".join(f"{len(records[split]):,}" for split in wanted)
+    print(f"  {' / '.join(wanted):<22}: {sizes} mẫu")
+    if args.dev_only:
+        print("  chế độ                : --dev-only, KHÔNG chấm tập test")
     print(f"  lưới lớp × đầu        : {n_layers} × {n_heads}")
 
     chunks = [row["n_chunks"] for row in records["train"]]
@@ -214,12 +229,20 @@ def main() -> int:
         x_train, labels["train"], records, groups, n_layers, n_heads,
         labels["dev"], REQUIRED_SPLIT_SEED,
     )
-    print(f"  {'Cách gộp':<22} {'số chiều':>10} {'macro-F1 dev':>14}")
+    print(f"  {'Cách gộp':<32} {'số chiều':>10} {'macro-F1 dev':>14}")
     for trial in trials:
         mark = "  ← chọn" if trial["label"] == best["label"] else ""
-        print(f"  {trial['label']:<22} {trial['n_features']:>10,} "
+        print(f"  {trial['label']:<32} {trial['n_features']:>10,} "
               f"{trial['dev_macro_f1']:>14.4f}{mark}")
     print(f"  ({time.perf_counter() - started:.0f} giây)")
+
+    if args.dev_only:
+        print()
+        print("-" * 80)
+        print(f"  chọn                  : {best['label']}, {best['n_features']:,} chiều")
+        print(f"  macro-F1 trên DEV     : {best['dev_macro_f1']:.4f}")
+        print("  Dừng ở đây theo --dev-only. Tập test để dành cho cấu hình thắng ở T24.")
+        return 0
 
     # -- the chosen model, scored once on test --------------------------------------------
     keep = best["keep"]
@@ -275,7 +298,7 @@ def main() -> int:
     for block, value in sorted(per_block.items(), key=lambda item: -item[1]):
         print(f"    {block:<22} {value / total * 100:>5.1f} %")
 
-    config = {**cfg.to_dict(), "experiment": args.run_name.split("_")[0].upper()}
+    config = {**cfg.to_dict(), "experiment": run_name.split("_")[0].upper()}
     extra = {
         "n_train": len(records["train"]),
         "n_dev": len(records["dev"]),
@@ -299,7 +322,7 @@ def main() -> int:
         "std_method": "_lo/_hi/_se từ bootstrap tập test; bộ phân loại tất định nên không có _std",
         "selection_note": "cách gộp đầu chọn trên tập dev, tập test chỉ chấm một lần",
     }
-    record = log_result(args.run_name, config, {**point, **interval}, extra,
+    record = log_result(run_name, config, {**point, **interval}, extra,
                         path=args.results_path)
     print()
     print(f"  Đã ghi {args.results_path} — config_hash {record['config_hash']}")
@@ -310,7 +333,7 @@ def main() -> int:
     print("-" * 80)
     delta = point["macro_f1"] - E02_MACRO_F1
     print(f"  E02 lookback gộp : {E02_MACRO_F1:.4f}")
-    print(f"  {args.run_name:<17}: {point['macro_f1']:.4f}   ({delta:+.4f})")
+    print(f"  {run_name:<17}: {point['macro_f1']:.4f}   ({delta:+.4f})")
     if point["macro_f1"] <= E02_MACRO_F1:
         print()
         print("  CHƯA VƯỢT. Chia theo đoạn chưa đóng góp được gì trên tập này. Đừng trình bày")

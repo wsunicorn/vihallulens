@@ -330,12 +330,41 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
-| Chiến lược | Tham số | macro-F1 dev |
-|---|---|---|
-| Câu | min_words=5 | |
-| Cửa sổ | 64 / stride 32 | |
-| Cửa sổ | 128 / stride 64 | |
-| Cửa sổ | 256 / stride 128 | |
+Ba cột đầu đo trên CPU ở T23 bằng `scripts/probe_chunking.py`, trên cả 7.000 ngữ cảnh ViHallu.
+Cột cuối cần GPU và được điền ở T23 (dev) rồi chốt ở T24.
+
+| Chiến lược | Tham số | TB số đoạn | Trung vị | Chỉ 1 đoạn | macro-F1 dev |
+|---|---|---|---|---|---|
+| Câu | min_words=5 | 5,3 | 5 | 1,1 % | **0,7768** |
+| Cửa sổ | 64 / stride 32 | 7,1 | 6 | 0,0 % | |
+| Cửa sổ | 128 / stride 64 | 3,3 | 3 | 0,1 % | |
+| Cửa sổ | 256 / stride 128 | 1,4 | 1 | 67,2 % | |
+
+**Cột "chỉ 1 đoạn" là phần dữ liệu mà năm đặc trưng hình dạng trở thành hằng số** `(0, 1, 0, 1, 0)`:
+với một đoạn thì entropy bằng 0, tỷ trọng lớn nhất bằng 1 và độ dịch chuyển bằng 0, bất kể mô
+hình đọc làm gì. Ở đó chunk-aware thoái hóa đúng về lookback gộp.
+
+Vì thế **cửa sổ 256 gần như chắc chắn không thắng trên ViHallu**, và điều đó đã biết trước khi
+đặt lịch GPU: ngữ cảnh ViHallu chỉ dài trung vị 218 token, nên một cửa sổ 256 token thường là
+cả ngữ cảnh. Vẫn chạy đủ ba cỡ, vì Bảng 3 phải được điền bằng số đo chứ không bằng suy luận —
+và vì nếu cửa sổ 256 *không* rơi về gần E02 thì đó là dấu hiệu đường ống sai, không phải một
+phát hiện.
+
+Con số đáng chờ là **64 so với 128**: 7,1 đoạn so với 3,3 đoạn, trong khi chia theo câu cho 5,3.
+Nếu điểm đi theo số đoạn thì thứ quyết định là **độ phân giải**; nếu chia theo câu thắng cả hai
+cỡ cửa sổ ở mật độ đoạn tương đương thì thứ quyết định là **ranh giới ngữ nghĩa**. Hai kết luận
+khác hẳn nhau về mặt cơ chế, và Bảng 3 phân biệt được chúng.
+
+### Một chỗ phải cẩn thận khi đọc entropy của cửa sổ chồng lấn
+
+Bước bằng nửa cửa sổ nên các đoạn chồng lấn: một token trong vùng chồng được đếm cho cả hai
+đoạn, và token ở hai đầu ngữ cảnh chỉ được phủ một lần trong khi token ở giữa được phủ hai lần.
+Véc-tơ theo đoạn vì vậy không còn là một phân bố theo nghĩa chặt.
+
+Entropy và Gini vẫn tính được sau khi chuẩn hóa, nhưng phải diễn giải là *"chú ý tản trên các
+cửa sổ"* chứ không phải *"tản trên các phần rời nhau của ngữ cảnh"*. Chia theo câu không vướng
+điều này vì các câu phủ kín và không đè lên nhau. Nếu cửa sổ thua câu thì đây là một trong hai
+cách giải thích, và cách kia là số đoạn — nên phải đọc Bảng 3 theo cả hai cột.
 
 ### Bảng 4 — Ablation nhóm đặc trưng (E12)
 
