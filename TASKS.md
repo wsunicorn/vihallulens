@@ -1970,7 +1970,7 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   Mở `notebooks/t24_doi_chung_khong_chong_lan_t4.ipynb`, khoảng **64 phút**: 57 phút train,
   7 phút dev. Chấm điểm chạy CPU.
 
-- [ ] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01 — **công cụ sẵn sàng 30/08/2026, chờ chạy trên Kaggle**
+- [x] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01 — **xong 31/08/2026**
   - Đo hit@1, hit@3, MRR so với sàn ngẫu nhiên; đo entropy của nhãn NEI so với hai nhãn kia.
   - **Kiểm tra:** Bảng 2 được điền, có kiểm định thống kê cho phần entropy. **Đây là thí nghiệm quyết định CH1.**
 
@@ -2054,6 +2054,90 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   hoạch ấy viết **trước** khi T24 chốt cách chia. Giờ chia theo câu đã là cấu hình chốt, nên chạy
   thêm 70 phút GPU cho cách chia đã bị loại là tiêu hạn mức để điền một ô không ai dùng. Bảng 3
   đã trả lời câu hỏi so sánh cách chia rồi.
+
+  ### Kết quả — CH1 được xác nhận trực tiếp
+
+  Chạy 31/08/2026, 65,1 phút GPU trên toàn tập dev 3.646 mẫu, **0 lỗi**. 2.376 mẫu có bằng chứng
+  định vị được, trung bình **22,6 đoạn** mỗi ngữ cảnh.
+
+| Chỉ số | Đầu mạnh nhất | Trung bình 756 đầu | Sàn ngẫu nhiên | Gấp sàn |
+|---|---|---|---|---|
+| **hit@1** | **0,8779** (lớp 14, đầu 6) | 0,3320 | 0,0614 | **14,29×** / 5,40× |
+| hit@3 | 0,9562 (lớp 16, đầu 7) | 0,5177 | 0,1843 | 5,19× / 2,81× |
+| MRR | 0,9200 (lớp 16, đầu 7) | 0,4709 | 0,1987 | 4,63× / 2,37× |
+
+  **Đầu mạnh nhất chỉ đúng đoạn chứa bằng chứng trong 87,8 % số mẫu, chọn giữa trung bình 22,6
+  đoạn.** Mọi kết quả trước đều suy ra cơ chế từ điểm phân loại; đây là lần đầu nó được đo thẳng.
+
+  ### Mối lo duy nhất, và nó bị dập tắt bằng số
+
+  0,8779 là max trên 756 ô, chọn trên đúng tập được báo cáo — nên là **cận trên**. Câu hỏi đúng
+  là bao nhiêu phần trong đó do may mắn khi chọn.
+
+  Không phần nào đáng kể. Nếu **mọi** đầu đều mạnh ngang mức trung bình 0,3320 thì sai số chuẩn
+  trên 2.376 mẫu là 0,0097, và max trên 756 lần rút chỉ kỳ vọng khoảng **0,363**. Quan sát
+  **0,878** — cách xa mọi giải thích bằng nhiễu chọn.
+
+  Và nó không phải một đầu ăn may:
+
+```
+  đầu tốt nhất        0,878          10 đầu đầu bảng  0,878 … 0,863
+  trung vị 756 đầu    0,178 (2,9x)   192/756 đầu vượt 10x sàn
+  trung bình          0,332 (5,4x)   453/756 đầu vượt  2x sàn
+  đầu kém nhất        0,048          5 lớp mạnh nhất: 14, 16, 15, 19, 8
+```
+
+  **Nếu chỉ được báo cáo một con số thì nên là 5,40× — trung bình mọi đầu, không dính lựa chọn
+  nào.** Con số 14,29× vẫn nên có, nhưng phải kèm câu này.
+
+  Một khác biệt với Lookback Lens đáng viết vào báo cáo: bài gốc thấy tín hiệu tập trung ở vài
+  đầu. Ở đây **một phần tư số đầu vượt 10 lần sàn** và các lớp mạnh nhất quây quanh giữa mạng
+  (14, 15, 16, 19). Định vị bằng chứng là **thuộc tính rộng** của Qwen2.5-7B chứ không phải một
+  mạch chuyên biệt.
+
+  ### Nửa thứ hai: nhãn không bằng chứng thì chú ý tản hơn
+
+  Entropy trung vị 0,7975 so với 0,7676. P(NEI tản hơn) = **0,7213**, cỡ ảnh hưởng rank-biserial
+  **+0,4426**, mức **lớn**. Mann-Whitney z = 22,05, p = 1,04 × 10⁻¹⁰⁷.
+
+  **p ở đây gần như vô nghĩa** — với 1.269 và 2.376 mẫu thì một khác biệt không đáng kể vẫn ra p
+  dưới 0,001, đúng cái bẫy mà một ca kiểm thử của T25 dựng sẵn để khóa lại.
+
+  Và phải nói cho cân: **chênh tuyệt đối chỉ 0,03 trên thang 0–1**. Hiệu ứng lớn nằm ở **tính
+  nhất quán của thứ tự** — bốc một mẫu mỗi bên thì bảy trên mười lần NEI tản hơn — chứ không ở độ
+  lớn. Nghĩa là entropy là tín hiệu thật nhưng **yếu khi dùng một mình**, khớp đúng với E03 nơi
+  đặc trưng hình dạng đứng riêng chỉ đạt 0,6054.
+
+  ### Nhánh cắt ngắn cuối cùng cũng chạy, và nó làm đúng việc
+
+  **6/3.646 mẫu bị cắt ngữ cảnh** — lần đầu sau bảy lượt trích. Trong đó **1 mẫu mất đoạn bằng
+  chứng** vì đoạn ấy nằm trong phần bị cắt, và nó được **loại khỏi phần định vị** thay vì âm thầm
+  chấm nhầm một đoạn khác.
+
+  Đây chính là lý do `AttentionFeatures` phải trả về danh sách chunk sống sót, quyết định ở phần
+  thiết kế phía trên. Nếu tính hạng bằng danh sách chunk gốc thì mẫu ấy đã được chấm với một chỉ
+  số trỏ sai và không ai biết. Cơ chế bảo vệ viết ra vì lo xa, nay được thử trên dữ liệu thật với
+  đúng một mẫu.
+
+  ### Kết quả tái lập chính xác giữa hai môi trường
+
+  Chấm lại trên máy cá nhân từ shard tải về cho **trùng từng chữ số**, khác hẳn độ trôi tới
+  0,0075 đo ở T23. Lý do rõ ràng: E06 chỉ có số học thuần — xếp hạng, đếm, trung bình — không có
+  bộ tối ưu lặp nào như `LogisticRegression` để hội tụ khác nhau theo phiên bản BLAS.
+
+  Nói thêm được một điều cho phần hạn chế của báo cáo: **độ trôi ở T23 là tính chất của bộ phân
+  loại, không phải của đặc trưng chú ý.** Bản thân tín hiệu trích ra thì tất định.
+
+  ### Chi phí
+
+  **1.071 ms/mẫu**, gấp đôi ViHallu (528 ms), đúng theo tỷ lệ độ dài ngữ cảnh 794 so với 243
+  token — khớp mô hình chi phí tuyến tính theo token đo ở T08. Ghi vào bảng E11.
+
+  ### Vì sao Bảng 2 chỉ có một dòng
+
+  Kế hoạch có thêm "cửa sổ 128 token", viết **trước** khi T24 chốt cách chia. Chạy thêm 70 phút
+  GPU cho một cách chia đã bị loại là tiêu hạn mức để điền một ô không ai dùng; Bảng 3 đã trả lời
+  câu hỏi so sánh cách chia bằng bốn cấu hình và một phép đối chứng thiết kế riêng.
 
   ### Việc cần chạy
 
