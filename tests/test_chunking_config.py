@@ -216,3 +216,52 @@ def test_the_control_window_matches_sentence_density():
     gives only 2,43 and would have confounded density back in, which is why the size was measured
     rather than guessed. This test pins the size that measurement produced."""
     assert control_config().chunking.window_size == 48
+
+
+# -- the matched-size comparison E07 needs -------------------------------------------------------
+
+
+def test_a_subsample_keeps_the_label_balance():
+    """The detector is fitted with class_weight='balanced', so a wobble in the class shares
+    changes the weights and adds a second difference to a comparison meant to have one."""
+    from run_chunk_aware import stratified_sample
+
+    labels = np.array(["no"] * 500 + ["intrinsic"] * 300 + ["extrinsic"] * 200)
+    rows = [{"sample_id": f"s{i:04d}"} for i in range(len(labels))]
+    _, taken = stratified_sample(rows, labels, 100, 42)
+    assert len(taken) == 100
+    for label, share in (("no", 0.5), ("intrinsic", 0.3), ("extrinsic", 0.2)):
+        assert (taken == label).mean() == pytest.approx(share, abs=0.02), label
+
+
+def test_asking_for_more_than_there_is_returns_everything():
+    from run_chunk_aware import stratified_sample
+
+    labels = np.array(["no"] * 30 + ["intrinsic"] * 30)
+    rows = [{"sample_id": f"s{i}"} for i in range(60)]
+    rows_out, labels_out = stratified_sample(rows, labels, 500, 42)
+    assert len(rows_out) == 60
+    assert len(labels_out) == 60
+
+
+def test_the_subsample_is_the_same_every_time():
+    """A different subset each run would make the matched-size number irreproducible, and it is
+    reported next to a number that is."""
+    from run_chunk_aware import stratified_sample
+
+    labels = np.array(["no", "intrinsic", "extrinsic"] * 200)
+    rows = [{"sample_id": f"s{i:04d}"} for i in range(600)]
+    first, _ = stratified_sample(rows, labels, 90, 42)
+    second, _ = stratified_sample(rows, labels, 90, 42)
+    assert [r["sample_id"] for r in first] == [r["sample_id"] for r in second]
+
+
+def test_rows_and_labels_stay_aligned():
+    """The bug worth guarding: sampling rows and labels separately would silently train on
+    mislabelled data and still produce a plausible-looking score."""
+    from run_chunk_aware import stratified_sample
+
+    labels = np.array([f"L{i % 3}" for i in range(300)])
+    rows = [{"sample_id": f"s{i:04d}", "label": labels[i]} for i in range(300)]
+    rows_out, labels_out = stratified_sample(rows, labels, 60, 42)
+    assert [r["label"] for r in rows_out] == list(labels_out)
