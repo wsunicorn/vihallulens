@@ -323,10 +323,82 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 
 ### Bảng 2 — Định vị chú ý trên ISE-DSC01 (E06)
 
-| Cấu hình | hit@1 | hit@3 | MRR | Sàn ngẫu nhiên |
+Chạy 31/08/2026 trên toàn bộ tập dev, 3.646 mẫu, 65,1 phút GPU, **0 lỗi**. Chia theo câu, cấu
+hình chốt ở T24. 2.376 mẫu có bằng chứng định vị được, trung bình **22,6 đoạn** mỗi ngữ cảnh.
+
+| Chỉ số | Đầu mạnh nhất | Trung bình 756 đầu | Sàn ngẫu nhiên | Gấp sàn (đầu / trung bình) |
 |---|---|---|---|---|
-| Chia theo câu | | | | |
-| Cửa sổ 128 token | | | | |
+| **hit@1** | **0,8779** (lớp 14, đầu 6) | 0,3320 | 0,0614 | **14,29×** / 5,40× |
+| hit@3 | 0,9562 (lớp 16, đầu 7) | 0,5177 | 0,1843 | 5,19× / 2,81× |
+| MRR | 0,9200 (lớp 16, đầu 7) | 0,4709 | 0,1987 | 4,63× / 2,37× |
+
+**Đầu mạnh nhất chỉ đúng đoạn chứa bằng chứng trong 87,8 % số mẫu, chọn giữa trung bình 22,6
+đoạn.** Đây là phép kiểm trực tiếp của cơ chế, không suy ra từ điểm phân loại nào.
+
+### Đầu mạnh nhất chọn trên chính dữ liệu báo cáo — và điều đó không giải thích được kết quả
+
+Con số 0,8779 là cận trên: nó là max trên 756 ô, chọn trên đúng tập được báo cáo. Câu hỏi đúng
+là phần nào của nó do may mắn khi chọn.
+
+Không phần nào đáng kể. Nếu **mọi** đầu đều mạnh ngang mức trung bình 0,3320, sai số chuẩn trên
+2.376 mẫu là 0,0097, nên max trên 756 lần rút chỉ kỳ vọng khoảng **0,363**. Quan sát được
+**0,878**.
+
+Và nó không phải một đầu ăn may:
+
+```
+  đầu tốt nhất        0,878          10 đầu đầu bảng   0,878 … 0,863
+  trung vị 756 đầu    0,178 (2,9x)   192/756 đầu vượt 10x sàn
+  trung bình          0,332 (5,4x)   453/756 đầu vượt  2x sàn
+  đầu kém nhất        0,048          5 lớp mạnh nhất: 14, 16, 15, 19, 8
+```
+
+**Trung bình mọi đầu đã là 5,40× sàn**, và con số ấy **không dính lựa chọn nào**. Nếu chỉ được
+báo cáo một số thì nên là số này.
+
+Khác Lookback Lens ở một điểm đáng nói: bài gốc thấy tín hiệu tập trung ở vài đầu. Ở đây **một
+phần tư số đầu vượt 10 lần sàn**, và các lớp mạnh nhất quây quanh giữa mạng (14, 15, 16, 19).
+Định vị bằng chứng là thuộc tính rộng của Qwen2.5-7B chứ không phải một mạch chuyên biệt.
+
+### Nhãn không có bằng chứng thì chú ý tản hơn
+
+| | Trung vị entropy | Số mẫu |
+|---|---|---|
+| Không bằng chứng (NEI) | 0,7975 | 1.269 |
+| Có bằng chứng (SUPPORTED + REFUTED) | 0,7676 | 2.376 |
+
+P(mẫu NEI tản hơn mẫu có bằng chứng) = **0,7213**, cỡ ảnh hưởng rank-biserial **+0,4426** — mức
+**lớn**. Mann-Whitney U cho z = 22,05, p = 1,04 × 10⁻¹⁰⁷.
+
+**Đọc p ở đây gần như vô nghĩa** và bảng ghi nó chỉ cho đủ. Với 1.269 và 2.376 mẫu, một khác biệt
+nhỏ tới mức không đáng kể vẫn ra p dưới 0,001. Con số phải đọc là cỡ ảnh hưởng.
+
+Nhưng cũng phải nói cho cân: **chênh lệch tuyệt đối chỉ 0,03 trên thang 0–1**. Hiệu ứng lớn nằm ở
+**tính nhất quán của thứ tự** — bốc một mẫu mỗi bên thì bảy trên mười lần NEI tản hơn — chứ không
+ở độ lớn. Entropy vì thế là tín hiệu thật nhưng yếu khi dùng một mình, đúng như E03 đã cho thấy
+khi đặc trưng hình dạng đứng riêng chỉ đạt 0,6054.
+
+### Ba điều phụ, ghi vì chúng sửa lại hiểu biết trước đó
+
+**Nhánh cắt ngắn cuối cùng cũng chạy: 6/3.646 mẫu.** Sau bảy lượt trích trước đó không mẫu nào
+chạm trần 4.096 token. Và nó làm đúng việc: 1 mẫu mất đoạn bằng chứng vì đoạn ấy bị cắt, được
+loại khỏi phần định vị thay vì âm thầm chấm nhầm đoạn khác. Đây là lần đầu cơ chế bảo vệ ấy được
+thử trên dữ liệu thật.
+
+**Kết quả tái lập chính xác giữa hai môi trường.** Chấm lại trên máy cá nhân từ shard tải về cho
+**trùng từng chữ số** — khác hẳn độ trôi tới 0,0075 đo ở T23. Lý do là E06 chỉ có số học thuần
+(xếp hạng, đếm, trung bình), không có bộ tối ưu lặp nào như `LogisticRegression` để hội tụ khác
+nhau theo phiên bản BLAS.
+
+**Chi phí 1.071 ms/mẫu**, gấp đôi ViHallu (528 ms) đúng theo tỷ lệ độ dài ngữ cảnh 794 so với
+243 token — khớp mô hình chi phí tuyến tính theo token đo ở T08.
+
+### Vì sao Bảng 2 chỉ có một cách chia
+
+Kế hoạch ban đầu có thêm dòng "cửa sổ 128 token", viết **trước** khi T24 chốt cách chia. Chia
+theo câu nay là cấu hình chốt cho mọi thí nghiệm còn lại, nên 70 phút GPU cho một cách chia đã bị
+loại là tiêu hạn mức để điền một ô không ai dùng. Câu hỏi so sánh cách chia đã được Bảng 3 trả
+lời, trên bộ dữ liệu và bằng phép đối chứng thiết kế riêng cho nó.
 
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
