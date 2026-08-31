@@ -1,0 +1,45 @@
+# E07 — chunk-aware trên ngữ cảnh dài, ISE-DSC01. Task T26.
+#
+# Câu hỏi: cách chia theo đoạn chốt ở T24 có còn hoạt động khi ngữ cảnh dài gấp bốn không.
+# ViHallu cho 5,3 đoạn mỗi ngữ cảnh, ISE-DSC01 cho 22,6 — nếu đóng góp của đề tài là "chia theo
+# đơn vị nghĩa" thì đây là chỗ nó phải mạnh lên, không phải yếu đi.
+#
+# DÙNG CHUNG lượt trích với E06 (hash 15ef31521fd6): cùng bộ dữ liệu, cùng cách chia đoạn, cùng
+# bộ trích. Nên tập dev 3.646 mẫu đã trích ở T25 không phải chạy lại, chỉ còn train và test.
+#
+# Cỡ tập train: trích ĐỦ 29.077 mẫu. Đo đường cong học trên E03 ở T26 cho thấy ở 5.600 mẫu vẫn
+# đang leo dốc — riêng chặng 4.200 → 5.600 đã mua thêm +0,023, gấp gần ba lần khoảng cách 0,0085
+# từng quyết định T24. Lấy mẫu con sẽ báo một con số thấp hơn khả năng thật.
+#
+# Phép so khớp cỡ với E03 vẫn làm được từ chính shard này bằng --train-sample 5600, không tốn
+# thêm GPU. Nên trích đủ chỉ THÊM một con số chứ không mất con số nào.
+#
+# E16 (chuyển giao chéo bộ) cũng dùng lại lượt trích này.
+
+run_name: e07_chunk_aware_isedsc01
+
+dataset:
+  name: isedsc01
+  split_seed: 42
+
+chunking:
+  # Chốt ở T24. Không đổi, kể cả khi sang bộ dữ liệu khác — đó là điều kiện để E07 nói được gì
+  # về ngữ cảnh dài chứ không phải về một cấu hình mới.
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

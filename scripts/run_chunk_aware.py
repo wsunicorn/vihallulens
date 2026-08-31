@@ -170,6 +170,32 @@ def dev_metrics_record(best: dict) -> dict:
     return record
 
 
+def stratified_sample(records, labels, size: int, seed: int):
+    """A subset of ``size`` training rows keeping each label's share of the whole.
+
+    Exists so E07 can report two numbers from one extraction: the full-strength result on all
+    29.077 ISE-DSC01 rows, and one trained on 5.600 rows to match E03's training size exactly.
+    Without the second, "chunk-aware does better on long contexts" would be confounded with
+    "chunk-aware was given five times the training data".
+
+    Stratified rather than uniform because a plain draw wobbles the class balance, and the
+    detector is fitted with ``class_weight='balanced'`` — so a wobble changes the weights and
+    adds a second difference to the comparison.
+    """
+    if size >= len(records):
+        return records, labels
+    rng = np.random.default_rng(seed)
+    chosen: list[int] = []
+    for label in sorted(set(labels)):
+        index = np.flatnonzero(labels == label)
+        take = round(size * len(index) / len(labels))
+        chosen.extend(rng.choice(index, size=min(take, len(index)), replace=False).tolist())
+    # Sorted so the subset is the same list order the full run would have used, which keeps the
+    # fitted model reproducible for a given seed.
+    chosen.sort()
+    return [records[i] for i in chosen], labels[chosen]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="E03/E04: bộ phát hiện chunk-aware.")
     parser.add_argument("--config", type=Path, required=True)
@@ -177,6 +203,10 @@ def main() -> int:
                         help="mặc định lấy run_name trong file cấu hình")
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED_DIR)
     parser.add_argument("--results-path", type=Path, default=Path("results/runs.jsonl"))
+    parser.add_argument(
+        "--train-sample", type=int, default=None,
+        help="chỉ dùng N mẫu train, giữ nguyên tỷ lệ nhãn — để so khớp cỡ với thí nghiệm khác",
+    )
     parser.add_argument(
         "--dev-only", action="store_true",
         help="dừng sau khi chấm dev, không đụng tập test — dùng cho lượt quét E04 của T23",
@@ -188,6 +218,8 @@ def main() -> int:
 
     cfg = load_config(args.config)
     run_name = args.run_name or cfg.run_name
+    if args.train_sample:
+        run_name = f"{run_name}_train{args.train_sample}"
     run = extraction_hash(cfg)
     groups = list(cfg.features.groups)
 
@@ -206,6 +238,14 @@ def main() -> int:
             return 1
         records[split] = rows
         labels[split] = np.asarray([row["label"] for row in rows])
+
+    if args.train_sample:
+        before = len(records["train"])
+        records["train"], labels["train"] = stratified_sample(
+            records["train"], labels["train"], args.train_sample, REQUIRED_SPLIT_SEED
+        )
+        print(f"\n  lấy mẫu train         : {before:,} → {len(records['train']):,} "
+              f"(giữ nguyên tỷ lệ nhãn, seed {REQUIRED_SPLIT_SEED})")
 
     layer_indices = records["train"][0]["layer_indices"]
     n_layers = len(layer_indices)
