@@ -2147,7 +2147,83 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
 
   Lượt trích này **T26 dùng lại được** cho E07 nên nhớ tải shard về.
 
-- [ ] **T26** · L · E07 chunk-aware trên ngữ cảnh dài ISE-DSC01
+- [ ] **T26** · L · E07 chunk-aware trên ngữ cảnh dài ISE-DSC01 — **công cụ sẵn sàng 31/08/2026, chờ chạy trên Kaggle**
+
+  ### Câu hỏi
+
+  E03 cho thấy chia theo đoạn có ích trên ViHallu, nơi ngữ cảnh chỉ **5,3 đoạn**. E06 cho thấy
+  chú ý rơi đúng đoạn bằng chứng trên ISE-DSC01, nơi ngữ cảnh có **22,6 đoạn**. Còn lại: khi ngữ
+  cảnh dài gấp bốn, bộ phát hiện **có mạnh lên không**.
+
+  Nếu đóng góp của đề tài là "chia theo đơn vị nghĩa" thì đây phải là chỗ nó phát huy. Ngữ cảnh
+  càng nhiều đoạn thì hình dạng phân bố càng có chỗ để nói lên điều gì.
+
+  ### Dùng chung lượt trích với E06
+
+  E07 khai cùng bộ dữ liệu, cùng cách chia đoạn, cùng bộ trích, nên `extraction_hash` trùng
+  (`15ef31521fd6`) và **tập dev 3.646 mẫu đã trích ở T25 không phải chạy lại**. Còn train
+  (29.077 mẫu, ~8,7 giờ) và test (3.646 mẫu, ~1,1 giờ).
+
+  Đây đúng là thứ việc tách `extraction_hash` khỏi `config_hash` ở T22 sinh ra để làm.
+
+  ### Cỡ tập train: đo trước khi quyết, và tự sửa một ước lượng sai
+
+  Câu hỏi là trích đủ 29.077 hay lấy mẫu con. Đo đường cong học trên E03, chạy CPU.
+
+  **Lần đo đầu sai.** Script tôi viết cố định cách gộp đầu lấy từ mô hình huấn luyện trên đủ
+  5.600 mẫu, rồi áp cho mọi cỡ — nên các cỡ nhỏ bị phạt oan và đường cong dốc giả:
+
+```
+             script cố định cách gộp   đường ống thật
+  1.400 mẫu          0,7300               0,7630
+  2.800 mẫu          0,7512               0,7671
+  4.200 mẫu          0,7540               0,7710
+  5.600 mẫu          0,7768               0,7768
+```
+
+  Đường ống thật **chọn lại cách gộp đầu trên từng cỡ**, và việc đó bù được phần lớn dữ liệu
+  thiếu. Gấp bốn dữ liệu chỉ mua **+0,0138**, không phải +0,047 như con số đầu.
+
+  Hệ quả: tôi đã báo với người dùng rằng trích đủ hơn 12.000 mẫu khoảng +0,03; ước lượng đúng là
+  khoảng **+0,007**. Phải đính chính trước khi tiêu 9,8 giờ GPU chứ không phải sau.
+
+  **Vẫn chọn trích đủ**, vì ba lý do không phụ thuộc biên độ ấy:
+
+  1. **E16 dùng lại chính lượt trích này.** Trích thiếu thì E16 thừa hưởng cùng giới hạn.
+  2. **Phép so khớp cỡ với E03 miễn phí** — `--train-sample 5600` huấn luyện lại từ cùng shard,
+     không tốn giây GPU nào. Trích đủ chỉ **thêm** một con số chứ không mất con số nào.
+  3. **Không phải xếp lịch GPU lần hai.** Chi phí ẩn lớn nhất là mỗi lần quay lại phải nạp mô
+     hình và mở phiên mới.
+
+  ### Hai con số, hai câu hỏi khác nhau
+
+  - **Huấn luyện trên đủ 29.077 mẫu** → E07 mạnh nhất có thể, là số vào bảng kết quả.
+  - **Huấn luyện trên đúng 5.600 mẫu** → phép so **có kiểm soát** với E03. Chỉ con số này mới nói
+    được "ngữ cảnh dài thì chunk-aware thế nào", vì nó giữ cỡ tập huấn luyện cố định.
+
+  So thẳng số của lượt đủ với 0,7567 của E03 là phép so không kiểm soát được biến nào — hai bộ
+  dữ liệu, hai cỡ train, hai độ khó.
+
+  `stratified_sample` giữ nguyên tỷ lệ nhãn thay vì rút đều, vì bộ phát hiện chạy với
+  `class_weight='balanced'`: tỷ lệ nhãn lệch đi là trọng số lớp đổi theo, tức thêm một biến nữa
+  vào phép so vốn chỉ được có một.
+
+  ### Ba khả năng, ghi trước khi thấy số
+
+  - **Số khớp cỡ cao hơn E03 rõ** → chunk-aware **mạnh lên** khi ngữ cảnh dài, đóng góp được củng
+    cố ở đúng chỗ nó nên mạnh.
+  - **Xấp xỉ nhau** → phương pháp **bền** qua độ dài ngữ cảnh. Tốt, chỉ khiêm tốn hơn.
+  - **Thấp hơn rõ** → chunk-aware **không** chuyển được sang ngữ cảnh dài. E06 vẫn đứng vì chú ý
+    vẫn rơi đúng đoạn, nhưng lúc đó khoảng cách giữa "định vị đúng" và "phân loại đúng" mới là
+    thứ phải đi giải thích — và nó là một kết quả đáng viết chứ không phải một thất bại.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t26_chunk_aware_ngu_canh_dai_t4.ipynb`, khoảng **9,8 giờ**. Tập train tách làm ba
+  ô (0–10.000, 10.000–20.000, phần còn lại) để có điểm dừng nhìn thấy được; mỗi ô chạy lại được
+  nên phiên chết giữa chừng chỉ cần mở phiên mới chạy lại đúng ô đó.
+
+  Phiên Kaggle giới hạn 12 giờ nên 9,8 giờ vừa đủ nhưng sát — chia hai phiên cũng được.
 - [ ] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16
 
 ---
