@@ -21,6 +21,7 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from vihallulens.data.text import tokenize
@@ -201,3 +202,70 @@ class EvidenceIndex:
             if hit.evidence_id == wanted_id:
                 return hit.rank
         return None
+
+
+# -- building the paired contexts experiment E08 runs on ------------------------------------------
+
+# How many evidence sentences go into one built context. Ten gives ten chunks — twice ViHallu's
+# 5,3 and half ISE-DSC01's 22,6 — at about 496 tokens, measured at T27.
+DEFAULT_CONTEXT_K = 10
+
+# Every context built without its gold sentence makes the response unsupported by construction,
+# which is exactly what this label means.
+UNSUPPORTED_LABEL = "extrinsic"
+
+
+def _permutation(sample_id: str, size: int):
+    """A deterministic shuffle of ``size`` positions, seeded by the sample.
+
+    Deterministic so the two halves of a pair get the *same* ordering and stay comparable, and so
+    rebuilding the dataset gives the same file rather than a new one that invalidates every shard
+    extracted from the old.
+    """
+    seed = int.from_bytes(hashlib.sha256(sample_id.encode("utf-8")).digest()[:8], "big")
+    return np.random.default_rng(seed % (2**32)).permutation(size)
+
+
+def paired_contexts(index: EvidenceIndex, sample_id: str, claim: str, gold_id: str,
+                    k: int = DEFAULT_CONTEXT_K) -> tuple[str, str, int] | None:
+    """Two retrieved contexts for one claim: one holding the gold sentence, one not.
+
+    This is the intervention experiment E08 is built on. Both contexts hold ``k`` sentences from
+    the same pool, in the same order, and differ in **exactly one position** — where the present
+    version has the gold evidence, the absent version has the next distractor down the ranking.
+    Everything else about the sample is identical: same claim, same response, same length, same
+    number of chunks.
+
+    That makes the comparison causal rather than correlational. Every other experiment in this
+    thesis asks whether a signal *correlates* with a label somebody else assigned; this one
+    removes the evidence and asks whether the signal moves the way the mechanism says it should.
+
+    Two details that would quietly ruin it:
+
+    * **The order is shuffled.** BM25 puts the gold sentence first for 94 % of claims, measured at
+      T27, so an unshuffled context would let "always look at chunk 0" score like a mechanism. The
+      shuffle takes the gold position to a flat 0,513 of the way through.
+    * **The shuffle is the same for both halves.** Different orderings would change every
+      position, and the pair would differ in ten things instead of one.
+
+    Returns ``(present, absent, gold_position)`` or ``None`` when the pool cannot supply ``k``
+    distractors. ``gold_position`` is the chunk index the gold sentence occupies in the present
+    context, which is also the one position where the two differ.
+    """
+    distractors = index.search(claim, k=k, exclude={gold_id})
+    if len(distractors) < k:
+        return None
+    gold_row = index.corpus[index.corpus["evidence_id"] == gold_id]
+    if gold_row.empty:
+        return None
+
+    gold_text = str(gold_row.iloc[0]["text"])
+    # The two lists differ only in slot 0; the same permutation then moves that slot to the same
+    # place in both, so the pair still differs in exactly one position after shuffling.
+    present = [gold_text] + [hit.text for hit in distractors[: k - 1]]
+    absent = [distractors[k - 1].text] + [hit.text for hit in distractors[: k - 1]]
+
+    order = _permutation(sample_id, k)
+    position = int(order.tolist().index(0))
+    join = lambda parts: " ".join(parts[index] for index in order)  # noqa: E731
+    return join(present), join(absent), position

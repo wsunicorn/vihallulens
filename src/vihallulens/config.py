@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 # so it may only be changed by editing CLAUDE.md first.
 REQUIRED_SPLIT_SEED = 42
 
-DatasetName = Literal["vihallu", "isedsc01", "viwikifc", "vifactcheck"]
+DatasetName = Literal["vihallu", "isedsc01", "viwikifc", "viwikifc_e08", "vifactcheck"]
 ChunkStrategy = Literal["sentence", "token_window"]
 Quantization = Literal["nf4", "none"]
 ComputeDtype = Literal["float16", "bfloat16", "float32"]
