@@ -2322,7 +2322,104 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   nên phiên chết giữa chừng chỉ cần mở phiên mới chạy lại đúng ô đó.
 
   Phiên Kaggle giới hạn 12 giờ nên 9,8 giờ vừa đủ nhưng sát — chia hai phiên cũng được.
-- [ ] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16
+- [ ] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16 — **công cụ sẵn sàng 01/09/2026, chờ chạy trên Kaggle**
+
+  ### Đây là phép kiểm can thiệp duy nhất của cả đề tài
+
+  Mọi thí nghiệm đến giờ đều **tương quan**: đo một tín hiệu, so với nhãn người khác gán, báo mức
+  khớp. Khi hai bên khớp thì "cơ chế hoạt động" là một **suy luận**, không phải quan sát. E06 gần
+  trực tiếp nhất nhưng vẫn chỉ *quan sát* chú ý rơi ở đâu.
+
+  E08 **can thiệp**. Mỗi claim ghép cặp với chính nó: cùng phản hồi, đọc hai lần trên hai ngữ cảnh
+  mười câu **khác nhau đúng một câu ở đúng một vị trí**. Một bên có câu bằng chứng vàng, bên kia
+  thay bằng câu nhiễu. Không gì khác đổi — không độ dài, không số đoạn, không thứ tự.
+
+  Nếu tín hiệu chunk-aware đúng như đề tài nói, bỏ bằng chứng đi phải làm phân bố chú ý **tản ra**.
+  Nếu nó không nhúc nhích thì thứ đặc trưng hình dạng bắt được trên các bộ khác **không phải**
+  "mô hình đã tìm thấy bằng chứng" — và đó là kết quả bác cách diễn giải của đề tài.
+
+  ### Nhãn nửa 'absent' không do ai gán
+
+  Rút câu vàng ra thì phản hồi khẳng định điều ngữ cảnh không chứa — đúng định nghĩa ảo giác ngoại
+  lai. Nhãn `extrinsic` ở nửa ấy là **sự thật về cách dựng**, không phải phán đoán ai đó có thể bất
+  đồng.
+
+  Điều này quan trọng hơn vẻ ngoài. T13 đã đo rằng ranh giới nội tại–ngoại lai đánh bại hai người
+  gán nhãn (0,70 và 0,50) và cả Gemini (0,474). Ở E08 ranh giới ấy được **dựng ra** chứ không được
+  **đoán**, nên lần đầu tiên phần khó nhất của bài toán không còn phụ thuộc vào chất lượng nhãn.
+
+  ### Bốn phép đo trên CPU, và một confound suýt lọt
+
+```
+  bằng chứng vàng có trong kho    2.090/2.090  (100 %)
+  ngữ cảnh top-10                 496 token TB, 9,8 đoạn sau khi chia theo câu
+  hai vế cùng số đoạn             87,2 %
+  và khác đúng một đoạn           99,7 % trong số đó
+  dựng được                       1.836 cặp = 3.672 dòng từ 2.090 mẫu dev
+```
+
+  **BM25 để câu vàng ở hạng 0 với 94 % claim** — vị trí tương đối trung bình **0,040**. Ghép theo
+  thứ tự truy xuất thì một bộ đoán "luôn chọn đoạn đầu" đã thắng sàn, và hit@1 cao sẽ chẳng chứng
+  minh được gì. Đây đúng cái confound tôi đã kiểm và loại trừ được ở T25, chỉ khác là lần này nó
+  **có thật**.
+
+  Chữa bằng **xáo thứ tự** mười câu trước khi ghép: vị trí vàng về **0,513**, rải đều mười hạng.
+  Hai vế của một cặp dùng **cùng một hoán vị**, nếu không thì chúng khác nhau ở mười chỗ chứ không
+  phải một.
+
+  ### Ô cổng bắt được thứ bộ lọc bỏ sót
+
+  Bộ lọc đầu tiên chỉ đòi hai vế **cùng số đoạn**. Ô kiểm tiền đề trong notebook chạy trên dữ liệu
+  thật và tìm ra **5/1.841 cặp khác nhau ở hơn một đoạn** dù cùng số đoạn: câu vàng gộp với hàng
+  xóm ở vế này trong khi câu nhiễu gộp kiểu khác ở vế kia, dịch hai ranh giới mà tổng vẫn nguyên.
+
+  0,3 %, đủ nhỏ để lọt và đủ lớn để làm yếu đúng cái tính chất cả thí nghiệm dựa vào. Siết bộ lọc
+  thành "đếm số đoạn khác nhau, phải bằng đúng 1" — tính chất ấy nay có **do cách dựng** chứ không
+  do assert cầu may. Cả ba tiền đề giờ đạt 100 %.
+
+  ### Hướng dự đoán, ghi trước khi thấy số
+
+| đặc trưng | bỏ vàng đi thì phải | vì sao |
+|---|---|---|
+| `chunk_entropy` | **tăng** | không còn gì để tập trung |
+| `chunk_max_share` | **giảm** | không đoạn nào còn trội hẳn |
+| `chunk_gini` | **giảm** | các đoạn đều nhau hơn |
+| `top1_top2_gap` | **giảm** | đoạn tốt nhất hết nổi bật |
+| `chunk_drift` | *không dự đoán* | drift nói về chuyển động theo token |
+
+  Bảng này nằm trong `run_extrinsic.py` dưới dạng `EXPECTED_DIRECTION` và có ca kiểm thử khóa lại,
+  để một kết quả đi ngược **không thể** được mô tả lại thành xác nhận sau khi đã thấy số.
+
+  ### Kiểm định phải theo cặp, và cỡ ảnh hưởng của nó có bẫy riêng
+
+  Hai vế là **cùng một mẫu đọc hai lần** — cùng phản hồi, cùng chín câu nhiễu, cùng độ dài — nên
+  không độc lập. Mann-Whitney của T25 sẽ trả lời một câu hỏi về hai tổng thể riêng biệt vốn không
+  tồn tại ở đây. Thêm `wilcoxon()` cho dữ liệu theo cặp, cũng tự viết bằng numpy.
+
+  Bẫy của nó ngược với bẫy của p-value: kiểm định theo cặp đo mức nhất quán của **hướng**, không
+  đo độ lớn. Một dịch chuyển đều đặn bằng một phần hai mươi độ lệch chuẩn vẫn cho **100 % cặp đúng
+  hướng và cỡ ảnh hưởng 1,0**. Nên báo cáo in `median_change` ngay cạnh, và có ca kiểm thử dựng
+  đúng tình huống ấy để khóa lại.
+
+  ### Ô tiền kiểm — món nợ từ T26
+
+  T26 để hai ô chấm điểm chạy sau 10 giờ GPU rồi mới báo thiếu shard. Ô kiểm toàn vẹn báo đúng
+  nhưng đứng **sau** nên vô dụng. Notebook T27 có **ô 3 là tiền kiểm**: liệt kê mọi shard các ô sau
+  cần, đối chiếu với thứ phiên này sẽ tự sinh ra, và `SystemExit` ngay nếu thiếu. Đã chạy thử.
+
+  ### Chạy thử trọn đường ống trên shard giả
+
+  Cấy sẵn bốn hiệu ứng đúng hướng dự đoán và một đầu định vị ở lớp 14 đầu 6. Script khôi phục cả
+  bốn với đúng dấu và đúng độ lớn (+0,0399 so với +0,04 đã cấy), tìm đúng đầu đã cấy, và
+  `chunk_drift` không cấy gì thì ra 49,4 % — đúng mức ngẫu nhiên và không bị đánh dấu.
+
+  ### Việc cần chạy
+
+  Mở `notebooks/t27_bo_bang_chung_t4.ipynb`, khoảng **48 phút**: 3.672 dòng ở ~784 ms. Việc dựng
+  ngữ cảnh chạy CPU trong notebook, không cần chuẩn bị gì trước.
+
+  Chấm điểm sẽ chạy lại ở **máy cá nhân** theo quy tắc chốt ở T26, nên nhớ tải cả `runs.jsonl`,
+  `viwikifc_e08_dev.parquet` và shard về.
 
 ---
 

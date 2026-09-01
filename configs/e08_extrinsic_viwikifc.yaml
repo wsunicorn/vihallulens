@@ -1,0 +1,47 @@
+# E08 — bỏ bằng chứng đi rồi đo lại chú ý, trên ViWikiFC. Task T27.
+#
+# Phép kiểm CAN THIỆP duy nhất của cả đề tài. Mọi thí nghiệm khác đo một tín hiệu rồi so với nhãn
+# người khác gán; cái này giữ nguyên mọi thứ và chỉ RÚT câu bằng chứng ra khỏi ngữ cảnh, rồi hỏi
+# tín hiệu có nhúc nhích đúng hướng cơ chế dự đoán không.
+#
+# Mỗi claim thành một cặp: hai ngữ cảnh mười câu, khác nhau ĐÚNG MỘT câu ở ĐÚNG MỘT vị trí. Nửa
+# 'absent' mang nhãn extrinsic không phải do ai gán mà do cách dựng — phản hồi khẳng định điều
+# ngữ cảnh không chứa. Không còn nhãn nào để tranh cãi.
+#
+# Đo trên CPU ở T27 trước khi đặt lịch GPU:
+#   kho 3.814 câu, bằng chứng vàng có trong kho 2.090/2.090 (100 %)
+#   ngữ cảnh top-10: 496 token trung bình, 9,8 đoạn sau khi chia theo câu
+#   87,2 % cặp có hai vế cùng số đoạn, và 100 % trong số đó khác đúng một đoạn
+#   dựng được 1.841 cặp = 3.682 dòng từ 2.090 mẫu dev
+#
+# XÁO THỨ TỰ mười câu trước khi ghép. Không xáo thì BM25 để câu vàng ở hạng 0 với 94 % claim, và
+# một bộ đoán "luôn chọn đoạn đầu" sẽ trông y như một cơ chế. Xáo xong vị trí vàng về 0,513.
+
+run_name: e08_extrinsic_viwikifc
+
+dataset:
+  # Bộ dẫn xuất, không phải bộ tải về: ngữ cảnh gốc của ViWikiFC chỉ ba bốn câu và 15,3 % chỉ ra
+  # đúng một đoạn (đo ở T15), nên chunk-aware thoái hóa thành lookback gộp. Mục 8 docs/DATA.md
+  # dự liệu việc dựng lại ngữ cảnh bằng truy xuất từ chính kho bằng chứng của bộ.
+  name: viwikifc_e08
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

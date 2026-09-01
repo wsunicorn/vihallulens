@@ -75,3 +75,68 @@ def test_the_medians_come_back_for_the_write_up():
 )
 def test_the_effect_is_put_into_words(effect, word):
     assert describe_effect(effect) == word
+
+
+# -- the paired test E08 needs -------------------------------------------------------------------
+
+
+def test_every_pair_moving_up_gives_the_maximum_effect():
+    from vihallulens.evaluation.stats import wilcoxon
+
+    base = np.random.default_rng(0).normal(0, 1, 200)
+    out = wilcoxon(base, base + 0.5)
+    assert out["win_rate"] == 1.0
+    assert out["effect"] == pytest.approx(1.0)
+
+
+def test_the_effect_is_signed_for_pairs_too():
+    """A drop has to report as a drop, or E08 could announce its hypothesis confirmed while the
+    attention actually became *less* diffuse."""
+    from vihallulens.evaluation.stats import wilcoxon
+
+    base = np.random.default_rng(0).normal(0, 1, 200)
+    assert wilcoxon(base, base - 0.5)["effect"] == pytest.approx(-1.0)
+
+
+def test_a_uniform_but_trivial_shift_still_maxes_the_effect_size():
+    """The trap this pins down. A paired test measures how *consistently* pairs move, not how
+    far, so a shift of a fiftieth of a standard deviation reports win_rate 1,0 and effect 1,0.
+    The report must therefore print median_change beside them, and the write-up must read both."""
+    from vihallulens.evaluation.stats import wilcoxon
+
+    base = np.random.default_rng(0).normal(0, 1, 500)
+    out = wilcoxon(base, base + 0.02)
+    assert out["win_rate"] == 1.0
+    assert out["effect"] == pytest.approx(1.0)
+    assert out["median_change"] == pytest.approx(0.02, abs=1e-9)
+
+
+def test_pure_noise_moves_about_half_the_pairs():
+    from vihallulens.evaluation.stats import wilcoxon
+
+    rng = np.random.default_rng(1)
+    base = rng.normal(0, 1, 2000)
+    out = wilcoxon(base, base + rng.normal(0, 1, 2000))
+    assert 0.45 < out["win_rate"] < 0.55
+    assert describe_effect(out["effect"]) == "không đáng kể"
+
+
+def test_mismatched_pair_counts_are_refused():
+    """Two arrays of different length are not pairs, and silently zipping them would compare
+    unrelated samples while looking perfectly healthy."""
+    from vihallulens.evaluation.stats import wilcoxon
+
+    with pytest.raises(ValueError, match="cùng số cặp"):
+        wilcoxon(np.arange(50.0), np.arange(40.0))
+
+
+def test_ties_are_dropped_and_counted():
+    from vihallulens.evaluation.stats import wilcoxon
+
+    base = np.arange(100.0)
+    after = base.copy()
+    after[:60] += 1.0
+    out = wilcoxon(base, after)
+    assert out["n_pairs"] == 100
+    assert out["n_tied"] == 40
+    assert out["win_rate"] == 1.0
