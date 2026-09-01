@@ -2413,6 +2413,38 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   bốn với đúng dấu và đúng độ lớn (+0,0399 so với +0,04 đã cấy), tìm đúng đầu đã cấy, và
   `chunk_drift` không cấy gì thì ra 49,4 % — đúng mức ngẫu nhiên và không bị đánh dấu.
 
+  ### Lượt chạy đầu hỏng ở giây thứ 43, và cảnh báo đã có sẵn từ T23
+
+```
+vihallulens 0.1.0 requires rank-bm25, which is not installed.
+...
+ModuleNotFoundError: No module named 'rank_bm25'
+```
+
+  Ô cài đặt kế thừa từ T22 chỉ cài `transformers accelerate bitsandbytes`, còn
+  `pip install --no-deps -e .` thì **cố ý** không kéo phụ thuộc nào về. Nên pip in cảnh báo
+  "requires rank-bm25, which is not installed" ở **mọi lượt chạy từ T23**.
+
+  Tôi đọc dòng ấy bốn lần và bốn lần viết "vô hại, không nằm trong đường đi của task này". Đúng
+  cho T23 tới T26. Sai cho T27 — và chính tôi là người viết câu *"rank-bm25 cho kho truy xuất ở
+  T16"*. Biết mà vẫn dựng một notebook không cài nó.
+
+  **Không tốn giây GPU nào**: hỏng ở giây thứ 43, trước cả ô trích.
+
+  ### Ô tiền kiểm báo đạt, và đó là lỗi thứ hai
+
+  Ô tiền kiểm — thứ vừa thêm ở T27 để trả nợ T26 — **báo xanh** rồi để notebook chạy tiếp vào chỗ
+  chết. Nó chỉ kiểm shard, không kiểm phụ thuộc.
+
+  Đã mở rộng: nay kiểm cả các gói mà **các ô sau thật sự import**. Khai rõ danh sách thay vì quét
+  toàn bộ `pyproject.toml`, vì `fastapi`, `uvicorn` và `ruff` cũng được khai báo nhưng Kaggle
+  không cài và E08 không dùng — quét tất cả sẽ **báo động giả**, đúng lỗi mà ô kiểm toàn vẹn của
+  T26 từng mắc với shard cũ.
+
+  Bài học chung, và nó lặp lại lần thứ ba: **một ô cổng chỉ chặn được thứ nó biết phải kiểm.**
+  T26 dạy "phải chạy trước", T27 dạy "phải kiểm đủ loại điều kiện, không chỉ loại vừa làm hỏng
+  lần trước".
+
   ### Việc cần chạy
 
   Mở `notebooks/t27_bo_bang_chung_t4.ipynb`, khoảng **48 phút**: 3.672 dòng ở ~784 ms. Việc dựng
