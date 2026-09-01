@@ -2413,37 +2413,51 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   bốn với đúng dấu và đúng độ lớn (+0,0399 so với +0,04 đã cấy), tìm đúng đầu đã cấy, và
   `chunk_drift` không cấy gì thì ra 49,4 % — đúng mức ngẫu nhiên và không bị đánh dấu.
 
-  ### Lượt chạy đầu hỏng ở giây thứ 43, và cảnh báo đã có sẵn từ T23
+  ### Ba lượt hỏng liên tiếp, ba loại khác nhau, cùng một sai lầm
+
+  Không lượt nào tốn giây GPU nào — cả ba đều chết trước ô trích. Nhưng chúng đáng ghi vì chúng
+  là **cùng một sai lầm lặp ba lần**, và lần nào tôi cũng vá đúng cái vừa hỏng.
 
 ```
-vihallulens 0.1.0 requires rank-bm25, which is not installed.
-...
-ModuleNotFoundError: No module named 'rank_bm25'
+  T26        ô cổng kiểm shard nhưng chạy SAU 10 giờ GPU   -> báo đúng mà vô dụng
+  T27 lần 1  ô cổng chạy trước, chỉ kiểm shard             -> thiếu rank-bm25, chết ở giây 43
+  T27 lần 2  ô cổng kiểm shard + gói                       -> thiếu data/interim, chết ở giây 44
 ```
 
-  Ô cài đặt kế thừa từ T22 chỉ cài `transformers accelerate bitsandbytes`, còn
-  `pip install --no-deps -e .` thì **cố ý** không kéo phụ thuộc nào về. Nên pip in cảnh báo
-  "requires rank-bm25, which is not installed" ở **mọi lượt chạy từ T23**.
+  **Lần 1.** `pip install --no-deps -e .` cố ý không kéo phụ thuộc nào, và ô cài đặt kế thừa từ
+  T22 chỉ cài `transformers accelerate bitsandbytes`. Pip in "requires rank-bm25, which is not
+  installed" ở **mọi lượt chạy từ T23**; tôi đọc bốn lần và bốn lần viết "vô hại, không nằm trong
+  đường đi" — đúng cho T23–T26, sai cho T27, mà chính tôi là người viết câu *"rank-bm25 cho kho
+  truy xuất ở T16"*.
 
-  Tôi đọc dòng ấy bốn lần và bốn lần viết "vô hại, không nằm trong đường đi của task này". Đúng
-  cho T23 tới T26. Sai cho T27 — và chính tôi là người viết câu *"rank-bm25 cho kho truy xuất ở
-  T16"*. Biết mà vẫn dựng một notebook không cài nó.
+  **Lần 2.** Khi dựng notebook T27 tôi thay ô "chuẩn bị dữ liệu" bằng ô tiền kiểm và **quên thêm
+  lại**. Mọi notebook trước đều có ô chạy `normalize_data.py` với `split_data.py`; thiếu nó thì
+  `data/interim/viwikifc_*.parquet` không tồn tại và kho truy xuất không dựng được.
 
-  **Không tốn giây GPU nào**: hỏng ở giây thứ 43, trước cả ô trích.
+  **Cả hai lần ô tiền kiểm đều báo xanh.** Đó mới là lỗi thật: nó chỉ kiểm thứ tôi bảo nó kiểm,
+  và tôi chỉ bảo nó kiểm thứ vừa làm hỏng lần trước.
 
-  ### Ô tiền kiểm báo đạt, và đó là lỗi thứ hai
+  ### Sửa tận gốc: tiền kiểm đi hết chuỗi, tách "phải có sẵn" khỏi "tự tạo"
 
-  Ô tiền kiểm — thứ vừa thêm ở T27 để trả nợ T26 — **báo xanh** rồi để notebook chạy tiếp vào chỗ
-  chết. Nó chỉ kiểm shard, không kiểm phụ thuộc.
+  Ô tiền kiểm nay chia đôi rành mạch:
 
-  Đã mở rộng: nay kiểm cả các gói mà **các ô sau thật sự import**. Khai rõ danh sách thay vì quét
-  toàn bộ `pyproject.toml`, vì `fastapi`, `uvicorn` và `ruff` cũng được khai báo nhưng Kaggle
-  không cài và E08 không dùng — quét tất cả sẽ **báo động giả**, đúng lỗi mà ô kiểm toàn vẹn của
-  T26 từng mắc với shard cũ.
+  - **Phải có sẵn** — phiên này không tạo được, nên thiếu là dừng: các gói mà các ô sau import,
+    và thư mục dữ liệu thô đã mount cùng file `viwikifc*` trong đó.
+  - **Tự tạo** — in ra cả chuỗi bốn mắt xích theo thứ tự ô sinh ra chúng, từ
+    `viwikifc_dev.parquet` tới shard đặc trưng, để đọc và đối chiếu.
 
-  Bài học chung, và nó lặp lại lần thứ ba: **một ô cổng chỉ chặn được thứ nó biết phải kiểm.**
-  T26 dạy "phải chạy trước", T27 dạy "phải kiểm đủ loại điều kiện, không chỉ loại vừa làm hỏng
-  lần trước".
+  Cách này khác hai lần trước ở chỗ nó liệt kê **toàn bộ đường đi** chứ không chỉ mắt xích cuối.
+  Đã chạy thử cả hai chiều: chạy bình thường thì in đủ chuỗi và báo đạt; cố tình bỏ một gói thì
+  `SystemExit` ngay với tên gói thiếu.
+
+  ### Bài học, viết ra vì nó không hiển nhiên
+
+  **Một ô cổng chỉ chặn được thứ nó biết phải kiểm.** T25 dựng cổng kiểm tiền đề khoa học và nó
+  qua; T26 dựng cổng kiểm shard nhưng đặt sai chỗ; T27 dựng cổng đúng chỗ nhưng kiểm thiếu loại
+  hai lần liền. Vá đúng cái vừa hỏng là chiến lược thua, vì lần sau hỏng ở loại khác.
+
+  Cách duy nhất thoát ra là **liệt kê toàn bộ điều kiện của cả đường đi**, không phải thêm một
+  trường hợp đặc biệt mỗi lần.
 
   ### Việc cần chạy
 
