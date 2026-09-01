@@ -265,3 +265,85 @@ def test_rows_and_labels_stay_aligned():
     rows = [{"sample_id": f"s{i:04d}", "label": labels[i]} for i in range(300)]
     rows_out, labels_out = stratified_sample(rows, labels, 60, 42)
     assert [r["label"] for r in rows_out] == list(labels_out)
+
+
+# -- the baseline must come from the same dataset ------------------------------------------------
+
+
+def write_runs(tmp_path, rows):
+    import json
+
+    path = tmp_path / "runs.jsonl"
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def run_row(dataset, groups, macro_f1, name, dev_only=False):
+    return {
+        "run_name": name,
+        "config": {"dataset": {"name": dataset}, "features": {"groups": groups}},
+        "metrics": {"macro_f1": macro_f1},
+        "extra": {"dev_only": dev_only} if dev_only else {},
+    }
+
+
+def test_the_baseline_ignores_other_datasets():
+    """The bug this replaced. E02's 0,7465 is a ViHallu number, and the hardcoded version applied
+    it to ISE-DSC01 — a different label balance, context length and difficulty. It printed a
+    verdict that meant nothing and returned a failure code for it."""
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [
+            run_row("vihallu", ["basic"], 0.7465, "e02_lookback_lens"),
+            run_row("isedsc01", ["basic"], 0.6900, "e07_baseline"),
+        ])
+        assert lookback_baseline("isedsc01", path) == (0.69, "e07_baseline")
+
+
+def test_no_baseline_on_the_dataset_returns_none():
+    """Better than silently borrowing another corpus's number: the caller says there is no
+    baseline and refuses to render a verdict."""
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [run_row("vihallu", ["basic"], 0.7465, "e02")])
+        assert lookback_baseline("isedsc01", path) is None
+
+
+def test_only_lookback_only_runs_count_as_a_baseline():
+    """A chunk-aware run on the same dataset is the thing being measured, not the thing to
+    measure against."""
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [
+            run_row("isedsc01", ["basic", "chunk_aware", "stability"], 0.99, "e07"),
+            run_row("isedsc01", ["basic"], 0.70, "e07_baseline"),
+        ])
+        assert lookback_baseline("isedsc01", path) == (0.70, "e07_baseline")
+
+
+def test_a_dev_only_row_is_not_read_as_a_test_score():
+    """dev_only rows carry dev_macro_f1, never macro_f1 — but a future row that carried both
+    would otherwise slip into the baseline as though the test set had been scored."""
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [
+            run_row("isedsc01", ["basic"], 0.95, "chi_dev", dev_only=True),
+            run_row("isedsc01", ["basic"], 0.70, "e07_baseline"),
+        ])
+        assert lookback_baseline("isedsc01", path) == (0.70, "e07_baseline")
