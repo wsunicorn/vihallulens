@@ -1417,9 +1417,9 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
   Và **E06 mới là phép kiểm trực tiếp của cơ chế**: định vị chú ý so với đoạn bằng chứng vàng trên ISE-DSC01, thay vì suy ra từ điểm phân loại. Nếu chú ý thật sự rơi đúng đoạn bằng chứng thì cơ chế đứng vững kể cả khi điểm ba lớp chưa bật lên.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t20_lookback_lens_t4.ipynb`, attach dataset, bật GPU T4, Save Version. Khoảng **50 phút**: 39 phút cho tập train, 5 phút cho tập test, phần còn lại là tải mô hình 7B.
+  Đã chạy `notebooks/t20_lookback_lens_t4.ipynb`, attach dataset, bật GPU T4, Save Version. Khoảng **50 phút**: 39 phút cho tập train, 5 phút cho tập test, phần còn lại là tải mô hình 7B.
 
   Nhớ tải cả `data/processed/*.jsonl` về — T21 dùng lại được phần đặc trưng gộp mà không phải chạy lại GPU.
 
@@ -1532,9 +1532,9 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
   Dựng ba shard giả với tín hiệu cấy sẵn vào vài đầu, rồi chạy `run_chunk_aware.py` thật. Bắt được đủ thứ mà không tốn một giây GPU nào: bảng chọn cách gộp in đúng, tên cột khớp số cột, bảng trọng số theo khối chạy được, bản ghi ghi ra được. Cùng bài học của T18, nơi một lỗi kiểu dữ liệu đã đốt một phiên GPU vì vòng lặp huấn luyện chưa từng chạy trên CPU.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t22_chunk_aware_cau_t4.ipynb`, khoảng **55 phút**: 43 phút tập train, 5 phút dev, 5 phút test, còn lại là tải mô hình.
+  Đã chạy `notebooks/t22_chunk_aware_cau_t4.ipynb`, khoảng **55 phút**: 43 phút tập train, 5 phút dev, 5 phút test, còn lại là tải mô hình.
 
   Phải trích lại vì lượt T20 chưa lưu mảng theo đoạn. Nhưng từ lượt này trở đi thì **E04, E05, E12 dùng lại được** — trừ E04 vốn đổi cách chia đoạn nên phải trích riêng.
 
@@ -1809,9 +1809,9 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
   [0,7242; 0,7885]. Cùng quy trình, cùng lượt trích. Nên T24 chỉ còn việc viết kết luận vào
   Bảng 3 — trừ khi quyết chạy thêm phép đối chứng cửa sổ không chồng lấn ở trên.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t23_chunk_aware_cua_so_t4.ipynb`, khoảng **3,2 giờ**: ba cỡ cửa sổ × (57 phút
+  Đã chạy `notebooks/t23_chunk_aware_cua_so_t4.ipynb`, khoảng **3,2 giờ**: ba cỡ cửa sổ × (57 phút
   train + 7 phút dev), cộng thời gian nạp mô hình. Mỗi ô chạy lại được nên chia làm hai phiên
   cũng được.
 
@@ -1965,9 +1965,9 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   57,5 phút GPU của T24 chi hết cho phép đối chứng — tức chi để biết **viết phần đóng góp thế
   nào**, không phải để chọn cấu hình.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t24_doi_chung_khong_chong_lan_t4.ipynb`, khoảng **64 phút**: 57 phút train,
+  Đã chạy `notebooks/t24_doi_chung_khong_chong_lan_t4.ipynb`, khoảng **64 phút**: 57 phút train,
   7 phút dev. Chấm điểm chạy CPU.
 
 - [x] **T25** · L · 🚩 E06 định vị chú ý trên ISE-DSC01 — **xong 31/08/2026**
@@ -2139,9 +2139,9 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   GPU cho một cách chia đã bị loại là tiêu hạn mức để điền một ô không ai dùng; Bảng 3 đã trả lời
   câu hỏi so sánh cách chia bằng bốn cấu hình và một phép đối chứng thiết kế riêng.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t25_dinh_vi_chu_y_t4.ipynb`, khoảng **70 phút**: chỉ tập dev, 3.646 mẫu ở
+  Đã chạy `notebooks/t25_dinh_vi_chu_y_t4.ipynb`, khoảng **70 phút**: chỉ tập dev, 3.646 mẫu ở
   ~1,1 giây mỗi mẫu. Không chạy train vì E06 không huấn luyện gì; không chạy test để dành cho
   E07 và E16.
 
@@ -2315,9 +2315,9 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   nhẹ (0,0258 → 0,0334). Chưa có cách giải thích chắc chắn và không nên bịa một cách; ghi lại để
   đối chiếu ở E12 khi tách riêng đóng góp từng nhóm đặc trưng.
 
-  ### Việc cần chạy
+  ### Lượt chạy đã thực hiện
 
-  Mở `notebooks/t26_chunk_aware_ngu_canh_dai_t4.ipynb`, khoảng **9,8 giờ**. Tập train tách làm ba
+  Đã chạy `notebooks/t26_chunk_aware_ngu_canh_dai_t4.ipynb`, khoảng **9,8 giờ**. Tập train tách làm ba
   ô (0–10.000, 10.000–20.000, phần còn lại) để có điểm dừng nhìn thấy được; mỗi ô chạy lại được
   nên phiên chết giữa chừng chỉ cần mở phiên mới chạy lại đúng ô đó.
 
