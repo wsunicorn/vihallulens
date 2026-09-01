@@ -109,3 +109,65 @@ def describe_effect(effect: float) -> str:
     if size < 0.43:
         return "vừa"
     return "lớn"
+
+
+def wilcoxon(before, after) -> dict:
+    """Paired test: does ``after`` sit above ``before`` within each pair?
+
+    Experiment E08 removes the gold evidence sentence from a context and measures the same claim
+    twice. The two measurements are **not independent** — same response, same nine distractors,
+    same length — so :func:`mann_whitney` would be answering a question about two separate
+    populations that do not exist here. The paired test uses each pair as its own control, which
+    is the whole reason the experiment was built that way.
+
+    Returns the signed-rank statistic, the two-sided ``p_value`` from the normal approximation,
+    and two effect measures. ``win_rate`` is the share of pairs that moved up, ignoring ties, and
+    is the one to lead with: it is the sentence "in N % of pairs, taking the evidence away made
+    the attention more diffuse", which a reader can check against intuition. ``effect`` is the
+    matched-pairs rank-biserial correlation, on the same −1…1 scale as
+    :func:`mann_whitney`'s.
+    """
+    before = np.asarray(before, dtype=float)
+    after = np.asarray(after, dtype=float)
+    if before.shape != after.shape:
+        raise ValueError(f"hai vế phải cùng số cặp; nhận {before.shape} và {after.shape}")
+
+    difference = after - before
+    # Zero differences carry no information about direction and are dropped, which is Wilcoxon's
+    # original handling. The count is reported so a reader can see how many were discarded.
+    nonzero = difference[difference != 0]
+    if len(nonzero) < MIN_GROUP:
+        raise ValueError(
+            f"cần ít nhất {MIN_GROUP} cặp khác 0 để xấp xỉ chuẩn dùng được; nhận {len(nonzero)}"
+        )
+
+    ranks = _rank_with_ties(np.abs(nonzero))
+    positive = float(ranks[nonzero > 0].sum())
+    negative = float(ranks[nonzero < 0].sum())
+    count = len(nonzero)
+
+    mean_w = count * (count + 1) / 4.0
+    _, tie_counts = np.unique(np.abs(nonzero), return_counts=True)
+    tie_term = float(((tie_counts ** 3 - tie_counts).sum()) / 48.0)
+    variance = count * (count + 1) * (2 * count + 1) / 24.0 - tie_term
+
+    if variance <= 0:
+        z, p_value = 0.0, 1.0
+    else:
+        z = (positive - mean_w) / math.sqrt(variance)
+        p_value = math.erfc(abs(z) / math.sqrt(2.0))
+
+    return {
+        "w_positive": positive,
+        "w_negative": negative,
+        "z": float(z),
+        "p_value": float(p_value),
+        "effect": float((positive - negative) / (positive + negative))
+        if positive + negative else 0.0,
+        "win_rate": float((nonzero > 0).mean()),
+        "n_pairs": int(len(difference)),
+        "n_tied": int(len(difference) - count),
+        "median_before": float(np.median(before)),
+        "median_after": float(np.median(after)),
+        "median_change": float(np.median(difference)),
+    }

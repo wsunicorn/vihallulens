@@ -18,7 +18,11 @@ from typing import Any
 
 import pandas as pd
 
-DATASETS = ("vihallu", "isedsc01", "viwikifc", "vifactcheck")
+# "viwikifc_e08" is derived, not downloaded: experiment E08 rebuilds ViWikiFC contexts by
+# retrieving ten evidence sentences per claim, because the native contexts are three or
+# four sentences and 15,3 % of them yield a single chunk — measured at T15 — which makes
+# chunk-aware degenerate into aggregate lookback. Section 8 of docs/DATA.md plans it.
+DATASETS = ("vihallu", "isedsc01", "viwikifc", "viwikifc_e08", "vifactcheck")
 SPLITS = ("train", "dev", "test")
 LABELS = ("no", "intrinsic", "extrinsic")
 
