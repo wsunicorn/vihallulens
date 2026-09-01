@@ -2147,7 +2147,7 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
 
   Lượt trích này **T26 dùng lại được** cho E07 nên nhớ tải shard về.
 
-- [ ] **T26** · L · E07 chunk-aware trên ngữ cảnh dài ISE-DSC01 — **công cụ sẵn sàng 31/08/2026, chờ chạy trên Kaggle**
+- [x] **T26** · L · E07 chunk-aware trên ngữ cảnh dài ISE-DSC01 — **xong 01/09/2026**
 
   ### Câu hỏi
 
@@ -2216,6 +2216,104 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_8c49fc0417
   - **Thấp hơn rõ** → chunk-aware **không** chuyển được sang ngữ cảnh dài. E06 vẫn đứng vì chú ý
     vẫn rơi đúng đoạn, nhưng lúc đó khoảng cách giữa "định vị đúng" và "phân loại đúng" mới là
     thứ phải đi giải thích — và nó là một kết quả đáng viết chứ không phải một thất bại.
+
+  ### Kết quả — chuyển được sang ngữ cảnh dài, nhưng lợi thế co lại
+
+  Trích 10,1 giờ GPU, **0 lỗi trên 32.723 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn số. Ba ô nối nhau
+  đúng chỗ, cơ chế chạy-lại-được hoạt động như thiết kế.
+
+| Bộ dữ liệu | Đoạn/ngữ cảnh | train | Lookback gộp | Chunk-aware | Chênh |
+|---|---|---|---|---|---|
+| ViHallu | 5,3 | 5.600 | 0,7451 | 0,7567 | **+0,0116** |
+| ISE-DSC01 | 22,6 | 5.600 | 0,7337 | 0,7388 | **+0,0051** |
+| ISE-DSC01 | 22,6 | 29.077 | 0,7851 | **0,7919** | **+0,0068** |
+
+  **Giả thuyết bị bác.** Trước khi chạy tôi viết: ngữ cảnh càng nhiều đoạn thì hình dạng phân bố
+  càng có chỗ để nói lên điều gì, nên đây phải là chỗ chunk-aware mạnh lên. Gấp bốn số đoạn thì
+  lợi thế **co lại còn một nửa**.
+
+  Cả ba chênh lệch đều nhỏ so với khoảng tin cậy. Cách nói đúng: **chunk-aware nhỉnh hơn lookback
+  gộp nhất quán về hướng nhưng không có ý nghĩa thống kê, ở cả hai bộ dữ liệu.**
+
+  Lý do co lại đọc được ngay từ bảng: **lookback gộp trên ISE-DSC01 đã rất mạnh sẵn** (0,7851 so
+  với 0,7451 trên ViHallu). Ngữ cảnh dài không làm chunk-aware yếu đi — nó làm *mốc so* khỏe lên.
+
+  ### Khoảng cách giữa "định vị đúng" và "phân loại đúng" mới là phát hiện
+
+  E06 cho thấy chú ý rơi đúng đoạn bằng chứng **87,8 %** số lần, gấp 14 lần sàn. E07 cho thấy biết
+  *chỗ nào* được nhìn chỉ thêm **+0,007** so với biết *bao nhiêu* chú ý rơi vào ngữ cảnh.
+
+  Hai kết quả không mâu thuẫn, và đặt cạnh nhau chúng nói điều đáng viết nhất của cả hai task:
+  **tín hiệu định vị có thật và rất mạnh, nhưng bài toán phân loại ba lớp này phần lớn đã được
+  giải bằng đại lượng gộp.** Định vị đúng không tự động thành phân biệt đúng.
+
+  Đó cũng là chỗ hướng phát triển nằm: một bài toán *cần* biết chỗ — chỉ ra câu nào chống đỡ hay
+  mâu thuẫn với phản hồi — sẽ khai thác được phần E06 đo, còn nhãn ba lớp thì không.
+
+  ### Suýt đọc sai trọng số theo khối
+
+  Nhìn thô thì đặc trưng chunk chiếm **87 % ở E03** nhưng chỉ **27 % ở E07**, như thể mất tác
+  dụng. Đó là hiện vật của cách gộp đầu dev chọn: E03 chọn `topk k=32` nên lookback còn 32 cột,
+  E07 chọn `mixed k=32` nên lookback giữ **nguyên 756 cột**. Quy về mỗi cột thì ngược lại:
+
+```
+                              lookback      chunk-aware   tỷ lệ
+  E03, ViHallu 5,3 đoạn     0,4016 %/cột   0,5447 %/cột   1,36x
+  E07, ISE-DSC01 22,6 đoạn  0,0963 %/cột   0,1700 %/cột   1,77x
+```
+
+  **Mỗi cột đặc trưng chunk nặng ký hơn trên ngữ cảnh dài, không nhẹ đi.** Nếu chỉ đọc cột phần
+  trăm thô thì đã viết vào báo cáo một kết luận ngược hẳn.
+
+  ### Đường cong học dốc hơn hẳn dự đoán của chính tôi
+
+  Trước khi chạy tôi ước lượng từ ViHallu rằng trích đủ 29.077 thay vì 5.600 mua khoảng **+0,015**.
+  Đo thật: **+0,0531** cho chunk-aware và **+0,0514** cho lookback gộp — **gấp ba lần rưỡi**.
+
+  Đường cong học của ISE-DSC01 dốc hơn ViHallu nhiều. Ghi lại như hạn chế của cách làm việc:
+  **đường cong đo trên một bộ không dự báo được cho bộ khác**, kể cả cùng mô hình đọc và cùng bộ
+  đặc trưng. Quyết định trích đủ hóa ra đúng với biên độ lớn hơn hẳn lý do đã dùng để biện minh.
+
+  ### Hai lỗi task này phơi ra
+
+  **1. Tôi lặp lại đúng lỗi đã ghi ở T24.** Hai ô chấm điểm trong notebook đều hỏng:
+
+```
+Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.jsonl
+```
+
+  Phiên Kaggle mới chỉ có thứ nó vừa tự sinh ra. Shard dev trích ở T25 nằm ở máy cá nhân. T24 đã
+  ghi nguyên văn *"ô nào cần shard của thí nghiệm cũ thì phải chạy trên máy cá nhân"* — ghi rồi
+  vẫn lặp lại ở task ngay sau.
+
+  Không mất giờ GPU nào vì phần đắt đã xong, nhưng bài học thật là: **ghi ra không đủ**. Ô kiểm
+  toàn vẹn đã báo đúng `THIEU isedsc01_dev` nhưng nó chạy **sau** hai ô chấm điểm nên vô dụng.
+  Nếu chạy ở phút thứ 2 thay vì giờ thứ 10 thì đã cứu được.
+
+  Chốt quy tắc, không phải ghi chú: **notebook trên Kaggle chỉ làm việc trích; mọi việc chấm điểm
+  chạy ở máy cá nhân.** Nó còn giải luôn ràng buộc T23 là mọi con số đem so phải chấm cùng một
+  máy. Từ T27 thêm một ô tiền kiểm ngay sau ô cài đặt, liệt kê mọi shard các ô sau cần và dừng
+  ngay nếu thiếu.
+
+  **2. Mốc so cắm cứng số của bộ dữ liệu khác.** `run_chunk_aware.py` giữ `E02_MACRO_F1 = 0.7465`
+  — số đo trên **ViHallu** — rồi áp cho mọi bộ. Nên E07 trên ISE-DSC01 bị đem so với một corpus
+  khác phân bố nhãn, khác độ dài ngữ cảnh, khác độ khó. Nó in ra `CHƯA VƯỢT` cho lượt khớp cỡ và
+  trả mã lỗi 2 vì điều đó.
+
+  Sửa: mốc nay **tra từ `results/runs.jsonl`** theo đúng bộ dữ liệu, tìm lượt chạy có
+  `groups: [basic]`. Không có thì nói thẳng là chưa có mốc chứ không mượn số của bộ khác. Kèm bốn
+  ca kiểm thử, trong đó một ca khóa việc dòng `dev_only` không được đọc nhầm thành điểm test.
+
+  Và dựng luôn mốc đúng: `configs/e07_baseline_lookback_isedsc01.yaml`, cùng lượt trích, khác E07
+  đúng một thứ là nhóm đặc trưng — **không tốn giây GPU nào**. Chính nó cho 0,7851, và chính nó
+  làm lộ ra rằng lợi thế của chunk-aware ở đây chỉ +0,0068 chứ không phải +0,0454 như con số so
+  chéo bộ gợi ý.
+
+  ### Một chỗ ECE đảo chiều
+
+  Trên ViHallu chunk-aware **giảm** ECE hơn một nửa (0,1090 → 0,0441). Trên ISE-DSC01 nó **tăng**
+  nhẹ (0,0258 → 0,0334). Chưa có cách giải thích chắc chắn và không nên bịa một cách; ghi lại để
+  đối chiếu ở E12 khi tách riêng đóng góp từng nhóm đặc trưng.
 
   ### Việc cần chạy
 

@@ -400,6 +400,93 @@ theo câu nay là cấu hình chốt cho mọi thí nghiệm còn lại, nên 70
 loại là tiêu hạn mức để điền một ô không ai dùng. Câu hỏi so sánh cách chia đã được Bảng 3 trả
 lời, trên bộ dữ liệu và bằng phép đối chứng thiết kế riêng cho nó.
 
+### Bảng 2b — Chunk-aware trên ngữ cảnh dài (E07, ISE-DSC01)
+
+Chạy 31/08–01/09/2026. Trích 10,1 giờ GPU, **0 lỗi trên 32.723 mẫu**, 0 cắt ngữ cảnh, 0 lớp tràn
+số. Chấm điểm chạy trên máy cá nhân, cùng máy đã chấm E02 và E03, theo nguyên tắc chốt ở T23.
+
+| Bộ dữ liệu | Đoạn/ngữ cảnh | train | Lookback gộp | Chunk-aware | Chênh |
+|---|---|---|---|---|---|
+| ViHallu | 5,3 | 5.600 | 0,7451 | 0,7567 | **+0,0116** |
+| ISE-DSC01 | 22,6 | 5.600 | 0,7337 | 0,7388 | **+0,0051** |
+| ISE-DSC01 | 22,6 | 29.077 | 0,7851 | **0,7919** | **+0,0068** |
+
+Chi tiết lượt đầy đủ trên ISE-DSC01: macro-F1 **0,7919** [0,7791; 0,8054], nhị phân 0,8536,
+`no` 0,8111 · `intrinsic` 0,7633 · `extrinsic` 0,8011, ECE 0,0334.
+
+### Chunk-aware chuyển được sang ngữ cảnh dài, nhưng lợi thế KHÔNG lớn lên
+
+Giả thuyết trước khi chạy: ngữ cảnh càng nhiều đoạn thì hình dạng phân bố càng có chỗ để nói lên
+điều gì, nên đây phải là chỗ chunk-aware mạnh lên.
+
+**Không đúng.** Lợi thế so với lookback gộp là **+0,0116 trên ViHallu (5,3 đoạn)** nhưng chỉ
+**+0,0051 tới +0,0068 trên ISE-DSC01 (22,6 đoạn)**. Gấp bốn số đoạn thì lợi thế **co lại còn
+một nửa**.
+
+Cả ba chênh lệch đều nhỏ so với khoảng tin cậy — [0,7791; 0,8054] của chunk-aware chồng gần hết
+lên [0,7714; 0,7982] của lookback gộp. Đúng đắn nhất là nói: **chunk-aware nhỉnh hơn lookback gộp
+một cách nhất quán về hướng nhưng không có ý nghĩa thống kê, ở cả hai bộ dữ liệu.**
+
+Lý do lợi thế co lại thì đọc được ngay từ bảng: **lookback gộp trên ISE-DSC01 đã rất mạnh sẵn**
+(0,7851 so với 0,7451 trên ViHallu). Ngữ cảnh dài không làm chunk-aware yếu đi — nó làm *mốc so*
+khỏe lên, và phần dư địa còn lại để cải thiện thì ít đi.
+
+### Khoảng cách giữa "định vị đúng" và "phân loại đúng" mới là phát hiện
+
+E06 cho thấy chú ý rơi đúng đoạn bằng chứng **87,8 %** số lần, gấp 14 lần sàn ngẫu nhiên. E07 cho
+thấy biết *chỗ nào* được nhìn chỉ thêm **+0,007** so với biết *bao nhiêu* phần chú ý rơi vào ngữ
+cảnh.
+
+Hai kết quả này không mâu thuẫn, và đặt cạnh nhau chúng nói một điều đáng viết: **tín hiệu định
+vị có thật và rất mạnh, nhưng bài toán phân loại ba lớp này phần lớn đã được giải bằng đại lượng
+gộp.** Định vị đúng không tự động thành phân biệt đúng.
+
+Đây là chỗ hướng phát triển nằm: một bài toán *cần* biết chỗ — chỉ ra câu nào trong ngữ cảnh
+chống đỡ hay mâu thuẫn với phản hồi — sẽ khai thác được phần E06 đo, còn nhãn ba lớp thì không.
+
+### Cột phần trăm trọng số dễ đọc sai, phải quy về mỗi cột
+
+Nhìn thô thì đặc trưng chunk chiếm **87 % trọng số ở E03** nhưng chỉ **27 % ở E07** — như thể
+chúng mất tác dụng trên ngữ cảnh dài. Đó là hiện vật của cách gộp đầu mà dev chọn, không phải
+của dữ liệu.
+
+E03 chọn `topk k=32` nên khối lookback còn 32 cột; E07 chọn `mixed k=32` nên khối lookback giữ
+**nguyên 756 cột** còn năm khối chunk mỗi khối 32 cột. Quy về mỗi cột:
+
+| | lookback | chunk-aware | tỷ lệ |
+|---|---|---|---|
+| E03, ViHallu 5,3 đoạn | 0,4016 %/cột | 0,5447 %/cột | 1,36× |
+| E07, ISE-DSC01 22,6 đoạn | 0,0963 %/cột | 0,1700 %/cột | **1,77×** |
+
+**Mỗi cột đặc trưng chunk nặng ký hơn trên ngữ cảnh dài, không nhẹ đi.** Bộ phân loại dựa vào
+chúng *nhiều hơn*; chỉ là phần dư địa để cải thiện điểm số thì nhỏ hơn.
+
+### Đường cong học dốc hơn hẳn dự đoán, và dự đoán ấy là của tôi
+
+Trước khi chạy tôi ước lượng từ ViHallu rằng trích đủ 29.077 mẫu thay vì 5.600 sẽ mua khoảng
+**+0,015**. Đo thật:
+
+```
+  chunk-aware   5.600 → 29.077   0,7388 → 0,7919   +0,0531
+  lookback gộp  5.600 → 29.077   0,7337 → 0,7851   +0,0514
+```
+
+**+0,053, gấp ba lần rưỡi ước lượng.** Đường cong học của ISE-DSC01 dốc hơn ViHallu nhiều, và
+ngoại suy từ bộ này sang bộ kia không đứng được. Quyết định trích đủ hóa ra đúng với biên độ lớn
+hơn hẳn lý do đã dùng để biện minh cho nó.
+
+Ghi lại như một hạn chế của phương pháp làm việc: **đường cong học đo trên một bộ không dự báo
+được cho bộ khác**, kể cả cùng một mô hình đọc và cùng một bộ đặc trưng.
+
+### Một chỗ ECE đảo chiều so với ViHallu
+
+Trên ViHallu, chunk-aware **giảm** ECE hơn một nửa (0,1090 → 0,0441) và đó là một trong ba điều
+E03 làm được. Trên ISE-DSC01 nó **tăng** nhẹ (0,0258 → 0,0334). Lookback gộp ở đây hiệu chỉnh tốt
+hơn.
+
+Chưa có cách giải thích chắc chắn, và không nên bịa một cách. Ghi lại như một quan sát cần đối
+chiếu ở E12 khi tách riêng đóng góp từng nhóm đặc trưng.
+
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
 **Kết luận: chọn chia theo câu, `min_words=5`.** Giữ nguyên cấu hình này cho mọi thí nghiệm

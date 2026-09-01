@@ -20,6 +20,7 @@ requires dev for exactly this.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
@@ -50,10 +51,17 @@ from vihallulens.features.assemble import (  # noqa: E402
 # themselves as E03 in results/runs.jsonl and become impossible to tell apart afterwards.
 RUN_NAME = None
 
-# The number to beat, measured at T20. Not E01's 0,6562: chunk-aware and aggregate lookback are
-# the same family of method differing only in how the denominator is split, so clearing E01
-# would only show that attention helps. Clearing E02 is what shows that *chunking* helps.
-E02_MACRO_F1 = 0.7465
+# The number to beat is a *lookback-only* run on the SAME dataset — not E01's surface features.
+# Chunk-aware and aggregate lookback are the same family differing only in how the denominator is
+# split, so clearing E01 would only show that attention helps; clearing lookback-only is what
+# shows that *chunking* helps.
+#
+# Looked up from results/runs.jsonl rather than hardcoded. The hardcoded version was E02's 0,7465,
+# measured on ViHallu, and it was applied to every dataset — so E07 on ISE-DSC01 was compared
+# against a different corpus with a different label balance, different context lengths and a
+# different difficulty. It printed a verdict of "chưa vượt" that meant nothing, and returned a
+# failure code for it.
+BASELINE_GROUPS = ["basic"]
 
 # Candidate widths for topk_heads. Small enough to stay far below the 5.600 training rows even
 # with six blocks, wide enough to keep more than a handful of heads.
@@ -168,6 +176,36 @@ def dev_metrics_record(best: dict) -> dict:
     record.update({f"dev_f1_{label}": float(value)
                    for label, value in best["dev_per_class"].items()})
     return record
+
+
+def lookback_baseline(dataset: str, results_path: Path) -> tuple[float, str] | None:
+    """The best lookback-only macro-F1 recorded for this dataset, and the run it came from.
+
+    Reads the results file instead of holding a constant, so the comparison automatically follows
+    whichever corpus the config names. Returns ``None`` when no such run exists yet — in which
+    case the caller says so rather than inventing a baseline out of another dataset's number.
+    """
+    if not results_path.exists():
+        return None
+    best: tuple[float, str] | None = None
+    with results_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            config = record.get("config", {})
+            if config.get("dataset", {}).get("name") != dataset:
+                continue
+            if list(config.get("features", {}).get("groups", [])) != BASELINE_GROUPS:
+                continue
+            score = record.get("metrics", {}).get("macro_f1")
+            # dev-only rows carry no test macro_f1 and must not be read as one.
+            if score is None or record.get("extra", {}).get("dev_only"):
+                continue
+            if best is None or score > best[0]:
+                best = (float(score), record["run_name"])
+    return best
 
 
 def stratified_sample(records, labels, size: int, seed: int):
@@ -423,19 +461,28 @@ def main() -> int:
 
     print()
     print("-" * 80)
-    print("SO VỚI E02 — mốc thật của phần đóng góp")
+    print("SO VỚI LOOKBACK GỘP TRÊN CÙNG BỘ DỮ LIỆU — mốc thật của phần đóng góp")
     print("-" * 80)
-    delta = point["macro_f1"] - E02_MACRO_F1
-    print(f"  E02 lookback gộp : {E02_MACRO_F1:.4f}")
-    print(f"  {run_name:<17}: {point['macro_f1']:.4f}   ({delta:+.4f})")
-    if point["macro_f1"] <= E02_MACRO_F1:
+    baseline = lookback_baseline(cfg.dataset.name, args.results_path)
+    if baseline is None:
+        print(f"  Chưa có lượt lookback gộp nào trên {cfg.dataset.name}, nên không có mốc để so.")
+        print("  Chạy một cấu hình groups: [basic] trên cùng lượt trích rồi chấm lại.")
+        print("  KHÔNG lấy điểm của bộ dữ liệu khác làm mốc — khác phân bố nhãn, khác độ dài")
+        print("  ngữ cảnh, khác độ khó, nên chênh lệch không quy được cho việc chia đoạn.")
+        return 0
+
+    floor, source = baseline
+    delta = point["macro_f1"] - floor
+    print(f"  {source:<34}: {floor:.4f}")
+    print(f"  {run_name:<34}: {point['macro_f1']:.4f}   ({delta:+.4f})")
+    if point["macro_f1"] <= floor:
         print()
         print("  CHƯA VƯỢT. Chia theo đoạn chưa đóng góp được gì trên tập này. Đừng trình bày")
         print("  như một cải tiến — kiểm cách chia đoạn và cách gộp đầu trước, rồi mới kết luận.")
         return 2
     print()
-    print("  Vượt. Nhưng muốn nói HƠN HẲN thì phải vượt 0,7773 — cận trên khoảng tin cậy của")
-    print("  E02 — chứ không phải chỉ vượt điểm của nó.")
+    print(f"  Vượt. Muốn nói HƠN HẲN thì phải vượt cận trên khoảng tin cậy của "
+          f"{source}, chứ không chỉ vượt điểm của nó.")
     return 0
 
 

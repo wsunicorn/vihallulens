@@ -1,0 +1,38 @@
+# Mốc so cho E07 — lookback gộp trên chính ISE-DSC01. Task T26.
+#
+# E02 đo 0,7465 trên ViHallu. Đem con số ấy làm mốc cho ISE-DSC01 là so chéo bộ dữ liệu: khác
+# phân bố nhãn, khác độ dài ngữ cảnh, khác độ khó. Nó không nói được gì về việc chia theo đoạn
+# có ích trên ngữ cảnh dài hay không.
+#
+# Cấu hình này là mốc đúng: cùng bộ dữ liệu, cùng lượt trích, cùng quy trình chọn cách gộp đầu,
+# khác E07 ĐÚNG MỘT THỨ là nhóm đặc trưng. Chênh lệch giữa hai bên vì thế quy được cho việc chia
+# theo đoạn chứ không cho thứ gì khác.
+#
+# Dùng chung extraction_hash 15ef31521fd6 nên KHÔNG tốn giây GPU nào — chỉ chạy lại bộ phân loại.
+
+run_name: e07_baseline_lookback_isedsc01
+
+dataset:
+  name: isedsc01
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  # Đúng một nhóm: tỷ lệ lookback gộp. Không có chunk_aware, không có stability.
+  groups: [basic]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
