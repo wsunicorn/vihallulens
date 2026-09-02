@@ -2588,8 +2588,98 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
 ## Giai đoạn 5 — Báo cáo giữa kỳ (tuần 8–9)
 
-- [ ] **T28** · LM · Gom kết quả và viết báo cáo giữa kỳ
+- [ ] **T28** · LM · Gom kết quả và viết báo cáo giữa kỳ — **bản báo cáo soạn xong 02/09/2026,
+  chờ gửi GVHD trước 04/10**
   - **Kiểm tra:** file báo cáo giữa kỳ, Bảng 1–3 đã có số, gửi GVHD trước 04/10.
+
+  ### Task này để làm gì
+
+  Mốc thứ hai trong bốn mốc không được lỡ. Nó không sinh ra kết quả kỹ thuật nào mới — việc của
+  nó là **gom** những gì đã đo được thành một tài liệu người ngoài đọc hiểu, và đặt câu hỏi đúng
+  chỗ cho GVHD trước khi tiêu tiếp giờ GPU của giai đoạn 6.
+
+  ### Hai file đã tạo
+
+| File | Nội dung |
+|---|---|
+| `UniversityRequirements/Reports/tao_bao_cao_giua_ky.py` | Bộ sinh báo cáo, dùng lại đúng bộ hàm định dạng của báo cáo tuần: Times New Roman 13, giãn dòng 1,3, lề 3-2-2-2 cm, bảng Table Grid nhỏ hơn một cỡ |
+| `UniversityRequirements/WeeklyLogs/Email_giua_ky.md` | Thư đính kèm, Reply All vào chuỗi cũ. Chuyển sang HTML bằng `tao_email_html.py Email_giua_ky` |
+
+  **Cả bốn file đều không vào Git.** Thư mục `UniversityRequirements/` nằm nguyên trong
+  `.gitignore` từ đầu và hiện `git ls-files` đếm được **0 file** trong đó — giấy tờ trường, kế
+  hoạch và báo cáo tuần đều nằm ngoài repo. Hai bộ sinh vừa viết theo đúng lệ đó, nên PR này chỉ
+  chứa `TASKS.md`.
+
+  Có thể ép theo dõi riêng hai file `.py` bằng `git add -f` để chúng được phiên bản hóa, nhưng
+  đó là đổi lệ đã có nên **để người dùng quyết**, không tự làm.
+
+  ### Vì sao viết thành script sinh chứ không gõ thẳng vào Word
+
+  Vì hôm nay là **02/09**, còn hạn gửi là **04/10** — cách nhau năm tuần. Giai đoạn 6 gần như
+  chắc chắn có thêm số trước lúc gửi. Gõ thẳng vào Word thì mỗi lần có kết quả mới phải sửa tay
+  và rất dễ để sót một con số cũ trong một bảng nào đó; có script thì sửa một chỗ rồi chạy lại.
+
+  Đổi lại, script này **không tự tính gì cả**. Mọi con số chép tay từ `docs/EXPERIMENTS.md`. Ghi
+  rõ điều đó ngay trong docstring để sau này không ai tưởng nó đọc `runs.jsonl`.
+
+  ### Báo cáo có gì
+
+  Mười mục, khoảng 4.100 từ, 12 bảng. Ba bảng mà tiêu chí hoàn thành đòi đều có đủ số:
+
+| Bảng trong báo cáo | Tương ứng `EXPERIMENTS.md` | Thí nghiệm |
+|---|---|---|
+| Bảng 5 — kết quả chính trên ViHallu | Bảng 1 | E01, E09, E10, E02, E03 |
+| Bảng 6 — chọn cách chia đoạn | Bảng 3 | E05 |
+| Bảng 7 — định vị chú ý | Bảng 2 | E06 |
+| Bảng 8 — ngữ cảnh dài | Bảng 2b | E07 |
+| Bảng 9 và 10 — bỏ bằng chứng đi, và phép lặp định vị | Bảng 2c | E08 |
+
+  Bốn bảng còn lại là câu hỏi nghiên cứu, năm đại lượng chunk-aware, thiết lập kỹ thuật, bốn bộ
+  dữ liệu, tiến độ chín giai đoạn và kế hoạch nửa sau.
+
+  ### Chỗ khó nhất khi viết: nói thế nào về một lợi thế nhỏ
+
+  Số liệu hiện có kể một câu chuyện hai mặt, và cả hai mặt đều phải vào báo cáo:
+
+  - **Cơ chế thì được xác nhận rất mạnh.** Định vị đúng 87,8 % giữa 22,6 đoạn, lặp lại gần y hệt
+    trên bộ thứ hai (0,3320 so với 0,3289 trung bình mọi đầu), phép kiểm can thiệp đúng cả bốn
+    hướng đã ghi trước khi chạy.
+  - **Lợi thế phân loại thì nhỏ.** +0,0116 trên ViHallu, +0,0068 trên ISE-DSC01, khoảng tin cậy
+    chồng gần hết lên nhau.
+
+  Cách xử lý đã chọn: **để hai mặt cạnh nhau và biến khoảng cách giữa chúng thành phát hiện**,
+  ở mục 6.1 của báo cáo. Định vị đúng và phân loại đúng là hai việc khác nhau, vì một câu trả lời
+  ảo giác nội tại **vẫn dồn chú ý đúng chỗ** — mô hình có đọc, chỉ là nói sai thứ nó đọc.
+
+  Cách còn lại là dẫn con số 14,29× lên đầu và để lợi thế +0,007 xuống một chú thích. Không chọn
+  cách đó, vì hội đồng sẽ tự tìm ra và lúc ấy nó thành điểm yếu về sự trung thực chứ không còn là
+  điểm yếu về kết quả.
+
+  ### Mục 10 hỏi GVHD ba câu, và câu đầu mới là câu thật
+
+  1. **Định vị đóng góp thế nào cho đúng chuẩn khóa luận** — nhóm nghiêng về "đóng góp là bằng
+     chứng cơ chế và khả năng chỉ ra vị trí", nhưng đây là câu chỉ GVHD trả lời được vì nó phụ
+     thuộc kỳ vọng của hội đồng, không phụ thuộc dữ liệu.
+  2. Có nên tiêu thêm giờ GPU để đuổi theo điểm phân loại không — đường cong học ở T26 cho thấy
+     còn dư địa (+0,0531 khi tăng 5.600 → 29.077 mẫu), nhưng gộp dữ liệu nhiều bộ sẽ làm E16 khó
+     diễn giải.
+  3. Xin một buổi gặp trực tiếp, đúng như mẫu email dặn với ba email quan trọng của kỳ.
+
+  ### Vì sao vẫn để ô chưa tick
+
+  Tiêu chí hoàn thành có ba vế và vế thứ ba là **gửi GVHD trước 04/10**. Hai vế đầu xong; vế thứ
+  ba là việc của người, không phải của repo. Dùng đúng lối ghi đã dùng ở T27 lúc chờ chạy Kaggle:
+  ghi rõ phần đã xong ngay trên dòng task, giữ `[ ]` cho tới khi thư gửi đi thật.
+
+  ### Việc cần làm
+
+  1. Đọc lại `Bao_cao_giua_ky_KLTN.docx`, sửa chỗ nào thấy chưa đúng giọng.
+  2. **Gần tới ngày gửi thì chạy lại** `tao_bao_cao_giua_ky.py` nếu giai đoạn 6 đã có thêm số, và
+     sửa `SNAPSHOT` trong script cho khớp ngày chốt mới.
+  3. `python UniversityRequirements/WeeklyLogs/tao_email_html.py Email_giua_ky`, mở file HTML,
+     Ctrl+A Ctrl+C, dán vào Gmail.
+  4. Reply All vào chuỗi cũ, CC Minh, đính kèm file `.docx`, gửi trước **04/10**.
+  5. Tick ô này sau khi gửi.
 
 ---
 
