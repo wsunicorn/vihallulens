@@ -570,6 +570,17 @@ E06 một mình không nói được.
 máy cá nhân từ shard tải về cho **trùng từng chữ số**, như E06 và khác T23 — vì cả hai đều là số
 học thuần, không có bộ tối ưu lặp nào.
 
+Nhưng phần **dựng ngữ cảnh** thì không tái lập được giữa hai máy, và điều đó chỉ lộ ra khi so
+file. BM25 xếp hạng bằng `argsort`, vốn không ổn định, nên hai câu cùng điểm ra theo thứ tự tùy
+phiên bản numpy — **17 trên 1.836 cặp** (0,9 %) dựng ngữ cảnh khác nhau trên Kaggle và trên máy
+cá nhân, một cặp thậm chí khác số đoạn. Đã sửa thành `lexsort` phân định hòa bằng `evidence_id`,
+tức bằng nội dung câu, kèm hai ca kiểm thử.
+
+Con số trong bảng **không đổi**: phép ghép cặp chỉ dùng `sample_id` và `pair_id` vốn giống nhau ở
+cả hai bản, còn đặc trưng lấy từ shard trích trên Kaggle. Bản parquet giữ lại là bản của Kaggle,
+đúng bản đã sinh ra shard. Shard vì thế **có trước bản sửa**, và dựng lại kho bây giờ sẽ ra một
+bản thứ ba khác cả hai ở đúng những cặp hòa điểm ấy.
+
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
 **Kết luận: chọn chia theo câu, `min_words=5`.** Giữ nguyên cấu hình này cho mọi thí nghiệm
