@@ -2598,44 +2598,54 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   nó là **gom** những gì đã đo được thành một tài liệu người ngoài đọc hiểu, và đặt câu hỏi đúng
   chỗ cho GVHD trước khi tiêu tiếp giờ GPU của giai đoạn 6.
 
-  ### Hai file đã tạo
+  ### Bốn bộ sinh đã tạo
 
-| File | Nội dung |
+| File | Sinh ra |
 |---|---|
-| `UniversityRequirements/Reports/tao_bao_cao_giua_ky.py` | Bộ sinh báo cáo, dùng lại đúng bộ hàm định dạng của báo cáo tuần: Times New Roman 13, giãn dòng 1,3, lề 3-2-2-2 cm, bảng Table Grid nhỏ hơn một cỡ |
-| `UniversityRequirements/WeeklyLogs/Email_giua_ky.md` | Thư đính kèm, Reply All vào chuỗi cũ. Chuyển sang HTML bằng `tao_email_html.py Email_giua_ky` |
+| `Reports/tao_bao_cao_giua_ky.py` | `Bao_cao_giua_ky_KLTN.docx` — dựng trên mẫu của Khoa |
+| `Reports/tao_hinh_giua_ky.py` | Bốn hình trong `Reports/hinh/`, tự chạy khi sinh báo cáo |
+| `WeeklyLogs/tao_bao_cao_tuan_05.py` | `Bao_cao_tuan_05_31-08_den_06-09.docx` |
+| `WeeklyLogs/Email_giua_ky.md`, `Email_tuan_05.md` | Thư đính kèm, chuyển sang HTML để dán Gmail |
 
-  **Cả bốn file đều không vào Git.** Thư mục `UniversityRequirements/` nằm nguyên trong
-  `.gitignore` từ đầu và hiện `git ls-files` đếm được **0 file** trong đó — giấy tờ trường, kế
-  hoạch và báo cáo tuần đều nằm ngoài repo. Hai bộ sinh vừa viết theo đúng lệ đó, nên PR này chỉ
-  chứa `TASKS.md`.
+  `tao_email_html.py` nhận thêm một tham số dòng lệnh là tên file, nên cùng một bộ chuyển đổi
+  dùng được cho cả thư tuần lẫn thư giữa kỳ.
 
-  Có thể ép theo dõi riêng hai file `.py` bằng `git add -f` để chúng được phiên bản hóa, nhưng
-  đó là đổi lệ đã có nên **để người dùng quyết**, không tự làm.
+  **Cả bốn đều không vào Git.** Thư mục `UniversityRequirements/` nằm nguyên trong `.gitignore`
+  từ đầu và `git ls-files` đếm được **0 file** trong đó. Có thể ép theo dõi riêng các file `.py`
+  bằng `git add -f`, nhưng đó là đổi lệ đã có nên **để người dùng quyết**.
 
-  ### Vì sao viết thành script sinh chứ không gõ thẳng vào Word
+  ### Báo cáo giữa kỳ dựng theo đúng mẫu `Mau bao cao KLTN_DS.docx`
 
-  Vì hôm nay là **02/09**, còn hạn gửi là **04/10** — cách nhau năm tuần. Giai đoạn 6 gần như
-  chắc chắn có thêm số trước lúc gửi. Gõ thẳng vào Word thì mỗi lần có kết quả mới phải sửa tay
-  và rất dễ để sót một con số cũ trong một bảng nào đó; có script thì sửa một chỗ rồi chạy lại.
+  Bản đầu tôi viết theo bố cục báo cáo tuần. Sai — mẫu của Khoa có quy định định dạng riêng và
+  chặt hơn nhiều. Đã dựng lại từ đầu theo mục **ĐỊNH DẠNG** của mẫu:
 
-  Đổi lại, script này **không tự tính gì cả**. Mọi con số chép tay từ `docs/EXPERIMENTS.md`. Ghi
-  rõ điều đó ngay trong docstring để sau này không ai tưởng nó đọc `runs.jsonl`.
-
-  ### Báo cáo có gì
-
-  Mười mục, khoảng 4.100 từ, 12 bảng. Ba bảng mà tiêu chí hoàn thành đòi đều có đủ số:
-
-| Bảng trong báo cáo | Tương ứng `EXPERIMENTS.md` | Thí nghiệm |
+| Hạng mục | Mẫu của Khoa đòi | Khác báo cáo tuần |
 |---|---|---|
-| Bảng 5 — kết quả chính trên ViHallu | Bảng 1 | E01, E09, E10, E02, E03 |
-| Bảng 6 — chọn cách chia đoạn | Bảng 3 | E05 |
-| Bảng 7 — định vị chú ý | Bảng 2 | E06 |
-| Bảng 8 — ngữ cảnh dài | Bảng 2b | E07 |
-| Bảng 9 và 10 — bỏ bằng chứng đi, và phép lặp định vị | Bảng 2c | E08 |
+| Lề | trên 3, dưới 3, **trái 3,5**, phải 2 cm | báo cáo tuần dùng 2-2-3-2 |
+| Giãn dòng thân bài | **1,5 lines**, cách trên 10 pt, cách dưới 0 | báo cáo tuần dùng 1,3 |
+| Heading 1 | TNR 14 đậm IN HOA, cách trên và dưới 24 pt, giãn 1,15 | — |
+| Heading 2 | TNR 13 đậm đứng, cách trên 6 dưới 12, giãn 1,15 | — |
+| Caption | TNR 13, căn giữa, cách trên 6 dưới 12 | — |
+| Đánh số bảng và hình | **gắn với chương**: Bảng 5.1 là bảng thứ nhất chương 5 | — |
+| Vị trí caption | tiêu đề bảng **ở trên**, tiêu đề hình **ở dưới** | — |
+| Số trang | góc phải dưới, **bắt đầu từ phần nội dung** | — |
 
-  Bốn bảng còn lại là câu hỏi nghiên cứu, năm đại lượng chunk-aware, thiết lập kỹ thuật, bốn bộ
-  dữ liệu, tiến độ chín giai đoạn và kế hoạch nửa sau.
+  Phần đầu điền đủ theo danh sách "Thành phần" của mẫu: bìa tiếng Việt (hai bản), bìa tiếng Anh,
+  Abstract kèm keywords, Tóm tắt kèm từ khóa, lời cảm ơn, ba trang nhận xét, mục lục, hai danh
+  mục, danh mục viết tắt. Không để chỗ nào là chữ mẫu — điền hết bằng nội dung thật.
+
+  Nội dung: **6 chương, 8.033 từ, 19 bảng, 4 hình**. Mẫu nói "nội dung tùy theo mỗi đề tài" nên
+  chương 3 tới 6 đặt theo đề tài (phương pháp, thiết kế thực nghiệm, kết quả, kết luận) thay vì
+  bốn chương phân tích–thiết kế–hiện thực của mẫu; bốn chương đó thuộc giai đoạn 7, chưa tới.
+
+  ### Ba thứ Word phải tự hoàn tất
+
+  Mục lục, danh mục hình ảnh và danh mục bảng biểu là **trường Word**, không phải chữ. Mở file,
+  Ctrl+A, F9, chọn "Update entire table".
+
+  Hai danh mục dùng hai style riêng `Caption Hinh` và `Caption Bang` thay vì một style `Caption`
+  chung, để hai trường `TOC \t` tách được hình khỏi bảng. Hệ quả có chủ ý: một caption viết sai
+  style thì **không hiện ra** trong danh mục — hỏng thì hỏng to, không hỏng âm thầm.
 
   ### Chỗ khó nhất khi viết: nói thế nào về một lợi thế nhỏ
 
@@ -2648,14 +2658,14 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
     chồng gần hết lên nhau.
 
   Cách xử lý đã chọn: **để hai mặt cạnh nhau và biến khoảng cách giữa chúng thành phát hiện**,
-  ở mục 6.1 của báo cáo. Định vị đúng và phân loại đúng là hai việc khác nhau, vì một câu trả lời
+  ở mục 5.7 của báo cáo. Định vị đúng và phân loại đúng là hai việc khác nhau, vì một câu trả lời
   ảo giác nội tại **vẫn dồn chú ý đúng chỗ** — mô hình có đọc, chỉ là nói sai thứ nó đọc.
 
   Cách còn lại là dẫn con số 14,29× lên đầu và để lợi thế +0,007 xuống một chú thích. Không chọn
   cách đó, vì hội đồng sẽ tự tìm ra và lúc ấy nó thành điểm yếu về sự trung thực chứ không còn là
   điểm yếu về kết quả.
 
-  ### Mục 10 hỏi GVHD ba câu, và câu đầu mới là câu thật
+  ### Mục 6.4 hỏi GVHD ba câu, và câu đầu mới là câu thật
 
   1. **Định vị đóng góp thế nào cho đúng chuẩn khóa luận** — nhóm nghiêng về "đóng góp là bằng
      chứng cơ chế và khả năng chỉ ra vị trí", nhưng đây là câu chỉ GVHD trả lời được vì nó phụ
@@ -2671,15 +2681,33 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   ba là việc của người, không phải của repo. Dùng đúng lối ghi đã dùng ở T27 lúc chờ chạy Kaggle:
   ghi rõ phần đã xong ngay trên dòng task, giữ `[ ]` cho tới khi thư gửi đi thật.
 
+  ### Báo cáo tuần 5 làm cùng lúc, và một lỗ hổng trong chuỗi báo cáo
+
+  Tuần 5 là **31/08 – 06/09**, gửi thứ Sáu **04/09**. Từ đây tới hạn báo cáo giữa kỳ 04/10 còn
+  đúng **năm** kỳ báo cáo tuần: tuần 5, 6, 7, 8 và 9 — và thư tuần 9 gửi thứ Sáu 02/10 chính là
+  thư mang báo cáo giữa kỳ đi.
+
+  Khi soạn mới phát hiện một lỗ hổng: **báo cáo tuần 4 chốt nội dung ngày 27/08** và xếp T20 tới
+  T24 vào mục "kế hoạch tuần tới". Nhưng bốn đầu việc ấy hoàn thành **28–30/08**, tức vẫn trong
+  tuần 4, chỉ là sau khi báo cáo tuần 4 đã chốt. Chúng mang E02, E03, E04 và E05 — phần kết quả
+  chính. Nếu báo cáo tuần 5 chỉ tính từ 31/08 thì GVHD **không bao giờ** nghe về bốn thí nghiệm
+  đó.
+
+  Xử lý: báo cáo tuần 5 vẫn ghi kỳ 31/08–06/09 nhưng gộp cả bốn đầu việc ấy, và **nói thẳng ở
+  câu đầu mục 1** vì sao gộp. Ghi chú cách gửi trong `Email_tuan_05.md` cũng nhắc: báo cáo tuần 4
+  chưa gửi, nên hoặc gửi nó trước, hoặc đính kèm luôn.
+
   ### Việc cần làm
 
-  1. Đọc lại `Bao_cao_giua_ky_KLTN.docx`, sửa chỗ nào thấy chưa đúng giọng.
-  2. **Gần tới ngày gửi thì chạy lại** `tao_bao_cao_giua_ky.py` nếu giai đoạn 6 đã có thêm số, và
-     sửa `SNAPSHOT` trong script cho khớp ngày chốt mới.
-  3. `python UniversityRequirements/WeeklyLogs/tao_email_html.py Email_giua_ky`, mở file HTML,
+  1. Đọc lại `Bao_cao_giua_ky_KLTN.docx`, mở trong Word rồi **Ctrl+A, F9** để sinh mục lục và hai
+     danh mục; sửa chỗ nào thấy chưa đúng giọng.
+  2. Gửi **báo cáo tuần 5** trước, hạn thứ Sáu 04/09 — kèm hoặc gửi trước báo cáo tuần 4.
+  3. **Gần tới ngày gửi báo cáo giữa kỳ thì chạy lại** `tao_bao_cao_giua_ky.py` nếu giai đoạn 6
+     đã có thêm số, và sửa `SNAPSHOT` trong script cho khớp ngày chốt mới.
+  4. `python UniversityRequirements/WeeklyLogs/tao_email_html.py Email_giua_ky`, mở file HTML,
      Ctrl+A Ctrl+C, dán vào Gmail.
-  4. Reply All vào chuỗi cũ, CC Minh, đính kèm file `.docx`, gửi trước **04/10**.
-  5. Tick ô này sau khi gửi.
+  5. Reply All vào chuỗi cũ, CC Minh, đính kèm file `.docx`, gửi trước **04/10**.
+  6. Tick ô này sau khi gửi.
 
 ---
 
