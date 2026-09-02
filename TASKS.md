@@ -2322,7 +2322,7 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   nên phiên chết giữa chừng chỉ cần mở phiên mới chạy lại đúng ô đó.
 
   Phiên Kaggle giới hạn 12 giờ nên 9,8 giờ vừa đủ nhưng sát — chia hai phiên cũng được.
-- [ ] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16 — **công cụ sẵn sàng 01/09/2026, chờ chạy trên Kaggle**
+- [x] **T27** · M · E08 thí nghiệm lớp ngoại lai trên ViWikiFC dùng kho truy xuất từ T16 — **xong 01/09/2026, hết giai đoạn 4**
 
   ### Đây là phép kiểm can thiệp duy nhất của cả đề tài
 
@@ -2459,9 +2459,84 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Cách duy nhất thoát ra là **liệt kê toàn bộ điều kiện của cả đường đi**, không phải thêm một
   trường hợp đặc biệt mỗi lần.
 
-  ### Việc cần chạy
+  ### Kết quả — cả bốn hướng dự đoán đều đúng
 
-  Mở `notebooks/t27_bo_bang_chung_t4.ipynb`, khoảng **48 phút**: 3.672 dòng ở ~784 ms. Việc dựng
+  Chạy 01/09/2026, 43,1 phút GPU, **0 lỗi trên 3.672 dòng**, 0 cắt ngữ cảnh, 0 lớp tràn số.
+
+| Đặc trưng | Có vàng | Mất vàng | Đổi | % cặp đúng hướng | Cỡ ảnh hưởng |
+|---|---|---|---|---|---|
+| `chunk_entropy` ↑ | 0,7966 | 0,8176 | **+0,0156** | **75,4 %** | +0,7156 |
+| `chunk_gini` ↓ | 0,5064 | 0,4860 | −0,0158 | 74,5 % | −0,6855 |
+| `chunk_max_share` ↓ | 0,3597 | 0,3392 | −0,0139 | 72,4 % | −0,6570 |
+| `top1_top2_gap` ↓ | 0,1829 | 0,1611 | −0,0129 | 71,2 % | −0,6237 |
+| `chunk_drift` *(không dự đoán)* | 0,2081 | 0,2110 | +0,0024 | 63,3 % | +0,4009 |
+
+  Mũi tên ở cột đầu là hướng ghi vào `EXPECTED_DIRECTION` **trước khi chạy**, có ca kiểm thử khóa
+  lại. Không có cách nào mô tả lại một kết quả đi ngược thành xác nhận.
+
+  ### Đây là bằng chứng khác loại với mọi thí nghiệm trước
+
+  T20 tới T26 đều **tương quan**: đo tín hiệu, so với nhãn ai đó gán, báo mức khớp. Khi khớp thì
+  "cơ chế hoạt động" là **suy luận** — tín hiệu có thể đang bắt bất kỳ thứ gì đi kèm với nhãn.
+
+  T27 **can thiệp**: giữ nguyên phản hồi, chín câu nhiễu, độ dài, số đoạn và thứ tự, chỉ rút câu
+  bằng chứng ra. Ba tới bốn cặp trên năm chuyển động đúng hướng, cỡ ảnh hưởng 0,62–0,72 tức mức
+  **lớn**.
+
+  Và nhãn nửa "mất vàng" **không do ai gán** — rút câu vàng ra thì phản hồi khẳng định điều ngữ
+  cảnh không chứa. T13 đo được ranh giới nội tại–ngoại lai đánh bại hai người gán nhãn (kappa
+  0,70 và 0,50) và cả Gemini (0,474); ở đây nó được **dựng ra** chứ không **đoán**.
+
+  ### Độ lớn nhỏ, phải nói rõ
+
+  Chênh tuyệt đối chỉ **0,013–0,016 trên thang 0–1**. Kiểm định theo cặp đo mức nhất quán của
+  **hướng**, không đo độ lớn.
+
+  Cách đọc đúng: **rút bằng chứng ra làm chú ý tản hơn một cách nhỏ nhưng rất nhất quán.** Nó
+  chứng minh tín hiệu *phản ứng với sự có mặt của bằng chứng* — không chứng minh tín hiệu ấy đủ
+  mạnh để một mình phân loại. E03 và E07 đã cho thấy điều thứ hai không đúng.
+
+  ### `chunk_drift` phản ứng mà không được dự đoán
+
+  63,3 % cặp, cỡ ảnh hưởng +0,4009 — thấp hơn bốn cái kia nhưng vẫn trên mức ngẫu nhiên rõ rệt.
+  `EXPECTED_DIRECTION` ghi 0 cho nó vì drift nói về chuyển động qua các token phản hồi, không phải
+  hình dạng ở một thời điểm.
+
+  Ghi lại như **quan sát thăm dò**, không phải xác nhận: dùng nó làm bằng chứng bây giờ là chọn
+  giả thuyết sau khi thấy dữ liệu.
+
+  ### Phép lặp E06 trên bộ thứ hai, và số gần như trùng
+
+| | E06 · ISE-DSC01 | E08 · ViWikiFC |
+|---|---|---|
+| Cách dựng ngữ cảnh | tài liệu tự nhiên | mười câu BM25, **đã xáo** |
+| Đoạn mỗi ngữ cảnh | 22,6 | 9,8 |
+| Sàn ngẫu nhiên hit@1 | 0,0614 | 0,1027 |
+| **hit@1 đầu mạnh nhất** | 0,8779 | **0,8529** |
+| **hit@1 trung bình 756 đầu** | 0,3320 | **0,3289** |
+
+  Hai corpus khác thể loại, khác cách dựng ngữ cảnh, khác số đoạn gần ba lần, khác sàn — mà
+  **hit@1 trung bình mọi đầu lệch nhau 0,003**. Con số ấy không dính lựa chọn nào nên sự trùng
+  khớp không thể là hiện vật của việc chọn đầu tốt nhất.
+
+  **Định vị bằng chứng là thuộc tính của mô hình đọc, không phải của một bộ dữ liệu.** E06 một
+  mình không nói được điều này.
+
+  ### Tái lập và một chỗ tôi làm hơi vội
+
+  Chấm lại trên máy cá nhân từ shard tải về cho **trùng từng chữ số**, như E06 và khác T23 — cả
+  hai đều là số học thuần, không có bộ tối ưu lặp.
+
+  File `viwikifc_e08_dev.parquet` tải về bị đặt nhầm vào `data/processed/`. Tôi so nó với bản dựng
+  ở máy, thấy `.equals()` trả về False, rồi **xóa nó trước khi soi kỹ khác ở đâu** — hơi vội, đúng
+  kiểu lỗi đã mắc với notebook T22. Bằng chứng gián tiếp cho thấy nội dung khớp: shard được trích
+  trên Kaggle từ parquet của Kaggle, còn phép ghép cặp chạy với parquet dựng ở máy, và **1.836/
+  1.836 cặp ghép đúng** — sai một `sample_id` nào là hỏng ngay. Khác biệt gần như chắc chắn nằm ở
+  metadata kiểu dữ liệu, nhưng tôi không còn file để khẳng định.
+
+  ### Lượt chạy đã thực hiện
+
+  Đã chạy `notebooks/t27_bo_bang_chung_t4.ipynb`, khoảng **48 phút**: 3.672 dòng ở ~784 ms. Việc dựng
   ngữ cảnh chạy CPU trong notebook, không cần chuẩn bị gì trước.
 
   Chấm điểm sẽ chạy lại ở **máy cá nhân** theo quy tắc chốt ở T26, nên nhớ tải cả `runs.jsonl`,

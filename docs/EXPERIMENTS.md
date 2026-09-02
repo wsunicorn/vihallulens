@@ -487,6 +487,89 @@ hơn.
 Chưa có cách giải thích chắc chắn, và không nên bịa một cách. Ghi lại như một quan sát cần đối
 chiếu ở E12 khi tách riêng đóng góp từng nhóm đặc trưng.
 
+### Bảng 2c — Bỏ bằng chứng đi (E08, ViWikiFC)
+
+Chạy 01/09/2026, 43,1 phút GPU, **0 lỗi trên 3.672 dòng**, 0 cắt ngữ cảnh, 0 lớp tràn số.
+1.836 cặp, mỗi cặp là **cùng một claim đọc hai lần** trên hai ngữ cảnh mười câu khác nhau **đúng
+một câu ở đúng một vị trí**.
+
+| Đặc trưng | Có vàng | Mất vàng | Đổi | % cặp đúng hướng | Cỡ ảnh hưởng |
+|---|---|---|---|---|---|
+| `chunk_entropy` ↑ | 0,7966 | 0,8176 | **+0,0156** | **75,4 %** | +0,7156 |
+| `chunk_gini` ↓ | 0,5064 | 0,4860 | −0,0158 | 74,5 % | −0,6855 |
+| `chunk_max_share` ↓ | 0,3597 | 0,3392 | −0,0139 | 72,4 % | −0,6570 |
+| `top1_top2_gap` ↓ | 0,1829 | 0,1611 | −0,0129 | 71,2 % | −0,6237 |
+| `chunk_drift` *(không dự đoán)* | 0,2081 | 0,2110 | +0,0024 | 63,3 % | +0,4009 |
+
+**Cả bốn hướng dự đoán đều đúng.** Mũi tên trong cột đầu là hướng đã ghi vào `EXPECTED_DIRECTION`
+**trước khi chạy**, có ca kiểm thử khóa lại, nên không có cách nào mô tả lại một kết quả đi ngược
+thành xác nhận.
+
+### Vì sao đây là bằng chứng khác loại với mọi bảng còn lại
+
+Bảng 1, 2, 2b và 3 đều **tương quan**: đo một tín hiệu, so với nhãn ai đó gán, báo mức khớp. Khi
+hai bên khớp, câu "cơ chế hoạt động" là một **suy luận** — tín hiệu có thể đang bắt bất kỳ thứ gì
+đi kèm với nhãn.
+
+Bảng này **can thiệp**. Giữ nguyên phản hồi, giữ nguyên chín câu nhiễu, giữ nguyên độ dài, số
+đoạn và thứ tự — chỉ **rút câu bằng chứng ra** và thay bằng câu nhiễu kế tiếp. Rồi đo lại. Ba đến
+bốn cặp trên năm chuyển động **đúng hướng cơ chế dự đoán**, với cỡ ảnh hưởng 0,62–0,72, tức mức
+**lớn** trên thang rank-biserial.
+
+Nhãn nửa "mất vàng" cũng không do ai gán: rút câu vàng ra thì phản hồi khẳng định điều ngữ cảnh
+không chứa, đúng định nghĩa ảo giác ngoại lai. T13 đo được ranh giới nội tại–ngoại lai đánh bại
+hai người gán nhãn (kappa 0,70 và 0,50) và cả Gemini (0,474); ở đây ranh giới ấy được **dựng ra**
+chứ không được **đoán**, nên lần đầu tiên phần khó nhất của bài toán không phụ thuộc chất lượng
+nhãn.
+
+### Độ lớn nhỏ, và phải nói rõ điều đó
+
+Chênh lệch tuyệt đối chỉ **0,013–0,016 trên thang 0–1**. Kiểm định theo cặp đo mức **nhất quán
+của hướng**, không đo độ lớn — một dịch chuyển nhỏ tới mức vô nghĩa vẫn cho tỷ lệ cặp đúng hướng
+rất cao nếu nó đều. Có một ca kiểm thử dựng đúng cái bẫy ấy để khóa lại.
+
+Cách đọc đúng: **rút bằng chứng ra làm chú ý tản hơn một cách nhỏ nhưng rất nhất quán.** Đó vẫn
+là điều đề tài cần — nó chứng minh tín hiệu *phản ứng với sự có mặt của bằng chứng*, chứ không
+chứng minh tín hiệu ấy đủ mạnh để một mình phân loại. Hai điều khác nhau, và E03 với E07 đã cho
+thấy điều thứ hai không đúng.
+
+### `chunk_drift` phản ứng mà không được dự đoán
+
+63,3 % cặp, cỡ ảnh hưởng +0,4009 — thấp hơn bốn đặc trưng kia nhưng vẫn trên mức ngẫu nhiên rõ
+rệt. `EXPECTED_DIRECTION` ghi 0 cho nó vì drift nói về **chuyển động của phân bố qua các token
+phản hồi**, không phải hình dạng ở một thời điểm, nên không có lý do tiên nghiệm để nó đổi.
+
+Ghi lại như **quan sát thăm dò**, không phải xác nhận: nó không nằm trong dự đoán, nên dùng nó
+làm bằng chứng bây giờ là chọn giả thuyết sau khi thấy dữ liệu. Nếu muốn dùng thì phải kiểm lại
+trên bộ khác.
+
+### E08 lặp lại E06 trên bộ dữ liệu thứ hai, và con số gần như trùng
+
+Nửa "có vàng" của mỗi cặp đo được đúng thứ E06 đo, nên E08 là một **phép lặp độc lập**:
+
+| | E06 · ISE-DSC01 | E08 · ViWikiFC |
+|---|---|---|
+| Cách dựng ngữ cảnh | tài liệu tự nhiên | mười câu BM25 truy xuất, **đã xáo thứ tự** |
+| Đoạn mỗi ngữ cảnh | 22,6 | 9,8 |
+| Sàn ngẫu nhiên hit@1 | 0,0614 | 0,1027 |
+| **hit@1 đầu mạnh nhất** | 0,8779 (lớp 14, đầu 6) | **0,8529** (lớp 19, đầu 20) |
+| **hit@1 trung bình 756 đầu** | 0,3320 | **0,3289** |
+| hit@3 | 0,9562 | 0,9461 |
+| MRR | 0,9200 | 0,9049 |
+
+Hai corpus khác nhau về thể loại, khác cách dựng ngữ cảnh, khác số đoạn gần ba lần, khác sàn ngẫu
+nhiên — mà **hit@1 trung bình mọi đầu lệch nhau 0,003**. Con số ấy không dính lựa chọn nào, nên
+sự trùng khớp không thể là hiện vật của việc chọn đầu tốt nhất.
+
+**Định vị bằng chứng là thuộc tính của mô hình đọc, không phải của một bộ dữ liệu.** Đây là điều
+E06 một mình không nói được.
+
+### Chi phí và tái lập
+
+**705 ms/mẫu**, khớp mô hình tuyến tính theo token của T08 với ngữ cảnh 496 token. Chấm lại trên
+máy cá nhân từ shard tải về cho **trùng từng chữ số**, như E06 và khác T23 — vì cả hai đều là số
+học thuần, không có bộ tối ưu lặp nào.
+
 ### Bảng 3 — Chọn cách chia chunk (E05)
 
 **Kết luận: chọn chia theo câu, `min_words=5`.** Giữ nguyên cấu hình này cho mọi thí nghiệm
