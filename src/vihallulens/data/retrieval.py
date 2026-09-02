@@ -171,7 +171,18 @@ class EvidenceIndex:
             return []
 
         scores = self._bm25.get_scores(tokens)
-        order = scores.argsort()[::-1]
+        # Ties are broken by evidence_id, not left to the sort. ``argsort`` defaults to quicksort,
+        # which is not stable, so two sentences on the same BM25 score came out in whichever order
+        # the local numpy happened to produce — and that order differed between Kaggle and the
+        # development machine. Measured at T27: 17 of 1.836 claims (0,9 %) built a different
+        # context on the two platforms because of it, and one of them even ended up with a
+        # different chunk count.
+        #
+        # lexsort takes its LAST key as primary, so this reads "by descending score, then by
+        # evidence_id". evidence_id is a hash of the sentence text, so the tie-break depends on
+        # content alone and does not move if the corpus is ever rebuilt in a different row order.
+        ids = self.corpus["evidence_id"].to_numpy()
+        order = np.lexsort((ids, -scores))
 
         hits: list[Hit] = []
         for position in order:

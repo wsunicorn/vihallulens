@@ -2522,17 +2522,59 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   **Định vị bằng chứng là thuộc tính của mô hình đọc, không phải của một bộ dữ liệu.** E06 một
   mình không nói được điều này.
 
-  ### Tái lập và một chỗ tôi làm hơi vội
+  ### Tái lập, và một lỗi tái lập thật tìm ra sau khi đã tick
 
   Chấm lại trên máy cá nhân từ shard tải về cho **trùng từng chữ số**, như E06 và khác T23 — cả
   hai đều là số học thuần, không có bộ tối ưu lặp.
 
-  File `viwikifc_e08_dev.parquet` tải về bị đặt nhầm vào `data/processed/`. Tôi so nó với bản dựng
-  ở máy, thấy `.equals()` trả về False, rồi **xóa nó trước khi soi kỹ khác ở đâu** — hơi vội, đúng
-  kiểu lỗi đã mắc với notebook T22. Bằng chứng gián tiếp cho thấy nội dung khớp: shard được trích
-  trên Kaggle từ parquet của Kaggle, còn phép ghép cặp chạy với parquet dựng ở máy, và **1.836/
-  1.836 cặp ghép đúng** — sai một `sample_id` nào là hỏng ngay. Khác biệt gần như chắc chắn nằm ở
-  metadata kiểu dữ liệu, nhưng tôi không còn file để khẳng định.
+  Nhưng file `viwikifc_e08_dev.parquet` dựng trên Kaggle **không giống** bản dựng ở máy. Lần đầu
+  tôi thấy `.equals()` trả `False` rồi đoán là khác biệt kiểu dữ liệu và xóa file đi — **đoán
+  sai**. So kỹ lại thì:
+
+```
+  byte giống nhau : False
+  kiểu dữ liệu    : không cột nào khác
+  context         : 31 dòng khác   <<<
+  evidence_start  :  2 dòng khác
+  evidence_end    :  2 dòng khác
+```
+
+  Khác **nội dung thật**, thuộc **17 cặp trên 1.836** (0,9 %). Một cặp thậm chí ra số đoạn khác
+  nhau giữa hai máy (9 so với 8).
+
+  ### Nguyên nhân: BM25 hòa điểm gặp một phép sắp xếp không ổn định
+
+  `EvidenceIndex.search` xếp hạng bằng `scores.argsort()[::-1]`. `argsort` mặc định dùng
+  quicksort, **không ổn định**, nên hai câu cùng điểm BM25 ra theo thứ tự mà numpy trên máy đó
+  tình cờ sinh ra. Claim đầu tiên bị lệch có đúng một cặp hòa ở 23,1387 trong top-14.
+
+  Sửa: `np.lexsort((ids, -scores))` — giảm dần theo điểm, hòa thì xếp theo `evidence_id`.
+  `evidence_id` là băm của nội dung câu nên tiêu chí phân định **chỉ phụ thuộc nội dung**, không
+  đổi nếu sau này dựng lại kho theo thứ tự dòng khác. Hai ca kiểm thử khóa lại: một ca dựng ba
+  mươi câu cùng điểm và đòi thứ tự lặp lại được, một ca đảo ngược thứ tự dòng của kho và đòi kết
+  quả truy xuất không đổi.
+
+  ### Giữ bản Kaggle, và vì sao không trích lại
+
+  Đã đổi tên bản Kaggle thành `viwikifc_e08_dev.parquet`, đè lên bản dựng ở máy. Lý do: shard đặc
+  trưng được trích **từ** ngữ cảnh của Kaggle, nên con số E08 mô tả đúng thứ mô hình đã đọc. Giữ
+  bản máy thì parquet và shard nói về hai ngữ cảnh khác nhau ở 17 cặp.
+
+  **Kết quả không đổi** — đã chấm lại với bản Kaggle và ra đúng từng chữ số. Phép ghép cặp chỉ
+  dùng `sample_id`, `condition` và `pair_id`, vốn giống hệt ở cả hai bản; đặc trưng thì lấy từ
+  shard. Nên 17 cặp lệch kia không hề đi vào con số nào.
+
+  **Không trích lại** dù shard có trước bản sửa. Ba lý do: Kaggle tự chạy ô kiểm tiền đề trên
+  chính dữ liệu của nó và báo 1.836/1.836 đạt 100 %, nên 17 cặp ấy vẫn là cặp tối thiểu hợp lệ,
+  chỉ khác câu nhiễu; chênh lệch chạm 0,9 % dữ liệu; và 43 phút GPU để đổi một thứ không đo được
+  là không đáng. Ghi lại rằng **shard T27 có trước bản sửa**, nên dựng lại kho bây giờ sẽ ra bản
+  thứ ba khác cả hai ở đúng những cặp hòa điểm ấy.
+
+  ### Bài học
+
+  Lần thứ hai trong hai ngày tôi **xóa một file rồi mới tìm hiểu nó khác ở đâu** — lần đầu là
+  notebook T22 đã chạy. Cả hai lần đều khôi phục được, nhưng cả hai lần lý do xóa đều là một
+  phỏng đoán chưa kiểm. Và lần này phỏng đoán ấy **sai**, che mất một lỗi tái lập có thật.
 
   ### Lượt chạy đã thực hiện
 

@@ -204,3 +204,47 @@ def test_every_chunk_feature_has_a_direction_written_down_before_the_run(name):
 
     assert name in EXPECTED_DIRECTION
     assert EXPECTED_DIRECTION[name] in (-1, 0, +1)
+
+
+# -- the tie-break that made two platforms disagree ----------------------------------------------
+
+
+def test_tied_scores_are_broken_by_evidence_id_not_by_the_sort():
+    """The T27 reproducibility bug. ``argsort`` defaults to quicksort, which is not stable, so two
+    sentences on the same BM25 score came out in whichever order the local numpy produced — and
+    Kaggle and the development machine produced different ones. 17 of 1.836 claims built a
+    different context because of it, one of them with a different chunk count.
+
+    A hash of the sentence text is the tie-break because it depends on content alone: rebuilding
+    the corpus in a different row order must not move it."""
+    rows = []
+    for index in range(30):
+        # Identical wording apart from a trailing marker, so BM25 scores them the same.
+        text = f"Câu hoàn toàn giống nhau về từ ngữ dùng để kiểm tra hòa điểm số {index}."
+        rows.append({"evidence_id": evidence_id(text), "text": text,
+                     "title": "Bài", "link": "", "n_claims": 1})
+    index = EvidenceIndex(pd.DataFrame(rows))
+
+    first = [hit.evidence_id for hit in index.search("hoàn toàn giống nhau kiểm tra", k=10)]
+    for _ in range(5):
+        assert [h.evidence_id for h in index.search("hoàn toàn giống nhau kiểm tra", k=10)] == first
+
+    # And the order the ids come out in has to be the order the ids themselves sort in, among
+    # equal scores — not the order they happen to sit in the corpus.
+    scores = index._bm25.get_scores(["hoàn", "toàn", "giống", "nhau"])
+    tied = {rows[i]["evidence_id"] for i in range(len(rows)) if scores[i] == max(scores)}
+    returned = [i for i in first if i in tied]
+    assert returned == sorted(returned)
+
+
+def test_shuffling_the_corpus_rows_does_not_change_the_ranking():
+    """Follows from tie-breaking on content: the same pool in a different row order is the same
+    pool, and must retrieve the same sentences in the same order."""
+    rows = [{"evidence_id": evidence_id(f"Câu số {i} nói về chủ đề chung một cách rõ ràng."),
+             "text": f"Câu số {i} nói về chủ đề chung một cách rõ ràng.",
+             "title": "Bài", "link": "", "n_claims": 1} for i in range(30)]
+    straight = EvidenceIndex(pd.DataFrame(rows))
+    reversed_ = EvidenceIndex(pd.DataFrame(rows[::-1]))
+    query = "chủ đề chung rõ ràng"
+    assert ([h.evidence_id for h in straight.search(query, k=8)]
+            == [h.evidence_id for h in reversed_.search(query, k=8)])
