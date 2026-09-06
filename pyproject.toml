@@ -14,9 +14,18 @@ authors = [
 ]
 
 dependencies = [
-    # Mô hình đọc và trích attention
+    # Mô hình đọc và trích attention.
+    #
+    # transformers có trần major theo yêu cầu ở mục 5 CLAUDE.md: việc hook trên self_attn có
+    # nhận được attn_weights hay không PHỤ THUỘC PHIÊN BẢN, và một bản major mới là đúng chỗ
+    # hành vi đó đổi. Sàn là 5.0 vì đó là bản thấp nhất đã chạy thật (Kaggle, 06/09/2026); mã
+    # nguồn được đo trên 5.15.0. Không ghim chặt một bản vì cả hai bản đều chưa được kiểm hết.
+    #
+    # Ghim ở đây KHÔNG bảo vệ được notebook: nó cài bằng `pip install --no-deps -e .` nên dùng
+    # bản Kaggle có sẵn. Thứ bảo vệ thật là tests/test_attention_hook.py, và ô 4 của mỗi
+    # notebook phải chạy nó trên chính môi trường sắp tiêu giờ GPU.
     "torch",
-    "transformers",
+    "transformers>=5.0,<6",
     "accelerate",
     "bitsandbytes",
     # Dữ liệu
