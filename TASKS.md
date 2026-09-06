@@ -2851,16 +2851,34 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Ô 5 nay truyền `--reference bfloat16` và đặt `PYTORCH_ALLOC_CONF=expandable_segments:True`,
   đúng thứ thông báo lỗi gợi ý. Lượt trích chính ở ô 7 chạy `float16` + NF4 nên không dính.
 
-  ### Hai điều khác thấy trong log, chưa xử lý
+  ### Một điều khác thấy trong log, và một chỗ tôi báo sai
 
-  **`transformers` không được ghim phiên bản.** Mục 5 của `CLAUDE.md` đòi *"ghim đúng phiên bản
-  trong `pyproject.toml`, kèm một test khẳng định `attn_weights is not None`"* — **cả hai đều
-  chưa có**. `pyproject.toml` ghi trần `"transformers"`, và không có ca kiểm thử nào chứa chuỗi
-  `attn_weights is not None`. Kaggle lần này cài **transformers 5.0.0**, một bản major mới.
+  **`transformers` — tôi báo sai một lần, đính chính ở đây.** Lần đầu tôi nói mục 5 `CLAUDE.md`
+  đòi hai thứ mà "cả hai đều chưa có". **Sai.** Tôi grep chuỗi `attn_weights is not None` trong
+  `tests/` thấy rỗng rồi kết luận, trong khi test có thật chỉ khác cách diễn đạt. Thực tế:
 
-  Chưa cắn ai vì T20–T27 đều chạy được, nhưng đây là rủi ro thật với T30: mô hình mới, thư viện
-  mới. Và ghim trong `pyproject.toml` **không cứu được** vì notebook cài bằng `--no-deps`, nên
-  thứ bảo vệ thật phải là một phép kiểm lúc chạy. Ghi lại đây để xử lý riêng, không lẫn vào T30.
+| Mục 5 đòi | Tình trạng thật |
+|---|---|
+| Phép kiểm lúc chạy | **Đã có** từ T07 — `attention.py` bỏ qua lớp không có `attn_weights`, thử lại với `output_attentions=True`, rồi ném `RuntimeError` kèm tên phiên bản nếu vẫn rỗng. Hỏng ở **mẫu đầu**, không phải sau 3 giờ |
+| Test khẳng định `attn_weights` | **Đã có** — `test_hook_receives_attention_weights`, chạy cả hai giá trị `output_attentions`, thông báo lỗi trỏ thẳng mục 5 |
+| Ghim phiên bản | **Thiếu thật.** Đã sửa: `transformers>=5.0,<6` |
+
+  Sàn 5.0 vì đó là bản thấp nhất đã chạy thật (Kaggle 06/09); mã nguồn được đo trên 5.15.0. Không
+  ghim chặt một bản vì cả hai đều chưa kiểm hết. Trần major vì mục 5 nói đúng chỗ hành vi này đổi.
+
+  ### Chỗ hở thật, và nó không phải chỗ tôi tưởng
+
+  Ghim trong `pyproject.toml` **không bảo vệ được notebook**: nó cài bằng `--no-deps` nên dùng bản
+  `transformers` của Kaggle. Nghĩa là bộ kiểm thử bảo vệ đúng thứ cần bảo vệ, nhưng **chỉ từng
+  chạy ở máy cá nhân** — tức đúng môi trường *không* rủi ro. Môi trường có phiên bản không ai
+  kiểm soát thì chưa bao giờ được hỏi.
+
+  Sửa: ô 4 của notebook nay chạy `tests/test_attention_hook.py` cùng với `test_compare_heads.py`,
+  trên chính Kaggle, mất vài giây và trước khi đụng GPU. Mô hình Qwen2 hai lớp trọng số ngẫu
+  nhiên chạy CPU nên không cần tải gì.
+
+  **Cảnh báo thiếu `pyvi` và `rank-bm25`.** Vô hại cho T30 vì nó không tách từ và không truy
+  xuất, nhưng cùng một gốc `--no-deps`.
 
   **Cảnh báo thiếu `pyvi` và `rank-bm25`.** Vô hại cho T30 vì nó không tách từ và không truy
   xuất, nhưng vẫn là cùng một gốc: `--no-deps` không kéo phụ thuộc nào về.
