@@ -143,6 +143,8 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+    import gc
+
     import torch
 
     data_dir = find_raw_dir(args.data_dir)
@@ -181,8 +183,15 @@ def main() -> int:
             print()
             print(f"  !! Hết bộ nhớ khi nạp mô hình ở {dtype_name}. Bỏ phần so lệch.")
             print("     Danh sách lớp tràn số bên dưới VẪN ĐÚNG — nó chỉ cần lượt float16.")
-            print("     Muốn có phần so lệch thì chạy lại với --reference bfloat16, vốn tốn bộ")
-            print("     nhớ ngang float16 mà vẫn có dải mũ rộng như float32.")
+            print("     Mất phần này nghĩa là chưa kiểm được các lớp còn sống ở float16 có bị")
+            print("     bóp méo không. Phải ghi vào phần hạn chế, đừng lặng lẽ bỏ qua.")
+        # gc.collect() chứ không chỉ `del`: cây nn.Module có vòng tham chiếu, mà vòng thì đếm
+        # tham chiếu không phá được — phải đợi bộ thu gom chu trình chạy. Thiếu dòng này thì
+        # mô hình đầu vẫn nằm nguyên trên card khi mô hình thứ hai bắt đầu nạp, và empty_cache()
+        # không giúp được gì vì các khối đó đang có chủ chứ không phải chỉ được nhớ đệm.
+        # Đo ở lượt Sailor2 ngày 06/09: lượt float16 đỉnh 8.785 MB trên card 14,5 GB, dư gần
+        # 6 GB — thừa chỗ cho mô hình thứ hai, mà vẫn hết bộ nhớ.
+        gc.collect()
         torch.cuda.empty_cache()
 
     low = runs["float16"]
