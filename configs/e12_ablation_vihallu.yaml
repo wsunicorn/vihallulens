@@ -1,0 +1,37 @@
+# E12 — ablation nhóm đặc trưng, trên ViHallu. Task T29.
+#
+# Câu hỏi: mỗi nhóm đặc trưng cộng thêm bao nhiêu điểm khi đứng cạnh các nhóm trước nó. Bốn mức
+# cộng dồn, bắt đầu từ hai đặc trưng bề mặt của E01 rồi thêm dần vào.
+#
+# KHÔNG tốn giờ GPU. Mọi mức đều đọc lại đúng shard đặc trưng mà E02 và E03 đã dùng — cùng
+# extraction_hash 8c49fc0417f1 — rồi chỉ khớp lại bộ phân loại tuyến tính trên các tập con cột.
+# Vì vậy khối extractor và chunking dưới đây phải giống hệt e03_chunk_sentence_vihallu.yaml;
+# lệch một khóa là hash đổi và script sẽ đòi trích lại.
+
+run_name: e12_ablation_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  # Mức rộng nhất, tức dòng cuối của bảng ablation. Ba mức hẹp hơn do script tự cắt ra; danh sách
+  # ở đây chỉ nói shard phải chứa đủ những khối nào.
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

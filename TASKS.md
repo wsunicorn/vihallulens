@@ -2713,7 +2713,56 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
 ## Giai đoạn 6 — Thực nghiệm đầy đủ (tuần 10–11)
 
-- [ ] **T29** · L · E12 ablation nhóm đặc trưng
+- [x] **T29** · L · E12 ablation nhóm đặc trưng — **xong 02/09/2026, 0 giây GPU**
+
+  ### Kết quả — nhóm chunk-aware cộng thêm một số ÂM
+
+| Nhóm đặc trưng | Dev chọn riêng | Chênh | Gộp chung `k=32` | Chênh |
+|---|---|---|---|---|
+| Chỉ bề mặt | 0,6562 | — | 0,6562 | — |
+| + lookback gộp | 0,7653 | **+0,1091** | 0,7759 | **+0,1197** |
+| + chunk-aware | 0,7388 | **−0,0266** | 0,7688 | **−0,0071** |
+| + ổn định | 0,7746 | +0,0358 | 0,7746 | +0,0057 |
+
+  Chạy hai lần vì cột chênh của cách thứ nhất **trộn hai thứ**: dev chọn `k=64` cho mức 2, `k=16`
+  cho mức 3 rồi `k=32` cho mức 4, nên −0,0266 gồm cả "thêm bốn đại lượng" lẫn "số cột tụt từ 64
+  đầu xuống 16". Khóa cách gộp lại thì phần lớn con số âm biến mất, còn −0,0071. **Dấu không
+  đổi ở cả hai.**
+
+  ### Vì sao không mâu thuẫn với E03, và nó thật sự nói gì
+
+  E03 đo chunk-aware **hơn** lookback gộp +0,0116. Ở đây nó **kém** 0,0071. Khác nhau đúng một
+  điều: **E03 không có hai đặc trưng bề mặt trong véc-tơ, E12 có ở mọi mức.**
+
+  Ba con số +0,0116, −0,0071, −0,0266 đều nằm sâu trong KTC rộng **0,063** của tập test 700 mẫu.
+  Phát biểu đúng: **đóng góp riêng của nhóm chunk-aware trên ViHallu không phân biệt được với 0**,
+  và dấu của nó đổi tùy khung đo.
+
+  Giả thuyết khả dĩ nhất, **chưa kiểm**: tín hiệu hình dạng chồng lấn với thứ mà độ dài phản hồi
+  và độ trùng lặp từ vựng đã mang — cùng bắt một hiện tượng bằng hai đường.
+
+  ### Điều này KHÔNG bác bỏ
+
+  Nó nói về **giá trị cộng thêm cho phân loại**, không nói về cơ chế. Định vị 87,8 % (E06), phép
+  lặp trên bộ hai (E08), can thiệp đúng cả bốn hướng (E08), ECE giảm hơn nửa (E03) — nguyên vẹn.
+  Và tỷ lệ gộp **không** chỉ được đoạn nào, bất kể điểm số.
+
+  Nó củng cố đúng kết luận mục 5.7 báo cáo giữa kỳ: **định vị đúng ≠ phân loại đúng.** Giờ có một
+  phép đo trực tiếp cho vế thứ hai thay vì chỉ suy từ chênh lệch hai bộ.
+
+  ### Chỗ tôi suýt làm sai
+
+  Lượt chạy đầu chỉ có cách đo thứ nhất, và tôi suýt ghi thẳng **−0,0266** vào báo cáo. Con số đó
+  phóng đại gần **bốn lần** vì lẫn phần đổi số cột. Bài học: ablation mà mỗi mức tự chọn siêu
+  tham số thì cột chênh **không đọc thẳng được** — phải có một lượt khóa siêu tham số để so.
+
+  ### Việc phải làm trước khi viết chương 7
+
+  1. Chạy lại E12 trên **ISE-DSC01** (22,6 đoạn). Dấu vẫn âm thì kết luận vững; đảo dấu thì nó
+     phụ thuộc số đoạn — lại là phát hiện khác.
+  2. Thêm mức phụ **bề mặt + chunk-aware, bỏ lookback gộp**, để đo thẳng mức chồng lấn.
+  3. **Không** sửa khung cho ra số đẹp. Hai cách đo đã cùng dấu.
+
 - [ ] **T30** · L · E13 so Qwen2.5-7B với Sailor2-8B, kèm phân tích vị trí đầu chú ý
 - [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B
 - [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
