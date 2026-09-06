@@ -177,6 +177,11 @@ def main() -> int:
     print(f"  Mẫu có ít nhất một lớp nan ở fp16 : {samples_with_nan}/{len(low)}")
     print(f"  Tập hợp các lớp từng nan          : {broken}")
 
+    # A machine-readable copy of the same list. The T30 notebook reads this line to fill
+    # exclude_layers in the config before spending three GPU hours, and parsing a Vietnamese
+    # sentence with diacritics out of stdout is a worse idea than printing the list twice.
+    print(f"EXCLUDE_LAYERS={broken}")
+
     per_layer_report(low, high, n_layers)
 
     clean = [layer for layer in range(n_layers) if layer not in broken]
