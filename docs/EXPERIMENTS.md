@@ -762,14 +762,75 @@ cửa sổ"* chứ không phải *"tản trên các phần rời nhau của ng�
 điều này vì các câu phủ kín và không đè lên nhau. Nếu cửa sổ thua câu thì đây là một trong hai
 cách giải thích, và cách kia là số đoạn — nên phải đọc Bảng 3 theo cả hai cột.
 
-### Bảng 4 — Ablation nhóm đặc trưng (E12)
+### Bảng 4 — Ablation nhóm đặc trưng (E12, ViHallu)
 
-| Nhóm đặc trưng | macro-F1 | Chênh lệch |
-|---|---|---|
-| Chỉ bề mặt | | — |
-| + lookback gộp | | |
-| + chunk-aware | | |
-| + ổn định | | |
+Chạy 02/09/2026 trên máy cá nhân, **0 giây GPU** — mọi mức đọc lại shard `8c49fc0417f1` mà E02 và
+E03 đã dùng, chỉ khớp lại bộ phân loại trên các tập con cột. Bốn mức **cộng dồn**, nên cột chênh
+đọc là "nhóm này cộng thêm bao nhiêu vào mọi nhóm phía trên".
+
+Hai đặc trưng bề mặt của E01 có mặt ở **mọi** mức, kể cả mức 1. Câu hỏi được đặt là chú ý cộng
+thêm bao nhiêu vào *thứ lấy được miễn phí*, chứ không phải chú ý một mình đạt bao nhiêu.
+
+Bảng chạy hai lần với hai cách xử lý gộp đầu, vì cách thứ nhất trộn hai thứ vào một cột chênh:
+
+| Nhóm đặc trưng | Dev chọn riêng từng mức | Chênh | Gộp chung `topk k=32` | Chênh |
+|---|---|---|---|---|
+| Chỉ bề mặt | 0,6562 | — | 0,6562 | — |
+| + lookback gộp | 0,7653 | **+0,1091** | 0,7759 | **+0,1197** |
+| + chunk-aware | 0,7388 | **−0,0266** | 0,7688 | **−0,0071** |
+| + ổn định | 0,7746 | +0,0358 | 0,7746 | +0,0057 |
+
+Khoảng tin cậy 95 % của dòng cuối là [0,7431; 0,8060], rộng **0,063**.
+
+### Nhóm chunk-aware cộng thêm một số âm, và phải nói thẳng
+
+Đây là kết quả bất lợi cho đóng góp cốt lõi của đề tài, ghi lại nguyên trạng.
+
+Cột chênh của cách đo thứ nhất không đọc thẳng được: dev chọn `k=64` cho mức 2, `k=16` cho mức 3
+rồi `k=32` cho mức 4, nên **−0,0266** trộn "thêm bốn đại lượng hình dạng" với "số cột tụt từ 64
+đầu xuống 16 đầu". Cách đo thứ hai khóa cách gộp lại ở `topk k=32` cho cả bảng, và phần lớn con
+số âm biến mất: còn **−0,0071**.
+
+Nhưng **dấu thì không đổi**. Ở cả hai cách đo, thêm nhóm chunk-aware vào tỷ lệ gộp cộng với đặc
+trưng bề mặt làm điểm **giảm nhẹ** chứ không tăng.
+
+### Vì sao điều này không mâu thuẫn với E03, và nó thật sự nói gì
+
+E03 đo được chunk-aware **hơn** lookback gộp +0,0116. E12 đo được nó **kém** 0,0071. Khác nhau ở
+đúng một điều: **E03 không có hai đặc trưng bề mặt trong véc-tơ, E12 thì có ở mọi mức.**
+
+Đặt cạnh nhau thì ba con số +0,0116, −0,0071 và −0,0266 đều nằm sâu trong khoảng tin cậy rộng
+0,063 của một tập test 700 mẫu. Kết luận đúng đắn nhất:
+
+> **Đóng góp riêng của nhóm chunk-aware trên ViHallu không phân biệt được với 0.** Dấu của nó
+> đổi tùy theo có mặt đặc trưng bề mặt hay không, và mọi độ lớn đo được đều nhỏ hơn nhiễu của
+> tập test.
+
+Cách giải thích khả dĩ nhất, và cần kiểm thêm trước khi khẳng định: **phần tín hiệu mà hình dạng
+phân bố mang có chồng lấn với phần mà độ dài phản hồi và độ trùng lặp từ vựng đã mang.** Cả hai
+đều bắt được cùng một hiện tượng — phản hồi không bám vào ngữ cảnh — chỉ bằng hai đường khác
+nhau. Khi tỷ lệ gộp và hai đặc trưng bề mặt đã có mặt, phần dư địa còn lại cho hình dạng thì ít.
+
+### Điều bảng này KHÔNG bác bỏ
+
+Nó nói về **giá trị cộng thêm cho bài toán phân loại**, không nói về cơ chế. Bốn kết quả sau
+không bị đụng tới:
+
+- Định vị đúng đoạn bằng chứng 87,8 % giữa 22,6 đoạn (E06), lặp lại trên bộ thứ hai (E08).
+- Phép kiểm can thiệp đúng cả bốn hướng dự đoán (E08).
+- Sai số hiệu chỉnh xác suất giảm hơn một nửa, 0,109 → 0,044 (E03).
+- Đầu ra chỉ được đoạn nào — thứ tỷ lệ gộp không cho được, bất kể điểm số.
+
+Nói cách khác, E12 củng cố đúng cái kết luận mục 5.7 của báo cáo giữa kỳ đã nêu: **định vị đúng
+và phân loại đúng là hai việc khác nhau.** Bây giờ có thêm một phép đo trực tiếp cho vế thứ hai.
+
+### Việc phải làm trước khi viết chương 7
+
+1. Chạy lại E12 trên **ISE-DSC01** — ngữ cảnh 22,6 đoạn thay vì 5,3. Nếu dấu vẫn âm ở đó thì kết
+   luận vững; nếu đảo dấu thì nó phụ thuộc số đoạn, và đó lại là một phát hiện khác.
+2. Chạy một mức phụ **bề mặt + chunk-aware, không có lookback gộp**, để đo trực tiếp mức chồng
+   lấn giả thuyết ở trên thay vì suy đoán.
+3. Không sửa lại khung E12 cho ra số đẹp. Khung hiện tại đã chạy hai cách và cả hai cùng dấu.
 
 ### Bảng 5 — Mô hình đọc (E13, E14)
 
