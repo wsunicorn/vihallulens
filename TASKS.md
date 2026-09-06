@@ -2826,6 +2826,45 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   cách `compile()` từng ô của notebook trước khi commit. Đáng đưa việc đó thành thói quen: notebook
   không có ai lint hộ.
 
+  ### Lượt chạy 06/09 chết ở ô 5 — hết bộ nhớ, không phải lỗi logic
+
+  `torch.OutOfMemoryError` khi **nạp** Sailor2 ở `float32`, tại 14,4 trên 14,56 GiB, trước cả khi
+  chạy mẫu đầu tiên. Nguyên nhân: bộ nạp của `transformers` chuyển từng tensor sang `float32`
+  trên GPU **trước khi** bitsandbytes lượng tử hóa, còn embedding và lm_head thì ở nguyên
+  `float32` sau đó. Sailor2 lớn hơn Qwen2.5-7B và mang từ điển Đông Nam Á rộng hơn, nên không
+  còn vừa.
+
+  **Chỗ tôi thiết kế sai, và nó đắt hơn cái OOM.** `compare_dtypes.py` chạy `float32` **trước**
+  rồi mới tới `float16`. Nhưng danh sách lớp tràn số **chỉ cần lượt `float16`** — lượt mốc trả
+  lời câu hỏi khác hẳn, là các lớp còn sống có bị bóp méo không. Thứ tự cũ vứt mất câu trả lời
+  đã nằm trong tầm tay khi nửa *tùy chọn* hết bộ nhớ. Hỏng một nửa mà mất cả hai.
+
+  Ba thứ đã sửa:
+
+  1. **`float16` chạy trước.** Câu trả lời cần thiết lấy được trước, rồi mới tới phần tùy chọn.
+  2. **Lượt mốc được phép hỏng.** Bắt `OutOfMemoryError`, in cảnh báo, bỏ bảng so lệch, vẫn in
+     `EXCLUDE_LAYERS=[...]`. Chỉ lượt `float16` hỏng mới ném lại.
+  3. **Thêm `--reference bfloat16`.** `bfloat16` có **cùng dải mũ với `float32`** nên không tràn
+     ở chỗ `float16` tràn, mà tốn bộ nhớ ngang `float16`. Với mô hình không vừa mốc `float32` thì
+     nó còn là mốc *hợp lý hơn*: cả Qwen2.5 lẫn Sailor2 đều được huấn luyện ở `bfloat16`.
+
+  Ô 5 nay truyền `--reference bfloat16` và đặt `PYTORCH_ALLOC_CONF=expandable_segments:True`,
+  đúng thứ thông báo lỗi gợi ý. Lượt trích chính ở ô 7 chạy `float16` + NF4 nên không dính.
+
+  ### Hai điều khác thấy trong log, chưa xử lý
+
+  **`transformers` không được ghim phiên bản.** Mục 5 của `CLAUDE.md` đòi *"ghim đúng phiên bản
+  trong `pyproject.toml`, kèm một test khẳng định `attn_weights is not None`"* — **cả hai đều
+  chưa có**. `pyproject.toml` ghi trần `"transformers"`, và không có ca kiểm thử nào chứa chuỗi
+  `attn_weights is not None`. Kaggle lần này cài **transformers 5.0.0**, một bản major mới.
+
+  Chưa cắn ai vì T20–T27 đều chạy được, nhưng đây là rủi ro thật với T30: mô hình mới, thư viện
+  mới. Và ghim trong `pyproject.toml` **không cứu được** vì notebook cài bằng `--no-deps`, nên
+  thứ bảo vệ thật phải là một phép kiểm lúc chạy. Ghi lại đây để xử lý riêng, không lẫn vào T30.
+
+  **Cảnh báo thiếu `pyvi` và `rank-bm25`.** Vô hại cho T30 vì nó không tách từ và không truy
+  xuất, nhưng vẫn là cùng một gốc: `--no-deps` không kéo phụ thuộc nào về.
+
   ### Việc cần chạy
 
   1. Mở `notebooks/t30_sailor2_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
