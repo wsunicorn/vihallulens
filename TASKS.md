@@ -2763,7 +2763,89 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   2. Thêm mức phụ **bề mặt + chunk-aware, bỏ lookback gộp**, để đo thẳng mức chồng lấn.
   3. **Không** sửa khung cho ra số đẹp. Hai cách đo đã cùng dấu.
 
-- [ ] **T30** · L · E13 so Qwen2.5-7B với Sailor2-8B, kèm phân tích vị trí đầu chú ý
+- [ ] **T30** · L · E13 so Qwen2.5-7B với Sailor2-8B, kèm phân tích vị trí đầu chú ý —
+  **công cụ sẵn sàng 06/09/2026, chờ chạy trên Kaggle**
+
+  ### Câu hỏi thật của E13 không phải "mô hình nào điểm cao hơn"
+
+  Sailor2-8B-SFT mở rộng từ chính họ Qwen2.5 rồi huấn luyện thêm rất nhiều trên ngôn ngữ Đông Nam
+  Á. Nên nó là một **phép thử tự nhiên**: vị trí các đầu chú ý có ích là thuộc tính của **kiến
+  trúc** hay của **dữ liệu huấn luyện**?
+
+  Nếu các đầu mà bộ dò tuyến tính dựa vào nằm ở cùng độ sâu trong cả hai mô hình thì vị trí đầu
+  sao chép sống sót qua việc huấn luyện chuyên sâu một ngôn ngữ. Nếu dịch chuyển thì ngược lại.
+  **Cả hai đều là kết quả** — đừng lược cái thứ hai.
+
+  Bài gốc Lookback Lens có kết quả liên quan: bộ dò huấn luyện trên 7B dùng lại được cho 13B
+  không cần huấn luyện lại. E13 kiểm điều tương tự theo hướng khác — không đổi cỡ mà đổi dữ liệu
+  huấn luyện.
+
+  ### Ba thứ đã tạo
+
+| File | Vai trò |
+|---|---|
+| `configs/e13_sailor2_vihallu.yaml` | Giống hệt E03 mọi khóa, chỉ đổi `model_name` |
+| `scripts/compare_heads.py` | So vị trí đầu chú ý giữa hai mô hình. **0 giây GPU** |
+| `notebooks/t30_sailor2_t4.ipynb` | 14 ô, ~3 giờ GPU |
+
+  ### Ba chỗ E13 khác mọi thí nghiệm trước, và cả ba đều dễ hỏng
+
+  **1. Lớp tràn số của Sailor2 chưa biết, và không suy ra được từ Qwen.** T07 đo được Qwen2.5-7B
+  hỏng đúng lớp 27 — lớp cuối — ở `float16` trên 20/20 mẫu. Sailor2 là mô hình khác, nhiều lớp
+  hơn. Nếu bê nguyên `exclude_layers: [27]` sang thì hoặc bỏ nhầm một lớp lành, hoặc giữ lại lớp
+  hỏng và sinh `nan` — mà điều đó chỉ lộ ra **sau 3 giờ GPU**.
+
+  Xử lý: `exclude_layers: []` trong repo là **cố ý**. Ô 5 chạy `compare_dtypes.py --model
+  sail/Sailor2-8B-SFT` (~10 phút GPU) rồi **tự ghi đè** danh sách đo được vào file cấu hình, nên
+  `extraction_hash` phản ánh đúng thứ đã chạy. Ô 6 là cổng: `exclude_layers` còn trống thì dừng.
+
+  Thêm vào `compare_dtypes.py` một dòng máy đọc được `EXCLUDE_LAYERS=[...]` bên cạnh dòng tiếng
+  Việt vốn có, vì bóc danh sách ra từ một câu tiếng Việt có dấu là ý tồi.
+
+  **2. Lưới lớp × đầu có thể khác.** Qwen cho 27 × 28 = 756 cặp sau khi bỏ lớp 27. Sailor2 là bản
+  mở rộng nên nhiều lớp hơn. Lúc đó **so theo chỉ số là vô nghĩa**: lớp 5 của mô hình 28 lớp và
+  lớp 5 của mô hình 33 lớp nằm ở hai độ sâu khác nhau.
+
+  `compare_heads.py` xử lý thẳng: lưới trùng thì báo overlap@k, kỳ vọng ngẫu nhiên `k²/N` và
+  Spearman trên toàn lưới; lưới khác thì **từ chối** hai chỉ số đầu và chỉ báo **phân bố theo độ
+  sâu tương đối**, vốn định nghĩa được cho cả hai. Có ca kiểm thử khóa lại tính chất "lớp 5 của
+  28 và lớp 6 của 33 phải ra cùng độ sâu".
+
+  Đây là chỗ dễ ra một con số **trông như câu trả lời mà không phải**, nên nó được viết thành
+  nhánh riêng chứ không phải một ghi chú.
+
+  **3. Chat template khác.** Không phải lo, nhưng phải kiểm. Từ T07, vị trí ngữ cảnh và phản hồi
+  được tìm bằng cách **dò chuỗi trong prompt đã render** rồi ánh xạ sang token, chứ không đếm ký
+  tự khung — thiết kế đó có sẵn đúng cho tình huống này. Ô 6 gọi `render_prompt` với Sailor2 rồi
+  **assert** hai vùng đọc lại từ offset khớp chính xác chuỗi đưa vào, thay vì in ra nhìn bằng mắt.
+
+  ### Một lỗi bắt được lúc dựng notebook
+
+  Ô cổng ban đầu gọi `build_prompt` — **hàm đó không tồn tại**, tên thật là `render_prompt`. Nó sẽ
+  chết ở dòng import, tức sau ô dò kiểu số 10 phút và ngay trước lượt chạy 3 giờ. Bắt được bằng
+  cách `compile()` từng ô của notebook trước khi commit. Đáng đưa việc đó thành thói quen: notebook
+  không có ai lint hộ.
+
+  ### Việc cần chạy
+
+  1. Mở `notebooks/t30_sailor2_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
+  2. Chạy tuần tự. Ô 5 (~10 phút) và ô 7 (~3 giờ) là hai ô tốn GPU.
+  3. **Đọc kỹ output ô 5**: với Qwen là đúng một lớp cuối. Nếu Sailor2 ra nhiều lớp hoặc ra lớp ở
+     giữa thì dừng lại đọc bảng per-layer — mất nhiều lớp giữa sẽ làm phép so với Qwen khập
+     khiễng và phải ghi rõ trong báo cáo.
+  4. Ô 8 in ra lưới của Sailor2. Nếu khác 27 × 28 thì phần so vị trí sẽ chỉ báo độ sâu.
+  5. Tải thư mục `ket_qua_t30` về, đặt `*.jsonl` vào `data/processed/` và **ghi đè** config bằng
+     bản mang `exclude_layers` đã đo.
+  6. Chấm ở **máy cá nhân**, theo quy tắc T23:
+
+```
+  python scripts/run_chunk_aware.py --config configs/e13_sailor2_vihallu.yaml
+  python scripts/compare_heads.py --config-a configs/e03_chunk_sentence_vihallu.yaml \
+                                  --config-b configs/e13_sailor2_vihallu.yaml
+```
+
+  7. Commit lại config đã đo, nếu không lượt chạy này **không tái lập được**.
+
 - [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B
 - [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
 - [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc
