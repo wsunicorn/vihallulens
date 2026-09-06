@@ -2883,6 +2883,45 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   **Cảnh báo thiếu `pyvi` và `rank-bm25`.** Vô hại cho T30 vì nó không tách từ và không truy
   xuất, nhưng vẫn là cùng một gốc: `--no-deps` không kéo phụ thuộc nào về.
 
+  ### Lượt chạy 06/09 lần hai — qua cổng, đang trích
+
+| Bước | Kết quả |
+|---|---|
+| Test hook trên Kaggle | **16/16 đạt** với `transformers 5.0.0` — hook vẫn nhận `attn_weights` |
+| Lượt `float16` | 20/20 mẫu trong 22 s, VRAM đỉnh **8.785 MB** |
+| Lớp tràn số | **`[30, 31]`** — hai lớp, và là hai lớp **cuối** |
+| Ghi vào config | `exclude_layers: [30, 31]`, hash trích `f58b3bee5934` |
+| Kiểm mẫu prompt | Hai vùng đọc lại từ offset **khớp chính xác** |
+| Trích đặc trưng | Đang chạy, 5.600 mẫu train |
+
+  Sailor2 có **32 lớp**, bỏ hai lớp cuối còn **30**. Qwen2.5-7B có 28, bỏ một còn 27. Cả hai đều
+  chỉ bỏ lớp đuôi nên phần so theo **độ sâu tương đối** vẫn có nghĩa — nhưng lưới khác nhau
+  (30 × H so với 27 × 28) nên `compare_heads.py` sẽ **từ chối** so theo chỉ số, đúng nhánh đã
+  viết sẵn.
+
+  ### Lượt mốc bfloat16 CŨNG hết bộ nhớ, và lần này là lỗi của tôi
+
+  Tôi đoán `bfloat16` sẽ vừa vì nó tốn bộ nhớ ngang `float16`. Đoán đúng về kích thước, sai về
+  nguyên nhân: lượt `float16` đỉnh **8.785 MB trên card 14,5 GB**, dư gần 6 GB — thừa chỗ cho mô
+  hình thứ hai. Vậy mà vẫn hết bộ nhớ, nghĩa là **mô hình đầu chưa hề được giải phóng**.
+
+  `del extractor` chỉ bỏ một cái tên. Cây `nn.Module` có **vòng tham chiếu**, mà vòng thì đếm
+  tham chiếu không phá được — phải đợi bộ thu gom chu trình chạy. `torch.cuda.empty_cache()` sau
+  đó không giúp gì, vì các khối ấy đang **có chủ** chứ không phải chỉ được nhớ đệm.
+
+  Sửa: thêm `gc.collect()` trước `empty_cache()`. Và sửa luôn câu thông báo dự phòng — nó bảo
+  "chạy lại với `--reference bfloat16`" trong khi `bfloat16` chính là thứ vừa hỏng.
+
+  ### Hạn chế phải ghi vào báo cáo, không được lặng lẽ bỏ qua
+
+  Với Qwen, T07 kiểm được rằng sau khi bỏ lớp 27 thì **27 lớp còn lại khớp `float32` tới 0,07 %
+  thang đo**. Với Sailor2 hiện **chưa có phép kiểm tương đương**: biết hai lớp nào tràn, nhưng
+  chưa biết 30 lớp còn sống có bị bóp méo không.
+
+  Không chặn T30 — danh sách lớp tràn là thứ lượt trích cần, và nó đúng. Nhưng khi viết chương
+  đánh giá phải nói rõ phép so Qwen ↔ Sailor2 đứng trên hai mức kiểm chứng khác nhau. Chạy lại ô
+  5 sau khi có `gc.collect()` sẽ lấp được chỗ này, tốn ~10 phút GPU.
+
   ### Việc cần chạy
 
   1. Mở `notebooks/t30_sailor2_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
