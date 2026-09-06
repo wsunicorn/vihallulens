@@ -2843,10 +2843,18 @@ tuần 7, đã chạy sớm ngày 31/08" thì vừa đúng tiến độ vừa đ
 | 5 | 04/09 | T20–T22: tái lập E02, năm đặc trưng, E03 | 28–29/08 | đã soạn |
 | 6 | 11/09 | T23–T24: E04, E05, chốt cách chia đoạn | 30/08 | đã soạn |
 | 7 | 18/09 | T25–T27: E06, E07, E08 — hết giai đoạn 4 | 31/08–01/09 | đã soạn |
-| 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | chưa soạn |
-| 9 | 02/10 | Gửi báo cáo giữa kỳ — **hạn 04/10** | — | chưa soạn |
-| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | E12 xong 02/09 | chưa soạn |
+| 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | đã soạn |
+| 9 | 02/10 | Gửi báo cáo giữa kỳ — **hạn 04/10** | — | đã soạn |
+| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | E12 xong 02/09 | chờ T30, T31 |
 | 11 | 16/10 | T32–T35 | chưa chạy | chưa soạn |
+
+**Tuần 9 dùng chung một lá thư với báo cáo giữa kỳ.** `Email_giua_ky.md` đính kèm cả quyển báo
+cáo giữa kỳ lẫn `Bao_cao_tuan_09`. Quy trình đòi thư hàng tuần và đòi nộp giữa kỳ ở tuần 8–9;
+một lá thư làm cả hai, đúng ghi chú về ba email quan trọng của kỳ. Không gửi thư tuần 9 riêng.
+
+Tuần 5 tới tuần 9 đã soạn xong hết — báo cáo `.docx` và thư `.md`/`.html` đều sẵn. Từ giờ tới
+04/10 chỉ còn việc **đọc lại rồi gửi đúng ngày**. Nếu trong khoảng đó có kết quả mới hoặc GVHD
+góp ý làm đổi hướng thì chạy lại script tuần tương ứng, đừng sửa tay file `.docx`.
 
 Bản nháp tuần 6 có ô `[ chưa có số ]` đã bỏ. Nó tồn tại vì lúc đó tuần 6 được hiểu là mang nội
 dung T29–T31 vốn chưa chạy; theo quy tắc báo cáo đúng tiến độ thì tuần 6 mang T23–T24, đã xong,
