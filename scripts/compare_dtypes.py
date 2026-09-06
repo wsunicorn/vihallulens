@@ -131,6 +131,13 @@ def main() -> int:
     parser.add_argument("--per-dataset", type=int, default=10)
     parser.add_argument("--max-context-tokens", type=int, default=4096)
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument(
+        "--reference", default="float32", choices=("float32", "bfloat16", "none"),
+        help="kiểu số làm mốc so. float32 sạch nhất nhưng nạp tốn bộ nhớ nhất — Sailor2-8B "
+             "không vừa 14,56 GiB. bfloat16 có cùng dải mũ với float32 nên không tràn ở chỗ "
+             "float16 tràn, mà tốn bộ nhớ ngang float16. none thì bỏ hẳn phần so, chỉ báo lớp "
+             "tràn số.",
+    )
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -143,27 +150,43 @@ def main() -> int:
 
     print()
     print("=" * 80)
-    print("SO SÁNH float16 VỚI float32")
+    print(f"SO SÁNH float16 VỚI {args.reference.upper()}")
     print("=" * 80)
     print(f"  dữ liệu   : {data_dir}")
     print(f"  số mẫu    : {len(samples)}")
     lengths = [len(context.split()) for _, context, _, _ in samples]
     print(f"  độ dài    : {min(lengths)} đến {max(lengths)} từ")
 
+    # float16 FIRST. The list of overflowing layers comes from this pass alone, and it is the
+    # answer T30 needs before spending three GPU hours. Running the heavier reference first
+    # meant an OOM there destroyed an answer that was already within reach.
+    wanted = ["float16"] if args.reference == "none" else ["float16", args.reference]
     runs = {}
-    for dtype_name in ("float32", "float16"):
-        extractor = AttentionExtractor(
-            args.model,
-            max_context_tokens=args.max_context_tokens,
-            device="cuda",
-            compute_dtype=dtype_name,
-        )
-        runs[dtype_name] = extract_all(extractor, samples, dtype_name)
-        n_layers = len(extractor.layer_indices)
-        del extractor
+    n_layers = None
+    for dtype_name in wanted:
+        try:
+            extractor = AttentionExtractor(
+                args.model,
+                max_context_tokens=args.max_context_tokens,
+                device="cuda",
+                compute_dtype=dtype_name,
+            )
+            runs[dtype_name] = extract_all(extractor, samples, dtype_name)
+            n_layers = len(extractor.layer_indices)
+            del extractor
+        except torch.cuda.OutOfMemoryError:
+            if dtype_name == "float16":
+                raise
+            # The reference pass is optional. Losing it costs the drift table, not the answer.
+            print()
+            print(f"  !! Hết bộ nhớ khi nạp mô hình ở {dtype_name}. Bỏ phần so lệch.")
+            print("     Danh sách lớp tràn số bên dưới VẪN ĐÚNG — nó chỉ cần lượt float16.")
+            print("     Muốn có phần so lệch thì chạy lại với --reference bfloat16, vốn tốn bộ")
+            print("     nhớ ngang float16 mà vẫn có dải mũ rộng như float32.")
         torch.cuda.empty_cache()
 
-    low, high = runs["float16"], runs["float32"]
+    low = runs["float16"]
+    high = runs.get(args.reference)
 
     print()
     for dtype_name, results in runs.items():
@@ -181,6 +204,13 @@ def main() -> int:
     # exclude_layers in the config before spending three GPU hours, and parsing a Vietnamese
     # sentence with diacritics out of stdout is a worse idea than printing the list twice.
     print(f"EXCLUDE_LAYERS={broken}")
+
+    if high is None:
+        print()
+        print("  Không có lượt mốc để so, nên bỏ bảng theo lớp và phần |Δ|.")
+        print("  Phần trên là đủ để điền exclude_layers; phần thiếu chỉ trả lời câu hỏi thứ hai")
+        print("  của script — các lớp còn sống ở float16 có bị bóp méo không.")
+        return 0
 
     per_layer_report(low, high, n_layers)
 
