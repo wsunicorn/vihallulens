@@ -1,0 +1,46 @@
+# E13 — đổi mô hình đọc sang Sailor2-8B-SFT, trên ViHallu. Task T30.
+#
+# Sailor2 mở rộng từ chính họ Qwen2.5 nhưng huấn luyện thêm trên ngôn ngữ Đông Nam Á, nên dùng
+# chung được đường dẫn mã nguồn — chỉ đổi model_name. Câu hỏi khoa học của thí nghiệm này không
+# phải "mô hình nào điểm cao hơn" mà là: **huấn luyện chuyên sâu tiếng Việt có làm dịch chuyển
+# vị trí các đầu chú ý có ích không.**
+#
+# Mọi khóa khác giữ y hệt e03_chunk_sentence_vihallu.yaml để phép so khác đúng một biến.
+
+run_name: e13_sailor2_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: sail/Sailor2-8B-SFT
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+
+  # !! PHẢI ĐIỀN TỪ SỐ ĐO, KHÔNG ĐƯỢC ĐOÁN !!
+  #
+  # Với Qwen2.5-7B, T07 đo được đúng lớp 27 — lớp cuối — tràn số ở float16 trên cả 20/20 mẫu.
+  # Sailor2 là mô hình khác, nhiều lớp hơn, nên lớp hỏng của nó là một câu hỏi thực nghiệm chứ
+  # không suy ra được từ Qwen.
+  #
+  # Ô "tiền kiểm kiểu số" trong notebook chạy scripts/compare_dtypes.py rồi **tự ghi đè** danh
+  # sách này bằng các lớp đo được. Để trống ở đây là cố ý: nếu ô đó không chạy thì phần trích
+  # đặc trưng sẽ dùng đủ mọi lớp và sinh ra nan, hỏng to chứ không hỏng âm thầm.
+  #
+  # Sau khi chạy xong nhớ commit lại file này với giá trị đã đo, để lượt chạy tái lập được.
+  exclude_layers: []
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
