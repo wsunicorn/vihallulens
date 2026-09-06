@@ -2816,33 +2816,41 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 | Cập nhật sheet "Nhật ký" trong `UniversityRequirements/Plan/Ke_hoach_KLTN_da_dien.xlsx` | mỗi tuần | Xin GVHD phê duyệt nhật ký |
 | Cập nhật cột "thực tế" trong sheet kế hoạch | mỗi tuần | Đơn vị trên Gantt là **tuần** |
 
-### Bộ sinh báo cáo tuần, và tình trạng từng tuần
+### Bộ sinh báo cáo tuần, và quy tắc báo cáo theo tiến độ
 
-Mỗi tuần một script trong `UniversityRequirements/WeeklyLogs/`, dùng chung một bộ hàm định dạng:
-Times New Roman 13, giãn dòng 1,3, lề 3-2-2-2, bảng Table Grid nhỏ hơn một cỡ. Thư đi kèm viết
-markdown rồi đổi sang HTML bằng `tao_email_html.py <tên file>` để dán vào Gmail giữ được định
-dạng.
+Mỗi tuần một script trong `UniversityRequirements/WeeklyLogs/`, tất cả dùng chung bộ hàm định
+dạng ở `bao_cao_tuan.py`: Times New Roman 13, giãn dòng 1,3, lề 3-2-2-2, bảng Table Grid nhỏ hơn
+một cỡ. Thư đi kèm viết markdown rồi đổi sang HTML bằng `tao_email_html.py <tên file>`.
 
-| Tuần | Khoảng | Gửi thứ Sáu | Tình trạng |
-|---|---|---|---|
-| 1–3 | 03/08 – 23/08 | 21/08 | đã soạn |
-| 4 | 24/08 – 30/08 | 28/08 | đã soạn, **chưa gửi** — chốt nội dung 27/08 nên thiếu T20–T24 |
-| 5 | 31/08 – 06/09 | 04/09 | đã soạn, gộp bù T20–T24 |
-| 6 | 07/09 – 13/09 | 11/09 | **bản nháp**, chờ số của T29–T31 |
-| 7 | 14/09 – 20/09 | 18/09 | chưa soạn |
-| 8 | 21/09 – 27/09 | 25/09 | chưa soạn |
-| 9 | 28/09 – 04/10 | 02/10 | chưa soạn — **thư này mang báo cáo giữa kỳ đi** |
+#### Quy tắc: chạy trước, báo cáo đúng tiến độ
 
-**Bản nháp tuần 6 cố tình không điền số.** Tuần 6 chưa diễn ra, mà báo cáo tuần là minh chứng
-đánh giá quá trình gửi cho GVHD — điền số phỏng đoán vào đó thì tài liệu mất hết giá trị làm
-minh chứng. Nên script đặt cờ `DA_CHAY = False`, mọi ô số ghi `[ chưa có số ]`, tên file mang
-hậu tố `_BAN_NHAP`, và đầu tài liệu có banner "BẢN NHÁP — CHƯA GỬI". Các dòng mở đầu bằng `»`
-là ghi chú cho hai đứa, tự biến mất khi bật cờ.
+Nhóm chạy sớm hơn kế hoạch khoảng ba tuần. Báo cáo **không** dồn hết vào một lá thư mà trình bày
+theo đúng lịch kế hoạch, mỗi tuần một phần, để GVHD góp ý từng chặng.
 
-Phần đã biết chắc thì điền sẵn hết: khung sáu mục, việc dự kiến của T29–T31 lấy từ mục kế hoạch
-của báo cáo tuần 5, dòng Qwen2.5-7B trong bảng so mô hình lấy từ số đã đo, kế hoạch tuần 7 lấy
-từ T32–T35, và lý do mỗi cấu hình phải chạy một phiên GPU riêng (T4 hạ xung 10–15 % sau vài phút
-chạy liên tục, đo ở T08).
+**Ràng buộc không thương lượng: pacing chỉ đổi thứ tự trình bày, không bao giờ đổi ngày.** Mỗi
+tiểu mục ghi ngày chạy thật ở tiêu đề, và hàm `loi_mo_dau_som()` in một câu ở đầu mục 1 nói nhóm
+chạy sớm. Lý do: mục "Việc hành chính định kỳ" ngay trên đây ghi rõ email và báo cáo tuần là
+**minh chứng đánh giá quá trình**, ngang kết quả kỹ thuật — viết "tuần này nhóm em chạy E06" khi
+nó chạy từ 31/08 là khai sai mốc thời gian trong hồ sơ chấm điểm. Còn "báo cáo E06 theo kế hoạch
+tuần 7, đã chạy sớm ngày 31/08" thì vừa đúng tiến độ vừa đúng sự thật, và đọc lên còn có lợi hơn.
+
+#### Ánh xạ tuần báo cáo sang task
+
+| Tuần | Gửi | Nội dung báo cáo | Chạy thật | Tình trạng |
+|---|---|---|---|---|
+| 1–3 | 21/08 | T01–T16 khung dự án và dữ liệu | 03–23/08 | đã soạn |
+| 4 | 28/08 | T17–T19: E01, E09, E10 — ba mốc so sánh | 27/08 | đã soạn, **chưa gửi** |
+| 5 | 04/09 | T20–T22: tái lập E02, năm đặc trưng, E03 | 28–29/08 | đã soạn |
+| 6 | 11/09 | T23–T24: E04, E05, chốt cách chia đoạn | 30/08 | đã soạn |
+| 7 | 18/09 | T25–T27: E06, E07, E08 — hết giai đoạn 4 | 31/08–01/09 | đã soạn |
+| 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | chưa soạn |
+| 9 | 02/10 | Gửi báo cáo giữa kỳ — **hạn 04/10** | — | chưa soạn |
+| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | E12 xong 02/09 | chưa soạn |
+| 11 | 16/10 | T32–T35 | chưa chạy | chưa soạn |
+
+Bản nháp tuần 6 có ô `[ chưa có số ]` đã bỏ. Nó tồn tại vì lúc đó tuần 6 được hiểu là mang nội
+dung T29–T31 vốn chưa chạy; theo quy tắc báo cáo đúng tiến độ thì tuần 6 mang T23–T24, đã xong,
+nên mọi con số đều có thật.
 
 ## Bốn mốc không được lỡ
 
