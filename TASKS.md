@@ -2922,9 +2922,61 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   đánh giá phải nói rõ phép so Qwen ↔ Sailor2 đứng trên hai mức kiểm chứng khác nhau. Chạy lại ô
   5 sau khi có `gc.collect()` sẽ lấp được chỗ này, tốn ~10 phút GPU.
 
+  ### Lượt chạy 06/09 lần ba — trích xong cả ba tập, nhưng shard có `nan`
+
+| Bước | Kết quả |
+|---|---|
+| Ô 4 test hook | **16/16 đạt** trên `transformers 5.0.0` |
+| Ô 5 dò kiểu số | lớp tràn `[30, 31]`, ghi vào config, hash `f58b3bee5934` |
+| Ô 6 cổng | qua, hai vùng prompt khớp chính xác |
+| Ô 7 trích | **5.600 + 700 + 700 mẫu, lỗi 0, cắt ngữ cảnh 0**, ~613 ms/mẫu |
+| Ô 8 kiểm | **CHẶN** — `hữu hạn False`, `trong [0,1] False` |
+
+  Lưới Sailor2 là **30 × 28 = 840 cặp**, so với 27 × 28 = 756 của Qwen. Khác lưới, đúng như đã
+  lường trước, nên phần so vị trí đầu sẽ chạy nhánh độ sâu tương đối.
+
+  ### Nguyên nhân: 20 mẫu không đủ để tìm hết lớp tràn số
+
+  Ô 5 dò trên 20 mẫu và tìm ra `[30, 31]`. Nhưng lượt trích 7.000 mẫu còn gặp thêm lớp khác —
+  riêng tập test đã `có lớp tràn số: 3/700`. Chính tôi viết cảnh báo này vào ô 5 rồi vẫn để mặc
+  định 10 mẫu mỗi bộ.
+
+  Phép dò kiểu này **không bao giờ vét cạn được**. Nên chỗ sửa đúng không phải là tăng mẫu dò cho
+  thật nhiều, mà là để **chính lượt trích tự khai** ra lớp nào hỏng.
+
+  ### Ba chỗ sửa
+
+  **1. Lượt trích nói rõ lớp nào tràn.** Trước chỉ in `có lớp tràn số: 3/700` — biết có, không
+  biết lớp nào, nên ba giờ GPU kết thúc mà không có gì để hành động. Nay in thêm dòng
+  `LỚP TRÀN SỐ: lớp 29 (12 mẫu), ...` kèm gợi ý chạy `inspect_shard.py`.
+
+  **2. Thêm `scripts/inspect_shard.py`.** Đọc shard đã có, không cần GPU, báo: lớp nào tràn, bao
+  nhiêu mẫu dính, bao nhiêu giá trị không hữu hạn hoặc ngoài `[0, 1]` theo từng khối. Rồi in giá
+  của **hai đường đi**, để quyết bằng số chứ không bằng cảm giác:
+
+| Đường | Giá |
+|---|---|
+| Bỏ thêm lớp vào `exclude_layers` | Đổi hash → **trích lại ~3 giờ GPU**, và mất lớp đó cho *mọi* mẫu kể cả mẫu không sao |
+| Bỏ các mẫu hỏng lúc chấm | **0 giây GPU**, chỉ mất đúng số mẫu ấy, báo cáo tỷ lệ như đang làm với tỷ lệ cắt ngữ cảnh |
+
+  Script cảnh báo nếu tỷ lệ mẫu hỏng vượt 5 % — trên mức đó thì đường thứ hai hết rẻ.
+
+  **3. Ô 8 không còn `raise` nữa.** Đây là chỗ sai thiết kế nặng nhất: ô 8 ném `SystemExit` nên
+  papermill dừng, **ô 9 không chạy**, tức shard ở lại Kaggle rồi chết theo phiên. Mà một shard
+  hỏng chính là thứ **cần đem về nhất** để chẩn đoán. Cổng chặn đúng thứ nó phải bảo vệ.
+
+  Nay ô 8 gọi `inspect_shard.py` in chẩn đoán đầy đủ, ô 8b in kết luận gọn, và **cả hai đều không
+  dừng notebook** — ô 9 luôn chạy được.
+
   ### Việc cần chạy
 
-  1. Mở `notebooks/t30_sailor2_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
+  0. **Phiên Kaggle cũ nếu còn sống:** chạy ô 9 ngay để lấy shard về, đừng để mất. Trích đã xong
+     rồi, không cần chạy lại ô 7.
+  1. Nếu phiên đã chết: mở lại `notebooks/t30_sailor2_t4.ipynb`, chạy tới ô 7 (~3 giờ), rồi ô 8,
+     8b, 9. Bản mới không chặn ở ô 8 nữa.
+  2. Gửi output ô 8 — bảng chẩn đoán quyết định đi đường nào.
+  3. Tải `ket_qua_t30` về, đặt `*.jsonl` vào `data/processed/`, **ghi đè** config bằng bản mang
+     `exclude_layers: [30, 31]`.
   2. Chạy tuần tự. Ô 5 (~10 phút) và ô 7 (~3 giờ) là hai ô tốn GPU.
   3. **Đọc kỹ output ô 5**: với Qwen là đúng một lớp cuối. Nếu Sailor2 ra nhiều lớp hoặc ra lớp ở
      giữa thì dừng lại đọc bảng per-layer — mất nhiều lớp giữa sẽ làm phép so với Qwen khập

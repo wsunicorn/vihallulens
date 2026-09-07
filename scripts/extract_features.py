@@ -21,6 +21,7 @@ import argparse
 import json
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -221,6 +222,10 @@ def main() -> int:
 
     started = time.perf_counter()
     written, failed, truncated, nonfinite = 0, 0, 0, 0
+    # Which layers went non-finite, not just how many samples were hit. The T30 Sailor2 run
+    # reported "có lớp tràn số: 3/700" and stopped there, so three GPU hours ended with the
+    # shard poisoned and no clue which layer to add to exclude_layers.
+    broken_layers: Counter[int] = Counter()
     first_error = None
     with path.open("a", encoding="utf-8") as handle:
         for position, row in enumerate(todo, start=1):
@@ -247,6 +252,7 @@ def main() -> int:
             written += 1
             truncated += int(record["truncated"])
             nonfinite += int(bool(record["nonfinite_layers"]))
+            broken_layers.update(int(layer) for layer in record["nonfinite_layers"])
 
             if position % PROGRESS_EVERY == 0 or position == len(todo):
                 rate = (time.perf_counter() - started) / position
@@ -262,6 +268,12 @@ def main() -> int:
     print(f"  lỗi                   : {failed:,}")
     print(f"  bị cắt ngữ cảnh       : {truncated:,}/{written:,}")
     print(f"  có lớp tràn số        : {nonfinite:,}/{written:,}")
+    if broken_layers:
+        listed = ", ".join(f"lớp {layer} ({count:,} mẫu)"
+                           for layer, count in sorted(broken_layers.items()))
+        print(f"  LỚP TRÀN SỐ           : {listed}")
+        print("  -> Các lớp này KHÔNG nằm trong exclude_layers nên shard có nan.")
+        print("     Chạy scripts/inspect_shard.py để xem giá của hai đường xử lý.")
     print(f"  thời gian             : {elapsed / 60:.1f} phút, "
           f"{elapsed * 1000 / max(written, 1):,.0f} ms/mẫu")
     print(f"  file                  : {path}")
