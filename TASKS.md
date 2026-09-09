@@ -2968,6 +2968,65 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Nay ô 8 gọi `inspect_shard.py` in chẩn đoán đầy đủ, ô 8b in kết luận gọn, và **cả hai đều không
   dừng notebook** — ô 9 luôn chạy được.
 
+  ### Lượt chạy 09/09 — trích xong, và chẩn đoán khác hẳn dự đoán
+
+| Bước | Kết quả |
+|---|---|
+| Ô 4 test hook | 16/16 đạt trên `transformers 5.0.0` |
+| Ô 5 dò kiểu số | `[30, 31]`, hash `f58b3bee5934`; lượt mốc `bfloat16` vẫn hết bộ nhớ |
+| Ô 7 trích | **5.600 + 700 + 700 mẫu, lỗi 0, cắt ngữ cảnh 0**, ~566 ms/mẫu, 66 phút |
+| Lưới | **30 × 28 = 840 cặp** (Qwen: 27 × 28 = 756) |
+| Ô 8 soi shard | **49/7.000 mẫu (0,70 %)** có lớp tràn số |
+
+  ### Không phải một lớp hỏng — là cả mạng hỏng trên vài mẫu
+
+  Đây là chỗ tôi dự đoán sai, và sai theo hướng quan trọng. Bảng theo lớp:
+
+```
+  train  lớp 0:  6 mẫu   lớp 1–29: 38 mẫu mỗi lớp    → 38 mẫu dính (0,68 %)
+  dev    lớp 0:  1 mẫu   lớp 1–29:  8 mẫu mỗi lớp    →  8 mẫu dính (1,14 %)
+  test   lớp 0:  1 mẫu   lớp 1–29:  3 mẫu mỗi lớp    →  3 mẫu dính (0,43 %)
+```
+
+  Đọc bảng này kỹ thì thấy: **cùng một tập mẫu ấy hỏng ở MỌI lớp từ 1 trở đi.** Không phải lớp
+  nào yếu, mà là vài mẫu làm activation tràn `float16` ngay từ lớp đầu rồi `nan` lan qua toàn bộ
+  mạng. Layer 0 dính ít hơn vì với đa số mẫu, chỗ tràn bắt đầu ở lớp 1.
+
+  **Khác hẳn Qwen.** Qwen hỏng đúng lớp 27 trên *mọi* mẫu, nên bỏ một lớp là xong cho tất cả.
+  Sailor2 hỏng *mọi* lớp trên vài mẫu — không có tập lớp nào bỏ được ngoài việc bỏ hết.
+
+  Chính công cụ chẩn đoán nói ra điều đó, và nó tự bác đường thứ nhất bằng số:
+
+```
+  1. BỎ THÊM LỚP [0, 1, 2, ..., 29]
+     Giá: khoảng 3 giờ GPU, và mất 30 lớp cho MỌI mẫu — kể cả 6.951 mẫu vốn không sao.
+```
+
+  Bỏ 30 trên 30 lớp là không còn gì để đo. **Đường thứ nhất bị loại, không phải vì đắt mà vì vô
+  nghĩa.**
+
+  ### Quyết định: bỏ 49 mẫu, và báo cáo tỷ lệ
+
+  0,70 % là nhỏ, và cách xử lý phải giống hệt cách đang làm với tỷ lệ cắt ngữ cảnh: **loại ra rồi
+  nói rõ đã loại bao nhiêu.** Nguy hiểm duy nhất của việc bỏ mẫu là làm mẫu số dịch chuyển mà
+  người đọc không biết.
+
+  Hiện thực: `drop_nonfinite()` trong `features/assemble.py`, gọi từ `load_split()` — điểm chung
+  của cả ba script chấm điểm. Chữ ký `load_split` thêm phần tử thứ ba **có chủ ý**: nó buộc mọi
+  chỗ gọi cũ phải sửa và tự quyết in gì, thay vì lặng lẽ thừa hưởng một thay đổi hành vi.
+
+  Kiểm chứng không hồi quy: chấm lại E03 trên shard Qwen cho **đúng 0,7768** như Bảng 3, và
+  `topk k=32, 192 chiều` không đổi. Shard Qwen sạch nên hàm lọc là phép đồng nhất ở đó.
+
+  ### Hai hạn chế phải ghi vào báo cáo
+
+  1. **Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không.** Lượt mốc `bfloat16` hết
+     bộ nhớ lần thứ hai, kể cả sau khi thêm `gc.collect()`. Với Qwen, T07 kiểm được 27 lớp còn
+     lại khớp `float32` tới 0,07 % thang đo; với Sailor2 không có con số tương đương. Phép so hai
+     mô hình vì thế đứng trên hai mức kiểm chứng khác nhau.
+  2. **Hai lưới khác nhau** — 30 × 28 so với 27 × 28 — nên `compare_heads.py` sẽ từ chối so theo
+     chỉ số và chỉ báo phân bố theo độ sâu tương đối. Đúng nhánh đã viết sẵn, không phải lỗi.
+
   ### Việc cần chạy
 
   0. **Phiên Kaggle cũ nếu còn sống:** chạy ô 9 ngay để lấy shard về, đừng để mất. Trích đã xong
