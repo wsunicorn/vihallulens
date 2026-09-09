@@ -3182,6 +3182,70 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   đọc, không giấu. `measure_throughput.py` còn đọc nhiệt độ GPU mỗi lượt, nên hạ xung nếu xảy ra
   thì thấy trực tiếp chứ không phải suy đoán.
 
+  ### Lượt 09/09 chết ở ô 6 — bug của tôi, nhưng số đo lại là tin tốt
+
+```
+  SystemExit: khong tim thay dong 'exclude_layers: []' trong configs/e14_qwen3b_vihallu.yaml
+```
+
+  Dòng đó **có** trong file. Chuyện thật là **Qwen2.5-3B không có lớp nào tràn số** — 0/20 mẫu,
+  trên cả 36 lớp — nên `bad = []` và phép thay ghi `exclude_layers: []` đè lên
+  `exclude_layers: []`. Y hệt nhau.
+
+  Guard viết là `if patched == text: raise`, tức gộp hai chuyện khác hẳn:
+
+| Tình huống | Đúng ra phải làm gì |
+|---|---|
+| Dòng không có trong file | hỏng thật, phải dừng |
+| Thay xong mà không đổi gì | kết quả hợp lệ, phải chạy tiếp |
+
+  Sửa: kiểm **dòng có tồn tại không** bằng `re.search` trước, rồi mới thay. Cùng dạng sai với vụ
+  notebook đã chạy: dùng một thứ *thường* trùng với điều mình quan tâm làm đại diện cho nó, rồi
+  nó lệch đúng lúc trường hợp trở nên đáng chú ý.
+
+  ### Qwen2.5-3B: 36 lớp, không lớp nào tràn số
+
+  Đây là phát hiện đáng ghi, không phải chi tiết vụn.
+
+| | Qwen2.5-7B | Qwen2.5-3B |
+|---|---|---|
+| Số lớp | 28 | **36** |
+| Lớp tràn số ở `float16` | lớp 27, trên **20/20** mẫu | **không lớp nào**, 0/20 mẫu |
+| VRAM đỉnh khi dò | 8.428 MB | **3.710 MB** |
+
+  Nghĩa là **mô hình nhỏ hơn không thừa hưởng lỗi tràn số của 7B**. Lỗi đó là chuyện riêng của
+  bản 7B chứ không phải đặc tính của họ Qwen2.5.
+
+  Và lần đầu tiên lượt mốc chạy được, nên có bảng lệch mà Sailor2 không cho được:
+
+```
+  Nếu bỏ các lớp [], còn 36 lớp:
+    |Δ| trung bình : 0.00623
+    |Δ| phân vị 99 : 0.04883
+    |Δ| lớn nhất   : 0.98631   (lớp 27)
+```
+
+  ### Nhưng phải nói rõ: mốc là `bfloat16`, không phải `float32`
+
+  **`bfloat16` có ÍT bit định trị hơn `float16`** — 8 so với 10. Nó rộng dải mũ nên không tràn,
+  đó là lý do dùng nó làm mốc; nhưng nó **kém chính xác hơn** ở phần định trị.
+
+  Hệ quả: con số `|Δ| 0,00623` **gồm cả sai số của chính bfloat16**, nên nó là **cận trên** của
+  sai số float16 chứ không phải phép đo sai số ấy. Không so thẳng được với con số 0,07 % mà T07
+  đo cho 7B, vì T07 dùng mốc `float32`.
+
+  Ghi vào phần hạn chế khi viết Bảng 5. Muốn con số so được thì phải chạy mốc `float32` cho 3B —
+  mô hình này nhỏ nên có thể vừa bộ nhớ, khác Sailor2.
+
+  ### Một chỗ cần để mắt ở ô 9
+
+  Lượt dò đo 3B ở **527 ms/mẫu**, gần như trùng 528 ms của 7B. Đáng ngờ với một mô hình nhỏ hơn
+  hai lần rưỡi. Có thể thật — ở độ dài này việc dựng ma trận chú ý và phần xử lý Python trong hook
+  có thể lấn phần nhân ma trận — nhưng ô 9 mới là phép đo tử tế cho cột chi phí. Đọc kỹ nó.
+
+  Ngoài lề: `bfloat16` chậm **4,4 lần** float16 (2.317 so với 527 ms). T4 là kiến trúc Turing,
+  không có bf16 gốc nên phải giả lập. Đừng bao giờ dùng bf16 làm kiểu số chạy thật trên card này.
+
   ### Việc cần chạy — MỘT phiên, khoảng 75 phút
 
   1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
