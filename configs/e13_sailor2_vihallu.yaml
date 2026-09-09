@@ -35,7 +35,7 @@ extractor:
   # đặc trưng sẽ dùng đủ mọi lớp và sinh ra nan, hỏng to chứ không hỏng âm thầm.
   #
   # Sau khi chạy xong nhớ commit lại file này với giá trị đã đo, để lượt chạy tái lập được.
-  exclude_layers: []
+  exclude_layers: [30, 31]
 
 features:
   groups: [basic, chunk_aware, stability]
