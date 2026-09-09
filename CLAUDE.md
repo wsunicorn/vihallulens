@@ -45,6 +45,7 @@ Những điều này KHÔNG được thương lượng khi viết code:
 | Mô hình ablation | `sail/Sailor2-8B-SFT` (mở rộng từ Qwen2.5, dùng chung code path) |
 | Trích attention | `attn_implementation="eager"` + forward hook, cộng dồn trong hook |
 | Kiểu số khi tính | `float16`, **bỏ lớp 27** của Qwen2.5-7B. Đo ở T07: lớp 27 tràn số ở 20/20 mẫu, 27 lớp còn lại khớp `float32` với sai lệch trung bình 0,07 % thang đo và lỗi không tăng dần về cuối. `float32` sạch nhưng chậm 3,6 lần |
+| Ngoại lệ kiểu số | **Qwen2.5-1.5B chạy `bfloat16`**, chốt 09/09/2026 ở T31. Ở `float16` nó tràn số trên **cả 28 lớp, 20/20 mẫu**, hỏng ngay từ lớp 0 — không còn lớp nào để bỏ. Giá phải trả: T4 không có bf16 gốc nên chậm 4,1 lần (1.101 so với 271 ms/mẫu), tức nấc lùi này **đắt hơn gấp đôi** nấc 3B ở `float16` (513 ms). Qwen2.5-3B thì sạch hoàn toàn, 36 lớp không lớp nào tràn — tràn số **không suy ra được** từ cỡ mô hình, phải đo từng bản |
 | Mẫu số lookback | Lưu **cả hai**: `lookback_total` tính cả token khung như bài gốc (dùng cho E02), `lookback_context` chỉ tính ngữ cảnh (dùng cho phần chunk-aware) |
 | Chia chunk | Làm **cả hai** cách (theo câu và theo cửa sổ token) rồi so sánh — đây là một thí nghiệm riêng, không phải chọn sẵn |
 | Chia tập | Theo ngữ cảnh (group split), seed 42, tỷ lệ 80/10/10 |

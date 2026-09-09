@@ -93,10 +93,10 @@ def extract_all(extractor, samples, dtype_name: str):
     return results
 
 
-def per_layer_report(low, high, n_layers: int) -> None:
-    """How often float16 breaks, and how far it drifts where it does not."""
+def per_layer_report(low, high, n_layers: int, dtype_name: str = "float16") -> None:
+    """How often the dtype under test breaks, and how far it drifts where it does not."""
     print()
-    print(f"  {'Lớp':>4} | {'mẫu nan (fp16)':>15} | {'|Δ| trung bình':>15} | {'|Δ| lớn nhất':>13}")
+    print(f"  {'Lớp':>4} | {'mẫu nan':>15} | {'|Δ| trung bình':>15} | {'|Δ| lớn nhất':>13}")
     print(f"  {'-' * 4}-+-{'-' * 15}-+-{'-' * 15}-+-{'-' * 13}")
 
     worst_clean_layer, worst_clean_value = None, 0.0
@@ -122,13 +122,13 @@ def per_layer_report(low, high, n_layers: int) -> None:
 
     print()
     if worst_clean_layer is None:
-        print("  Không có lớp nào sống sót ở float16, nên không có 'lớp lệch nhiều nhất'.")
+        print(f"  Không có lớp nào sống sót ở {dtype_name}, nên không có 'lớp lệch nhiều nhất'.")
     else:
         print(f"  Lớp lệch nhiều nhất trong số các lớp không bao giờ nan: {worst_clean_layer} "
               f"(|Δ| lớn nhất {worst_clean_value:.5f})")
 
 
-def overall_report(low, high, n_layers: int, broken) -> None:
+def overall_report(low, high, n_layers: int, broken, dtype_name: str = "float16") -> None:
     """Drift across the layers that survive float16 — and what to print when none of them do.
 
     The empty case is not an edge case to guard against, it is a result. Qwen2.5-1.5B overflows
@@ -142,11 +142,11 @@ def overall_report(low, high, n_layers: int, broken) -> None:
 
     print()
     if not clean:
-        print(f"  KHÔNG còn lớp nào: cả {n_layers} lớp đều tràn số ở float16.")
+        print(f"  KHÔNG còn lớp nào: cả {n_layers} lớp đều tràn số ở {dtype_name}.")
         print("  Không có gì để so lệch, và cũng không có cấu hình nào chạy được — bỏ hết lớp")
         print("  thì AttentionExtractor báo lỗi ngay lúc khởi tạo. Mô hình này không đọc được ở")
-        print("  float16. Muốn dùng thì phải đổi kiểu số, mà kiểu số là quyết định đã chốt ở")
-        print("  mục 3 CLAUDE.md — phải hỏi trước khi đổi, đừng tự ý.")
+        print(f"  {dtype_name}. Muốn dùng thì phải đổi kiểu số, mà kiểu số là quyết định đã chốt")
+        print("  ở mục 3 CLAUDE.md — phải hỏi trước khi đổi, đừng tự ý.")
         return
 
     diffs = []
@@ -170,6 +170,12 @@ def overall_report(low, high, n_layers: int, broken) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compare float16 and float32 extraction.")
     parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--dtype", default="float16", choices=("float16", "bfloat16"),
+        help="kiểu số ĐANG XÉT — lượt này chạy trước và danh sách lớp tràn số lấy từ nó. Mặc "
+             "định float16 vì đó là kiểu số đã chốt ở mục 3 CLAUDE.md. Đổi sang bfloat16 khi "
+             "float16 đã đo được là không dùng nổi, như Qwen2.5-1.5B ở T31.",
+    )
     parser.add_argument("--per-dataset", type=int, default=10)
     parser.add_argument("--max-context-tokens", type=int, default=4096)
     parser.add_argument("--data-dir", type=Path, default=None)
@@ -181,6 +187,8 @@ def main() -> int:
              "tràn số.",
     )
     args = parser.parse_args()
+    if args.dtype == args.reference:
+        parser.error("--dtype và --reference phải khác nhau, nếu không không có gì để so")
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -194,17 +202,17 @@ def main() -> int:
 
     print()
     print("=" * 80)
-    print(f"SO SÁNH float16 VỚI {args.reference.upper()}")
+    print(f"SO SÁNH {args.dtype.upper()} VỚI {args.reference.upper()}")
     print("=" * 80)
     print(f"  dữ liệu   : {data_dir}")
     print(f"  số mẫu    : {len(samples)}")
     lengths = [len(context.split()) for _, context, _, _ in samples]
     print(f"  độ dài    : {min(lengths)} đến {max(lengths)} từ")
 
-    # float16 FIRST. The list of overflowing layers comes from this pass alone, and it is the
-    # answer T30 needs before spending three GPU hours. Running the heavier reference first
-    # meant an OOM there destroyed an answer that was already within reach.
-    wanted = ["float16"] if args.reference == "none" else ["float16", args.reference]
+    # The dtype under test runs FIRST. The list of overflowing layers comes from that pass
+    # alone, and it is the answer T30 needs before spending three GPU hours. Running the heavier
+    # reference first meant an OOM there destroyed an answer that was already within reach.
+    wanted = [args.dtype] if args.reference == "none" else [args.dtype, args.reference]
     runs = {}
     n_layers = None
     for dtype_name in wanted:
@@ -219,14 +227,14 @@ def main() -> int:
             n_layers = len(extractor.layer_indices)
             del extractor
         except torch.cuda.OutOfMemoryError:
-            if dtype_name == "float16":
+            if dtype_name == args.dtype:
                 raise
             # The reference pass is optional. Losing it costs the drift table, not the answer.
             print()
             print(f"  !! Hết bộ nhớ khi nạp mô hình ở {dtype_name}. Bỏ phần so lệch.")
-            print("     Danh sách lớp tràn số bên dưới VẪN ĐÚNG — nó chỉ cần lượt float16.")
-            print("     Mất phần này nghĩa là chưa kiểm được các lớp còn sống ở float16 có bị")
-            print("     bóp méo không. Phải ghi vào phần hạn chế, đừng lặng lẽ bỏ qua.")
+            print(f"     Danh sách lớp tràn số bên dưới VẪN ĐÚNG — nó chỉ cần lượt {args.dtype}.")
+            print(f"     Mất phần này nghĩa là chưa kiểm được các lớp còn sống ở {args.dtype} có")
+            print("     bị bóp méo không. Phải ghi vào phần hạn chế, đừng lặng lẽ bỏ qua.")
         # gc.collect() chứ không chỉ `del`: cây nn.Module có vòng tham chiếu, mà vòng thì đếm
         # tham chiếu không phá được — phải đợi bộ thu gom chu trình chạy. Thiếu dòng này thì
         # mô hình đầu vẫn nằm nguyên trên card khi mô hình thứ hai bắt đầu nạp, và empty_cache()
@@ -236,7 +244,7 @@ def main() -> int:
         gc.collect()
         torch.cuda.empty_cache()
 
-    low = runs["float16"]
+    low = runs[args.dtype]
     high = runs.get(args.reference)
 
     print()
@@ -248,7 +256,7 @@ def main() -> int:
     broken = sorted({layer for item in low for layer in item["nonfinite"]})
     samples_with_nan = sum(1 for item in low if item["nonfinite"])
     print()
-    print(f"  Mẫu có ít nhất một lớp nan ở fp16 : {samples_with_nan}/{len(low)}")
+    print(f"  Mẫu có ít nhất một lớp nan ở {args.dtype:<9}: {samples_with_nan}/{len(low)}")
     print(f"  Tập hợp các lớp từng nan          : {broken}")
 
     # A machine-readable copy of the same list. The T30 notebook reads this line to fill
@@ -264,11 +272,11 @@ def main() -> int:
         print()
         print("  Không có lượt mốc để so, nên bỏ bảng theo lớp và phần |Δ|.")
         print("  Phần trên là đủ để điền exclude_layers; phần thiếu chỉ trả lời câu hỏi thứ hai")
-        print("  của script — các lớp còn sống ở float16 có bị bóp méo không.")
+        print(f"  của script — các lớp còn sống ở {args.dtype} có bị bóp méo không.")
         return 0
 
-    per_layer_report(low, high, n_layers)
-    overall_report(low, high, n_layers, broken)
+    per_layer_report(low, high, n_layers, args.dtype)
+    overall_report(low, high, n_layers, broken, args.dtype)
     return 0
 
 
