@@ -676,7 +676,19 @@
 
 - [x] **T17** · M · E01 baseline tầm thường — hoàn thành 27/08/2026
   - Hai đặc trưng: độ dài phản hồi và tỷ lệ trùng lặp từ vựng. Logistic regression, 5 seed.
-  - **Kiểm tra:** kết quả ghi vào `results/runs.jsonl` ✅, điền Bảng 1 dòng đầu `docs/EXPERIMENTS.md` ✅.
+  - **Kiểm tra:** `python scripts/run_baseline_surface.py --dataset vihallu` ✅, kết quả ghi vào
+    `results/runs.jsonl` ✅, điền Bảng 1 dòng đầu `docs/EXPERIMENTS.md` ✅.
+
+  Dòng lệnh trên thêm vào ngày 09/09/2026 khi rà soát toàn repo. Trước đó tiêu chí chỉ ghi hai
+  **kết quả** mà không ghi **cách gọi lại**, và `run_baseline_surface.py` là script duy nhất
+  không được nhắc tên ở bất kỳ file `.md` hay notebook nào. Chuyện đó đáng sửa vì đây không phải
+  một thí nghiệm phụ: E01 là **sàn của cả đề tài**, và con số 0,689 sinh ra từ nó là ngưỡng mà
+  mọi phương pháp khác, kể cả đóng góp của chính đề tài, phải vượt.
+
+  Chạy lại ngày 09/09 cho **trùng từng chữ số** với Bảng 1: macro-F1 0,6562, `intrinsic` 0,5327,
+  `extrinsic` 0,6942, ECE 0,0613, nhị phân 0,8018, `config_hash` `6eaabe152a32`. Mặc định đọc
+  `data/interim/` và ghi `results/runs.jsonl`; muốn chạy thử mà không thêm dòng vào sổ kết quả
+  thì truyền `--results-path` sang chỗ khác.
 
   **Task này để làm gì.** Mục 4 `docs/EXPERIMENTS.md` gọi E01 là *"thí nghiệm bắt buộc chạy sớm nhất, vì nó định nghĩa sàn thật sự"*. Ý tưởng: chỉ dùng hai con số ai cũng tính được — **phản hồi dài bao nhiêu từ**, và **bao nhiêu phần chữ trong phản hồi là chép lại từ ngữ cảnh** — rồi cho một mô hình tuyến tính đơn giản nhất phân loại. Nếu chừng đó đã đủ tốt, thì mọi phương pháp phức tạp hơn, **kể cả đóng góp của chính đề tài này**, phải chứng minh vượt được **nó**, chứ không phải vượt một con số bài báo khác công bố.
 
@@ -3411,6 +3423,64 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   - Tách kết quả theo `meta.prompt_type`: so macro-F1 trên nhóm `noisy` (prompt bị bỏ dấu) với phần còn lại, theo yêu cầu ở `docs/EXPERIMENTS.md`.
   - **Kiểm tra:** `results/error_analysis.csv` 100 dòng có cột loại lỗi và cột `prompt_type`, kèm biểu đồ phân bố và một bảng hai dòng `noisy` / còn lại.
 
+- [ ] **T35B** · M · Hai việc E12 để lại — **0 giây GPU**
+  - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl`, Bảng 4 `docs/EXPERIMENTS.md` có thêm
+    cột ISE-DSC01 và một dòng mức phụ, kèm kết luận về dấu.
+
+  ### Vì sao task này tồn tại
+
+  Thêm ngày 09/09/2026 khi rà soát toàn repo. Hai việc dưới đây đã được ghi trong phần "Việc phải
+  làm trước khi viết chương 7" của T29 và của mục Bảng 4 `docs/EXPERIMENTS.md`, nhưng **chỉ nằm
+  dạng văn xuôi bên trong write-up của một task đã tick**. Không task nào nhận, nên theo quy trình
+  ở mục 6 `CLAUDE.md` chúng sẽ không bao giờ tới lượt. Đưa ra thành task riêng để chúng có chỗ
+  trong hàng đợi.
+
+  ### Việc 1 — Chạy lại E12 trên ISE-DSC01
+
+  E12 đo trên ViHallu, trung bình **5,3 đoạn** mỗi ngữ cảnh. ISE-DSC01 có **22,6 đoạn**. Nếu năm
+  đại lượng hình dạng có ích thật thì chỗ chúng phải có ích nhất là ngữ cảnh nhiều đoạn — với 5
+  đoạn thì entropy và hệ số Gini gần như không có chỗ để phân biệt.
+
+  Đây là phép thử **quan trọng nhất còn lại đối với đóng góp cốt lõi**, và nó tốn 0 giây GPU vì
+  shard ISE-DSC01 đã có sẵn từ T26.
+
+| Kết quả | Nghĩa là gì |
+|---|---|
+| Dấu vẫn âm ở 22,6 đoạn | Kết luận "đóng góp riêng không phân biệt được với 0" **vững**, không phụ thuộc số đoạn |
+| Dấu đảo thành dương | Đóng góp **phụ thuộc số đoạn** — và đó là một phát hiện khác hẳn, đủ sức đứng riêng một mục trong chương 7 |
+
+  Hai khả năng đều là kết quả dùng được. Không có khả năng nào làm phí công.
+
+  ### Việc 2 — Mức phụ: bề mặt + chunk-aware, BỎ lookback gộp
+
+  Bảng 4 cộng dồn nên không tách được một câu hỏi: phần tín hiệu mà hình dạng phân bố mang có
+  **chồng lấn** với phần mà độ dài phản hồi và độ trùng lặp từ vựng đã mang hay không. Hiện tại
+  đó mới là *cách giải thích khả dĩ nhất*, suy ra chứ chưa đo.
+
+  Mức phụ này đo thẳng: bỏ tỷ lệ gộp ra, xem hình dạng một mình cộng thêm bao nhiêu vào hai đặc
+  trưng bề mặt. Đối chiếu với con số đã có — hình dạng **một mình** chỉ đạt 0,6054, thua cả 0,6562
+  của riêng hai đặc trưng bề mặt (đo ở T22).
+
+  ### Ràng buộc, và một chỗ phải viết thêm code
+
+  Cả hai đọc lại shard đã có nên **không tốn GPU**, nhưng chúng không ngang nhau về công sức:
+
+| Việc | `run_ablation.py` hôm nay làm được chưa |
+|---|---|
+| 1. E12 trên ISE-DSC01 | **được ngay** — bộ dữ liệu lấy từ config, chỉ cần `--config configs/e07_chunk_aware_isedsc01.yaml` |
+| 2. Mức phụ bỏ lookback | **chưa** — phải sửa code trước |
+
+  Lý do việc 2 chưa chạy được: `LEVELS` là hằng số cứng trong module, bốn mức **cộng dồn theo
+  cấu tạo**, và không có cờ dòng lệnh nào diễn đạt được một mức *không* cộng dồn.
+
+  Đừng sửa bằng cách thêm thẳng một dòng thứ năm vào `LEVELS`. Làm vậy thì **mọi lượt chạy sau
+  này đều ra bảng năm dòng**, không so được với lượt E12 đã ghi trong `results/runs.jsonl` và
+  đang nằm ở Bảng 4. Cách sạch hơn là một cờ riêng cho mức phụ, để bảng bốn dòng giữ nguyên hình
+  dạng. Chọn cách nào thì tùy người làm task, nhưng phải giữ được điều đó.
+
+  Và giữ nguyên khung bốn mức hiện tại, **không sửa lại để ra số đẹp hơn** — khung này đã chạy
+  hai cách xử lý gộp đầu và cả hai cùng dấu.
+
 ---
 
 ## Giai đoạn 7 — Đóng gói hệ thống (tuần 12–13)
@@ -3477,8 +3547,8 @@ tuần 7, đã chạy sớm ngày 31/08" thì vừa đúng tiến độ vừa đ
 | Tuần | Gửi | Nội dung báo cáo | Chạy thật | Tình trạng |
 |---|---|---|---|---|
 | 1–3 | 21/08 | T01–T16 khung dự án và dữ liệu | 03–23/08 | đã soạn |
-| 4 | 28/08 | T17–T19: E01, E09, E10 — ba mốc so sánh | 27/08 | đã soạn, **chưa gửi** |
-| 5 | 04/09 | T20–T22: tái lập E02, năm đặc trưng, E03 | 28–29/08 | đã soạn |
+| 4 | 28/08 | T17–T19: E01, E09, E10 — ba mốc so sánh | 27/08 | **đã gửi 06/09** |
+| 5 | 04/09 | T20–T22: tái lập E02, năm đặc trưng, E03 | 28–29/08 | **đã gửi 06/09** |
 | 6 | 11/09 | T23–T24: E04, E05, chốt cách chia đoạn | 30/08 | đã soạn |
 | 7 | 18/09 | T25–T27: E06, E07, E08 — hết giai đoạn 4 | 31/08–01/09 | đã soạn |
 | 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | đã soạn |
