@@ -3300,10 +3300,10 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   không — cũng ngần ấy phép nhân ma trận. Nhưng ô có in cảnh báo rằng con số `float16` của một
   nấc hỏng không phải giá phải trả thật, vì muốn dùng nấc đó thì phải đổi kiểu số.
 
-  #### Quyết định cần người dùng chốt: làm gì với nấc 1.5B
+  #### Quyết định 09/09/2026: nấc 1.5B chạy `bfloat16`
 
-  Kiểu số là quyết định đã chốt ở mục 3 `CLAUDE.md`, nên theo mục 6.4 tôi dừng lại hỏi thay vì tự
-  đổi. Ba phương án:
+  Kiểu số là quyết định đã chốt ở mục 3 `CLAUDE.md`, nên theo mục 6.4 đã dừng lại hỏi thay vì tự
+  đổi. Ba phương án đặt ra:
 
 | | Cách làm | Giá | Được gì |
 |---|---|---|---|
@@ -3311,36 +3311,83 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 | **B** | Bỏ nấc 1.5B, bậc thang dừng ở 3B | 0 | Vẫn là câu trả lời đầy đủ, chỉ ngắn hơn |
 | **C** | Đổi hàm attention để tính điểm ở `float32` | đổi kiến trúc | Nấc 3 mục 5 `CLAUDE.md` |
 
-  **Con số quyết định phương án A:** `bfloat16` trên T4 chạy 1.101 ms/mẫu, còn 3B ở `float16`
-  chạy 513 ms/mẫu. Tức là **nấc lùi 1.5B đắt hơn gấp đôi nấc 3B nó lùi khỏi**. Bậc thang lùi tồn
-  tại để rẻ hơn; ở đây nó không rẻ hơn. Đó tự nó đã là kết luận của E14, và lấy được nó **không
-  tốn thêm giây GPU nào** — bốn con số trong bảng trên đủ để nói.
+  **Đã chọn A.** Ban đầu tôi ghi vào file này là nghiêng về B, và lập luận đó yếu — sửa lại
+  ở đây cho đúng.
 
-  Cần nói rõ chuyện này chỉ đúng trên **T4**: Turing không có `bfloat16` gốc nên phải giả lập,
-  chậm khoảng 4,1 lần. Trên Ampere trở lên `bfloat16` nhanh ngang `float16` và phương án A gần
-  như miễn phí. Viết vào báo cáo thì phải gắn kèm tên phần cứng, đừng nói trống.
+  Lý do B nghe hợp lý: một con số đã đủ nói lên chuyện đắt. `bfloat16` trên T4 chạy 1.101
+  ms/mẫu, còn 3B ở `float16` chạy 513 ms/mẫu, tức **nấc lùi 1.5B đắt hơn gấp đôi nấc 3B mà nó
+  lùi khỏi**. Bậc thang lùi tồn tại để rẻ hơn; ở đây nó không rẻ hơn. Kết luận ấy lấy được mà
+  không tốn thêm giây GPU nào.
 
-  Phương án A còn một vấn đề về phương pháp: so 3B (`float16`) với 1.5B (`bfloat16`) là để **hai
-  thứ khác nhau cùng lúc** — cỡ mô hình và kiểu số — đúng thứ mà quy tắc mốc của repo này cấm.
-  Có thể chống chế được, vì `bfloat16` trung thực hơn `float16` nên nếu 1.5B vẫn kém hơn 3B thì
-  kết luận đó là kết luận thận trọng, không phải do kiểu số làm hỏng. Nhưng phải viết ra chứ
-  không được im.
+  Nhưng chuyện đó chỉ trả lời **trục chi phí**. Câu hỏi thứ hai của T31 — nhóm chunk-aware có
+  chuyển giữa các cỡ trong cùng một họ không — mới là câu đáng giá hơn, và B chỉ để lại **một
+  cặp** so sánh (7B với 3B). A để lại **ba điểm**, tức một xu hướng. Với E11 ở T32 cũng vậy: ba
+  điểm là một đường cong, hai điểm chỉ là một đoạn thẳng. 2,2 giờ GPU trong hạn mức 30 giờ/tuần
+  là giá rẻ cho khác biệt đó.
 
-  **Nghiêng về B**, và ghi nấc 1.5B vào báo cáo như một kết quả âm có nội dung: *bậc thang lùi
-  của mục 5 `CLAUDE.md` dừng ở 3B trên phần cứng này, vì nấc dưới không đọc được ở `float16` và
-  không rẻ hơn ở `bfloat16`.*
+  Chỗ tôi lo về A hóa ra nhẹ hơn tôi tưởng. Đúng là so 3B (`float16`) với 1.5B (`bfloat16`) làm
+  **hai thứ đổi cùng lúc** — cỡ mô hình và kiểu số — thứ mà quy tắc mốc của repo này cấm. Nhưng
+  nó chỉ đụng vào phần so **tuyệt đối** giữa hai cỡ. Phần quan trọng hơn, *"chunk-aware có hơn
+  mốc lookback của chính nó không"*, tính trong nội bộ từng cỡ: mốc dùng chung mô hình, chung
+  kiểu số, chung shard. Chênh lệch ấy sạch. Và với phần tuyệt đối thì `bfloat16` trung thực hơn
+  `float16`, nên nếu 1.5B vẫn kém hơn 3B thì đó là kết luận thận trọng chứ không phải do kiểu số
+  làm hỏng.
 
-  ### Việc cần chạy — MỘT phiên, khoảng 60 phút
+  Vẫn phải ghi hạn chế vào Bảng 6, không được im.
 
-  Ngắn hơn ước tính cũ vì nấc 1.5B tự loại khỏi phần trích: còn một nấc phải trích thay vì hai.
+  Và phải gắn kèm tên phần cứng khi viết: chuyện `bfloat16` chậm 4,1 lần chỉ đúng trên **T4**.
+  Turing không có bf16 gốc nên phải giả lập; trên Ampere trở lên bf16 nhanh ngang fp16 và cả vấn
+  đề này biến mất.
+
+  #### Đã đổi những gì để chạy phương án A
+
+  Kiểu số nằm sẵn trong `ExtractorConfig.compute_dtype`, và `compute_dtype` vốn đã thuộc
+  `EXTRACTION_KEYS` nên `extraction_hash` tự đổi theo — không phải sửa hạ tầng, chỉ sửa cấu hình
+  và cách gọi.
+
+| Chỗ | Đổi gì |
+|---|---|
+| `e14_qwen15b_vihallu.yaml`, `e14_baseline_lookback_qwen15b.yaml` | `compute_dtype: bfloat16`, kèm ghi chú dài giải thích vì sao lệch khỏi hai nấc kia |
+| `scripts/compare_dtypes.py` | thêm `--dtype` để chọn **kiểu số đang xét**, không còn cứng `float16` |
+| Ô 6 notebook | đọc `compute_dtype` **từ YAML** rồi dò đúng kiểu đó; mốc so là `float32` khi kiểu chính là `bfloat16` |
+| Ô 9 notebook | truyền `--compute-dtype` cho `measure_throughput`, mỗi nấc đo ở đúng kiểu số nó chạy thật |
+
+  Hai config của 1.5B vẫn trùng `extraction_hash` (`9e2b80984a73`), khác hash của 3B
+  (`8f77142aa220`) — tức mốc lookback của 1.5B vẫn dùng chung shard, không tốn thêm GPU.
+
+  Notebook **đọc** kiểu số từ YAML chứ không tự quyết. Cấu hình là nguồn sự thật, nếu không thì
+  lượt chạy không tái lập được từ file config.
+
+  Một món lời không tính trước: nấc 1.5B lấy `float32` làm mốc được, vì mô hình đủ nhỏ để nạp
+  `float32` vừa bộ nhớ (khoảng 6,2 GB) — khác Sailor2-8B vốn cần 32 GB. Nên **riêng nấc này có
+  con số `|Δ|` đo theo `float32` thật**, so thẳng được với 0,07 % của T07, đỡ hơn cận trên mà nấc
+  3B phải chịu khi lấy `bfloat16` làm mốc.
+
+  Nếu lượt `float32` có hết bộ nhớ thì script vẫn chạy tiếp và vẫn cho danh sách lớp tràn số —
+  phần mốc là tùy chọn, mất nó chỉ mất bảng lệch.
+
+  ### Việc cần chạy — MỘT phiên, khoảng 4 giờ
+
+  Dài hơn ước tính cũ vì nấc 1.5B chạy `bfloat16`, chậm 4,1 lần trên T4. Vẫn một phiên: hạn mức
+  Kaggle là 12 giờ mỗi phiên và 30 giờ mỗi tuần.
+
+| Việc | Thời gian |
+|---|---|
+| Dò kiểu số hai nấc | ~12 phút |
+| Trích 3B, `float16` | ~60 phút |
+| Trích 1.5B, `bfloat16` | ~130 phút |
+| Đo chi phí xen kẽ, sáu lượt | ~30 phút |
 
   1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
   2. Chạy tuần tự tới hết ô 11. Không phải sửa gì trong notebook.
-  3. Đọc kỹ hai chỗ:
-     - **Ô 6** — nấc 1.5B sẽ báo `tran so o TAT CA 28 lop` rồi tự bị loại. Đó là **đúng như dự
-       kiến**, không phải hỏng; phiên vẫn chạy tiếp cho 3B.
+  3. Đọc kỹ ba chỗ:
+     - **Ô 6, nấc 3B** — phải ra `lop tran so = KHONG CO`, giống lượt trước.
+     - **Ô 6, nấc 1.5B** — dòng đầu phải in `kieu so dang xet: bfloat16   moc so: float32`. Nếu
+       nó in `float16` thì config chưa được kéo về, dừng lại. Nấc này cũng phải ra `KHONG CO`;
+       nếu `bfloat16` mà **vẫn** tràn số thì nấc bị loại và phải báo lại, vì lúc đó hết cách.
      - **Ô 9** — so lần 1 với lần 2 **của cùng một mô hình**. Lệch nhỏ thì cột chi phí dùng được;
-       lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh.
+       lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh. Nhớ là 1.5B đo ở
+       `bfloat16` nên nó phải **chậm hơn** 3B — đó là kết quả, không phải lỗi.
   4. Tải thư mục `ket_qua_t31` về: `vihallu_*.jsonl` vào `data/processed/`, bốn `*.yaml` **ghi
      đè** vào `configs/`, giữ `runs_t31.jsonl` vì nó chứa bốn lượt đo chi phí.
   5. Chấm ở **máy cá nhân**, 0 giây GPU. Chạy mốc lookback **trước** cấu hình chunk-aware của
