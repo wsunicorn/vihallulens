@@ -3151,41 +3151,55 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Tin tốt: hai mô hình này nhỏ hơn Sailor2 nhiều nên lượt mốc `bfloat16` sẽ vừa bộ nhớ — lần này
   có cả phần kiểm "các lớp còn sống có bị bóp méo không" mà Sailor2 không cho được.
 
-  ### Việc cần chạy — HAI phiên, làm đúng thứ tự
+  ### Save Version CÓ bị hạ xung — nhưng nó chỉ đụng vào một cột
 
-  **Phiên 1 — nấc 3B, khoảng 45 phút**
+  Bản đầu của notebook bắt chạy hai phiên riêng. Không cần thiết, và đây là lý do.
+
+  Hạ xung là chuyện của **phần cứng**, không phải của cách khởi chạy. Save Version chạy trên đúng
+  card T4 ấy qua papermill nên **không tránh được** hạ xung. Nhưng phải hỏi tiếp: nó làm hỏng
+  **cái gì**?
+
+| Cột | Hạ xung có đụng tới không |
+|---|---|
+| macro-F1, F1 từng lớp, ECE | **không** — trọng số chú ý y hệt dù card chạy 1.590 hay 1.200 MHz |
+| ms mỗi mẫu | **có** — và đây là một nửa câu hỏi của E14 |
+
+  Nên gộp hai cỡ vào một phiên **an toàn cho toàn bộ phần độ chính xác**. Chỉ cột chi phí cần xử
+  lý riêng, và mục 5 `CLAUDE.md` cho sẵn cách: *"chạy mỗi cấu hình một phiên riêng **hoặc đo xen
+  kẽ**"*. Bản đầu chọn vế thứ nhất và bắt người dùng dựng hai phiên; bản này chọn vế thứ hai.
+
+  ### Ô 9 đo xen kẽ, và tự đo luôn mức trôi
+
+  Thứ tự **3B → 1.5B → 3B → 1.5B**, mỗi lượt một tiến trình riêng nạp lại mô hình từ đầu. Nếu card
+  trôi trong phiên thì nó trôi lên **cả hai** mô hình như nhau, thay vì dồn hết vào mô hình chạy
+  sau.
+
+  Hai lượt của cùng một mô hình lệch nhau bao nhiêu **chính là thước đo mức trôi** — in ra để
+  đọc, không giấu. `measure_throughput.py` còn đọc nhiệt độ GPU mỗi lượt, nên hạ xung nếu xảy ra
+  thì thấy trực tiếp chứ không phải suy đoán.
+
+  ### Việc cần chạy — MỘT phiên, khoảng 75 phút
 
   1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
-  2. Ô 2 để nguyên `CO = "3B"`.
-  3. Chạy tuần tự tới hết ô 10.
-  4. Tải thư mục `ket_qua_t31_3B` về.
-  5. **Đóng phiên.** Đừng chạy nấc thứ hai trong cùng phiên.
-
-  **Phiên 2 — nấc 1.5B, khoảng 35 phút**
-
-  6. Mở **phiên Kaggle mới**.
-  7. Ô 2 sửa thành `CO = "1.5B"`. Đây là dòng duy nhất phải sửa; quên đổi thì ô 4 bắt được.
-  8. Chạy tuần tự, tải `ket_qua_t31_1_5B` về.
-
-  **Sau cả hai phiên**
-
-  9. Đặt `*.jsonl` vào `data/processed/`, **ghi đè** bốn file `*.yaml` vào `configs/` — chúng
-     mang `exclude_layers` đã đo.
-  10. Chấm ở **máy cá nhân**, 0 giây GPU:
+  2. Chạy tuần tự tới hết ô 11. Không phải sửa gì trong notebook.
+  3. Đọc kỹ hai chỗ:
+     - **Ô 6** — lớp tràn số của từng cỡ. Nếu liệt kê *mọi* lớp thì đó là kiểu hỏng của Sailor2.
+     - **Ô 9** — so lần 1 với lần 2 **của cùng một mô hình**. Lệch nhỏ thì cột chi phí dùng được;
+       lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh.
+  4. Tải thư mục `ket_qua_t31` về: `vihallu_*.jsonl` vào `data/processed/`, bốn `*.yaml` **ghi
+     đè** vào `configs/`, giữ `runs_t31.jsonl` vì nó chứa bốn lượt đo chi phí.
+  5. Chấm ở **máy cá nhân**, 0 giây GPU. Chạy mốc lookback **trước** cấu hình chunk-aware của
+     cùng cỡ, để `lookback_baseline()` đã có mốc đúng mô hình mà so:
 
 ```
   python scripts/run_chunk_aware.py --config configs/e14_baseline_lookback_qwen3b.yaml
   python scripts/run_chunk_aware.py --config configs/e14_qwen3b_vihallu.yaml
   python scripts/run_chunk_aware.py --config configs/e14_baseline_lookback_qwen15b.yaml
   python scripts/run_chunk_aware.py --config configs/e14_qwen15b_vihallu.yaml
-  python scripts/compare_heads.py --config-a configs/e03_chunk_sentence_vihallu.yaml \
-                                  --config-b configs/e14_qwen3b_vihallu.yaml
+  python scripts/compare_heads.py --config-a configs/e03_chunk_sentence_vihallu.yaml                                   --config-b configs/e14_qwen3b_vihallu.yaml
 ```
 
-  Chạy mốc lookback **trước** cấu hình chunk-aware của cùng cỡ, để lúc chấm chunk-aware thì
-  `lookback_baseline()` đã có mốc đúng mô hình mà so.
-
-  11. Commit lại bốn file config mang `exclude_layers` đã đo, nếu không lượt chạy không tái lập.
+  6. Commit lại bốn file config mang `exclude_layers` đã đo, nếu không lượt chạy không tái lập.
 
 - [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
 - [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc
