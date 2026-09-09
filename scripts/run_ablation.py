@@ -162,7 +162,9 @@ def main() -> int:
 
     records, labels, surface = {}, {}, {}
     for split in ("train", "dev", "test"):
-        rows, path = load_split(args.processed_dir, run, cfg.dataset.name, split)
+        rows, path, dropped = load_split(args.processed_dir, run, cfg.dataset.name, split)
+        if dropped:
+            print(f"  bỏ mẫu có nan {split:<9}: {len(dropped):,}")
         if rows is None:
             print(f"\nThiếu đặc trưng của tập {split}: {path}")
             print("Chạy trước: python scripts/extract_features.py "

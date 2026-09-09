@@ -126,3 +126,30 @@ def build_feature_matrix(records, groups, n_layers: int, n_heads: int,
     blocks = blocks_for(groups)
     stacked = stack_blocks(records, blocks, n_layers, n_heads)
     return aggregate_heads(stacked, len(blocks), n_layers, n_heads, mode, keep)
+
+
+def drop_nonfinite(records, blocks=None):
+    """Split records into the usable ones and the ones carrying ``nan`` or ``inf``.
+
+    Measured at T30 with Sailor2-8B: 49 of 7.000 ViHallu samples (0,70 %) came out with every
+    layer non-finite, not one particular layer. Qwen2.5-7B overflows at layer 27 on *every*
+    sample, so excluding that layer fixes it for everyone. Sailor2 instead overflows on *every*
+    layer for a few samples — a cascade from an early layer rather than one fragile layer — so
+    there is no set of layers to exclude short of all of them.
+
+    That makes dropping the samples the only path, which is fine as long as it stays small and
+    stays *reported*. Silently returning a shorter matrix would move the test-set denominator
+    without saying so.
+
+    Returns ``(clean, dropped)``. Both are lists of records, so the caller can count, report and
+    if needed inspect what it lost.
+    """
+    blocks = tuple(blocks) if blocks else ("lookback_total",)
+    clean, dropped = [], []
+    for record in records:
+        values = np.concatenate([
+            np.asarray(record[name], dtype=np.float64)
+            for name in blocks if name in record
+        ]) if any(name in record for name in blocks) else np.empty(0)
+        (dropped if values.size and not np.isfinite(values).all() else clean).append(record)
+    return clean, dropped
