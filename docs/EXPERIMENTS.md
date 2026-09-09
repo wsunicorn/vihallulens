@@ -832,14 +832,104 @@ và phân loại đúng là hai việc khác nhau.** Bây giờ có thêm một 
    lấn giả thuyết ở trên thay vì suy đoán.
 3. Không sửa lại khung E12 cho ra số đẹp. Khung hiện tại đã chạy hai cách và cả hai cùng dấu.
 
-### Bảng 5 — Mô hình đọc (E13, E14)
+### Bảng 5 — Mô hình đọc (E13, ViHallu)
 
-| Mô hình đọc | macro-F1 | ms/mẫu | VRAM MB |
+Chạy 09/09/2026. Trích Sailor2 mất 66 phút GPU cho 7.000 mẫu, **0 lỗi**, 0 cắt ngữ cảnh. Chấm
+trên máy cá nhân, cùng máy đã chấm E02 và E03.
+
+| Mô hình đọc | Lưới | Nhóm đặc trưng | macro-F1 | Nhị phân | `no` | `intr` | `extr` | ECE |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-7B | 27 × 28 | lookback gộp | 0,7451 | 0,8426 | 0,7925 | **0,7308** | 0,7121 | 0,1090 |
+| Qwen2.5-7B | 27 × 28 | chunk-aware | **0,7567** | **0,8636** | **0,8228** | 0,6858 | **0,7615** | **0,0441** |
+| Sailor2-8B | 30 × 28 | lookback gộp | 0,7377 | 0,8406 | 0,7880 | 0,6971 | 0,7281 | 0,0484 |
+| Sailor2-8B | 30 × 28 | chunk-aware | 0,7120 | 0,8245 | 0,7666 | 0,6653 | 0,7040 | 0,0715 |
+
+Hai dòng Sailor2 chấm trên **697** mẫu test thay vì 700 — ba mẫu bị loại vì đặc trưng không hữu
+hạn, xem mục "0,7 % mẫu hỏng" bên dưới.
+
+### Kết quả chính: một họ đặc trưng chuyển được, họ kia thì không
+
+Đọc bảng theo **cột chênh** chứ không theo dòng nào cao nhất:
+
+| | Qwen2.5-7B | Sailor2-8B | chênh giữa hai mô hình |
 |---|---|---|---|
-| Qwen2.5-7B-Instruct | | | |
-| Qwen2.5-3B-Instruct | | | |
-| Qwen2.5-1.5B-Instruct | | | |
-| Sailor2-8B-SFT | | | |
+| lookback gộp | 0,7451 | 0,7377 | **−0,0074** |
+| chunk-aware | 0,7567 | 0,7120 | **−0,0447** |
+| chunk-aware − lookback | **+0,0116** | **−0,0257** | |
+
+Hai điều, và điều thứ hai là kết quả thật của E13:
+
+1. **Tỷ lệ lookback gộp chuyển gần như hoàn hảo giữa hai mô hình đọc.** 0,7451 so với 0,7377,
+   lệch 0,0074 — nhỏ hơn cả biên độ trôi 0,0075 giữa hai môi trường máy tính đo ở T23. Đổi hẳn
+   mô hình đọc mà điểm gần như không nhúc nhích.
+
+2. **Nhóm chunk-aware thì không chuyển.** Trên Qwen nó cộng +0,0116; trên Sailor2 nó **trừ
+   0,0257**. Đổi dấu, và độ lớn gấp đôi. Toàn bộ khoảng cách 0,0447 giữa hai mô hình nằm ở đúng
+   nhóm đặc trưng này.
+
+Nói gọn: **thứ đo "mô hình có bám vào ngữ cảnh không" là thuộc tính bền của kiến trúc; thứ đo
+"hình dạng phân bố trên các đoạn" thì gắn với từng mô hình cụ thể.**
+
+Đây là kết quả bất lợi cho đóng góp của đề tài và nó **độc lập** với E12: E12 hỏi nhóm chunk-aware
+cộng thêm bao nhiêu khi đứng cạnh đặc trưng bề mặt (trả lời: không phân biệt được với 0); E13 hỏi
+nó có chuyển sang mô hình đọc khác không (trả lời: không). Hai phép đo khác nhau, cùng một hướng.
+
+### Vị trí đầu chú ý — hai lưới khác nhau nên chỉ so được độ sâu
+
+Sailor2 có 32 lớp, bỏ hai lớp cuối còn **30**; Qwen có 28, bỏ lớp 27 còn **27**. Lớp 5 của mô
+hình 28 lớp và lớp 5 của mô hình 32 lớp nằm ở hai độ sâu khác nhau, nên phép trùng chỉ số và
+Spearman đều vô nghĩa ở đây. `scripts/compare_heads.py` **từ chối** in chúng và chỉ báo phân bố
+theo độ sâu tương đối, vốn định nghĩa được cho cả hai.
+
+| k | Bên | TB độ sâu | 1/3 đầu | 1/3 giữa | 1/3 cuối |
+|---|---|---|---|---|---|
+| 10 | Qwen | 0,638 | 20,0 % | 30,0 % | 50,0 % |
+| 10 | Sailor2 | 0,479 | 30,0 % | 40,0 % | 30,0 % |
+| 32 | Qwen | 0,590 | 28,1 % | 31,2 % | 40,6 % |
+| 32 | Sailor2 | 0,547 | 25,0 % | 37,5 % | 37,5 % |
+| 64 | Qwen | 0,572 | 23,4 % | 37,5 % | 39,1 % |
+| 64 | Sailor2 | 0,517 | 29,7 % | 35,9 % | 34,4 % |
+
+Ba điều đọc được:
+
+1. **Cả hai mô hình đều rải đầu có ích khắp độ sâu**, không mô hình nào dồn về một vùng. Ở k=64,
+   cả hai đều có 23–30 % ở một phần ba đầu và 34–39 % ở một phần ba cuối. Đây là phép lặp của
+   quan sát đã ghi ở E02 — các đầu có ích trải khắp, không dồn về cuối.
+
+2. **Khoảng cách thu hẹp khi k lớn dần:** 0,159 ở k=10, còn 0,043 ở k=32 và 0,055 ở k=64. Nghĩa
+   là khác biệt nằm ở *vài đầu dẫn đầu* chứ không ở cả quần thể. Con số k=10 là con số nhiễu
+   nhất, đừng dẫn nó.
+
+3. **Sailor2 nghiêng nông hơn một chút** — 0,517 so với 0,572 ở k=64, tức khoảng 5,5 % độ sâu
+   mạng. Nhỏ, cùng chiều ở cả ba mức k, nhưng chưa có phép kiểm nào nói nó vượt mức ngẫu nhiên.
+
+Phát biểu đúng đắn nhất: **phân bố độ sâu của các đầu có ích gần giống nhau ở hai mô hình, không
+trùng khít.** Nó không đủ mạnh để nói vị trí đầu sao chép là thuộc tính thuần của kiến trúc, mà
+cũng không cho thấy huấn luyện tiếng Việt dịch chuyển chúng đi đâu rõ rệt.
+
+### 0,7 % mẫu hỏng, và vì sao không bỏ thêm lớp được
+
+49 trên 7.000 mẫu (0,70 %) có đặc trưng không hữu hạn: train 38 (0,68 %), dev 8 (1,14 %), test
+3 (0,43 %). Bảng theo lớp cho thấy **cùng một tập mẫu ấy hỏng ở mọi lớp từ 1 trở đi** — không
+phải lớp nào yếu, mà vài mẫu làm activation tràn `float16` ngay từ lớp đầu rồi `nan` lan khắp
+mạng.
+
+Khác hẳn Qwen, nơi đúng lớp 27 hỏng trên *mọi* mẫu nên bỏ một lớp là xong cho tất cả. Với Sailor2
+không có tập lớp nào bỏ được ngoài việc bỏ cả 30. Nên các mẫu ấy bị **loại lúc chấm và tỷ lệ được
+báo cáo**, đúng cách đang làm với tỷ lệ cắt ngữ cảnh.
+
+### Ba hạn chế phải nói rõ
+
+1. **Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không.** Lượt mốc `bfloat16` hết
+   bộ nhớ hai lần, kể cả sau khi sửa phần giải phóng mô hình. Với Qwen, T07 kiểm được 27 lớp còn
+   lại khớp `float32` tới 0,07 % thang đo; với Sailor2 không có con số tương đương. Hai bên vì
+   thế đứng trên hai mức kiểm chứng khác nhau.
+2. **Cột chi phí không so được giữa hai mô hình.** Sailor2 đo 566–572 ms/mẫu, Qwen đo 528, nhưng
+   hai lượt chạy ở hai phiên GPU khác nhau. Mục 5 của `CLAUDE.md` ghi rõ T4 bị hạ xung 10–15 %
+   sau vài phút chạy liên tục, nên chênh lệch 8 % này nằm gọn trong phần nhiễu đó. Muốn so chi
+   phí thật thì phải đo xen kẽ trong cùng một phiên.
+3. **Mới đo trên một bộ dữ liệu.** Kết luận "chunk-aware không chuyển giữa hai mô hình" hiện chỉ
+   đứng trên ViHallu. E16 khái quát hóa chéo bộ sẽ nói thêm.
 
 ### Bảng 6 — Đối chứng ngoài trên ViWikiFC (E15)
 

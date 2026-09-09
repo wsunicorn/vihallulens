@@ -2763,8 +2763,8 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   2. Thêm mức phụ **bề mặt + chunk-aware, bỏ lookback gộp**, để đo thẳng mức chồng lấn.
   3. **Không** sửa khung cho ra số đẹp. Hai cách đo đã cùng dấu.
 
-- [ ] **T30** · L · E13 so Qwen2.5-7B với Sailor2-8B, kèm phân tích vị trí đầu chú ý —
-  **công cụ sẵn sàng 06/09/2026, chờ chạy trên Kaggle**
+- [x] **T30** · L · E13 so Qwen2.5-7B với Sailor2-8B, kèm phân tích vị trí đầu chú ý —
+  **xong 09/09/2026**
 
   ### Câu hỏi thật của E13 không phải "mô hình nào điểm cao hơn"
 
@@ -3027,31 +3027,73 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   2. **Hai lưới khác nhau** — 30 × 28 so với 27 × 28 — nên `compare_heads.py` sẽ từ chối so theo
      chỉ số và chỉ báo phân bố theo độ sâu tương đối. Đúng nhánh đã viết sẵn, không phải lỗi.
 
-  ### Việc cần chạy
+  ### Kết quả — một họ đặc trưng chuyển được, họ kia thì không
 
-  0. **Phiên Kaggle cũ nếu còn sống:** chạy ô 9 ngay để lấy shard về, đừng để mất. Trích đã xong
-     rồi, không cần chạy lại ô 7.
-  1. Nếu phiên đã chết: mở lại `notebooks/t30_sailor2_t4.ipynb`, chạy tới ô 7 (~3 giờ), rồi ô 8,
-     8b, 9. Bản mới không chặn ở ô 8 nữa.
-  2. Gửi output ô 8 — bảng chẩn đoán quyết định đi đường nào.
-  3. Tải `ket_qua_t30` về, đặt `*.jsonl` vào `data/processed/`, **ghi đè** config bằng bản mang
-     `exclude_layers: [30, 31]`.
-  2. Chạy tuần tự. Ô 5 (~10 phút) và ô 7 (~3 giờ) là hai ô tốn GPU.
-  3. **Đọc kỹ output ô 5**: với Qwen là đúng một lớp cuối. Nếu Sailor2 ra nhiều lớp hoặc ra lớp ở
-     giữa thì dừng lại đọc bảng per-layer — mất nhiều lớp giữa sẽ làm phép so với Qwen khập
-     khiễng và phải ghi rõ trong báo cáo.
-  4. Ô 8 in ra lưới của Sailor2. Nếu khác 27 × 28 thì phần so vị trí sẽ chỉ báo độ sâu.
-  5. Tải thư mục `ket_qua_t30` về, đặt `*.jsonl` vào `data/processed/` và **ghi đè** config bằng
-     bản mang `exclude_layers` đã đo.
-  6. Chấm ở **máy cá nhân**, theo quy tắc T23:
+| Mô hình đọc | Lưới | lookback gộp | chunk-aware | chênh |
+|---|---|---|---|---|
+| Qwen2.5-7B | 27 × 28 | 0,7451 | **0,7567** | **+0,0116** |
+| Sailor2-8B | 30 × 28 | 0,7377 | 0,7120 | **−0,0257** |
+| chênh giữa hai mô hình | | **−0,0074** | **−0,0447** | |
 
-```
-  python scripts/run_chunk_aware.py --config configs/e13_sailor2_vihallu.yaml
-  python scripts/compare_heads.py --config-a configs/e03_chunk_sentence_vihallu.yaml \
-                                  --config-b configs/e13_sailor2_vihallu.yaml
-```
+  Đọc theo **cột chênh**, không theo dòng nào cao nhất:
 
-  7. Commit lại config đã đo, nếu không lượt chạy này **không tái lập được**.
+  1. **Tỷ lệ lookback gộp chuyển gần như hoàn hảo.** 0,7451 so với 0,7377, lệch 0,0074 — nhỏ hơn
+     cả biên độ trôi 0,0075 giữa hai môi trường máy tính đo ở T23. Đổi hẳn mô hình đọc mà điểm
+     gần như không nhúc nhích.
+  2. **Nhóm chunk-aware thì không chuyển.** Trên Qwen cộng +0,0116; trên Sailor2 **trừ 0,0257**.
+     Đổi dấu, độ lớn gấp đôi. Toàn bộ khoảng cách 0,0447 giữa hai mô hình nằm ở đúng nhóm này.
+
+  Nói gọn: **thứ đo "mô hình có bám vào ngữ cảnh không" là thuộc tính bền của kiến trúc; thứ đo
+  "hình dạng phân bố trên các đoạn" thì gắn với từng mô hình cụ thể.**
+
+  Kết quả này bất lợi cho đóng góp của đề tài, và nó **độc lập với E12**. E12 hỏi nhóm chunk-aware
+  cộng thêm bao nhiêu khi đứng cạnh đặc trưng bề mặt — trả lời: không phân biệt được với 0. E13
+  hỏi nó có chuyển sang mô hình đọc khác không — trả lời: không. Hai phép đo khác nhau, cùng một
+  hướng.
+
+  ### Vị trí đầu chú ý — gần giống, không trùng khít
+
+  Hai lưới khác nhau (30 × 28 so với 27 × 28) nên `compare_heads.py` từ chối so theo chỉ số, chỉ
+  báo độ sâu tương đối. Ở k=64: TB độ sâu **0,572 (Qwen)** so với **0,517 (Sailor2)**, và cả hai
+  đều rải khắp — 23–30 % ở một phần ba đầu, 34–39 % ở một phần ba cuối.
+
+  Khoảng cách thu hẹp khi k lớn dần: 0,159 ở k=10 → 0,043 ở k=32 → 0,055 ở k=64. Nghĩa là khác
+  biệt nằm ở *vài đầu dẫn đầu* chứ không ở cả quần thể; k=10 là con số nhiễu nhất, đừng dẫn nó.
+
+  Phát biểu đúng: **phân bố độ sâu gần giống nhau, không trùng khít.** Không đủ mạnh để nói vị
+  trí đầu sao chép là thuộc tính thuần của kiến trúc, cũng không cho thấy huấn luyện tiếng Việt
+  dịch chuyển chúng đi đâu rõ rệt.
+
+  ### Bug thứ hai của cùng một hàm, lệch thêm một biến
+
+  Lượt chấm đầu in ra `e02_lookback_lens : 0.7451` làm mốc cho Sailor2 rồi kết luận **"CHƯA VƯỢT.
+  Chia theo đoạn chưa đóng góp được gì"**. Sai: 0,7451 là số của **Qwen**, nên chênh lệch −0,0331
+  ấy gồm cả phần đổi mô hình đọc lẫn phần đổi nhóm đặc trưng, không tách được hai thứ.
+
+  `lookback_baseline()` lọc theo bộ dữ liệu và nhóm đặc trưng, **không lọc theo mô hình đọc**.
+  T26 đã sửa hàm này một lần cho biến "bộ dữ liệu"; T30 vấp đúng biến kế tiếp. Đã thêm bộ lọc
+  `model_name`, thêm hai ca kiểm thử, và dựng
+  `configs/e13_baseline_lookback_sailor2.yaml` — mốc lookback gộp cho **chính Sailor2**, chấm từ
+  đúng shard đã có nên **0 giây GPU**.
+
+  Bài học: **một mốc so chỉ là mốc khi đúng một thứ khác nhau.** Hàm này giờ đã đúng cho hai
+  biến; biến thứ ba sẽ là cách chia đoạn nếu có ngày nào đó so hai cách chia trên cùng mô hình.
+
+  ### Ba hạn chế đã ghi vào Bảng 5
+
+  1. Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không — lượt mốc `bfloat16` hết bộ
+     nhớ hai lần. Qwen có con số 0,07 % thang đo từ T07; Sailor2 không có gì tương đương.
+  2. Cột chi phí không so được: 566–572 ms/mẫu so với 528 của Qwen, nhưng hai phiên GPU khác
+     nhau, mà mục 5 `CLAUDE.md` ghi T4 hạ xung 10–15 % sau vài phút. Chênh 8 % nằm gọn trong đó.
+  3. Mới đo trên một bộ dữ liệu. E16 khái quát hóa chéo bộ sẽ nói thêm.
+
+  ### Lượt chạy đã thực hiện
+
+  Kaggle 09/09: 66 phút GPU, 7.000 mẫu, **0 lỗi**, 0 cắt ngữ cảnh. Chấm điểm và so vị trí đầu
+  chạy ở máy cá nhân, **0 giây GPU**, theo quy tắc chốt ở T23.
+
+  Nhớ commit `configs/e13_sailor2_vihallu.yaml` mang `exclude_layers: [30, 31]` — giá trị do ô 5
+  đo được, không phải đoán. Không có nó thì hash trích không tái lập.
 
 - [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B
 - [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
