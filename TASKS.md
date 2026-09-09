@@ -3096,7 +3096,7 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   đo được, không phải đoán. Không có nó thì hash trích không tái lập.
 
 - [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B —
-  **công cụ sẵn sàng 09/09/2026, chờ chạy HAI phiên Kaggle riêng**
+  **công cụ sẵn sàng 09/09/2026, chờ chạy MỘT phiên Kaggle**
 
   ### E14 nay trả lời hai câu, và câu thứ hai do T30 sinh ra
 
@@ -3109,20 +3109,24 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
      gắn với từng mô hình cụ thể" mạnh lên rất nhiều. Nếu nó chuyển được thì phạm vi của kết quả
      E13 thu lại thành "không chuyển giữa hai họ huấn luyện khác nhau", hẹp hơn nhiều.
 
-  ### Chỉ phải chạy HAI phiên, không phải ba
+  ### 7B: không trích lại, nhưng VẪN đo chi phí
 
-| Nấc | Cần chạy? | Lấy số từ đâu |
-|---|---|---|
-| Qwen2.5-7B | **không** | E02 (0,7451) và E03 (0,7567), cùng bộ dữ liệu, cùng cách chia đoạn |
-| Qwen2.5-3B | **có** | phiên 1 |
-| Qwen2.5-1.5B | **có** | phiên 2 |
+  Hai nửa của E14 trả lời câu này khác nhau, nên phải tách ra.
 
-  ### Vì sao bắt buộc hai phiên RIÊNG
+| Nấc | Trích đặc trưng? | Đo chi phí? | Ghi chú |
+|---|---|---|---|
+| Qwen2.5-7B | **không** | **có** | Độ chính xác đã có: E02 0,7451 và E03 0,7567 |
+| Qwen2.5-3B | có | có | |
+| Qwen2.5-1.5B | có | có | |
 
-  Mục 5 `CLAUDE.md` đo được T4 **hạ xung 10–15 %** sau vài phút chạy liên tục. Chạy hai cỡ nối
-  nhau trong một phiên thì phần hạ xung bị tính nhầm thành khác biệt giữa các mô hình — mà chi
-  phí mỗi mẫu chính là **một nửa câu hỏi** của E14. Đây cũng là hạn chế đã phải ghi vào Bảng 5:
-  cột chi phí của E13 không so được vì đúng lý do này.
+  **Độ chính xác của 7B đã xong.** E02 và E03 trích nó rồi — cùng bộ dữ liệu, cùng cách chia
+  đoạn, cùng nhóm đặc trưng — và shard `8c49fc0417f1` còn nằm sẵn trên máy. Trích lại là đốt 62
+  phút GPU để dựng lại con số đã có.
+
+  **Chi phí của 7B thì chưa dùng được.** Con số 528 ms/mẫu đo ở một **phiên khác** với phiên sắp
+  đo 3B và 1.5B — đúng kiểu so sánh mà mục 5 `CLAUDE.md` bảo đừng làm, và đúng hạn chế mà cột chi
+  phí của E13 đã phải mang. Đưa 7B vào ô đo xen kẽ tốn thêm ~10 phút, đổi lại **một đường cong
+  chi phí ba nấc thật sự so được** — thứ E11 cần.
 
   ### Bốn cấu hình, hai cặp
 
