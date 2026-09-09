@@ -1,0 +1,36 @@
+# E14 — mốc lookback gộp CHO CHÍNH Qwen/Qwen2.5-1.5B-Instruct. Task T31.
+#
+# T30 dạy bài học này bằng một kết luận sai: chấm chunk-aware trên Sailor2 rồi so với mốc lookback
+# của Qwen, chênh lệch thu được trộn "đổi mô hình" với "đổi nhóm đặc trưng" nên không tách được.
+# Mỗi cỡ mô hình vì thế phải có mốc lookback của riêng nó.
+#
+# KHÔNG tốn GPU. extraction_hash chỉ tính trên dataset, chunking và extractor — không tính
+# features — nên file này dùng lại đúng shard mà e14_qwen15b_vihallu.yaml đã trích.
+#
+# exclude_layers phải khớp file kia sau khi ô dò kiểu số ghi vào; notebook lo phần đó.
+
+run_name: e14_baseline_lookback_qwen15b
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-1.5B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: []
+
+features:
+  groups: [basic]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

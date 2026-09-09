@@ -1,0 +1,43 @@
+# E14 — bậc thang kích thước, mô hình đọc Qwen/Qwen2.5-1.5B-Instruct. Task T31.
+#
+# Câu hỏi của E14: phương pháp có chạy được trên phần cứng nhỏ hơn không, và mất bao nhiêu điểm
+# khi thu mô hình đọc lại. Sau E13 nó còn mang thêm một câu nữa, đáng giá hơn: T30 đo được nhóm
+# chunk-aware KHÔNG chuyển giữa Qwen2.5-7B và Sailor2-8B. Bậc thang này hỏi nó có chuyển giữa
+# các cỡ của CÙNG một họ mô hình không — một phép thử nhẹ hơn hẳn.
+#
+# Mọi khóa ngoài model_name giữ y hệt e03_chunk_sentence_vihallu.yaml để phép so khác đúng một
+# biến.
+
+run_name: e14_qwen15b_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-1.5B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+
+  # !! PHẢI ĐIỀN TỪ SỐ ĐO, KHÔNG ĐƯỢC ĐOÁN !!
+  #
+  # Qwen2.5-7B hỏng đúng lớp 27 — lớp cuối — đo ở T07. Nhưng 1_5B là mô hình khác, số lớp
+  # khác, nên lớp hỏng của nó là câu hỏi thực nghiệm riêng. T30 cho thấy chuyện này không suy
+  # ra được: Sailor2 hỏng theo kiểu hoàn toàn khác Qwen.
+  #
+  # Ô dò kiểu số trong notebook đo trước rồi TỰ GHI ĐÈ danh sách này. Để trống ở đây là cố ý.
+  exclude_layers: []
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
