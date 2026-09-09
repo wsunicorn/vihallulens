@@ -278,13 +278,54 @@ def write_runs(tmp_path, rows):
     return path
 
 
-def run_row(dataset, groups, macro_f1, name, dev_only=False):
+def run_row(dataset, groups, macro_f1, name, dev_only=False, model="Qwen/Qwen2.5-7B-Instruct"):
     return {
         "run_name": name,
-        "config": {"dataset": {"name": dataset}, "features": {"groups": groups}},
+        "config": {
+            "dataset": {"name": dataset},
+            "features": {"groups": groups},
+            "extractor": {"model_name": model},
+        },
         "metrics": {"macro_f1": macro_f1},
         "extra": {"dev_only": dev_only} if dev_only else {},
     }
+
+
+def test_the_baseline_ignores_other_reading_models():
+    """The T30 bug, one variable past the T26 one.
+
+    E13 swaps the reading model to Sailor2. The lookup matched on dataset only, so a Sailor2 run
+    scoring 0,7120 was compared against **Qwen's** 0,7451 and the script announced that chunking
+    had contributed nothing — a claim about chunking, drawn from a gap that also contained an
+    entire change of model. A baseline is only a baseline when exactly one thing differs.
+    """
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [
+            run_row("vihallu", ["basic"], 0.7451, "e02_qwen"),
+            run_row("vihallu", ["basic"], 0.7377, "e13_sailor2",
+                    model="sail/Sailor2-8B-SFT"),
+        ])
+        assert lookback_baseline("vihallu", path, "sail/Sailor2-8B-SFT") == (
+            0.7377, "e13_sailor2")
+        assert lookback_baseline("vihallu", path, "Qwen/Qwen2.5-7B-Instruct") == (
+            0.7451, "e02_qwen")
+
+
+def test_no_baseline_for_this_model_returns_none_rather_than_another_model_s():
+    """Refusing to answer beats answering with the closest wrong number."""
+    import tempfile
+    from pathlib import Path
+
+    from run_chunk_aware import lookback_baseline
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = write_runs(Path(tmp), [run_row("vihallu", ["basic"], 0.7451, "e02_qwen")])
+        assert lookback_baseline("vihallu", path, "sail/Sailor2-8B-SFT") is None
 
 
 def test_the_baseline_ignores_other_datasets():

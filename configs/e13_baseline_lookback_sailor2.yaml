@@ -1,0 +1,40 @@
+# E13 — mốc lookback gộp CHO CHÍNH SAILOR2. Task T30.
+#
+# Không có file này thì phép so của E13 trộn hai biến. Lượt chạy đầu ngày 09/09 so chunk-aware
+# trên Sailor2 (0,7120) với lookback gộp trên **Qwen** (0,7451) rồi kết luận "chia theo đoạn chưa
+# đóng góp được gì" — sai, vì chênh lệch đó gồm cả phần đổi mô hình đọc lẫn phần đổi nhóm đặc
+# trưng, không tách được hai thứ.
+#
+# Câu hỏi đúng của E13 là "trên CÙNG mô hình Sailor2, chia theo đoạn có hơn gộp không". File này
+# đo vế còn lại của câu đó.
+#
+# KHÔNG tốn GPU. extraction_hash chỉ tính trên dataset, chunking và extractor — không tính
+# features — nên mọi khóa dưới đây giữ y hệt e13_sailor2_vihallu.yaml và nó dùng lại đúng shard
+# f58b3bee5934 đã trích. Lệch một khóa trong ba khối đó là hash đổi và script sẽ đòi trích lại.
+
+run_name: e13_baseline_lookback_sailor2
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: sail/Sailor2-8B-SFT
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [30, 31]
+
+features:
+  # Chỉ tỷ lệ gộp — đây là điểm khác duy nhất so với e13_sailor2_vihallu.yaml.
+  groups: [basic]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

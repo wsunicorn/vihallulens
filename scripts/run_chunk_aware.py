@@ -186,12 +186,22 @@ def dev_metrics_record(best: dict) -> dict:
     return record
 
 
-def lookback_baseline(dataset: str, results_path: Path) -> tuple[float, str] | None:
-    """The best lookback-only macro-F1 recorded for this dataset, and the run it came from.
+def lookback_baseline(dataset: str, results_path: Path,
+                     model_name: str | None = None) -> tuple[float, str] | None:
+    """The best lookback-only macro-F1 for this dataset **and this reading model**.
 
-    Reads the results file instead of holding a constant, so the comparison automatically follows
-    whichever corpus the config names. Returns ``None`` when no such run exists yet — in which
-    case the caller says so rather than inventing a baseline out of another dataset's number.
+    Reads the results file instead of holding a constant, so the comparison follows whichever
+    corpus and model the config names. Returns ``None`` when no such run exists — in which case
+    the caller says so rather than inventing a baseline out of a different run's number.
+
+    Two filters, and the second was added at T30 after it cost a wrong conclusion. T26 had already
+    fixed this function once, for datasets: it was comparing an ISE-DSC01 run against a ViHallu
+    number. T30 hit the next variable along. E13 swaps the reading model to Sailor2, the lookup
+    returned **Qwen's** 0,7451 as its baseline, and the script announced "chưa vượt, chia theo
+    đoạn chưa đóng góp được gì" — a claim about chunking, drawn from a gap that also contains an
+    entire change of model.
+
+    A baseline is only a baseline when exactly one thing differs.
     """
     if not results_path.exists():
         return None
@@ -204,6 +214,8 @@ def lookback_baseline(dataset: str, results_path: Path) -> tuple[float, str] | N
             record = json.loads(line)
             config = record.get("config", {})
             if config.get("dataset", {}).get("name") != dataset:
+                continue
+            if model_name and config.get("extractor", {}).get("model_name") != model_name:
                 continue
             if list(config.get("features", {}).get("groups", [])) != BASELINE_GROUPS:
                 continue
@@ -475,7 +487,8 @@ def main() -> int:
     print("-" * 80)
     print("SO VỚI LOOKBACK GỘP TRÊN CÙNG BỘ DỮ LIỆU — mốc thật của phần đóng góp")
     print("-" * 80)
-    baseline = lookback_baseline(cfg.dataset.name, args.results_path)
+    baseline = lookback_baseline(cfg.dataset.name, args.results_path,
+                                 cfg.extractor.model_name)
     if baseline is None:
         print(f"  Chưa có lượt lookback gộp nào trên {cfg.dataset.name}, nên không có mốc để so.")
         print("  Chạy một cấu hình groups: [basic] trên cùng lượt trích rồi chấm lại.")
