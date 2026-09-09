@@ -3246,12 +3246,99 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Ngoài lề: `bfloat16` chậm **4,4 lần** float16 (2.317 so với 527 ms). T4 là kiến trúc Turing,
   không có bf16 gốc nên phải giả lập. Đừng bao giờ dùng bf16 làm kiểu số chạy thật trên card này.
 
-  ### Việc cần chạy — MỘT phiên, khoảng 75 phút
+  ### Lượt 09/09 lần hai: qua được 3B, chết ở 1.5B — hai lỗi chồng lên một phát hiện
+
+  Lượt này đi xa hơn hẳn: ô 5 chuẩn hóa và chia tập xong, 15 test qua, nấc 3B dò kiểu số sạch sẽ
+  và ghi được cả hai cấu hình. Rồi tới nấc 1.5B.
+
+  **Phát hiện: Qwen2.5-1.5B tràn số ở `float16` trên TOÀN BỘ 28 lớp, 20/20 mẫu.** Lớp 0 đã hỏng
+  19/20 mẫu, tức là hỏng ngay từ lớp đầu rồi lan xuống hết mạng.
+
+| | Qwen2.5-7B | Qwen2.5-3B | Qwen2.5-1.5B |
+|---|---|---|---|
+| Số lớp | 28 | 36 | 28 |
+| Lớp tràn số ở `float16` | lớp 27 | **không lớp nào** | **cả 28 lớp** |
+| Mẫu có ít nhất một lớp nan | 20/20 | 0/20 | **20/20** |
+| `float16` ms/mẫu (lượt dò) | 528 | 513 | 271 |
+| `bfloat16` ms/mẫu (lượt dò) | — | 2.116 | 1.101 |
+| VRAM đỉnh khi dò | 8.428 MB | 3.710 MB | 2.414 MB |
+
+  Hình dạng hỏng giống Sailor2 — cả mạng hỏng chứ không phải một lớp hỏng — nhưng **nặng hơn rất
+  nhiều**: Sailor2 hỏng trên 0,70 % mẫu, 1.5B hỏng trên **100 %**. Với Sailor2 còn có cách bỏ 49
+  mẫu mà đi tiếp; với 1.5B thì không còn mẫu nào để bỏ.
+
+  Bậc thang ba nấc bây giờ cho ba kiểu hỏng số học **khác hẳn nhau** trong **cùng một họ mô
+  hình**. Đây là kết quả đáng viết vào báo cáo chứ không phải sự cố kỹ thuật: nó nói rằng chuyện
+  tràn số ở `float16` **không suy ra được từ kiến trúc hay từ cỡ mô hình**, phải đo từng bản một.
+
+  #### Lỗi cơ chế thứ nhất: báo cáo tự nó đổ
+
+  `compare_dtypes.py` bỏ 28 lớp trên 28, còn 0 lớp, `joined` rỗng, rồi gọi
+  `np.percentile(joined, 99)` → `IndexError: index -1 is out of bounds for axis 0 with size 0`.
+
+  Trường hợp rỗng không phải góc khuất cần chặn, nó là **một kết quả**: mô hình này không đọc
+  được ở kiểu số đang dùng. Đã tách phần tổng kết ra thành `overall_report()` và cho nó nói câu
+  đó thành lời. Thêm `tests/test_compare_dtypes.py`, 8 test, phủ cả bốn hình dạng: không lớp nào
+  hỏng, một lớp hỏng, mọi lớp hỏng, và lớp sạch nhưng không mẫu nào so được.
+
+  Script cũng in thêm dòng máy đọc được `N_LAYERS=<n>` cạnh `EXCLUDE_LAYERS=`. Thiếu mẫu số thì
+  không phân biệt được "một lớp hỏng trong 28" với "cả 28 lớp hỏng", mà hai chuyện này cần cách
+  xử lý ngược nhau: bỏ lớp đó ra, hay bỏ hẳn mô hình ở kiểu số này.
+
+  #### Lỗi cơ chế thứ hai, đắt hơn: một nấc hỏng kéo cả phiên
+
+  Ô 6 viết `raise SystemExit(f"do kieu so hong o nac {nac['co']}")`. Nấc 3B đã chạy xong sạch sẽ
+  trước đó — và dòng này nuốt luôn ô 7 tới ô 11 của nó. Gần một giờ GPU đổi lấy một câu trả lời
+  đúng, rồi vứt đi phần biến nó thành đặc trưng.
+
+  **Cùng một dạng sai với bug T30**, nơi ô kiểm shard dừng trước ô mang shard về: một cái chặn
+  coi *"một phần hỏng"* là *"không phần nào dùng được"*. Sửa: nấc hỏng thì ghi vào `NAC_HONG` và
+  bị loại khỏi `CAN_TRICH`, các nấc còn lại chạy tiếp. Ô 7, 8, 10, 11 vốn đã lặp trên `CAN_TRICH`
+  nên tự bỏ qua nấc hỏng, không phải sửa gì thêm.
+
+  Ô 9 thì **vẫn đo đủ ba nấc**. Số ms/mẫu không phụ thuộc vào việc đặc trưng có hữu hạn hay
+  không — cũng ngần ấy phép nhân ma trận. Nhưng ô có in cảnh báo rằng con số `float16` của một
+  nấc hỏng không phải giá phải trả thật, vì muốn dùng nấc đó thì phải đổi kiểu số.
+
+  #### Quyết định cần người dùng chốt: làm gì với nấc 1.5B
+
+  Kiểu số là quyết định đã chốt ở mục 3 `CLAUDE.md`, nên theo mục 6.4 tôi dừng lại hỏi thay vì tự
+  đổi. Ba phương án:
+
+| | Cách làm | Giá | Được gì |
+|---|---|---|---|
+| **A** | Chạy riêng nấc 1.5B ở `bfloat16` | ~2,2 giờ GPU | Bậc thang đủ ba nấc |
+| **B** | Bỏ nấc 1.5B, bậc thang dừng ở 3B | 0 | Vẫn là câu trả lời đầy đủ, chỉ ngắn hơn |
+| **C** | Đổi hàm attention để tính điểm ở `float32` | đổi kiến trúc | Nấc 3 mục 5 `CLAUDE.md` |
+
+  **Con số quyết định phương án A:** `bfloat16` trên T4 chạy 1.101 ms/mẫu, còn 3B ở `float16`
+  chạy 513 ms/mẫu. Tức là **nấc lùi 1.5B đắt hơn gấp đôi nấc 3B nó lùi khỏi**. Bậc thang lùi tồn
+  tại để rẻ hơn; ở đây nó không rẻ hơn. Đó tự nó đã là kết luận của E14, và lấy được nó **không
+  tốn thêm giây GPU nào** — bốn con số trong bảng trên đủ để nói.
+
+  Cần nói rõ chuyện này chỉ đúng trên **T4**: Turing không có `bfloat16` gốc nên phải giả lập,
+  chậm khoảng 4,1 lần. Trên Ampere trở lên `bfloat16` nhanh ngang `float16` và phương án A gần
+  như miễn phí. Viết vào báo cáo thì phải gắn kèm tên phần cứng, đừng nói trống.
+
+  Phương án A còn một vấn đề về phương pháp: so 3B (`float16`) với 1.5B (`bfloat16`) là để **hai
+  thứ khác nhau cùng lúc** — cỡ mô hình và kiểu số — đúng thứ mà quy tắc mốc của repo này cấm.
+  Có thể chống chế được, vì `bfloat16` trung thực hơn `float16` nên nếu 1.5B vẫn kém hơn 3B thì
+  kết luận đó là kết luận thận trọng, không phải do kiểu số làm hỏng. Nhưng phải viết ra chứ
+  không được im.
+
+  **Nghiêng về B**, và ghi nấc 1.5B vào báo cáo như một kết quả âm có nội dung: *bậc thang lùi
+  của mục 5 `CLAUDE.md` dừng ở 3B trên phần cứng này, vì nấc dưới không đọc được ở `float16` và
+  không rẻ hơn ở `bfloat16`.*
+
+  ### Việc cần chạy — MỘT phiên, khoảng 60 phút
+
+  Ngắn hơn ước tính cũ vì nấc 1.5B tự loại khỏi phần trích: còn một nấc phải trích thay vì hai.
 
   1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
   2. Chạy tuần tự tới hết ô 11. Không phải sửa gì trong notebook.
   3. Đọc kỹ hai chỗ:
-     - **Ô 6** — lớp tràn số của từng cỡ. Nếu liệt kê *mọi* lớp thì đó là kiểu hỏng của Sailor2.
+     - **Ô 6** — nấc 1.5B sẽ báo `tran so o TAT CA 28 lop` rồi tự bị loại. Đó là **đúng như dự
+       kiến**, không phải hỏng; phiên vẫn chạy tiếp cho 3B.
      - **Ô 9** — so lần 1 với lần 2 **của cùng một mô hình**. Lệch nhỏ thì cột chi phí dùng được;
        lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh.
   4. Tải thư mục `ket_qua_t31` về: `vihallu_*.jsonl` vào `data/processed/`, bốn `*.yaml` **ghi

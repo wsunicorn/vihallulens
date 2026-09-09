@@ -121,8 +121,50 @@ def per_layer_report(low, high, n_layers: int) -> None:
         )
 
     print()
-    print(f"  Lớp lệch nhiều nhất trong số các lớp không bao giờ nan: {worst_clean_layer} "
-          f"(|Δ| lớn nhất {worst_clean_value:.5f})")
+    if worst_clean_layer is None:
+        print("  Không có lớp nào sống sót ở float16, nên không có 'lớp lệch nhiều nhất'.")
+    else:
+        print(f"  Lớp lệch nhiều nhất trong số các lớp không bao giờ nan: {worst_clean_layer} "
+              f"(|Δ| lớn nhất {worst_clean_value:.5f})")
+
+
+def overall_report(low, high, n_layers: int, broken) -> None:
+    """Drift across the layers that survive float16 — and what to print when none of them do.
+
+    The empty case is not an edge case to guard against, it is a result. Qwen2.5-1.5B overflows
+    on all 28 layers, so ``clean`` is empty, ``joined`` has size zero, and the old code walked
+    straight into ``np.percentile`` of an empty array and raised IndexError. A model that cannot
+    be read at all in float16 is exactly the finding the ladder experiment is looking for, and
+    it deserves a sentence rather than a traceback.
+    """
+    broken = set(broken)
+    clean = [layer for layer in range(n_layers) if layer not in broken]
+
+    print()
+    if not clean:
+        print(f"  KHÔNG còn lớp nào: cả {n_layers} lớp đều tràn số ở float16.")
+        print("  Không có gì để so lệch, và cũng không có cấu hình nào chạy được — bỏ hết lớp")
+        print("  thì AttentionExtractor báo lỗi ngay lúc khởi tạo. Mô hình này không đọc được ở")
+        print("  float16. Muốn dùng thì phải đổi kiểu số, mà kiểu số là quyết định đã chốt ở")
+        print("  mục 3 CLAUDE.md — phải hỏi trước khi đổi, đừng tự ý.")
+        return
+
+    diffs = []
+    for a, b in zip(low, high, strict=True):
+        diff = np.abs(a["total"][clean] - b["total"][clean])
+        if np.isfinite(diff).all():
+            diffs.append(diff.ravel())
+    joined = np.concatenate(diffs) if diffs else np.empty(0, dtype=np.float32)
+    if joined.size == 0:
+        print(f"  Còn {len(clean)} lớp sau khi bỏ {sorted(broken)}, nhưng không mẫu nào cho được")
+        print("  một bộ giá trị hữu hạn trên toàn bộ số lớp đó, nên không tính được |Δ|.")
+        return
+
+    print(f"  Nếu bỏ các lớp {sorted(broken)}, còn {len(clean)} lớp:")
+    print(f"    |Δ| trung bình : {joined.mean():.5f}")
+    print(f"    |Δ| phân vị 99 : {np.percentile(joined, 99):.5f}")
+    print(f"    |Δ| lớn nhất   : {joined.max():.5f}")
+    print("    lookback_total nằm trong [0, 1] nên sai lệch 0,01 là 1 % thang đo.")
 
 
 def main() -> int:
@@ -213,6 +255,10 @@ def main() -> int:
     # exclude_layers in the config before spending three GPU hours, and parsing a Vietnamese
     # sentence with diacritics out of stdout is a worse idea than printing the list twice.
     print(f"EXCLUDE_LAYERS={broken}")
+    # The denominator, on its own line, so a caller can tell "one bad layer out of 28" from
+    # "all 28 are bad" without counting layers itself. Qwen2.5-1.5B produces the second, and the
+    # two cases need opposite handling: exclude the layer, or abandon the model at this dtype.
+    print(f"N_LAYERS={n_layers}")
 
     if high is None:
         print()
@@ -222,21 +268,7 @@ def main() -> int:
         return 0
 
     per_layer_report(low, high, n_layers)
-
-    clean = [layer for layer in range(n_layers) if layer not in broken]
-    diffs = []
-    for a, b in zip(low, high, strict=True):
-        diff = np.abs(a["total"][clean] - b["total"][clean])
-        if np.isfinite(diff).all():
-            diffs.append(diff.ravel())
-    if diffs:
-        joined = np.concatenate(diffs)
-        print()
-        print(f"  Nếu bỏ các lớp {broken}, còn {len(clean)} lớp:")
-        print(f"    |Δ| trung bình : {joined.mean():.5f}")
-        print(f"    |Δ| phân vị 99 : {np.percentile(joined, 99):.5f}")
-        print(f"    |Δ| lớn nhất   : {joined.max():.5f}")
-        print("    lookback_total nằm trong [0, 1] nên sai lệch 0,01 là 1 % thang đo.")
+    overall_report(low, high, n_layers, broken)
     return 0
 
 
