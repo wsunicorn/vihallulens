@@ -3095,7 +3095,98 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Nhớ commit `configs/e13_sailor2_vihallu.yaml` mang `exclude_layers: [30, 31]` — giá trị do ô 5
   đo được, không phải đoán. Không có nó thì hash trích không tái lập.
 
-- [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B
+- [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B —
+  **công cụ sẵn sàng 09/09/2026, chờ chạy HAI phiên Kaggle riêng**
+
+  ### E14 nay trả lời hai câu, và câu thứ hai do T30 sinh ra
+
+  1. **Câu cũ:** phương pháp có chạy được trên phần cứng nhỏ hơn không, mất bao nhiêu điểm khi
+     thu mô hình đọc lại. Đây là trục chi phí của CH2.
+  2. **Câu mới, đáng giá hơn:** T30 đo được nhóm chunk-aware **không chuyển** giữa Qwen2.5-7B và
+     Sailor2-8B — hai mô hình khác họ huấn luyện. Bậc thang này hỏi nó có chuyển giữa các **cỡ
+     của cùng một họ** không. Đây là phép thử **nhẹ hơn hẳn**: cùng kiến trúc, cùng dữ liệu huấn
+     luyện, chỉ khác số tham số. Nếu nó cũng không chuyển ở đây thì kết luận "hình dạng phân bố
+     gắn với từng mô hình cụ thể" mạnh lên rất nhiều. Nếu nó chuyển được thì phạm vi của kết quả
+     E13 thu lại thành "không chuyển giữa hai họ huấn luyện khác nhau", hẹp hơn nhiều.
+
+  ### Chỉ phải chạy HAI phiên, không phải ba
+
+| Nấc | Cần chạy? | Lấy số từ đâu |
+|---|---|---|
+| Qwen2.5-7B | **không** | E02 (0,7451) và E03 (0,7567), cùng bộ dữ liệu, cùng cách chia đoạn |
+| Qwen2.5-3B | **có** | phiên 1 |
+| Qwen2.5-1.5B | **có** | phiên 2 |
+
+  ### Vì sao bắt buộc hai phiên RIÊNG
+
+  Mục 5 `CLAUDE.md` đo được T4 **hạ xung 10–15 %** sau vài phút chạy liên tục. Chạy hai cỡ nối
+  nhau trong một phiên thì phần hạ xung bị tính nhầm thành khác biệt giữa các mô hình — mà chi
+  phí mỗi mẫu chính là **một nửa câu hỏi** của E14. Đây cũng là hạn chế đã phải ghi vào Bảng 5:
+  cột chi phí của E13 không so được vì đúng lý do này.
+
+  ### Bốn cấu hình, hai cặp
+
+| File | Vai trò |
+|---|---|
+| `e14_qwen3b_vihallu.yaml` | chunk-aware trên 3B |
+| `e14_baseline_lookback_qwen3b.yaml` | mốc lookback gộp **của chính 3B** |
+| `e14_qwen15b_vihallu.yaml` | chunk-aware trên 1.5B |
+| `e14_baseline_lookback_qwen15b.yaml` | mốc lookback gộp **của chính 1.5B** |
+
+  Mỗi cặp dùng chung một `extraction_hash` vì hash chỉ tính trên dataset, chunking và extractor —
+  không tính features. Nên mốc lookback **không tốn thêm giây GPU nào**, nó đọc lại đúng shard.
+
+  Có mốc riêng cho từng cỡ là bài học trực tiếp từ T30: so chunk-aware của Sailor2 với mốc của
+  Qwen thì chênh lệch trộn "đổi mô hình" với "đổi nhóm đặc trưng", không tách được hai thứ.
+
+  ### Ô 6 ghi vào CẢ HAI file, và ô 7 kiểm điều đó
+
+  Lớp tràn số vẫn phải đo — Qwen2.5-7B hỏng lớp 27 nhưng hai cỡ này là mô hình khác, số lớp
+  khác. T30 cho thấy chuyện này không suy ra được: Sailor2 hỏng theo kiểu hoàn toàn khác.
+
+  Chỗ dễ hỏng riêng của T31: ô 6 phải ghi `exclude_layers` vào **cả hai** file của cỡ đang chạy.
+  Thiếu một cái thì hai hash lệch nhau và mốc lookback sẽ đòi trích lại từ đầu thay vì dùng lại
+  shard. Ô 7 so hai hash và dừng nếu lệch.
+
+  Tin tốt: hai mô hình này nhỏ hơn Sailor2 nhiều nên lượt mốc `bfloat16` sẽ vừa bộ nhớ — lần này
+  có cả phần kiểm "các lớp còn sống có bị bóp méo không" mà Sailor2 không cho được.
+
+  ### Việc cần chạy — HAI phiên, làm đúng thứ tự
+
+  **Phiên 1 — nấc 3B, khoảng 45 phút**
+
+  1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
+  2. Ô 2 để nguyên `CO = "3B"`.
+  3. Chạy tuần tự tới hết ô 10.
+  4. Tải thư mục `ket_qua_t31_3B` về.
+  5. **Đóng phiên.** Đừng chạy nấc thứ hai trong cùng phiên.
+
+  **Phiên 2 — nấc 1.5B, khoảng 35 phút**
+
+  6. Mở **phiên Kaggle mới**.
+  7. Ô 2 sửa thành `CO = "1.5B"`. Đây là dòng duy nhất phải sửa; quên đổi thì ô 4 bắt được.
+  8. Chạy tuần tự, tải `ket_qua_t31_1_5B` về.
+
+  **Sau cả hai phiên**
+
+  9. Đặt `*.jsonl` vào `data/processed/`, **ghi đè** bốn file `*.yaml` vào `configs/` — chúng
+     mang `exclude_layers` đã đo.
+  10. Chấm ở **máy cá nhân**, 0 giây GPU:
+
+```
+  python scripts/run_chunk_aware.py --config configs/e14_baseline_lookback_qwen3b.yaml
+  python scripts/run_chunk_aware.py --config configs/e14_qwen3b_vihallu.yaml
+  python scripts/run_chunk_aware.py --config configs/e14_baseline_lookback_qwen15b.yaml
+  python scripts/run_chunk_aware.py --config configs/e14_qwen15b_vihallu.yaml
+  python scripts/compare_heads.py --config-a configs/e03_chunk_sentence_vihallu.yaml \
+                                  --config-b configs/e14_qwen3b_vihallu.yaml
+```
+
+  Chạy mốc lookback **trước** cấu hình chunk-aware của cùng cỡ, để lúc chấm chunk-aware thì
+  `lookback_baseline()` đã có mốc đúng mô hình mà so.
+
+  11. Commit lại bốn file config mang `exclude_layers` đã đo, nếu không lượt chạy không tái lập.
+
 - [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
 - [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc
 - [ ] **T34** · M · E16 khái quát hóa chéo bộ
