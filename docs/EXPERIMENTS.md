@@ -732,14 +732,22 @@ Nếu độ phân giải quyết định, câu ở 5,3 đoạn phải nằm **gi
 không. Kết luận: **ranh giới câu mang thông tin mà cửa sổ token tùy tiện không có** — chunk-aware
 không chỉ là "chia nhỏ ngữ cảnh ra" mà là "chia theo đơn vị nghĩa".
 
-### Một điều chưa tách được, phải nói rõ
+### Điều này từng chưa tách được, và đã tách xong ở T24
 
-Cửa sổ **chồng lấn** (bước bằng nửa), câu thì **phủ kín và không đè lên nhau**. Nên "câu thắng"
-vẫn còn hai cách giải thích: ranh giới ngữ nghĩa, hoặc đơn giản là không chồng lấn. Lập luận về
-số đoạn ở trên nghiêng về cách thứ nhất nhưng **không loại trừ** cách thứ hai.
+Đoạn này giữ lại vì lịch sử của nó đáng đọc, chứ không phải vì còn nợ.
 
-Tách dứt điểm cần thêm một cấu hình cửa sổ 128 **bước 128** (không chồng), khoảng 57 phút GPU.
-Ghi vào đây như một việc còn nợ chứ không lờ đi.
+Khi T23 chạy xong, "câu thắng" còn hai cách giải thích: **ranh giới ngữ nghĩa**, hoặc đơn giản là
+**không chồng lấn** — vì cả ba cỡ cửa sổ đều bước bằng nửa, còn câu thì phủ kín không đè. Lập
+luận về số đoạn ở trên nghiêng về cách thứ nhất nhưng không loại trừ cách thứ hai. Phương án ghi
+lúc đó là chạy thêm cửa sổ 128 **bước 128**.
+
+**T24 chạy phép đối chứng, và chọn một cấu hình tốt hơn phương án ấy:** cửa sổ 48 **bước 48**, cho
+**5,56** đoạn — sát 5,29 của chia theo câu, trong khi 128/128 chỉ cho 2,43 đoạn và như vậy còn lẫn
+biến mật độ vào. Kết quả nằm ở mục "Phép đối chứng bác bỏ cách giải thích chồng lấn" phía trên:
+**0,7649, thấp hơn cả hai cỡ cửa sổ chồng lấn.** Bỏ chồng lấn đi không giúp được gì, nên chồng lấn
+chưa bao giờ là lời giải thích.
+
+Không còn nợ lượt GPU nào ở đây.
 
 ### Cửa sổ 256 rơi đúng chỗ đã dự báo — đó là phép kiểm đường ống
 
