@@ -24,7 +24,25 @@ extractor:
   quantization: nf4
   max_context_tokens: 4096
   device: cuda
-  compute_dtype: float16
+  # Nấc này chạy bfloat16, KHÁC hai nấc kia. Đây là ngoại lệ có chủ ý, quyết định ngày
+  # 09/09/2026, không phải sơ suất.
+  #
+  # Đo ở T31 trên 20 mẫu: Qwen2.5-1.5B tràn số ở float16 trên TOÀN BỘ 28 lớp, 20/20 mẫu, hỏng
+  # ngay từ lớp 0. Không phải một lớp yếu như lớp 27 của 7B, cũng không phải 0,70 % mẫu như
+  # Sailor2 — không còn lớp nào để bỏ, không còn mẫu nào để bỏ. Ở float16 mô hình này không đọc
+  # được, chấm hết.
+  #
+  # bfloat16 có cùng dải mũ với float32 nên không tràn ở chỗ float16 tràn. Cái giá: T4 là kiến
+  # trúc Turing, không có bfloat16 gốc nên phải giả lập, chậm khoảng 4,1 lần (1.101 so với 271
+  # ms/mẫu). Nghĩa là nấc lùi này ĐẮT HƠN GẤP ĐÔI nấc 3B mà nó lùi khỏi (513 ms ở float16).
+  # Bậc thang lùi tồn tại để rẻ hơn; ở đây nó không rẻ hơn. Đó là một kết quả của E14.
+  #
+  # Hạn chế phải ghi khi viết Bảng 6: so nấc này với nấc 3B là để hai thứ khác nhau cùng lúc —
+  # cỡ mô hình và kiểu số. Chống đỡ được một phần, vì bfloat16 trung thực hơn float16 nên nếu
+  # 1.5B vẫn kém hơn thì đó là kết luận thận trọng chứ không phải do kiểu số làm hỏng. Riêng
+  # phần "chunk-aware có hơn mốc lookback của chính nó không" thì không dính hạn chế này: mốc
+  # dùng chung mô hình, chung kiểu số, chung shard.
+  compute_dtype: bfloat16
   exclude_layers: []
 
 features:

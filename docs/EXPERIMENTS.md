@@ -24,6 +24,32 @@
 | E12 | Ablation: nhóm đặc trưng nào đóng góp | CH3 | ViHallu | E05 |
 | E13 | Ablation: mô hình đọc Qwen2.5-7B với Sailor2-8B | CH1, CH3 | ViHallu | E05 |
 | E14 | Ablation: bậc thang kích thước 7B / 3B / 1.5B | CH2 | ViHallu | E05 |
+
+**E14 — ba nấc, ba kiểu hỏng số học khác nhau, và một nấc lệch kiểu số.** Đo ở T31 ngày
+09/09/2026 trên 20 mẫu trải từ 47 tới 4.805 từ:
+
+| | Qwen2.5-7B | Qwen2.5-3B | Qwen2.5-1.5B |
+|---|---|---|---|
+| Số lớp | 28 | 36 | 28 |
+| Lớp tràn số ở `float16` | lớp 27 | **không lớp nào** | **cả 28 lớp** |
+| Mẫu có ít nhất một lớp nan | 20/20 | 0/20 | 20/20 |
+| Kiểu số dùng để trích | `float16` | `float16` | **`bfloat16`** |
+| ms/mẫu ở kiểu số ấy (lượt dò) | 528 | 513 | **1.101** |
+
+Ba cỡ của **cùng một họ mô hình** cho ba hình dạng hỏng khác hẳn nhau, nên chuyện tràn số ở
+`float16` không suy ra được từ kiến trúc hay từ cỡ — phải đo từng bản một.
+
+Nấc 1.5B phải chạy `bfloat16` vì `float16` không còn lớp nào dùng được. Hai hạn chế phải ghi
+kèm bảng kết quả:
+
+1. **So nấc 1.5B với nấc 3B là để hai thứ đổi cùng lúc** — cỡ mô hình và kiểu số. Chỉ đụng
+   vào phần so tuyệt đối; phần "chunk-aware có hơn mốc lookback của chính nó không" tính
+   trong nội bộ từng cỡ, chung mô hình chung kiểu số chung shard, nên sạch. `bfloat16` lại
+   trung thực hơn `float16`, nên nếu 1.5B vẫn kém hơn thì đó là kết luận thận trọng.
+2. **Con số chi phí gắn với T4.** Turing không có `bfloat16` gốc nên phải giả lập, chậm 4,1
+   lần. Trên Ampere trở lên bf16 nhanh ngang fp16 và cả vấn đề này biến mất. Kết luận "nấc
+   lùi 1.5B đắt hơn gấp đôi nấc 3B" phải luôn đi kèm tên phần cứng.
+
 | E15 | Đối chứng ngoài trên split gốc | CH2 | ViWikiFC | E05 |
 | E16 | Chuyển giao ViHallu sang ISE-DSC01 và ngược lại | CH3 | cả hai | E05, E07 |
 | E17 | Chuyển miền sang tin tức (chỉ nếu còn thời gian) | CH3 | ViFactCheck | E15 |
