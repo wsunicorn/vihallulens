@@ -44,6 +44,7 @@ from vihallulens.features.assemble import (  # noqa: E402
     blocks_for,
     build_feature_matrix,
     column_names,
+    drop_nonfinite,
     rank_heads,
 )
 
@@ -80,12 +81,19 @@ MIXED = "mixed_all_basic_topk_rest"
 
 
 def load_split(processed_dir: Path, run: str, dataset: str, split: str):
-    """Records for one split, sorted by sample id so a resumed extraction gives one matrix."""
+    """Records for one split, sorted by sample id so a resumed extraction gives one matrix.
+
+    Returns ``(records, path, dropped)``. ``dropped`` holds rows whose features carry nan or
+    inf — measured at T30, 0,70 % of the Sailor2 shard, where the overflow cascades through
+    every layer instead of sitting in one excludable layer. Callers must report the count:
+    a quietly shorter test set is a quietly moved denominator.
+    """
     path = shard_path(processed_dir, run, dataset, split)
     if not path.exists():
-        return None, path
+        return None, path, []
     records = sorted(load_done(path).values(), key=lambda record: record["sample_id"])
-    return records, path
+    records, dropped = drop_nonfinite(records)
+    return records, path, dropped
 
 
 def split_groups(groups) -> tuple[list[str], list[str]]:
@@ -268,7 +276,11 @@ def main() -> int:
     wanted = ("train", "dev") if args.dev_only else ("train", "dev", "test")
     records, labels = {}, {}
     for split in wanted:
-        rows, path = load_split(args.processed_dir, run, cfg.dataset.name, split)
+        rows, path, dropped = load_split(args.processed_dir, run, cfg.dataset.name, split)
+        if dropped:
+            share = len(dropped) / (len(rows) + len(dropped)) * 100
+            print(f"  bỏ mẫu có nan {split:<9}: {len(dropped):,} "
+                  f"({share:.2f} %) — đặc trưng không hữu hạn, không chấm được")
         if rows is None:
             print(f"\nThiếu đặc trưng của tập {split}: {path}")
             print("Chạy trước: python scripts/extract_features.py "

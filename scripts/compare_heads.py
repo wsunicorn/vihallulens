@@ -49,7 +49,7 @@ def head_ranking(config_path: Path, processed_dir: Path, split: str = "train"):
     """Fit on one model's shard and return its head ordering plus the grid it lives on."""
     cfg = load_config(config_path)
     run = extraction_hash(cfg)
-    records, path = load_split(processed_dir, run, cfg.dataset.name, split)
+    records, path, dropped = load_split(processed_dir, run, cfg.dataset.name, split)
     if records is None:
         raise SystemExit(
             f"Thiếu đặc trưng tập {split} của {cfg.run_name}: {path}\n"
@@ -80,6 +80,7 @@ def head_ranking(config_path: Path, processed_dir: Path, split: str = "train"):
         "order": order,
         "score": per_pair,
         "n_samples": len(records),
+        "n_dropped": len(dropped),
     }
 
 
@@ -138,6 +139,10 @@ def main() -> int:
         print(f"  {side['run_name']:<32} {side['model_name']}")
         print(f"    lưới lớp × đầu      : {side['n_layers']} × {side['n_heads']} "
               f"= {side['n_layers'] * side['n_heads']:,} cặp   ({side['n_samples']:,} mẫu train)")
+        if side["n_dropped"]:
+            total = side["n_samples"] + side["n_dropped"]
+            print(f"    bỏ mẫu có nan       : {side['n_dropped']:,}/{total:,} "
+                  f"({side['n_dropped'] / total * 100:.2f} %)")
 
     print()
     print("  Mười đầu dẫn đầu mỗi bên:")
