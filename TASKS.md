@@ -3378,17 +3378,114 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Nếu lượt `float32` có hết bộ nhớ thì script vẫn chạy tiếp và vẫn cho danh sách lớp tràn số —
   phần mốc là tùy chọn, mất nó chỉ mất bảng lệch.
 
-  ### Việc cần chạy — MỘT phiên, khoảng 4 giờ
+  ### Lượt 09/09 lần ba: chạy đúng hết phần đắt, rồi treo ở phần rẻ
 
-  Dài hơn ước tính cũ vì nấc 1.5B chạy `bfloat16`, chậm 4,1 lần trên T4. Vẫn một phiên: hạn mức
-  Kaggle là 12 giờ mỗi phiên và 30 giờ mỗi tuần.
+  Lượt này **không hỏng chỗ nào**. Ô 6 dò kiểu số cho cả hai cỡ, ô 7 kiểm hash, ô 8 trích xong
+  cả 3B lẫn 1.5B với 0 lỗi. Rồi ô 9 đo chi phí: lượt 7B xong trong 269 giây, lượt 3B xong trong
+  112 giây, lượt 1.5B bắt đầu lúc 6.578 giây — và dừng ở đó. Phiên treo tới sáng.
 
-| Việc | Thời gian |
+  Thiệt hại không phải là chỗ treo. Thiệt hại là **99 phút trích đặc trưng nằm lại trên máy
+  Kaggle**, vì ô mang kết quả về đứng *sau* ô đo chi phí.
+
+  #### Số đo lấy được, ghi lại vì chúng có thật
+
+| Nấc | Kiểu số | Lớp tràn số | Trích 7.000 mẫu | ms/mẫu khi trích |
+|---|---|---|---|---|
+| Qwen2.5-3B | `float16` | không lớp nào (36 lớp) | **28 phút** | ~240 |
+| Qwen2.5-1.5B | `bfloat16` | không lớp nào (28 lớp) | **71 phút** | ~604 |
+
+  Hai điều đáng ghi. **`bfloat16` chạy thật rẻ hơn lượt dò dự báo** — 604 ms/mẫu chứ không phải
+  1.106, vì lượt dò lấy mẫu trải đều tới 4.805 từ còn ViHallu thì ngắn hơn nhiều. Và **nấc 1.5B
+  vẫn đắt gấp 2,5 lần nấc 3B** (604 so với 240), nên kết luận "bậc thang lùi không rẻ hơn" giữ
+  nguyên, chỉ đổi độ lớn.
+
+  Lượt mốc `float32` của 1.5B cũng chạy được, cho `|Δ|` trung bình **0,02225**, phân vị 99 là
+  **0,21460**. Đây là con số **so thẳng được** với 0,07 % của T07 vì cùng mốc `float32` — và nó
+  cho thấy `bfloat16` lệch khá nhiều so với `float32`: 2,2 % thang đo, gấp ba mươi lần con số
+  của 7B. Phải ghi vào phần hạn chế.
+
+  #### Lỗi thứ nhất: ô đo chi phí lặng lẽ đo sai số lớp
+
+  Ô 9 chỉ truyền `--exclude-layers` khi danh sách **khác rỗng**:
+
+```python
+  bo_lop = " ".join(str(x) for x in cfg.extractor.exclude_layers)
+  if bo_lop:
+      lenh += f" --exclude-layers {bo_lop}"
+```
+
+  Mà `measure_throughput.py` để mặc định cờ đó là `[27]`. Cả 3B lẫn 1.5B đều có
+  `exclude_layers: []`, nên **không truyền cờ** và script lấy mặc định — bỏ lớp 27.
+
+| Nấc | Trích dùng | Đo chi phí dùng |
+|---|---|---|
+| 3B | 36 lớp | **35 lớp** |
+| 1.5B | 28 lớp | **27 lớp** |
+
+  Nếu ô 9 chạy xong thì cột chi phí và cột độ chính xác đo trên **hai mạng khác nhau**, mà không
+  dòng log nào nói ra. Sửa: truyền cờ **kể cả khi danh sách rỗng** — `argparse` với `nargs="*"`
+  nhận `--exclude-layers` không kèm giá trị và trả về `[]`.
+
+  #### Lỗi thứ hai: không có hạn mức thời gian
+
+  `os.system` không hủy được từ notebook. Một lượt kẹt thì giữ card cho tới khi có người để ý.
+  Nay mỗi lượt là `subprocess.run` với hạn mức **15 phút** — gấp 3,3 lần con số 269 giây mà lượt
+  7B thật sự tốn — và lượt quá hạn thì bị bỏ chứ không dừng cả ô.
+
+  Chưa xác định được nguyên nhân treo từ log này, và không đoán bừa. Nghi vấn đáng chú ý nhất là
+  dòng cảnh báo lặp ba lần ở **mọi** lần nạp mô hình:
+
+```
+  Warning: You are sending unauthenticated requests to the HF Hub.
+```
+
+  Lượt 1.5B là lần nạp thứ bảy của phiên. Hub chặn theo tần suất thì `huggingface_hub` sẽ thử
+  lại có giãn cách, và chuyện đó nhìn từ ngoài y hệt treo. Nhưng hạn mức thời gian chặn được
+  thiệt hại **bất kể nguyên nhân là gì**, nên không cần biết chắc mới sửa được.
+
+  #### Lỗi thứ ba, và nó mới là thứ đốt quota: cất phần đắt sau cùng
+
+  Đây là **lần thứ ba** cùng một hình dạng sai:
+
+| Lần | Chuyện gì |
 |---|---|
-| Dò kiểu số hai nấc | ~12 phút |
-| Trích 3B, `float16` | ~60 phút |
-| Trích 1.5B, `bfloat16` | ~130 phút |
-| Đo chi phí xen kẽ, sáu lượt | ~30 phút |
+| T30 | ô kiểm toàn vẹn shard `raise` **trước** ô mang shard về |
+| T31 lần một | một nấc hỏng `raise` và nuốt bốn ô đã xong của nấc trước |
+| T31 lần này | ô đo chi phí treo, chôn theo 99 phút trích |
+
+  Và nếp đúng thì repo đã có sẵn. **T30 và T26 đều đặt ô "lấy kết quả về" ngay sau ô trích,
+  không chèn việc GPU nào ở giữa.** T31 phá nếp đó khi thêm ô đo chi phí vào giữa.
+
+  Thứ tự mới, quay lại đúng nếp cũ:
+
+| Ô | Việc | Vì sao ở đó |
+|---|---|---|
+| 8 | trích đặc trưng | đắt nhất, ~1 giờ 40 |
+| 9 | soi shard | rẻ, CPU, không dừng notebook |
+| **10** | **lấy kết quả về** | **cất phần đắt đi trước khi làm bất cứ việc GPU nào khác** |
+| 11 | đo chi phí xen kẽ | rẻ, chạy lại lúc nào cũng được; chạy xong thì chép lại `runs.jsonl` |
+
+  Quy tắc mà repo này cứ phải học lại: **cất thứ đắt và không mua lại được đi trước, rồi mới làm
+  thứ rẻ và chạy lại được.**
+
+  Ô 8 cũng thôi `raise` khi một split hỏng. Trích có lưu tiến độ, nên một shard dở dang vẫn đáng
+  mang về — phiên sau đọc tiếp từ chỗ đó thay vì chạy lại từ đầu.
+
+  #### Phiên tới còn phải chạy những gì
+
+  Ô 6 và ô 8 **không phải chạy lại** nếu shard của lượt vừa rồi lấy về được. Nếu không lấy được
+  thì chạy lại từ đầu, nhưng ô 8 sẽ tự bỏ qua phần đã có nhờ cơ chế lưu tiến độ.
+
+  ### Việc cần chạy — MỘT phiên, khoảng 2 giờ 20
+
+  Ngắn hơn ước tính cũ vì lượt 09/09 đo được thời gian thật, thấp hơn dự báo từ lượt dò.
+
+| Việc | Dự báo cũ | **Đo thật 09/09** |
+|---|---|---|
+| Dò kiểu số hai nấc | ~12 phút | **4 phút** |
+| Trích 3B, `float16` | ~60 phút | **28 phút** |
+| Trích 1.5B, `bfloat16` | ~130 phút | **71 phút** |
+| Đo chi phí xen kẽ, sáu lượt | ~30 phút | ~30 phút (chưa chạy hết) |
 
   1. Mở `notebooks/t31_bac_thang_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
   2. Chạy tuần tự tới hết ô 11. Không phải sửa gì trong notebook.
@@ -3397,9 +3494,12 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
      - **Ô 6, nấc 1.5B** — dòng đầu phải in `kieu so dang xet: bfloat16   moc so: float32`. Nếu
        nó in `float16` thì config chưa được kéo về, dừng lại. Nấc này cũng phải ra `KHONG CO`;
        nếu `bfloat16` mà **vẫn** tràn số thì nấc bị loại và phải báo lại, vì lúc đó hết cách.
-     - **Ô 9** — so lần 1 với lần 2 **của cùng một mô hình**. Lệch nhỏ thì cột chi phí dùng được;
-       lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh. Nhớ là 1.5B đo ở
+     - **Ô 11** — so lần 1 với lần 2 **của cùng một mô hình**. Lệch nhỏ thì cột chi phí dùng
+       được; lệch lớn thì vẫn dùng được nhưng phải báo cáo mức trôi bên cạnh. Nhớ là 1.5B đo ở
        `bfloat16` nên nó phải **chậm hơn** 3B — đó là kết quả, không phải lỗi.
+
+  **Ô 10 chạy xong là an toàn.** Từ lúc đó mọi thứ đắt tiền đã nằm trong `ket_qua_t31`. Ô 11 có
+  treo thì cứ hủy phiên, chỉ mất cột chi phí — khoảng 30 phút chạy lại, không phải 99 phút.
   4. Tải thư mục `ket_qua_t31` về: `vihallu_*.jsonl` vào `data/processed/`, bốn `*.yaml` **ghi
      đè** vào `configs/`, giữ `runs_t31.jsonl` vì nó chứa bốn lượt đo chi phí.
   5. Chấm ở **máy cá nhân**, 0 giây GPU. Chạy mốc lookback **trước** cấu hình chunk-aware của
