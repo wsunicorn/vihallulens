@@ -237,13 +237,13 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 | XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,844** | 0,729 | 0,756 | 0,097 | 25,2 | 11.231 |
 | InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | | 11.231 |
 | Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
-| **Lookback gộp (E02)** ¶ | **0,745** [0,711–0,776] | 0,843 | 0,896 | 0,890 | 0,793 | **0,731** | 0,712 | 0,109 | 464 | 8.428 |
-| **Chunk-aware câu (E03)** ¶ | 0,757 [0,724–0,789] | 0,864 | 0,894 | 0,915 | 0,823 | 0,686 | **0,762** | **0,044** | 528 | 8.428 |
+| **Lookback gộp (E02)** ¶ | **0,745** [0,711–0,776] | 0,843 | 0,896 | 0,890 | 0,793 | **0,731** | 0,712 | 0,109 | 438 | 8.328 |
+| **Chunk-aware câu (E03)** ¶ | 0,757 [0,724–0,789] | 0,864 | 0,894 | 0,915 | 0,823 | 0,686 | **0,762** | **0,044** | 438 | 8.328 |
 | **Chunk-aware (E05)** | | | | | | | | | | |
 
 Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
 
-**¶** Cột `ms/mẫu` của E02 là **thời gian chạy mô hình đọc để lấy ma trận chú ý**, không phải thời gian của bộ phân loại — bộ phân loại chỉ có 2.271 tham số và chạy trong micro giây. VRAM lấy từ phép đo T08 trên đúng cấu hình này. Con số 464 ms là chi phí **tuyệt đối**; lập luận của đề tài là chi phí **biên** trong một hệ RAG thật gần bằng 0 vì lượt đọc đó dù sao cũng phải chạy — nhưng thí nghiệm này **không đo** điều đó, nên phải nói rõ khi trình bày.
+**¶** Cột `ms/mẫu` sửa ngày 10/09/2026. Bản cũ ghi 464 ms cho E02 và 528 ms cho E03 — hai con số cho **cùng một lượt trích**, vì hai dòng dùng chung shard `8c49fc0417f1` và chung `extraction_hash`. Chênh lệch 64 ms là nhiễu giữa hai phép đo, không phải chi phí thật của chunk-aware. Số mới 438 ms lấy từ lượt đo **xen kẽ** của T31, quy về phân bố độ dài của ViHallu, độ trôi giữa hai lượt 2,09 %; VRAM 8.328 MB đo trong cùng lượt ấy. Xem Bảng 8. Cột này là **thời gian chạy mô hình đọc để lấy ma trận chú ý**, không phải thời gian của bộ phân loại — bộ phân loại chỉ có 2.271 tham số và chạy trong micro giây. VRAM lấy từ phép đo T08 trên đúng cấu hình này. Con số 464 ms là chi phí **tuyệt đối**; lập luận của đề tài là chi phí **biên** trong một hệ RAG thật gần bằng 0 vì lượt đọc đó dù sao cũng phải chạy — nhưng thí nghiệm này **không đo** điều đó, nên phải nói rõ khi trình bày.
 
 **§** XLM-R chỉ **2 trên 3 seed học được** ở lượt chạy này; seed 42 đứng ở `ln(3)` và bị loại. Chính seed đó **học được** ở lượt 27/08 với cùng cấu hình — xem phần T18 của `TASKS.md`. Gộp cả hai lượt thì 5 trên 6 lượt seed thành công, trung bình **0,7730 ± 0,0199**, và đó là ước lượng đáng tin hơn bất kỳ lượt đơn lẻ nào. Bảng này dùng lượt 28/08 cho mọi cột vì chỉ lượt đó có dự đoán thô để tính chỉ số nhị phân.
 
@@ -1139,6 +1139,108 @@ cột mốc giảm đều trong khi cột chunk-aware nhảy lung tung.
 | ViHallu | ISE-DSC01 | | |
 | ISE-DSC01 | ISE-DSC01 | | — |
 | ISE-DSC01 | ViHallu | | |
+
+### Bảng 8 — Đánh đổi độ chính xác và chi phí (E11, ViHallu)
+
+Dựng ngày 10/09/2026 bằng `scripts/build_tradeoff.py`, đọc `results/runs.jsonl` cho độ chính xác
+và `results/feasibility.jsonl` cho chi phí lượt đọc. Bản máy đọc được ở `results/tradeoff.csv`.
+
+| Phương pháp | macro-F1 [KTC 95 %] | ms/mẫu | VRAM đỉnh | Tham số huấn luyện | Loại chi phí |
+|---|---|---|---|---|---|
+| Baseline bề mặt (E01) | 0,6562 [0,6200–0,6891] | **0,001** | — | **9** | chỉ CPU |
+| Gemini giám khảo (E10) | 0,6637 [0,6070–0,7191] | 8.194,0 | — | 0 | API ngoài |
+| PhoBERT-large tinh chỉnh (E09) | 0,7487 [0,7137–0,7776] | 12,3 | 9.002 MB | 369.166.339 | GPU, bộ mã hóa |
+| XLM-R-large tinh chỉnh (E09) | **0,7762** [0,7570–0,8184] | 25,2 | 11.231 MB | 559.893.507 | GPU, bộ mã hóa |
+| Lookback gộp, Qwen2.5-7B (E02) | 0,7451 [0,7111–0,7762] | 437,6 | 8.328 MB | 2.271 | GPU, lượt đọc |
+| Chunk-aware, Qwen2.5-7B (E03) | 0,7567 [0,7242–0,7885] | 437,6 | 8.328 MB | 579 | GPU, lượt đọc |
+| **Lookback gộp, Qwen2.5-3B (E14)** | 0,7345 [0,6994–0,7671] | **222,7** | **3.710 MB** | **195** | GPU, lượt đọc |
+| Chunk-aware, Qwen2.5-3B (E14) | 0,7217 [0,6877–0,7544] | 222,7 | 3.710 MB | 1.851 | GPU, lượt đọc |
+| Lookback gộp, Qwen2.5-1.5B (E14) | 0,7232 [0,6895–0,7558] | 608,1 | 2.718 MB | 1.011 | GPU, lượt đọc |
+| Chunk-aware, Qwen2.5-1.5B (E14) | 0,7345 [0,6999–0,7661] | 608,1 | 2.718 MB | 1.131 | GPU, lượt đọc |
+| Lookback gộp, Sailor2-8B (E13) | 0,7377 [0,7051–0,7695] | *chưa đo* | *chưa đo* | 195 | GPU, lượt đọc |
+| Chunk-aware, Sailor2-8B (E13) | 0,7120 [0,6780–0,7452] | *chưa đo* | *chưa đo* | 1.155 | GPU, lượt đọc |
+
+Cột `ms/mẫu` của các dòng lượt đọc quy về **phân bố độ dài thật của ViHallu**, không phải trung
+bình mọi bộ — ViHallu ngắn, 6.461 trên 7.000 mẫu nằm ở mức dưới 512 token, nên con số gộp mọi bộ
+sẽ thổi bảng này lên khoảng 70 %.
+
+### Ba loại chi phí, và bảng không được cộng chúng lại
+
+Một con số `ms/mẫu` duy nhất che mất điều mà người triển khai cần biết nhất: **thứ gì chặn họ**.
+
+| Loại | Chặn ở đâu | Dòng nào |
+|---|---|---|
+| chỉ CPU | không chặn gì | E01 |
+| GPU, bộ mã hóa | phải có GPU **và** phải tinh chỉnh được — E09 cho thấy InfoXLM không tinh chỉnh nổi | PhoBERT, XLM-R |
+| GPU, lượt đọc | phải có GPU, nhưng **không tinh chỉnh gì** | mọi dòng attention |
+| API ngoài | phải có khóa, có hạn mức, có mạng, và dữ liệu rời khỏi máy | E10 |
+
+Cột cuối là loại chi phí **khác hẳn về bản chất**: 8.194 ms của Gemini gần như toàn bộ là độ trễ
+mạng, và nó đi kèm một ràng buộc mà không dòng nào khác có — dữ liệu người dùng phải gửi ra ngoài.
+
+### Điều bảng này nói thẳng, kể cả phần bất lợi
+
+**XLM-R thắng cả hai trục tuyệt đối.** 0,7762 ở 25,2 ms, so với 0,7567 ở 437,6 ms của dòng
+chunk-aware tốt nhất. Cao hơn **0,0195** điểm và nhanh hơn **17 lần**. Nói cho chặt thì hai khoảng
+tin cậy chồng nhau nên chưa kết luận được XLM-R *hơn hẳn*, nhưng không có cách đọc nào biến bảng
+này thành "hướng nội tại rẻ hơn về thời gian tuyệt đối". Phải viết đúng như vậy.
+
+**Chỗ hướng nội tại thắng là số tham số phải huấn luyện, và biên độ thì rất lớn.** Dòng
+`Lookback gộp, Qwen2.5-3B` đạt **0,7345 với 195 tham số** — so với **559.893.507** của XLM-R. Ít
+hơn **2,87 triệu lần**, mất 0,0417 điểm. Và 195 tham số thì huấn luyện trên CPU trong vài giây,
+không có rủi ro không hội tụ như InfoXLM ở E09.
+
+**Nấc 3B là điểm cân bằng của cả bảng.** Nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ, chỉ mất 0,0106
+điểm, và cần đúng 195 tham số. Mọi dòng khác đều thua nó ở ít nhất một trục quan trọng.
+
+**Nấc 1.5B không có lý do tồn tại trên T4.** Chậm hơn 7B (608 so với 438 ms) trong khi kém chính
+xác hơn, chỉ được mỗi VRAM. Lý do ở mục Bảng 5b: nó buộc phải chạy `bfloat16`, mà T4 không có
+bf16 gốc.
+
+### Cột chi phí biên là lập luận, không phải phép đo
+
+Lập luận trung tâm của đề tài về chi phí là: trong một hệ RAG thật, lượt đọc **dù sao cũng phải
+chạy** để sinh câu trả lời, nên chi phí **biên** của việc thêm phát hiện ảo giác chỉ là phần cộng
+dồn trong hook và một hồi quy logistic.
+
+| Phương pháp | tuyệt đối | biên |
+|---|---|---|
+| Lookback gộp, Qwen2.5-7B | 437,6 ms | **0,010 ms** |
+| Chunk-aware, Qwen2.5-7B | 437,6 ms | **0,003 ms** |
+| Lookback gộp, Qwen2.5-3B | 222,7 ms | **0,002 ms** |
+| Chunk-aware, Qwen2.5-3B | 222,7 ms | **0,008 ms** |
+
+Nếu cột biên là cột đúng để đọc thì hướng nội tại rẻ hơn XLM-R khoảng **hai nghìn lần**, và toàn
+bộ kết luận ở trên đảo chiều.
+
+**Nhưng không thí nghiệm nào trong đề tài đo được cột đó.** Nó đòi một hệ RAG đầu cuối chạy thật,
+và T40 mới dựng cái đó. Cột biên vì thế là **giả thiết đã lượng hóa**, không phải kết quả đo, và
+phải trình bày đúng như vậy — hai cột riêng, có nhãn, không gộp.
+
+Ba điều khiến cột biên đáng tin ở mức giả thiết, ghi để người đọc tự cân:
+
+1. Bộ phân loại thật sự chỉ có 195–2.271 tham số, đo được, chạy trên CPU.
+2. Hook cộng dồn ngay trong lớp và giải phóng tensor, nên không thêm lượt forward nào.
+3. `forward_share` đo ở T31 cho thấy **86–95 %** thời gian một mẫu nằm trong forward của mô hình
+   đọc — phần còn lại mới là chi phí của phương pháp.
+
+Điều nó **chưa** tính: bật `output_attentions` vô hiệu hóa FlashAttention, nên một hệ RAG dùng
+FlashAttention sẽ phải trả thêm để lấy được ma trận chú ý. Đó là chi phí biên thật và chưa ai đo.
+
+### Hai ô của Bảng 1 sai, và bảng này chứng minh điều đó
+
+Bảng 1 ghi E02 tốn **464 ms** và E03 tốn **528 ms**. Hai con số ấy không thể cùng đúng: E02 và E03
+đọc **chung một shard** `8c49fc0417f1`, cùng một `extraction_hash`, tức **cùng một lượt chạy mô
+hình đọc**. Một lượt trích không thể có hai giá đồng thời.
+
+Chênh lệch 64 ms là nhiễu giữa hai phép đo ở hai thời điểm, bị đọc nhầm thành "chunk-aware đắt hơn
+lookback". Lượt đo xen kẽ của T31 cho **437,6 ms** cho cả hai, với độ trôi giữa hai lượt là
+**2,09 %**. Đã sửa hai ô đó ở Bảng 1.
+
+Bài học chung: **hai dòng dùng chung một `extraction_hash` phải dùng chung một ô chi phí.** Đây là
+lý do bảng này sinh bằng script — `scripts/build_tradeoff.py` lấy chi phí từ mô hình đọc chứ không
+từ dòng kết quả, nên không viết lại được kiểu sai ấy. `tests/test_tradeoff.py` khóa hành vi đó lại
+bằng một ca kiểm riêng.
 
 ## 6. Các mốc so sánh đã công bố
 
