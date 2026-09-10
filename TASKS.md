@@ -574,12 +574,20 @@
 
   ### Kết quả trên dữ liệu thật
 
-| Bộ | Chunk mỗi ngữ cảnh | Từ mỗi chunk | Ngữ cảnh chỉ có 1 chunk |
-|---|---|---|---|
-| ViHallu | 5,3 (trung vị 5, tối đa 42) | 33,9 | 1,0 % |
-| ISE-DSC01 | 22,8 (trung vị 20, tối đa 161) | 27,7 | 0,0 % |
-| ViWikiFC | 3,5 (trung vị 3, tối đa 20) | 31,5 | **15,3 %** |
-| ViFactCheck | 19,3 (trung vị 17, tối đa 86) | 35,3 | 0,0 % |
+Bảng này đếm **theo ngữ cảnh duy nhất**. Cột "theo mẫu" thêm ngày 10/09/2026 ở T33, và lý do
+phải có nó nằm ngay dưới bảng.
+
+| Bộ | Mẫu | Ngữ cảnh duy nhất | Chunk mỗi ngữ cảnh | Từ mỗi chunk | 1 chunk, theo **ngữ cảnh** | 1 chunk, theo **mẫu** |
+|---|---|---|---|---|---|---|
+| ViHallu | 7.000 | 3.865 | 5,3 (trung vị 5, tối đa 42) | 33,9 | 1,0 % | 1,1 % |
+| ISE-DSC01 | 36.369 | 4.793 | 22,8 (trung vị 20, tối đa 161) | 27,7 | 0,0 % | 0,0 % |
+| ViWikiFC | 20.919 | 1.481 | 3,5 (trung vị 3, tối đa 20) | 31,5 | **15,3 %** | **5,9 %** |
+| ViFactCheck | 7.232 | 1.041 | 19,3 (trung vị 17, tối đa 86) | 35,3 | 0,0 % | 0,0 % |
+
+**Ba bộ trùng nhau ở hai cách đếm, riêng ViWikiFC lệch gần ba lần.** Lý do là ở bộ ấy ngữ cảnh
+*ngắn* được dùng lại bởi *ít* mẫu hơn ngữ cảnh dài — 20.919 mẫu dùng chung chỉ 1.481 ngữ cảnh, và
+mối tương quan giữa độ dài với số lần dùng lại đủ mạnh để đổi con số. Ba bộ kia không có tương
+quan đó nên hai cách đếm ra gần như nhau.
 
   Trung vị khớp sát cột "số câu mỗi ngữ cảnh" ở mục 4 `docs/DATA.md` (5 / 19 / 4 / 17), lệch chút ở ISE-DSC01 và ViWikiFC do phần gộp câu ngắn.
 
@@ -596,7 +604,19 @@
 
   ### Một phát hiện phải xử lý ở T16
 
-  **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk.** Với một chunk thì chunk-aware **thoái hóa thành lookback gộp** — không còn gì để phân biệt, mọi đặc trưng phân bố (entropy, Gini, top1–top2) đều là hằng số. Nghĩa là trên bộ này, hơn một phần bảy số mẫu không đóng góp gì cho câu hỏi CH1.
+  **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk.** Với một chunk thì chunk-aware **thoái hóa thành lookback gộp** — không còn gì để phân biệt, mọi đặc trưng phân bố (entropy, Gini, top1–top2) đều là hằng số.
+
+  > **Sửa ngày 10/09/2026 ở T33.** Câu tiếp theo của mục này trước đây viết: *"Nghĩa là trên bộ
+  > này, hơn một phần bảy số mẫu không đóng góp gì cho câu hỏi CH1."* Câu đó **sai**, và sai theo
+  > một kiểu đáng ghi: nó lấy một tỷ lệ đếm **theo ngữ cảnh** rồi phát biểu **theo mẫu**.
+  >
+  > Tỷ lệ theo mẫu là **5,9 %**, tức một phần mười bảy chứ không phải một phần bảy. Ba bộ còn lại
+  > không dính lỗi này vì ở chúng hai cách đếm gần trùng nhau; chỉ ViWikiFC có tương quan giữa
+  > "ngữ cảnh ngắn" và "ít mẫu dùng lại" đủ mạnh để tách hai con số ra.
+  >
+  > Điều này **không** làm T16 mất lý do tồn tại: 4,73 đoạn mỗi mẫu vẫn mỏng, và E08 còn cần ngữ
+  > cảnh mười câu dựng có kiểm soát để làm phép can thiệp theo cặp. Nhưng lập luận đỡ lưng cho
+  > T16 phải nói đúng độ lớn của nó.
 
   Đây đúng là lý do mục 8 `docs/DATA.md` yêu cầu T16 dựng chỉ mục BM25 trên 3.814 câu bằng chứng: để ghép ngữ cảnh nhiều đoạn thật sự thay vì dùng `context` ngắn có sẵn. Trước T15 thì đó là một suy đoán, giờ có con số đỡ lưng.
 
@@ -614,7 +634,7 @@
   - Trích 3.814 câu bằng chứng duy nhất, dựng chỉ mục BM25.
   - **Kiểm tra:** file `data/interim/viwikifc_evidence_corpus.parquet` có **3.814 dòng** ✅ từ **73 bài** ✅; truy vấn thử trả về top-5 hợp lý ✅ (và đo hẳn recall, xem dưới).
 
-  **Task này để làm gì.** T15 vừa đo ra một vấn đề: **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk**, vì `context` của bộ này thường chỉ ba bốn câu. Với một chunk thì chunk-aware thoái hóa thành lookback gộp — chẳng còn gì để so sánh giữa các đoạn.
+  **Task này để làm gì.** T15 vừa đo ra một vấn đề: **15,3 % ngữ cảnh của ViWikiFC chỉ ra đúng một chunk** (tính theo mẫu thì 5,9 % — xem phần sửa ở T15), vì `context` của bộ này thường chỉ ba bốn câu. Với một chunk thì chunk-aware thoái hóa thành lookback gộp — chẳng còn gì để so sánh giữa các đoạn.
 
   Mục 8 `docs/DATA.md` đưa ra lời giải: cả bộ chỉ dựa trên **3.814 câu bằng chứng duy nhất** rút từ 73 bài Wikipedia — đủ ít để giữ trọn trong bộ nhớ làm **kho truy xuất**. E08 sẽ dựng ngữ cảnh nhiều đoạn thật sự bằng cách lấy top-k câu cho mỗi claim, thay vì dùng `context` ngắn có sẵn.
 
@@ -1482,7 +1502,7 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
 | Tình huống | Cách xử lý | Vì sao |
 |---|---|---|
-| Ngữ cảnh chỉ có **một đoạn** | entropy 0, Gini 0, `max_share` 1, `gap` 1 | `ln(1) = 0` sẽ thành phép chia 0/0. Một đoạn nghĩa là chỉ có một chỗ để nhìn, nên độ tập trung là cao nhất có thể. **Không hiếm: 15,3 % ngữ cảnh ViWikiFC**, đo ở T15 |
+| Ngữ cảnh chỉ có **một đoạn** | entropy 0, Gini 0, `max_share` 1, `gap` 1 | `ln(1) = 0` sẽ thành phép chia 0/0. Một đoạn nghĩa là chỉ có một chỗ để nhìn, nên độ tập trung là cao nhất có thể. **Không hiếm: 15,3 % ngữ cảnh ViWikiFC, tức 5,9 % số mẫu**, đo ở T15 và tính lại theo mẫu ở T33 |
 | Một đầu chú ý **không nhìn đoạn nào** | đọc là trải đều | Không nhìn gì thì không ưu tiên gì. Trả `nan` sẽ đầu độc cả mẫu qua bước chuẩn hóa của bộ phân loại |
 | Phản hồi chỉ có **một token được chấm** | `drift` = 0 | Không có cặp liên tiếp nào, tức **không quan sát được chuyển động** — khác với "chuyển động chưa rõ bao nhiêu", và 0 nói điều thứ nhất còn `nan` nói điều thứ hai |
 
@@ -3702,7 +3722,83 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   phải đo xen kẽ với ít nhất một nấc khác trong cùng phiên — đo riêng thì lại rơi vào đúng cái bẫy
   hạ xung mà mục 5 `CLAUDE.md` cảnh báo.
 
-- [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc
+- [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc —
+  **công cụ sẵn sàng 10/09/2026, chờ chạy MỘT phiên Kaggle ~2 giờ 30**
+  - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl`, Bảng 6 `docs/EXPERIMENTS.md` có số ở
+    dòng "Phương pháp của nhóm".
+
+  ### Task này để làm gì
+
+  Mọi bảng khác của đề tài chấm trên **split do nhóm tự chia**, nên không đặt cạnh được số của
+  ai. E15 chấm trên **đúng split mà ViWikiFC phát hành**, để lần đầu tiên có một con số so được
+  với các mốc đã công bố ở mục 6 `docs/EXPERIMENTS.md`.
+
+  Đây là câu hỏi CH2: hướng nội tại đứng ở đâu so với phần còn lại của lĩnh vực — chứ không phải
+  so với chính các baseline mà nhóm tự dựng.
+
+  ### E15 khác E08 ở chỗ nào, và vì sao phải khác
+
+  Cả hai chạy trên ViWikiFC nhưng dùng hai bộ khác nhau, và lẫn hai cái này thì mọi con số vô
+  nghĩa.
+
+| | E08 (T27) | **E15 (T33)** |
+|---|---|---|
+| Bộ dữ liệu | `viwikifc_e08`, **dẫn xuất** | `viwikifc`, **gốc** |
+| Ngữ cảnh | dựng lại bằng BM25, 10 câu, ~496 token | `context` có sẵn, ~154 từ |
+| Split | dev, dựng thành cặp | train/dev/test **gốc của bộ** |
+| Trả lời | phép can thiệp, cơ chế | so với số đã công bố |
+
+  E08 phải dựng lại ngữ cảnh vì `context` gốc quá ngắn để làm phép can thiệp theo cặp. E15 thì
+  **bắt buộc dùng ngữ cảnh gốc** — dùng ngữ cảnh dựng lại là so với một bài toán khác bài toán mà
+  các mốc kia giải.
+
+  ### Ba điều phải ghi kèm mọi con số của E15
+
+  1. **Tập test dùng lại 100 % ngữ cảnh của train.** Đo ở T14, `results/leakage_report.md`. Điểm
+     trên đó **không nói gì** về dữ liệu chưa từng thấy. Các mốc đã công bố chịu đúng phần rò rỉ
+     ấy nên phép so vẫn hợp lệ — nhưng cả hai bên đều không đo được khái quát hóa. Muốn nói về
+     khái quát hóa thì đó là T34 / E16.
+  2. **Chỉ 67 % nhãn NEI thật sự là ngoại lai**, kappa 0,505, đo ở T13. Lớp `extrinsic` của bộ
+     này nhiễu hơn hẳn ViHallu, nên F1 trên nó phải đọc kèm con số đó.
+  3. **5,9 % mẫu chỉ có một đoạn** — chunk-aware thoái hóa thành lookback gộp ở đó. Ít hơn con số
+     15,3 % vẫn ghi trong T15, vì con số ấy đếm theo ngữ cảnh; xem phần sửa ở T15.
+
+  ### Hai cấu hình, một lượt trích
+
+| File | Nhóm đặc trưng |
+|---|---|
+| `e15_chunk_viwikifc.yaml` | `[basic, chunk_aware, stability]` |
+| `e15_baseline_lookback_viwikifc.yaml` | `[basic]` |
+
+  Cả hai cùng ra `extraction_hash` **3c1a9a052afa**, nên mốc lookback **không tốn thêm giây GPU
+  nào**. Có mốc riêng cho từng bộ là bài học T26 và T30: so chunk-aware của bộ này với mốc của bộ
+  khác thì chênh lệch trộn "đổi dữ liệu" với "đổi nhóm đặc trưng".
+
+  ### Notebook đơn giản hơn T31 hai chặng
+
+  **Không có ô dò kiểu số** — mô hình đọc là Qwen2.5-7B, lớp tràn số đã chốt ở T07 là lớp 27, ghi
+  trong mục 3 `CLAUDE.md`. **Không có ô đo chi phí** — `measure_throughput` ở T31 đã cho phép
+  chiếu cho ViWikiFC từ trung bình theo mức độ dài, khoảng 424 ms mỗi mẫu.
+
+  Thứ tự ô giữ đúng nếp mà PR #93 phải khôi phục: **trích → soi shard → lấy kết quả về**, không
+  chèn việc GPU nào vào giữa.
+
+  Và ô lấy kết quả sửa luôn lỗi của T31: nó chép **cả hai** sổ kết quả, `results/runs.jsonl` và
+  `results/feasibility.jsonl`, chứ không chỉ file đầu.
+
+  ### Việc cần chạy
+
+  1. Mở `notebooks/t33_viwikifc_goc_t4.ipynb` trên Kaggle, bật GPU T4, mount dataset dữ liệu thô.
+  2. Chạy tuần tự tới hết ô 8. Không phải sửa gì.
+  3. Ô 4 phải in **hai hash trùng nhau**; lệch là dừng, đừng tiêu 2,5 giờ GPU.
+  4. Tải cả thư mục `ket_qua_t33` về.
+  5. Chấm ở **máy cá nhân**, 0 giây GPU, **mốc lookback trước**:
+
+```
+  python scripts/run_chunk_aware.py --config configs/e15_baseline_lookback_viwikifc.yaml
+  python scripts/run_chunk_aware.py --config configs/e15_chunk_viwikifc.yaml
+```
+
 - [ ] **T34** · M · E16 khái quát hóa chéo bộ
 - [ ] **T35** · LM · Phân tích sai sót
   - Lấy 100 mẫu dự đoán sai, phân loại kiểu lỗi, viết nhận xét.
