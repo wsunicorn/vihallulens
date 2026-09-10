@@ -965,6 +965,118 @@ báo cáo**, đúng cách đang làm với tỷ lệ cắt ngữ cảnh.
 3. **Mới đo trên một bộ dữ liệu.** Kết luận "chunk-aware không chuyển giữa hai mô hình" hiện chỉ
    đứng trên ViHallu. E16 khái quát hóa chéo bộ sẽ nói thêm.
 
+### Bảng 5b — Bậc thang kích thước mô hình đọc (E14, ViHallu)
+
+Chạy 10/09/2026. Trích trên Kaggle: Qwen2.5-3B mất 28 phút, Qwen2.5-1.5B mất 71 phút, **0 lỗi
+trên 7.000 mẫu mỗi cỡ**, 0 mẫu bị cắt ngữ cảnh, 0 mẫu có lớp tràn số. Chấm trên máy cá nhân,
+cùng máy đã chấm E02, E03 và E13.
+
+| Mô hình đọc | Tham số | Lưới | lookback gộp | chunk-aware | chênh |
+|---|---|---|---|---|---|
+| Qwen2.5-7B | 7,6 B | 27 × 28 | 0,7451 | **0,7567** | **+0,0116** |
+| Qwen2.5-3B | 3,1 B | 36 × 16 | **0,7345** | 0,7217 | **−0,0128** |
+| Qwen2.5-1.5B | 1,5 B | 28 × 12 | 0,7232 | **0,7345** | **+0,0114** |
+| *Sailor2-8B (E13)* | *8,0 B* | *30 × 28* | *0,7377* | *0,7120* | *−0,0257* |
+
+Khoảng tin cậy 95 % của mọi dòng rộng khoảng **0,065**, ví dụ 3B chunk-aware là [0,6877; 0,7544].
+
+### Dấu đảo hai lần trong cùng một họ mô hình — đây là kết quả của E14
+
+Đọc cột cuối theo thứ tự cỡ giảm dần: **+0,0116 → −0,0128 → +0,0114**.
+
+Không đơn điệu, không nhất quán, và trung bình ba cỡ là **+0,0034** — nhỏ hơn hai mươi lần độ
+rộng khoảng tin cậy. Ba cỡ này khác nhau **đúng một biến**: số tham số. Cùng họ, cùng dữ liệu
+huấn luyện, cùng kiến trúc, cùng bộ dữ liệu chấm, cùng cách chia đoạn, cùng nhóm đặc trưng.
+
+Nếu nhóm chunk-aware mang một đóng góp thật thì dấu của nó **không thể đảo hai lần** qua ba cỡ
+của cùng một họ. Đây là bằng chứng mạnh nhất từ trước tới nay cho kết luận đã nêu ở Bảng 4:
+
+> Đóng góp riêng của nhóm chunk-aware trên ViHallu **không phân biệt được với 0**.
+
+Ba phép đo độc lập, ba câu hỏi khác nhau, cùng một hướng:
+
+| Thí nghiệm | Hỏi gì | Trả lời |
+|---|---|---|
+| E12 (Bảng 4) | cộng thêm bao nhiêu khi đứng cạnh đặc trưng bề mặt | không phân biệt được với 0 |
+| E13 (Bảng 5) | có chuyển sang họ mô hình khác không | không, đổi dấu |
+| **E14 (bảng này)** | **có ổn định qua các cỡ cùng một họ không** | **không, đổi dấu hai lần** |
+
+### Nhưng cột mốc lookback lại là tin tốt, và nó trả lời CH2
+
+Bỏ cột chunk-aware đi, nhìn riêng cột lookback gộp:
+
+| Mô hình đọc | Tham số | macro-F1 | Mất so với 7B | VRAM đỉnh |
+|---|---|---|---|---|
+| Qwen2.5-7B | 7,6 B | 0,7451 | — | 8.328 MB |
+| Qwen2.5-3B | 3,1 B | 0,7345 | **−0,0106** | 3.710 MB |
+| Qwen2.5-1.5B | 1,5 B | 0,7232 | **−0,0219** | 2.718 MB |
+
+**Thu mô hình đọc 4,7 lần chỉ mất 0,022 macro-F1, và tiết kiệm 67 % VRAM.** Cả ba khoảng tin cậy
+chồng lên nhau gần hết, nên nói cho chặt thì ba cỡ **không phân biệt được với nhau**.
+
+Đây là câu trả lời trực tiếp và có lợi cho CH2. Hướng chú ý nội tại chịu được việc thu nhỏ mô
+hình rất tốt: 1.5B ở 0,7232 vẫn **trên** baseline bề mặt 0,6562 và **ngang** PhoBERT-large 0,749
+đã tinh chỉnh, trong khi mô hình đọc chỉ bằng 1/5 và bộ phân loại chỉ có vài nghìn tham số.
+
+Và nó giảm **đều**: 0,7451 → 0,7345 → 0,7232, mỗi nấc mất khoảng 0,011. Cột này đơn điệu còn cột
+chunk-aware thì không — chính sự tương phản đó là lập luận, chứ không phải riêng con số nào.
+
+### Chi phí: nấc lùi mua được bộ nhớ, không mua được thời gian
+
+Đo xen kẽ theo thứ tự 7B → 3B → 1.5B → 7B → 3B → 1.5B, mỗi lượt một tiến trình riêng. Số dưới
+đây là **trung vị ms mỗi mẫu** theo mức độ dài prompt.
+
+| Nấc | Kiểu số | Lượt | 0–512 | 513–1024 | 1025–2048 | 2049–4096 |
+|---|---|---|---|---|---|---|
+| 7B | `float16` | 1 | 404 | 741 | 1.350 | 2.609 |
+| 7B | `float16` | 2 | 416 | 756 | 1.375 | 2.585 |
+| 3B | `float16` | 1 | 211 | 366 | 688 | 1.402 |
+| 3B | `float16` | 2 | 209 | 368 | 692 | 1.404 |
+| 1.5B | `bfloat16` | 1 | 569 | 1.042 | 1.945 | 3.423 |
+
+**Đo xen kẽ có tác dụng.** So lần 1 với lần 2 của cùng một mô hình: 3B lệch dưới **0,9 %**, 7B
+lệch dưới **3,0 %**. So với **10–15 %** mà T08 đo được khi chạy nối nhau trong một phiên, cách xen
+kẽ đã khử gần hết phần hạ xung. Cột `ms/mẫu` của E14 vì thế so được, khác cột của E13.
+
+**Và con số đáng chú ý nhất của cả bảng:** Qwen2.5-1.5B ở `bfloat16` **chậm hơn Qwen2.5-7B ở
+`float16`** ở mọi mức độ dài — 569 so với 404 ms ở mức ngắn nhất, 3.423 so với 2.609 ở mức dài
+nhất. Trong khi VRAM thì ngược hẳn: 2.718 so với 8.328 MB.
+
+Nguyên nhân là T4 thuộc kiến trúc Turing, không có `bfloat16` gốc nên phải giả lập. Mà 1.5B thì
+**bắt buộc** dùng `bfloat16`: ở `float16` nó tràn số trên cả 28 lớp, 20/20 mẫu.
+
+Nên nấc lùi cuối của mục 5 `CLAUDE.md` có hình dạng như sau, và phải nói đúng như vậy khi trình
+bày: **nó mua được bộ nhớ, không mua được thời gian.** Đúng hình dạng bài học đã ghi ở nấc 1 của
+cùng mục ấy, nơi hạ `max_context_tokens` giảm 25 % VRAM mà lại *tăng* giờ GPU.
+
+Con số này gắn với **T4**. Trên Ampere trở lên `bfloat16` nhanh ngang `float16` và cả nghịch lý
+biến mất.
+
+### Vị trí đầu chú ý đổi cả khi chỉ đổi cỡ
+
+`compare_heads.py` từ chối so theo chỉ số vì hai lưới khác nhau — 7B còn 27 lớp sau khi bỏ lớp
+27, 3B có 36 lớp — nên chỉ báo phân bố theo độ sâu tương đối.
+
+| k | Bên | TB độ sâu | 1/3 đầu | 1/3 giữa | 1/3 cuối |
+|---|---|---|---|---|---|
+| 32 | Qwen2.5-7B | 0,590 | 28,1 % | 31,2 % | 40,6 % |
+| 32 | Qwen2.5-3B | 0,479 | 43,8 % | 12,5 % | 43,8 % |
+| 64 | Qwen2.5-7B | 0,572 | 23,4 % | 37,5 % | 39,1 % |
+| 64 | Qwen2.5-3B | **0,458** | **42,2 %** | 28,1 % | 29,7 % |
+
+Ở k = 64, 7B dồn về nửa sau (độ sâu trung bình 0,572) còn 3B dồn về nửa trước (0,458). Khoảng
+cách **0,114** này **lớn hơn** khoảng cách giữa Qwen2.5-7B và Sailor2-8B ở E13 (0,572 so với
+0,517, tức 0,055) — dù Sailor2 là mô hình **khác họ huấn luyện** còn 3B thì cùng họ.
+
+Nghĩa là **vị trí các đầu mang tín hiệu không phải thuộc tính bền của kiến trúc**. Nó đổi khi
+đổi cỡ, và đổi nhiều hơn cả khi đổi dữ liệu huấn luyện.
+
+Và đây chính là **lời giải thích cơ chế** cho cột chênh đảo dấu ở trên. Năm đại lượng hình dạng
+đọc phân bố chú ý *từ các đầu cụ thể*. Nếu các đầu ấy nằm ở độ sâu khác nhau tùy cỡ mô hình, thì
+hình dạng phân bố mà chúng cho ra không có lý do gì để cư xử giống nhau giữa các cỡ. Tỷ lệ gộp
+thì trái lại — nó cộng dồn toàn bộ ngữ cảnh nên không phụ thuộc đầu nào nằm ở đâu, và đó là lý do
+cột mốc giảm đều trong khi cột chunk-aware nhảy lung tung.
+
 ### Bảng 6 — Đối chứng ngoài trên ViWikiFC (E15)
 
 | Phương pháp | Nguồn | Strict Acc | VC Acc | ER Acc | macro-F1 |

@@ -3107,8 +3107,93 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Nhớ commit `configs/e13_sailor2_vihallu.yaml` mang `exclude_layers: [30, 31]` — giá trị do ô 5
   đo được, không phải đoán. Không có nó thì hash trích không tái lập.
 
-- [ ] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B —
-  **công cụ sẵn sàng 09/09/2026, chờ chạy MỘT phiên Kaggle**
+- [x] **T31** · L · E14 bậc thang kích thước 7B / 3B / 1.5B — hoàn thành 10/09/2026
+
+  ### Kết quả: dấu đảo hai lần trong cùng một họ mô hình
+
+  Phiên Kaggle 10/09 chạy trọn 6.729 giây (1 giờ 52), 0 lỗi. Chấm trên máy cá nhân, 0 giây GPU.
+
+| Mô hình đọc | Tham số | Lưới | lookback gộp | chunk-aware | chênh |
+|---|---|---|---|---|---|
+| Qwen2.5-7B | 7,6 B | 27 × 28 | 0,7451 | **0,7567** | **+0,0116** |
+| Qwen2.5-3B | 3,1 B | 36 × 16 | **0,7345** | 0,7217 | **−0,0128** |
+| Qwen2.5-1.5B | 1,5 B | 28 × 12 | 0,7232 | **0,7345** | **+0,0114** |
+
+  Cột cuối theo thứ tự cỡ giảm dần: **+ → − → +**. Ba cỡ này khác nhau **đúng một biến** là số
+  tham số — cùng họ, cùng dữ liệu huấn luyện, cùng kiến trúc, cùng bộ chấm, cùng cách chia đoạn,
+  cùng nhóm đặc trưng. Trung bình ba cỡ là **+0,0034**, nhỏ hơn hai mươi lần độ rộng khoảng tin
+  cậy (~0,065).
+
+  Một đóng góp thật **không đảo dấu hai lần** qua ba cỡ của cùng một họ. Đây là bằng chứng mạnh
+  nhất từ trước tới nay cho kết luận đã nêu ở Bảng 4, và nó **độc lập** với hai phép đo kia:
+
+| Thí nghiệm | Hỏi gì | Trả lời |
+|---|---|---|
+| E12 | cộng thêm bao nhiêu khi đứng cạnh đặc trưng bề mặt | không phân biệt được với 0 |
+| E13 | có chuyển sang họ mô hình khác không | không, đổi dấu |
+| **E14** | **có ổn định qua các cỡ cùng một họ không** | **không, đổi dấu hai lần** |
+
+  ### Cột mốc lookback thì ngược lại, và nó trả lời CH2 rất có lợi
+
+| Mô hình đọc | macro-F1 | Mất so với 7B | VRAM đỉnh |
+|---|---|---|---|
+| Qwen2.5-7B | 0,7451 | — | 8.328 MB |
+| Qwen2.5-3B | 0,7345 | −0,0106 | 3.710 MB |
+| Qwen2.5-1.5B | 0,7232 | −0,0219 | 2.718 MB |
+
+  **Thu mô hình đọc 4,7 lần chỉ mất 0,022 macro-F1 và tiết kiệm 67 % VRAM.** Ba khoảng tin cậy
+  chồng nhau gần hết nên nói cho chặt thì ba cỡ không phân biệt được với nhau.
+
+  Nấc 1.5B ở 0,7232 vẫn **trên** baseline bề mặt 0,6562 và **ngang** PhoBERT-large 0,749 đã tinh
+  chỉnh — với mô hình đọc bằng 1/5 và bộ phân loại chỉ vài nghìn tham số.
+
+  Và cột này giảm **đều**, mỗi nấc khoảng 0,011, trong khi cột chunk-aware nhảy lung tung. Chính
+  sự tương phản ấy là lập luận, không phải riêng con số nào.
+
+  ### Vị trí đầu chú ý đổi cả khi chỉ đổi cỡ — và đó là lời giải thích cơ chế
+
+  Ở k = 64, độ sâu trung bình của các đầu mạnh nhất: 7B là **0,572**, 3B là **0,458**. Khoảng
+  cách 0,114 này **lớn hơn** khoảng cách giữa Qwen2.5-7B và Sailor2-8B ở E13 (0,055) — dù Sailor2
+  khác **họ huấn luyện** còn 3B thì cùng họ.
+
+  Nên vị trí các đầu mang tín hiệu **không phải thuộc tính bền của kiến trúc**. Và đó giải thích
+  vì sao hai cột cư xử khác nhau: năm đại lượng hình dạng đọc phân bố *từ các đầu cụ thể*, nên
+  các đầu dời chỗ thì chúng dời theo; còn tỷ lệ gộp cộng dồn toàn bộ ngữ cảnh nên không phụ thuộc
+  đầu nào nằm ở đâu.
+
+  ### Chi phí: nấc lùi mua được bộ nhớ, không mua được thời gian
+
+  Trung vị ms mỗi mẫu, đo xen kẽ, mỗi lượt một tiến trình riêng:
+
+| Nấc | Kiểu số | Lượt | 0–512 | 513–1024 | 1025–2048 | 2049–4096 |
+|---|---|---|---|---|---|---|
+| 7B | `float16` | 1 / 2 | 404 / 416 | 741 / 756 | 1.350 / 1.375 | 2.609 / 2.585 |
+| 3B | `float16` | 1 / 2 | 211 / 209 | 366 / 368 | 688 / 692 | 1.402 / 1.404 |
+| 1.5B | `bfloat16` | 1 | 569 | 1.042 | 1.945 | 3.423 |
+
+  **Đo xen kẽ có tác dụng thật:** lần 1 so lần 2 lệch dưới **0,9 %** ở 3B và dưới **3,0 %** ở 7B,
+  so với **10–15 %** mà T08 đo được khi chạy nối nhau. Cột `ms/mẫu` của E14 vì thế so được, khác
+  cột của E13.
+
+  **Con số đáng chú ý nhất:** 1.5B ở `bfloat16` **chậm hơn 7B ở `float16`** ở mọi mức độ dài,
+  trong khi VRAM thì 2.718 so với 8.328 MB. T4 là Turing, không có bf16 gốc; mà 1.5B thì bắt buộc
+  dùng bf16 vì `float16` tràn số cả 28 lớp. Nấc lùi cuối của mục 5 `CLAUDE.md` vì thế **mua được
+  bộ nhớ, không mua được thời gian** — đúng hình dạng bài học ở nấc 1 của cùng mục ấy.
+
+  ### Một chỗ còn thiếu, nhỏ: `results/feasibility.jsonl`
+
+  Ô lấy kết quả về chỉ chép `results/runs.jsonl`, mà `measure_throughput.py` ghi vào
+  **`results/feasibility.jsonl`** (`DEFAULT_RESULTS_PATH`, dòng 47). Nên `runs_t31.jsonl` mang về
+  trùng **từng byte** với bản đã có trên máy — 24 dòng cũ, không dòng chi phí nào.
+
+  Số vẫn còn: bảng theo mức ở trên đọc từ log, và lượt 6/6 (1.5B lần 2) thì nằm trong
+  `results/feasibility.jsonl` của bản clone trong Output Kaggle. Tải thêm đúng một file nhỏ đó là
+  đủ.
+
+  **Bài học cho notebook sau:** ô lấy kết quả về phải chép **mọi** sổ kết quả mà phiên có thể
+  ghi vào, không chỉ `runs.jsonl`. Hai file là `results/runs.jsonl` và
+  `results/feasibility.jsonl`. Đây là họ hàng của lỗi ở PR #93 — cùng chuyện "phần đắt không ra
+  được tới thư mục kết quả", chỉ khác là lần này mất một cột chứ không mất cả shard.
 
   ### E14 nay trả lời hai câu, và câu thứ hai do T30 sinh ra
 
