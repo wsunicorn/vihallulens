@@ -1,0 +1,44 @@
+# E15 — đối chứng ngoài trên ViWikiFC, SPLIT GỐC. Task T33.
+#
+# Khác E08 ở chỗ quan trọng nhất: E08 dùng bộ dẫn xuất `viwikifc_e08`, ngữ cảnh dựng lại bằng
+# BM25 từ kho bằng chứng. File này dùng ĐÚNG `context` có sẵn của bộ và ĐÚNG split train/dev/test
+# mà bộ phát hành, vì chỉ như vậy con số mới đặt cạnh được số đã công bố ở mục 6
+# docs/EXPERIMENTS.md — InfoXLM large 86,51 macro-F1, SemViQA 80,82 strict accuracy.
+#
+# HAI ĐIỀU PHẢI GHI KÈM MỌI CON SỐ SINH TỪ FILE NÀY:
+#
+# 1. Tập test dùng lại 100 % ngữ cảnh của train (đo ở T14, results/leakage_report.md). Điểm trên
+#    đó KHÔNG nói gì về dữ liệu chưa từng thấy. Các mốc đã công bố cũng chịu đúng phần rò rỉ ấy
+#    nên phép so vẫn hợp lệ — nhưng cả hai bên đều không đo được khả năng khái quát hóa.
+# 2. Chỉ 67 % nhãn NEI thật sự là ngoại lai, kappa 0,505, đo ở T13. Lớp `extrinsic` của bộ này
+#    vì thế nhiễu hơn hẳn ViHallu, và F1 trên nó phải đọc kèm con số đó.
+#
+# Ngữ cảnh bộ này ngắn: đo lại ngày 10/09 trên đủ 20.919 mẫu, trung bình 4,73 đoạn, trung vị 4,
+# và 5,9 % mẫu chỉ ra ĐÚNG MỘT đoạn — chỗ chunk-aware thoái hóa thành lookback gộp. Con số cũ
+# 15,3 % ở T15 đếm theo ngữ cảnh duy nhất (1.481 cái) chứ không theo mẫu; xem T33.
+
+run_name: e15_chunk_viwikifc
+
+dataset:
+  name: viwikifc
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

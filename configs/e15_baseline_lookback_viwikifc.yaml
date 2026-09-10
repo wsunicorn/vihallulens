@@ -1,0 +1,37 @@
+# E15 — mốc lookback gộp CHO CHÍNH ViWikiFC split gốc. Task T33.
+#
+# Bài học T26 và T30, mỗi lần một biến khác: so chunk-aware của một bộ với mốc lookback của một
+# bộ KHÁC thì chênh lệch thu được trộn "đổi dữ liệu" với "đổi nhóm đặc trưng". Mỗi bộ vì thế
+# phải có mốc lookback của riêng nó, và `lookback_baseline()` lọc theo cả dataset lẫn model_name.
+#
+# KHÔNG tốn thêm giây GPU nào. extraction_hash chỉ tính trên dataset, chunking và extractor —
+# không tính features — nên file này dùng lại đúng shard mà e15_chunk_viwikifc.yaml đã trích.
+# Kiểm: cả hai cùng ra 3c1a9a052afa.
+#
+# Chấm file này TRƯỚC file chunk-aware, để lúc chấm chunk-aware thì mốc đã có sẵn mà so.
+
+run_name: e15_baseline_lookback_viwikifc
+
+dataset:
+  name: viwikifc
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
