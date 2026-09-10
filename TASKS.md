@@ -3621,7 +3621,87 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   6. Commit lại bốn file config mang `exclude_layers` đã đo, nếu không lượt chạy không tái lập.
 
-- [ ] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí
+- [x] **T32** · M · E11 bảng đánh đổi độ chính xác và chi phí — hoàn thành 10/09/2026
+  - **Kiểm tra:** `python scripts/build_tradeoff.py` ✅, `results/tradeoff.csv` 12 dòng ✅,
+    Bảng 8 `docs/EXPERIMENTS.md` có số ✅.
+
+  ### Task này để làm gì
+
+  Mục E11 `docs/EXPERIMENTS.md` gọi đây là **bảng trung tâm của chương 7**. Mọi thí nghiệm trước
+  trả lời "phương pháp nào chính xác hơn"; bảng này hỏi câu mà người triển khai thật sự hỏi:
+  *chính xác tới mức đó thì phải trả bằng gì.*
+
+  ### Vì sao phải viết script thay vì gõ tay một bảng markdown
+
+  Vì cột chi phí đến từ **hai file đo hai thứ khác nhau, và cả hai đều đặt tên là
+  `ms_per_sample`**.
+
+| File | `ms_per_sample` nghĩa là gì | Độ lớn |
+|---|---|---|
+| `results/runs.jsonl` | thời gian của **bộ phân loại** — hồi quy logistic vài trăm chiều, chạy CPU | 0,001–0,013 ms |
+| `results/feasibility.jsonl` | thời gian **lượt đọc** để lấy ma trận chú ý | 222–608 ms |
+
+  Chênh nhau **năm bậc độ lớn**. Một dòng lấy nhầm cột trông vẫn hợp lý và lật ngược toàn bộ kết
+  luận của chương 7 — nó sẽ nói hướng nội tại nhanh hơn XLM-R hai nghìn lần. Phép ghép ấy chính
+  là phần việc của task này, và làm bằng tay một lần vào một bảng markdown là cách chắc chắn nhất
+  để một con số sai lọt vào khóa luận.
+
+  `scripts/build_tradeoff.py` lấy chi phí **từ mô hình đọc** chứ không từ dòng kết quả.
+  `tests/test_tradeoff.py` có 10 ca, trong đó ca quan trọng nhất khẳng định dòng attention lấy
+  437 ms chứ không lấy 0,010 ms.
+
+  ### Bảng nói gì — kể cả phần bất lợi
+
+  **XLM-R thắng cả hai trục tuyệt đối.** 0,7762 ở 25,2 ms so với 0,7567 ở 437,6 ms của dòng
+  chunk-aware tốt nhất: cao hơn 0,0195 điểm và nhanh hơn **17 lần**. Không có cách đọc nào biến
+  bảng này thành "hướng nội tại rẻ hơn về thời gian tuyệt đối".
+
+  **Chỗ hướng nội tại thắng là số tham số, và biên độ rất lớn.** Dòng lookback gộp trên Qwen2.5-3B
+  đạt **0,7345 với đúng 195 tham số** — so với **559.893.507** của XLM-R. Ít hơn **2,87 triệu
+  lần**, mất 0,0417 điểm. Và 195 tham số thì huấn luyện trên CPU trong vài giây, không có rủi ro
+  không hội tụ như InfoXLM ở E09.
+
+  **Nấc 3B là điểm cân bằng của cả bảng:** nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ, mất 0,0106
+  điểm, cần 195 tham số. Mọi dòng khác thua nó ở ít nhất một trục quan trọng.
+
+  ### Ba loại chi phí, không được cộng lại
+
+  Một con số `ms/mẫu` duy nhất che mất thứ người triển khai cần biết nhất là **cái gì chặn họ**:
+  cần GPU, cần *tinh chỉnh được* trên GPU, hay cần khóa API và chấp nhận dữ liệu rời khỏi máy.
+  Cột `loai_chi_phi` giữ phân biệt đó thay vì quy về một đơn vị.
+
+  ### Cột chi phí biên: đã lượng hóa, nhưng vẫn là giả thiết
+
+  Lập luận chi phí của đề tài là lượt đọc trong hệ RAG **dù sao cũng phải chạy**, nên chi phí biên
+  của việc thêm phát hiện ảo giác chỉ là 0,002–0,010 ms. Nếu cột đó là cột đúng để đọc thì hướng
+  nội tại rẻ hơn XLM-R khoảng hai nghìn lần và mọi kết luận ở trên đảo chiều.
+
+  **Không thí nghiệm nào trong đề tài đo được cột đó** — nó đòi một hệ RAG đầu cuối, mà T40 mới
+  dựng. Nên nó nằm ở một cột riêng có nhãn, không gộp vào cột chính.
+
+  Và có một khoản chi phí biên **thật mà chưa ai đo**: bật `output_attentions` vô hiệu hóa
+  FlashAttention, nên một hệ RAG đang dùng FlashAttention sẽ phải trả thêm để lấy được ma trận
+  chú ý. Ghi vào phần hạn chế.
+
+  ### Bảng này chứng minh hai ô của Bảng 1 sai
+
+  Bảng 1 ghi E02 tốn **464 ms** và E03 tốn **528 ms**. Hai số ấy không thể cùng đúng: hai dòng đọc
+  **chung một shard** `8c49fc0417f1`, chung `extraction_hash`, tức **chung một lượt chạy mô hình
+  đọc**. Một lượt trích không có hai giá.
+
+  Chênh 64 ms là nhiễu giữa hai phép đo ở hai thời điểm, bị đọc nhầm thành "chunk-aware đắt hơn
+  lookback" — và nó đã nằm trong báo cáo giữa kỳ. Lượt xen kẽ của T31 cho **437,6 ms** cho cả hai,
+  trôi 2,09 %. Đã sửa hai ô và viết lại chú thích ¶.
+
+  Quy tắc rút ra, và nay có test khóa: **hai dòng chung `extraction_hash` phải chung ô chi phí.**
+
+  ### Hai ô còn trống, cố ý
+
+  Sailor2-8B trích ở T30 nhưng **chưa bao giờ đo chi phí** trong chế độ xen kẽ, nên hai ô của nó
+  ghi *chưa đo* thay vì mượn số của Qwen2.5-7B cùng cỡ. Muốn điền thì tốn khoảng 5 phút GPU, và
+  phải đo xen kẽ với ít nhất một nấc khác trong cùng phiên — đo riêng thì lại rơi vào đúng cái bẫy
+  hạ xung mà mục 5 `CLAUDE.md` cảnh báo.
+
 - [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc
 - [ ] **T34** · M · E16 khái quát hóa chéo bộ
 - [ ] **T35** · LM · Phân tích sai sót
