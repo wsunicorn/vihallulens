@@ -1023,24 +1023,69 @@ chunk-aware thì không — chính sự tương phản đó là lập luận, ch
 
 ### Chi phí: nấc lùi mua được bộ nhớ, không mua được thời gian
 
-Đo xen kẽ theo thứ tự 7B → 3B → 1.5B → 7B → 3B → 1.5B, mỗi lượt một tiến trình riêng. Số dưới
-đây là **trung vị ms mỗi mẫu** theo mức độ dài prompt.
+Đo xen kẽ theo thứ tự 7B → 3B → 1.5B → 7B → 3B → 1.5B, **mỗi lượt một tiến trình riêng**, nạp lại
+mô hình từ đầu. Cột `ms/mẫu` dưới đây là con số **có trọng số theo phân bố độ dài thật** của hai
+bộ dữ liệu chính, không phải trung bình cộng các mức.
 
-| Nấc | Kiểu số | Lượt | 0–512 | 513–1024 | 1025–2048 | 2049–4096 |
+| Nấc | Kiểu số | Lượt 1 | Lượt 2 | Trôi | VRAM đỉnh | Giờ GPU cho ViHallu + ISE-DSC01 |
 |---|---|---|---|---|---|---|
-| 7B | `float16` | 1 | 404 | 741 | 1.350 | 2.609 |
-| 7B | `float16` | 2 | 416 | 756 | 1.375 | 2.585 |
-| 3B | `float16` | 1 | 211 | 366 | 688 | 1.402 |
-| 3B | `float16` | 2 | 209 | 368 | 692 | 1.404 |
-| 1.5B | `bfloat16` | 1 | 569 | 1.042 | 1.945 | 3.423 |
+| Qwen2.5-7B | `float16` | 726,6 ms | 741,7 ms | **2,09 %** | 8.328 MB | 10,1 giờ |
+| Qwen2.5-3B | `float16` | **369,7 ms** | **370,2 ms** | **0,13 %** | **3.710 MB** | **5,1 giờ** |
+| Qwen2.5-1.5B | `bfloat16` | 1.029,3 ms | 1.029,8 ms | **0,04 %** | 2.718 MB | 14,2 giờ |
 
-**Đo xen kẽ có tác dụng.** So lần 1 với lần 2 của cùng một mô hình: 3B lệch dưới **0,9 %**, 7B
-lệch dưới **3,0 %**. So với **10–15 %** mà T08 đo được khi chạy nối nhau trong một phiên, cách xen
-kẽ đã khử gần hết phần hạ xung. Cột `ms/mẫu` của E14 vì thế so được, khác cột của E13.
+Trung vị theo từng mức độ dài, để đối chiếu:
 
-**Và con số đáng chú ý nhất của cả bảng:** Qwen2.5-1.5B ở `bfloat16` **chậm hơn Qwen2.5-7B ở
-`float16`** ở mọi mức độ dài — 569 so với 404 ms ở mức ngắn nhất, 3.423 so với 2.609 ở mức dài
-nhất. Trong khi VRAM thì ngược hẳn: 2.718 so với 8.328 MB.
+| Nấc | 0–512 | 513–1024 | 1025–2048 | 2049–4096 |
+|---|---|---|---|---|
+| 7B `float16` | 404 / 416 | 741 / 756 | 1.350 / 1.375 | 2.609 / 2.585 |
+| 3B `float16` | 211 / 209 | 366 / 368 | 688 / 692 | 1.402 / 1.404 |
+| 1.5B `bfloat16` | 569 / 571 | 1.042 / 1.040 | 1.945 / 1.946 | 3.423 / 3.419 |
+
+**Đo xen kẽ có tác dụng, và lần này đo được chính nó.** Hai lượt của cùng một mô hình lệch nhau
+**0,04 % tới 2,09 %**, so với **10–15 %** mà T08 đo được khi chạy nối nhau trong một phiên. Cột
+`ms/mẫu` của E14 vì thế so được, khác cột của E13 vốn phải mang hạn chế này.
+
+**Con số đáng chú ý nhất của cả bảng:** Qwen2.5-1.5B ở `bfloat16` tốn **1.029 ms/mẫu**, còn
+Qwen2.5-7B ở `float16` tốn **734 ms** — nấc lùi nhỏ nhất **chậm hơn 1,4 lần** mô hình lớn gấp
+năm lần nó. Trong khi VRAM thì ngược hẳn: 2.718 so với 8.328 MB, tức **giảm 67 %**.
+
+Quy ra giờ GPU cho hai bộ dữ liệu chính: 7B mất 10,1 giờ, 3B mất **5,1 giờ**, còn 1.5B mất
+**14,2 giờ** — vượt cả 7B, và gần chạm nửa hạn mức 30 giờ mỗi tuần.
+
+Nguyên nhân là T4 thuộc kiến trúc Turing, không có `bfloat16` gốc nên phải giả lập. Mà 1.5B thì
+**bắt buộc** dùng `bfloat16`: ở `float16` nó tràn số trên cả 28 lớp, 20/20 mẫu.
+
+Nên nấc lùi cuối của mục 5 `CLAUDE.md` có hình dạng như sau, và phải nói đúng như vậy khi trình
+bày: **nó mua được bộ nhớ, không mua được thời gian.** Đúng hình dạng bài học đã ghi ở nấc 1 của
+cùng mục ấy, nơi hạ `max_context_tokens` giảm 25 % VRAM mà lại *tăng* giờ GPU.
+
+**Nấc đáng dùng là 3B, không phải 1.5B.** Nó nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ, và chỉ mất
+0,0106 macro-F1. Bậc thang lùi của mục 5 `CLAUDE.md` trên phần cứng này thực chất chỉ có **một
+nấc dùng được**.
+
+### Hạ xung có xảy ra, nhưng không giải thích được thời gian
+
+`measure_throughput.py` đọc telemetry GPU mỗi mức. Số liệu cho thấy card **có** hạ xung: tỷ lệ
+xung SM tụt xuống tới **0,33** mức tối đa và nhiệt độ chạm **84 °C**, và 5 trên 6 lượt bị đánh dấu
+`gpu_throttled: true`.
+
+Nhưng hai lượt của cùng một mô hình vẫn lệch nhau **0,13 %** ở 3B — trong khi tỷ lệ xung đọc được
+ở lượt 1 là 0,858 còn lượt 2 là 0,330 tại cùng mức độ dài. Chênh lệch xung **2,6 lần** cho ra
+chênh lệch thời gian **0,13 %**.
+
+Hai cách đọc, và chưa tách được:
+
+1. Telemetry là ảnh chụp một thời điểm mỗi mức, không đại diện cho cả quãng đo.
+2. Xung SM **không phải** ràng buộc quyết định với suy luận NF4 — việc giải nén trọng số 4 bit và
+   băng thông bộ nhớ mới là, và cả hai không đọc được từ `sm_clock_mhz`.
+
+Cách thứ hai khớp với `forward_share`: phần thời gian nằm trong forward là 0,92 với 7B, 0,95 với
+3B, nhưng chỉ **0,86** với 1.5B ở `bfloat16` — mô hình càng nhỏ thì phần chi phí ngoài phép nhân
+ma trận càng chiếm tỷ trọng lớn.
+
+Điều dùng được ngay, bất kể cách đọc nào đúng: **hai lượt xen kẽ cho số trùng nhau trong 2 %**,
+nên cột chi phí tái lập được trong phiên. Ghi cả quan sát này vào phần bàn luận thay vì lặng lẽ
+báo con số trung bình.
 
 Nguyên nhân là T4 thuộc kiến trúc Turing, không có `bfloat16` gốc nên phải giả lập. Mà 1.5B thì
 **bắt buộc** dùng `bfloat16`: ở `float16` nó tràn số trên cả 28 lớp, 20/20 mẫu.

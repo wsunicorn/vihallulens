@@ -3163,37 +3163,58 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   ### Chi phí: nấc lùi mua được bộ nhớ, không mua được thời gian
 
-  Trung vị ms mỗi mẫu, đo xen kẽ, mỗi lượt một tiến trình riêng:
+  `ms/mẫu` dưới đây có **trọng số theo phân bố độ dài thật** của hai bộ chính, không phải trung
+  bình cộng các mức. Đo xen kẽ 7B → 3B → 1.5B → lặp lại, mỗi lượt một tiến trình riêng.
 
-| Nấc | Kiểu số | Lượt | 0–512 | 513–1024 | 1025–2048 | 2049–4096 |
+| Nấc | Kiểu số | Lượt 1 | Lượt 2 | Trôi | VRAM đỉnh | Giờ GPU hai bộ chính |
 |---|---|---|---|---|---|---|
-| 7B | `float16` | 1 / 2 | 404 / 416 | 741 / 756 | 1.350 / 1.375 | 2.609 / 2.585 |
-| 3B | `float16` | 1 / 2 | 211 / 209 | 366 / 368 | 688 / 692 | 1.402 / 1.404 |
-| 1.5B | `bfloat16` | 1 | 569 | 1.042 | 1.945 | 3.423 |
+| 7B | `float16` | 726,6 ms | 741,7 ms | **2,09 %** | 8.328 MB | 10,1 giờ |
+| 3B | `float16` | **369,7 ms** | **370,2 ms** | **0,13 %** | **3.710 MB** | **5,1 giờ** |
+| 1.5B | `bfloat16` | 1.029,3 ms | 1.029,8 ms | **0,04 %** | 2.718 MB | 14,2 giờ |
 
-  **Đo xen kẽ có tác dụng thật:** lần 1 so lần 2 lệch dưới **0,9 %** ở 3B và dưới **3,0 %** ở 7B,
-  so với **10–15 %** mà T08 đo được khi chạy nối nhau. Cột `ms/mẫu` của E14 vì thế so được, khác
-  cột của E13.
+  **Đo xen kẽ có tác dụng thật:** hai lượt lệch nhau **0,04 % tới 2,09 %**, so với **10–15 %** mà
+  T08 đo được khi chạy nối nhau. Cột `ms/mẫu` của E14 vì thế so được, khác cột của E13.
 
-  **Con số đáng chú ý nhất:** 1.5B ở `bfloat16` **chậm hơn 7B ở `float16`** ở mọi mức độ dài,
-  trong khi VRAM thì 2.718 so với 8.328 MB. T4 là Turing, không có bf16 gốc; mà 1.5B thì bắt buộc
-  dùng bf16 vì `float16` tràn số cả 28 lớp. Nấc lùi cuối của mục 5 `CLAUDE.md` vì thế **mua được
-  bộ nhớ, không mua được thời gian** — đúng hình dạng bài học ở nấc 1 của cùng mục ấy.
+  **Con số đáng chú ý nhất:** 1.5B ở `bfloat16` tốn 1.029 ms/mẫu còn 7B ở `float16` tốn 734 —
+  nấc lùi nhỏ nhất **chậm hơn 1,4 lần** mô hình lớn gấp năm lần nó, trong khi VRAM giảm 67 %.
+  Quy ra giờ GPU cho hai bộ chính: 14,2 giờ so với 10,1 giờ, tức gần nửa hạn mức tuần.
 
-  ### Một chỗ còn thiếu, nhỏ: `results/feasibility.jsonl`
+  T4 là Turing, không có bf16 gốc; mà 1.5B bắt buộc dùng bf16 vì `float16` tràn số cả 28 lớp.
+  Nấc lùi cuối của mục 5 `CLAUDE.md` vì thế **mua được bộ nhớ, không mua được thời gian** — đúng
+  hình dạng bài học ở nấc 1 của cùng mục ấy.
+
+  **Nấc đáng dùng là 3B.** Nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ, chỉ mất 0,0106 macro-F1. Bậc
+  thang lùi trên phần cứng này thực chất chỉ có **một nấc dùng được**.
+
+  ### Hạ xung có xảy ra, nhưng không giải thích được thời gian
+
+  Telemetry cho thấy card **có** hạ xung: tỷ lệ xung SM tụt tới **0,33** mức tối đa, nhiệt độ
+  chạm **84 °C**, 5 trên 6 lượt bị đánh dấu `gpu_throttled: true`.
+
+  Nhưng hai lượt 3B vẫn lệch nhau **0,13 %**, trong khi tỷ lệ xung đọc được ở lượt 1 là 0,858 và
+  lượt 2 là 0,330 tại cùng mức độ dài. Chênh xung **2,6 lần** cho chênh thời gian **0,13 %**.
+
+  Hai cách đọc, chưa tách được: telemetry là ảnh chụp một thời điểm nên không đại diện; hoặc xung
+  SM không phải ràng buộc quyết định với suy luận NF4, mà là việc giải nén trọng số 4 bit và băng
+  thông bộ nhớ. Cách thứ hai khớp với `forward_share`: 0,92 ở 7B, 0,95 ở 3B, nhưng chỉ **0,86** ở
+  1.5B — mô hình càng nhỏ thì phần chi phí ngoài phép nhân ma trận càng chiếm tỷ trọng lớn.
+
+  Điều dùng được ngay, bất kể cách đọc nào đúng: **hai lượt xen kẽ trùng nhau trong 2 %**, nên
+  cột chi phí tái lập được trong phiên.
+
+  ### Một lỗi của ô lấy kết quả, đã ghi để notebook sau không lặp
 
   Ô lấy kết quả về chỉ chép `results/runs.jsonl`, mà `measure_throughput.py` ghi vào
   **`results/feasibility.jsonl`** (`DEFAULT_RESULTS_PATH`, dòng 47). Nên `runs_t31.jsonl` mang về
   trùng **từng byte** với bản đã có trên máy — 24 dòng cũ, không dòng chi phí nào.
 
-  Số vẫn còn: bảng theo mức ở trên đọc từ log, và lượt 6/6 (1.5B lần 2) thì nằm trong
-  `results/feasibility.jsonl` của bản clone trong Output Kaggle. Tải thêm đúng một file nhỏ đó là
-  đủ.
+  Sáu dòng chi phí lấy được sau đó từ `vihallulens/results/feasibility.jsonl` trong Output Kaggle,
+  và bản trong repo nay có đủ 8 dòng: 2 dòng T08 cũ cộng 6 lượt T31.
 
-  **Bài học cho notebook sau:** ô lấy kết quả về phải chép **mọi** sổ kết quả mà phiên có thể
-  ghi vào, không chỉ `runs.jsonl`. Hai file là `results/runs.jsonl` và
-  `results/feasibility.jsonl`. Đây là họ hàng của lỗi ở PR #93 — cùng chuyện "phần đắt không ra
-  được tới thư mục kết quả", chỉ khác là lần này mất một cột chứ không mất cả shard.
+  **Bài học cho notebook sau:** ô lấy kết quả về phải chép **mọi** sổ kết quả mà phiên có thể ghi
+  vào, không chỉ `runs.jsonl`. Hai file là `results/runs.jsonl` và `results/feasibility.jsonl`.
+  Đây là họ hàng của lỗi ở PR #93 — cùng chuyện "phần đắt không ra được tới thư mục kết quả", chỉ
+  khác là lần này mất một cột chứ không mất cả shard.
 
   ### E14 nay trả lời hai câu, và câu thứ hai do T30 sinh ra
 
