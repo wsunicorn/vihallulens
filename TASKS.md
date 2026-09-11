@@ -4299,7 +4299,47 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   `ok` — phần đó ghi vào T40 cùng smoke test của T37. Ảnh 10,5 GB đang nằm trên máy anh, xóa bằng
   `docker rmi vihallulens:latest` nếu cần chỗ.
 
-- [ ] **T39** · L · Giao diện quan sát: tô màu chunk theo tỷ trọng chú ý
+- [x] **T39** · L · Giao diện quan sát: tô màu chunk theo tỷ trọng chú ý — hoàn thành 11/09/2026
+  - **Kiểm tra:** `GET /` trả trang HTML ✅; hai ca test mới trong `tests/test_serve.py` ✅;
+    hàm tô màu của trang chạy dưới Node với chunker thật: văn bản sau khi tô **trùng nguyên** ngữ
+    cảnh gốc, đoạn đậm nhất là đoạn có tỷ trọng lớn nhất ✅. Nhìn bằng mắt trên máy GPU thuộc T40.
+
+  ### Task này để làm gì
+
+  SPEC §2.6: một trang HTML tĩnh, ngữ cảnh tô màu theo tỷ trọng chú ý từng đoạn, kèm điểm rủi
+  ro; HTML + JS thuần. Sau T36–T37 mọi số liệu đã có sẵn trong `POST /score` — trang chỉ vẽ.
+
+  ### Trang vẽ đúng thứ API trả, không tự tính gì
+
+  `src/vihallulens/serve/static/index.html`, một file, không phụ thuộc ngoài. Nó gọi đúng hai
+  endpoint mà một client lập trình sẽ gọi — `/health` để biết mô hình nạp chưa (nút Chấm khóa cho
+  tới khi `ok`), `/score` để chấm — và vẽ từ chính JSON trả về. Test khóa chuyện đó: trang phải
+  chứa các tên trường `chunk_attention`, `risk_score`, `char_start`, `char_end`, để đổi schema thì
+  test hỏng chứ không phải trang hỏng lặng lẽ.
+
+  **Tô màu bằng cách cắt chuỗi ngữ cảnh gốc theo `char_start`/`char_end`**, không dùng `text` của
+  đoạn để ghép lại. Nhờ thế những gì hiện ra đúng từng ký tự với những gì đã chấm, kể cả khoảng
+  trắng chunker bỏ qua giữa hai đoạn. Độ đậm = `share / max(share)` — đoạn được nhìn nhiều nhất
+  luôn đậm nhất, bất kể có 3 hay 23 đoạn; số % tuyệt đối hiện khi rê chuột và trong bảng xếp hạng
+  bên dưới.
+
+  Kiểm dưới Node (không có trình duyệt trên máy này): chạy `chunk_context` thật lên một ngữ cảnh
+  bốn câu, dựng payload như `/score` trả, gọi đúng hàm `renderContext` của trang qua một DOM giả.
+  Văn bản gộp lại sau khi bỏ thẻ **trùng nguyên** ngữ cảnh; đoạn có `share` lớn nhất nhận alpha
+  lớn nhất; bảng xếp hạng đủ bốn dòng.
+
+  ### Điều trang nói với người xem, vì kết quả bắt phải nói
+
+  Chú thích dưới phần tô màu ghi thẳng: màu cho biết mô hình **nhìn vào đâu**, không cho biết câu
+  trả lời **nói gì về chỗ đó** — E06 đo đoạn được nhìn nhiều nhất trùng đoạn bằng chứng 87,8 %,
+  còn T35 thấy một câu phủ định lật ngược ngữ cảnh vẫn tô đúng đoạn ấy. Và điểm rủi ro là con số
+  nên hành động theo, nhãn ba lớp có sai số rộng hơn (Bảng 1, Bảng 7, E16). Một trang demo mà
+  gợi ý "đoạn đỏ là đoạn sai" sẽ hứa điều luận văn đã đo là không đúng.
+
+  Ba nút ví dụ nạp sẵn một ngữ cảnh về Hà Nội với ba câu trả lời: trung thực, nội tại (đổi triều
+  Lý thành Trần, thổi dân số), ngoại lai (bịa tháp Eiffel và tàu điện ngầm). Để T40 và buổi bảo vệ
+  bấm một cái là thấy.
+
 - [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu
   - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra.
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi

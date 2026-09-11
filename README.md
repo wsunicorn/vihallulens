@@ -138,7 +138,7 @@ bằng chứng vàng — không phải thứ bộ phân loại đọc.
 python scripts/serve.py --bundle models/e03_chunk_aware.pkl --port 8000
 ```
 
-Ba endpoint theo `docs/SPEC.md` §2.6, tài liệu tương tác ở `http://127.0.0.1:8000/docs`:
+Trang quan sát ở `http://127.0.0.1:8000/` — dán ngữ cảnh, câu hỏi, câu trả lời, bấm Chấm: ngữ cảnh được tô màu theo tỷ trọng chú ý mỗi đoạn nhận được, kèm điểm rủi ro và xác suất ba lớp. HTML + JS thuần, không framework. Ba endpoint theo `docs/SPEC.md` §2.6, tài liệu tương tác ở `http://127.0.0.1:8000/docs`:
 
 | Endpoint | Nhận | Trả |
 |---|---|---|
