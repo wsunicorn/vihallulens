@@ -77,6 +77,26 @@ Giữ nguyên nhân vật qua cả bộ. Phong cách: **3D siêu thực như ả
 > the bars — most of the light lands on the second bar, which glows; the others stay dim. Clean
 > geometric style, no readable text, no people, 16:10.
 
+## Cử chỉ thêm — mỗi cử chỉ một ảnh, cùng tư thế gốc của `owl-prof.png`
+
+Trang đã có sẵn cơ chế khung hình: mỗi biến thể là một ảnh, tên biến thể quyết định lúc nào
+dùng. Không có ảnh thì trang tự dùng cử chỉ thay thế (vẫy bằng hai khung base/point, gật, rung).
+
+| Biến thể | Trang dùng khi | Prompt (kèm ảnh `owl-prof.png` làm tham chiếu, giữ y hệt mọi thứ) |
+|---|---|---|
+| `wave` | chào khi tấm giới thiệu hiện, bấm vào cú | *…except the right wing is raised high above the head, feathers spread open, mid-wave as if greeting someone.* |
+| `think` | bộ phát hiện đang chấm, phán quyết nội tại | *…except the right wing is bent so the wingtip touches the chin, head tilted slightly, a pondering pose.* |
+| `shock` | phán quyết ngoại lai | *…except both wings are spread wide and the feathers on the head are puffed up, startled.* |
+| `happy` | phán quyết trung thực | *…except the right wing rests on the chest and the body leans forward slightly, a small satisfied bow.* |
+
+Mở đầu mỗi prompt: *Identical to the reference image in every detail — same owl, glasses, lab
+coat, branch, lighting, framing and flat turquoise eyes —*. Rồi hiệu chuẩn **tất cả biến thể trong
+một lệnh** (lệnh này ghi lại toàn bộ danh sách biến thể):
+
+```
+python scripts/calibrate_owl.py prof owl-prof.png --variant point owl-prof-point.png     --variant wave owl-prof-wave.png --variant think owl-prof-think.png     --variant shock owl-prof-shock.png --variant happy owl-prof-happy.png
+```
+
 Ảnh cú tĩnh cho slide bảo vệ (không dùng trên trang, mắt bình thường có đồng tử):
 
 > Same grey owl professor with round glasses and a white lab coat, glowing turquoise eyes with
