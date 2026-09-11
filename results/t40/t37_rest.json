@@ -1,0 +1,208 @@
+{
+  "health": {
+    "status": "ok",
+    "error": null,
+    "version": "0.1.0",
+    "model_loaded": true,
+    "bundle": "e03_chunk_aware: basic, chunk_aware, stability · topk_heads (32 đầu) · lưới 27 × 28 · 192 cột · 579 tham số",
+    "reading_model": "Qwen/Qwen2.5-7B-Instruct",
+    "chunking": {
+      "strategy": "sentence",
+      "min_words": 5,
+      "window_size": null,
+      "stride": null
+    },
+    "device": "cuda",
+    "vram_allocated_mb": 5571.37408,
+    "vram_reserved_mb": 7453.278208,
+    "requests_served": 0,
+    "uptime_s": 1.0923590660095215
+  },
+  "score_request": {
+    "context": "Thập kỷ 1970, Ayatollah Ruhollah Khomeini chiếm được cảm tình của đa số dân Iran. Những người Hồi giáo, cộng sản và những người theo đường lối tự do tiến hành cuộc Cách mạng Iran năm 1979, triều đình Shah bỏ chạy khỏi đất nước, sau đó Khomeini lên nắm quyền lực lập ra một nhà nước Cộng hòa Hồi giáo. Hệ thống mới lập ra những luật lệ Hồi giáo và quy định quyền cai trị trực tiếp ở mức cao nhất từ trước tới nay cho giới tăng lữ. Chính phủ chỉ trích mạnh mẽ phương Tây, đặc biệt là Mỹ vì đã ủng hộ triều đình Shah. Các quan hệ với phương Tây trở nên đặc biệt căng thẳng năm 1979, sau khi các sinh viên Iran bắt giữ các nhân viên Đại sứ quán Mỹ. Sau này, Iran đã tìm cách xuất khẩu cuộc cách mạng của mình ra nước ngoài, ủng hộ các nhóm quân sự chống phương Tây như nhóm Hezbollah ở Liban. Từ năm 1980 đến 1988, Iran và nước láng giềng Iraq lao vào một cuộc chiến đẫm máu Chiến tranh Iran-Iraq.",
+    "question": "Tại sao chính phủ Iran lên tiếng phản đối các cường quốc phương Tây, đặc biệt là Mỹ, mặc dù họ đã hỗ trợ Ayatollah Khomeini trong cuộc Cách mạng Iran năm 1979?",
+    "response": "Chính phủ Iran phản đối các cường quốc phương Tây, đặc biệt là Mỹ, vì Mỹ đã ủng hộ triều đình Shah, một chế độ mà Khomeini và những người cách mạng chống đối mạnh mẽ.",
+    "label_that": "no",
+    "sample_id": "vihallu_train_19"
+  },
+  "score_response": {
+    "label": "no",
+    "proba": {
+      "no": 0.6830584501439223,
+      "intrinsic": 0.2777413890170894,
+      "extrinsic": 0.039200160838988314
+    },
+    "risk_score": 0.3169415498560777,
+    "chunk_attention": [
+      {
+        "index": 0,
+        "text": "Thập kỷ 1970, Ayatollah Ruhollah Khomeini chiếm được cảm tình của đa số dân Iran. ",
+        "char_start": 0,
+        "char_end": 82,
+        "share": 0.17757449064260442
+      },
+      {
+        "index": 1,
+        "text": "Những người Hồi giáo, cộng sản và những người theo đường lối tự do tiến hành cuộc Cách mạng Iran năm 1979, triều đình Shah bỏ chạy khỏi đất nước, sau đó Khomeini lên nắm quyền lực lập ra một nhà nước Cộng hòa Hồi giáo. ",
+        "char_start": 82,
+        "char_end": 301,
+        "share": 0.12886338461610689
+      },
+      {
+        "index": 2,
+        "text": "Hệ thống mới lập ra những luật lệ Hồi giáo và quy định quyền cai trị trực tiếp ở mức cao nhất từ trước tới nay cho giới tăng lữ. ",
+        "char_start": 301,
+        "char_end": 430,
+        "share": 0.08649336732772338
+      },
+      {
+        "index": 3,
+        "text": "Chính phủ chỉ trích mạnh mẽ phương Tây, đặc biệt là Mỹ vì đã ủng hộ triều đình Shah. ",
+        "char_start": 430,
+        "char_end": 515,
+        "share": 0.19561782299851266
+      },
+      {
+        "index": 4,
+        "text": "Các quan hệ với phương Tây trở nên đặc biệt căng thẳng năm 1979, sau khi các sinh viên Iran bắt giữ các nhân viên Đại sứ quán Mỹ. ",
+        "char_start": 515,
+        "char_end": 645,
+        "share": 0.10498675399132645
+      },
+      {
+        "index": 5,
+        "text": "Sau này, Iran đã tìm cách xuất khẩu cuộc cách mạng của mình ra nước ngoài, ủng hộ các nhóm quân sự chống phương Tây như nhóm Hezbollah ở Liban. ",
+        "char_start": 645,
+        "char_end": 789,
+        "share": 0.12263823684823201
+      },
+      {
+        "index": 6,
+        "text": "Từ năm 1980 đến 1988, Iran và nước láng giềng Iraq lao vào một cuộc chiến đẫm máu Chiến tranh Iran-Iraq.",
+        "char_start": 789,
+        "char_end": 893,
+        "share": 0.1838259435754948
+      }
+    ],
+    "elapsed_ms": 510.87553299998945,
+    "n_chunks": 7,
+    "truncated": false,
+    "nonfinite_layers": []
+  },
+  "demo_ask": {
+    "question": "Vịnh Hạ Long thuộc tỉnh nào?",
+    "retrieved": [
+      {
+        "id": "ha-long",
+        "title": "Vịnh Hạ Long",
+        "score": 10.353,
+        "rank": 1
+      },
+      {
+        "id": "phu-quoc",
+        "title": "Phú Quốc",
+        "score": 3.412,
+        "rank": 2
+      },
+      {
+        "id": "da-nang",
+        "title": "Đà Nẵng",
+        "score": 2.178,
+        "rank": 3
+      }
+    ],
+    "context": "Vịnh Hạ Long thuộc tỉnh Quảng Ninh, có khoảng hai nghìn hòn đảo đá vôi. UNESCO công nhận vịnh là di sản thiên nhiên thế giới lần đầu năm 1994. Tên gọi Hạ Long có nghĩa là rồng đáp xuống, theo truyền thuyết về đàn rồng bảo vệ đất nước. Hang Sửng Sốt là một trong những hang động lớn nhất trong vịnh.\n\nPhú Quốc là đảo lớn nhất Việt Nam, thuộc tỉnh Kiên Giang, nằm trong vịnh Thái Lan. Đảo nổi tiếng với nước mắm và hồ tiêu. Phú Quốc trở thành thành phố đảo đầu tiên của Việt Nam vào năm 2021. Vườn quốc gia Phú Quốc chiếm hơn một nửa diện tích đảo.\n\nĐà Nẵng là thành phố trực thuộc trung ương ở miền Trung, nằm bên vịnh Đà Nẵng. Cầu Rồng bắc qua sông Hàn khánh thành năm 2013 và phun lửa vào tối cuối tuần. Bán đảo Sơn Trà nằm ngay cạnh thành phố và là nơi sinh sống của loài voọc chà vá chân nâu. Sân bay Đà Nẵng là một trong ba sân bay quốc tế lớn nhất cả nước.",
+    "answer": "![](https://cdn.pixabay.com!-/photo/2017/05/!-18-36-37!-/ha-long!_-!-_!-_bay!_-!-_!-_!-_view!_-!-_!-_from!_-!-_!-_!-_mountain!_.jpg)\n\n![](https://media!-.tstatic!-.net!-/img!-/2020!-/11!-/1!-2!-/1200x630!-/ha!_-long!_-!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_",
+    "score": {
+      "label": "extrinsic",
+      "proba": {
+        "no": 2.8194294850182203e-06,
+        "intrinsic": 0.00901367299495251,
+        "extrinsic": 0.9909835075755626
+      },
+      "risk_score": 0.999997180570515,
+      "chunk_attention": [
+        {
+          "index": 0,
+          "text": "Vịnh Hạ Long thuộc tỉnh Quảng Ninh, có khoảng hai nghìn hòn đảo đá vôi. ",
+          "char_start": 0,
+          "char_end": 72,
+          "share": 0.15198193765118276
+        },
+        {
+          "index": 1,
+          "text": "UNESCO công nhận vịnh là di sản thiên nhiên thế giới lần đầu năm 1994. Tên gọi Hạ Long có nghĩa là rồng đáp xuống, theo truyền thuyết về đàn rồng bảo vệ đất nước. ",
+          "char_start": 72,
+          "char_end": 235,
+          "share": 0.09684011676082147
+        },
+        {
+          "index": 2,
+          "text": "Hang Sửng Sốt là một trong những hang động lớn nhất trong vịnh.\n\n",
+          "char_start": 235,
+          "char_end": 300,
+          "share": 0.09816007669112738
+        },
+        {
+          "index": 3,
+          "text": "Phú Quốc là đảo lớn nhất Việt Nam, thuộc tỉnh Kiên Giang, nằm trong vịnh Thái Lan. ",
+          "char_start": 300,
+          "char_end": 383,
+          "share": 0.08590835246086898
+        },
+        {
+          "index": 4,
+          "text": "Đảo nổi tiếng với nước mắm và hồ tiêu. ",
+          "char_start": 383,
+          "char_end": 422,
+          "share": 0.06474342429345527
+        },
+        {
+          "index": 5,
+          "text": "Phú Quốc trở thành thành phố đảo đầu tiên của Việt Nam vào năm 2021. Vườn quốc gia Phú Quốc chiếm hơn một nửa diện tích đảo.\n\n",
+          "char_start": 422,
+          "char_end": 548,
+          "share": 0.07981232496891046
+        },
+        {
+          "index": 6,
+          "text": "Đà Nẵng là thành phố trực thuộc trung ương ở miền Trung, nằm bên vịnh Đà Nẵng. ",
+          "char_start": 548,
+          "char_end": 627,
+          "share": 0.08350045096043318
+        },
+        {
+          "index": 7,
+          "text": "Cầu Rồng bắc qua sông Hàn khánh thành năm 2013 và phun lửa vào tối cuối tuần. ",
+          "char_start": 627,
+          "char_end": 705,
+          "share": 0.09583456021213049
+        },
+        {
+          "index": 8,
+          "text": "Bán đảo Sơn Trà nằm ngay cạnh thành phố và là nơi sinh sống của loài voọc chà vá chân nâu. ",
+          "char_start": 705,
+          "char_end": 796,
+          "share": 0.09203617718211188
+        },
+        {
+          "index": 9,
+          "text": "Sân bay Đà Nẵng là một trong ba sân bay quốc tế lớn nhất cả nước.",
+          "char_start": 796,
+          "char_end": 861,
+          "share": 0.1511825788189583
+        }
+      ],
+      "elapsed_ms": 679.7873730000106,
+      "n_chunks": 10,
+      "truncated": false,
+      "nonfinite_layers": []
+    },
+    "elapsed_ms": {
+      "retrieve": 0.44886599999927057,
+      "generate": 9178.827013999979,
+      "score": 679.871004000006
+    }
+  },
+  "bad_strategy_status": 400
+}

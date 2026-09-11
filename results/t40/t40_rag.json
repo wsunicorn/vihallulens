@@ -1,0 +1,497 @@
+[
+  {
+    "question": "Đỉnh núi cao nhất Đông Dương là gì?",
+    "retrieved": [
+      {
+        "id": "sa-pa",
+        "title": "Sa Pa",
+        "score": 14.039,
+        "rank": 1
+      },
+      {
+        "id": "dien-bien-phu",
+        "title": "Chiến dịch Điện Biên Phủ",
+        "score": 4.792,
+        "rank": 2
+      },
+      {
+        "id": "da-lat",
+        "title": "Đà Lạt",
+        "score": 2.826,
+        "rank": 3
+      }
+    ],
+    "context": "Sa Pa là thị xã vùng cao thuộc tỉnh Lào Cai, ở độ cao khoảng 1.500 mét. Đỉnh Fansipan gần Sa Pa cao 3.143 mét và là đỉnh núi cao nhất Đông Dương. Tuyến cáp treo lên Fansipan khánh thành năm 2016. Ruộng bậc thang ở Sa Pa do người H'Mông và người Dao canh tác từ nhiều đời.\n\nChiến dịch Điện Biên Phủ diễn ra từ ngày 13 tháng 3 đến ngày 7 tháng 5 năm 1954. Quân đội Việt Nam do Đại tướng Võ Nguyên Giáp chỉ huy đã kéo pháo lên các điểm cao quanh lòng chảo. Chiến thắng dẫn tới Hiệp định Genève và kết thúc sự hiện diện của Pháp ở Đông Dương. Điện Biên Phủ nằm ở tỉnh Điện Biên, phía tây bắc.\n\nĐà Lạt là thành phố trên cao nguyên Lâm Viên, ở độ cao khoảng 1.500 mét. Thành phố do người Pháp xây dựng làm nơi nghỉ dưỡng từ đầu thế kỷ hai mươi, theo đề xuất của bác sĩ Alexandre Yersin. Khí hậu Đà Lạt mát mẻ quanh năm nên nơi đây trồng nhiều hoa và rau ôn đới. Hồ Xuân Hương nằm giữa trung tâm thành phố.",
+    "answer": "![](https://cdn.pixabay.com!-/photo/2017/08/16/13/19!-/mountain!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-",
+    "score": {
+      "label": "extrinsic",
+      "proba": {
+        "no": 6.792291499745852e-05,
+        "intrinsic": 0.0036767169627762155,
+        "extrinsic": 0.9962553601222263
+      },
+      "risk_score": 0.9999320770850025,
+      "chunk_attention": [
+        {
+          "index": 0,
+          "text": "Sa Pa là thị xã vùng cao thuộc tỉnh Lào Cai, ở độ cao khoảng 1.500 mét. ",
+          "char_start": 0,
+          "char_end": 72,
+          "share": 0.11094129863521209
+        },
+        {
+          "index": 1,
+          "text": "Đỉnh Fansipan gần Sa Pa cao 3.143 mét và là đỉnh núi cao nhất Đông Dương. ",
+          "char_start": 72,
+          "char_end": 146,
+          "share": 0.10001074953557802
+        },
+        {
+          "index": 2,
+          "text": "Tuyến cáp treo lên Fansipan khánh thành năm 2016. Ruộng bậc thang ở Sa Pa do người H'Mông và người Dao canh tác từ nhiều đời.\n\n",
+          "char_start": 146,
+          "char_end": 273,
+          "share": 0.0800416214834415
+        },
+        {
+          "index": 3,
+          "text": "Chiến dịch Điện Biên Phủ diễn ra từ ngày 13 tháng 3 đến ngày 7 tháng 5 năm 1954. Quân đội Việt Nam do Đại tướng Võ Nguyên Giáp chỉ huy đã kéo pháo lên các điểm cao quanh lòng chảo. ",
+          "char_start": 273,
+          "char_end": 454,
+          "share": 0.07010927642184832
+        },
+        {
+          "index": 4,
+          "text": "Chiến thắng dẫn tới Hiệp định Genève và kết thúc sự hiện diện của Pháp ở Đông Dương. ",
+          "char_start": 454,
+          "char_end": 539,
+          "share": 0.05332256389917404
+        },
+        {
+          "index": 5,
+          "text": "Điện Biên Phủ nằm ở tỉnh Điện Biên, phía tây bắc.\n\n",
+          "char_start": 539,
+          "char_end": 590,
+          "share": 0.07845231521721013
+        },
+        {
+          "index": 6,
+          "text": "Đà Lạt là thành phố trên cao nguyên Lâm Viên, ở độ cao khoảng 1.500 mét. ",
+          "char_start": 590,
+          "char_end": 663,
+          "share": 0.07815473469118463
+        },
+        {
+          "index": 7,
+          "text": "Thành phố do người Pháp xây dựng làm nơi nghỉ dưỡng từ đầu thế kỷ hai mươi, theo đề xuất của bác sĩ Alexandre Yersin. ",
+          "char_start": 663,
+          "char_end": 781,
+          "share": 0.07723428345071857
+        },
+        {
+          "index": 8,
+          "text": "Khí hậu Đà Lạt mát mẻ quanh năm nên nơi đây trồng nhiều hoa và rau ôn đới. ",
+          "char_start": 781,
+          "char_end": 856,
+          "share": 0.10730549924211377
+        },
+        {
+          "index": 9,
+          "text": "Hồ Xuân Hương nằm giữa trung tâm thành phố.",
+          "char_start": 856,
+          "char_end": 899,
+          "share": 0.24442765742351874
+        }
+      ],
+      "elapsed_ms": 614.2193139999677,
+      "n_chunks": 10,
+      "truncated": false,
+      "nonfinite_layers": []
+    },
+    "elapsed_ms": {
+      "retrieve": 0.6414690000156043,
+      "generate": 9395.450149999988,
+      "score": 614.3231130000117
+    }
+  },
+  {
+    "question": "Ai chỉ huy chiến dịch Điện Biên Phủ?",
+    "retrieved": [
+      {
+        "id": "dien-bien-phu",
+        "title": "Chiến dịch Điện Biên Phủ",
+        "score": 20.275,
+        "rank": 1
+      },
+      {
+        "id": "truyen-kieu",
+        "title": "Truyện Kiều",
+        "score": 2.212,
+        "rank": 2
+      },
+      {
+        "id": "tphcm",
+        "title": "Thành phố Hồ Chí Minh",
+        "score": 2.097,
+        "rank": 3
+      }
+    ],
+    "context": "Chiến dịch Điện Biên Phủ diễn ra từ ngày 13 tháng 3 đến ngày 7 tháng 5 năm 1954. Quân đội Việt Nam do Đại tướng Võ Nguyên Giáp chỉ huy đã kéo pháo lên các điểm cao quanh lòng chảo. Chiến thắng dẫn tới Hiệp định Genève và kết thúc sự hiện diện của Pháp ở Đông Dương. Điện Biên Phủ nằm ở tỉnh Điện Biên, phía tây bắc.\n\nTruyện Kiều là tác phẩm thơ Nôm của Nguyễn Du, gồm 3.254 câu lục bát. Tác phẩm dựa trên tiểu thuyết Kim Vân Kiều truyện của Thanh Tâm Tài Nhân. Nguyễn Du sinh năm 1765 ở làng Tiên Điền, Hà Tĩnh. Truyện Kiều được dịch ra hơn hai mươi thứ tiếng.\n\nThành phố Hồ Chí Minh là thành phố đông dân nhất Việt Nam, nằm ở miền Nam bên sông Sài Gòn. Trước năm 1976 thành phố mang tên Sài Gòn. Chợ Bến Thành xây xong năm 1914 và là một biểu tượng của thành phố. Khí hậu ở đây chỉ có hai mùa là mùa mưa và mùa khô.",
+    "answer": "![](https://cdn.mathpix![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https://cdn![](https",
+    "score": {
+      "label": "extrinsic",
+      "proba": {
+        "no": 0.004004472681172252,
+        "intrinsic": 0.026218906058055203,
+        "extrinsic": 0.9697766212607727
+      },
+      "risk_score": 0.9959955273188278,
+      "chunk_attention": [
+        {
+          "index": 0,
+          "text": "Chiến dịch Điện Biên Phủ diễn ra từ ngày 13 tháng 3 đến ngày 7 tháng 5 năm 1954. Quân đội Việt Nam do Đại tướng Võ Nguyên Giáp chỉ huy đã kéo pháo lên các điểm cao quanh lòng chảo. ",
+          "char_start": 0,
+          "char_end": 181,
+          "share": 0.08169342070106349
+        },
+        {
+          "index": 1,
+          "text": "Chiến thắng dẫn tới Hiệp định Genève và kết thúc sự hiện diện của Pháp ở Đông Dương. ",
+          "char_start": 181,
+          "char_end": 266,
+          "share": 0.05129840197225457
+        },
+        {
+          "index": 2,
+          "text": "Điện Biên Phủ nằm ở tỉnh Điện Biên, phía tây bắc.\n\n",
+          "char_start": 266,
+          "char_end": 317,
+          "share": 0.09925948964225517
+        },
+        {
+          "index": 3,
+          "text": "Truyện Kiều là tác phẩm thơ Nôm của Nguyễn Du, gồm 3.254 câu lục bát. ",
+          "char_start": 317,
+          "char_end": 387,
+          "share": 0.0964639412401487
+        },
+        {
+          "index": 4,
+          "text": "Tác phẩm dựa trên tiểu thuyết Kim Vân Kiều truyện của Thanh Tâm Tài Nhân. ",
+          "char_start": 387,
+          "char_end": 461,
+          "share": 0.04997258569133072
+        },
+        {
+          "index": 5,
+          "text": "Nguyễn Du sinh năm 1765 ở làng Tiên Điền, Hà Tĩnh. ",
+          "char_start": 461,
+          "char_end": 512,
+          "share": 0.09548984050934875
+        },
+        {
+          "index": 6,
+          "text": "Truyện Kiều được dịch ra hơn hai mươi thứ tiếng.\n\n",
+          "char_start": 512,
+          "char_end": 562,
+          "share": 0.08637004995183087
+        },
+        {
+          "index": 7,
+          "text": "Thành phố Hồ Chí Minh là thành phố đông dân nhất Việt Nam, nằm ở miền Nam bên sông Sài Gòn. ",
+          "char_start": 562,
+          "char_end": 654,
+          "share": 0.08104632134644425
+        },
+        {
+          "index": 8,
+          "text": "Trước năm 1976 thành phố mang tên Sài Gòn. ",
+          "char_start": 654,
+          "char_end": 697,
+          "share": 0.08770200304993554
+        },
+        {
+          "index": 9,
+          "text": "Chợ Bến Thành xây xong năm 1914 và là một biểu tượng của thành phố. ",
+          "char_start": 697,
+          "char_end": 765,
+          "share": 0.10039206109249667
+        },
+        {
+          "index": 10,
+          "text": "Khí hậu ở đây chỉ có hai mùa là mùa mưa và mùa khô.",
+          "char_start": 765,
+          "char_end": 816,
+          "share": 0.17031188480289092
+        }
+      ],
+      "elapsed_ms": 605.6999639999958,
+      "n_chunks": 11,
+      "truncated": false,
+      "nonfinite_layers": []
+    },
+    "elapsed_ms": {
+      "retrieve": 0.7917020000149932,
+      "generate": 9381.111345000023,
+      "score": 605.8032869999579
+    }
+  },
+  {
+    "question": "Phở xuất hiện ở đâu và khi nào?",
+    "retrieved": [
+      {
+        "id": "pho",
+        "title": "Phở",
+        "score": 9.65,
+        "rank": 1
+      },
+      {
+        "id": "banh-mi",
+        "title": "Bánh mì",
+        "score": 3.412,
+        "rank": 2
+      },
+      {
+        "id": "ao-dai",
+        "title": "Áo dài",
+        "score": 2.925,
+        "rank": 3
+      }
+    ],
+    "context": "Phở là món ăn truyền thống của Việt Nam gồm bánh phở, nước dùng ninh từ xương và thịt bò hoặc gà. Phở xuất hiện ở miền Bắc vào đầu thế kỷ hai mươi. Phở Hà Nội thường dùng nước trong và ít gia vị hơn phở Sài Gòn. Ngày 12 tháng 12 hằng năm được chọn làm Ngày của Phở.\n\nBánh mì Việt Nam là ổ bánh mì vỏ giòn kẹp nhân thịt, pa tê, rau thơm và đồ chua. Món ăn hình thành từ thời Pháp thuộc khi bánh baguette du nhập vào Việt Nam. Năm 2011 từ banh mi được đưa vào từ điển Oxford. Bánh mì Hội An và bánh mì Sài Gòn là hai phong cách nổi tiếng.\n\nÁo dài là trang phục truyền thống của Việt Nam, gồm áo dài xẻ hai tà mặc cùng quần rộng. Kiểu áo dài hiện đại định hình vào thập niên 1930 với cải tiến của họa sĩ Cát Tường. Áo dài thường được mặc trong lễ Tết, đám cưới và ở nhiều trường học. Lụa và gấm là hai chất liệu phổ biến để may áo dài.",
+    "answer": "![](https://cdn.pixabay.com!-/photo/2017/08/24/15/16!-/ph!-o!-s!-!-bowl!-!-!-with!-!-!-be!-ef!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-",
+    "score": {
+      "label": "extrinsic",
+      "proba": {
+        "no": 3.3163262048633363e-06,
+        "intrinsic": 0.0007575443592616124,
+        "extrinsic": 0.9992391393145336
+      },
+      "risk_score": 0.9999966836737951,
+      "chunk_attention": [
+        {
+          "index": 0,
+          "text": "Phở là món ăn truyền thống của Việt Nam gồm bánh phở, nước dùng ninh từ xương và thịt bò hoặc gà. ",
+          "char_start": 0,
+          "char_end": 98,
+          "share": 0.1170270710948565
+        },
+        {
+          "index": 1,
+          "text": "Phở xuất hiện ở miền Bắc vào đầu thế kỷ hai mươi. ",
+          "char_start": 98,
+          "char_end": 148,
+          "share": 0.0646214826203774
+        },
+        {
+          "index": 2,
+          "text": "Phở Hà Nội thường dùng nước trong và ít gia vị hơn phở Sài Gòn. ",
+          "char_start": 148,
+          "char_end": 212,
+          "share": 0.05172964483790204
+        },
+        {
+          "index": 3,
+          "text": "Ngày 12 tháng 12 hằng năm được chọn làm Ngày của Phở.\n\n",
+          "char_start": 212,
+          "char_end": 267,
+          "share": 0.08366636074123508
+        },
+        {
+          "index": 4,
+          "text": "Bánh mì Việt Nam là ổ bánh mì vỏ giòn kẹp nhân thịt, pa tê, rau thơm và đồ chua. ",
+          "char_start": 267,
+          "char_end": 348,
+          "share": 0.08542415629369
+        },
+        {
+          "index": 5,
+          "text": "Món ăn hình thành từ thời Pháp thuộc khi bánh baguette du nhập vào Việt Nam. ",
+          "char_start": 348,
+          "char_end": 425,
+          "share": 0.05354454546966559
+        },
+        {
+          "index": 6,
+          "text": "Năm 2011 từ banh mi được đưa vào từ điển Oxford. ",
+          "char_start": 425,
+          "char_end": 474,
+          "share": 0.08122198499964053
+        },
+        {
+          "index": 7,
+          "text": "Bánh mì Hội An và bánh mì Sài Gòn là hai phong cách nổi tiếng.\n\n",
+          "char_start": 474,
+          "char_end": 538,
+          "share": 0.05641133793213101
+        },
+        {
+          "index": 8,
+          "text": "Áo dài là trang phục truyền thống của Việt Nam, gồm áo dài xẻ hai tà mặc cùng quần rộng. ",
+          "char_start": 538,
+          "char_end": 627,
+          "share": 0.08180641676721181
+        },
+        {
+          "index": 9,
+          "text": "Kiểu áo dài hiện đại định hình vào thập niên 1930 với cải tiến của họa sĩ Cát Tường. ",
+          "char_start": 627,
+          "char_end": 712,
+          "share": 0.07604376547198158
+        },
+        {
+          "index": 10,
+          "text": "Áo dài thường được mặc trong lễ Tết, đám cưới và ở nhiều trường học. ",
+          "char_start": 712,
+          "char_end": 781,
+          "share": 0.07999438903833746
+        },
+        {
+          "index": 11,
+          "text": "Lụa và gấm là hai chất liệu phổ biến để may áo dài.",
+          "char_start": 781,
+          "char_end": 832,
+          "share": 0.16850884473297095
+        }
+      ],
+      "elapsed_ms": 625.7230859999936,
+      "n_chunks": 12,
+      "truncated": false,
+      "nonfinite_layers": []
+    },
+    "elapsed_ms": {
+      "retrieve": 0.6076669999970363,
+      "generate": 9337.591357999998,
+      "score": 625.8145400000217
+    }
+  },
+  {
+    "question": "Hồ Hoàn Kiếm gắn với truyền thuyết nào?",
+    "retrieved": [
+      {
+        "id": "hanoi-thu-do",
+        "title": "Hà Nội",
+        "score": 11.792,
+        "rank": 1
+      },
+      {
+        "id": "tet",
+        "title": "Tết Nguyên Đán",
+        "score": 5.41,
+        "rank": 2
+      },
+      {
+        "id": "trung-thu",
+        "title": "Tết Trung Thu",
+        "score": 2.953,
+        "rank": 3
+      }
+    ],
+    "context": "Hà Nội là thủ đô của Việt Nam, nằm ở đồng bằng sông Hồng. Thành phố từng mang tên Thăng Long từ năm 1010 dưới triều Lý. Hồ Hoàn Kiếm nằm ở trung tâm khu phố cổ và gắn với truyền thuyết vua Lê Lợi trả gươm. Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.\n\nTết Nguyên Đán là ngày lễ lớn nhất trong năm của người Việt, tính theo âm lịch. Người Việt thường dọn nhà, gói bánh chưng và thăm mộ tổ tiên trước Tết. Bánh chưng hình vuông tượng trưng cho đất, gắn với truyền thuyết Lang Liêu. Trẻ em được mừng tuổi bằng bao lì xì màu đỏ.\n\nTết Trung Thu diễn ra vào rằm tháng tám âm lịch. Trẻ em rước đèn ông sao, đèn kéo quân và xem múa lân. Bánh trung thu có hai loại chính là bánh nướng và bánh dẻo. Sự tích chú Cuội ngồi gốc cây đa trên cung trăng gắn với ngày lễ này.",
+    "answer": "![](https://cdn.pix![](https://cdn.pix!user\nuser\nHà Nội) Hồ Hoàn Kiếm![](https://cdn![](https://cdn!user\nuser\nHà Nội) Hồ Hoàn Kiếm![](https://cdn![](https://cdn!user\nuser\nHà Nội) Hồ Hoàn Kiếm![](https://cdn![](https://cdn!user\nuser\n![](https://cdn.pix![](https://cdn!user\nuser\nHà Nội) Hồ Hoàn![](https://cdn!user\nuser\n![](https://cdn![](https://cdn!user\nuser\nHà Nội) Hồ Hoàn![](",
+    "score": {
+      "label": "extrinsic",
+      "proba": {
+        "no": 0.0002785666729113511,
+        "intrinsic": 0.014959556271595177,
+        "extrinsic": 0.9847618770554933
+      },
+      "risk_score": 0.9997214333270886,
+      "chunk_attention": [
+        {
+          "index": 0,
+          "text": "Hà Nội là thủ đô của Việt Nam, nằm ở đồng bằng sông Hồng. ",
+          "char_start": 0,
+          "char_end": 58,
+          "share": 0.1382943723802008
+        },
+        {
+          "index": 1,
+          "text": "Thành phố từng mang tên Thăng Long từ năm 1010 dưới triều Lý. ",
+          "char_start": 58,
+          "char_end": 120,
+          "share": 0.0723434666283862
+        },
+        {
+          "index": 2,
+          "text": "Hồ Hoàn Kiếm nằm ở trung tâm khu phố cổ và gắn với truyền thuyết vua Lê Lợi trả gươm. ",
+          "char_start": 120,
+          "char_end": 206,
+          "share": 0.07814658065489226
+        },
+        {
+          "index": 3,
+          "text": "Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.\n\n",
+          "char_start": 206,
+          "char_end": 269,
+          "share": 0.10163982093483202
+        },
+        {
+          "index": 4,
+          "text": "Tết Nguyên Đán là ngày lễ lớn nhất trong năm của người Việt, tính theo âm lịch. ",
+          "char_start": 269,
+          "char_end": 349,
+          "share": 0.10229805562110617
+        },
+        {
+          "index": 5,
+          "text": "Người Việt thường dọn nhà, gói bánh chưng và thăm mộ tổ tiên trước Tết. ",
+          "char_start": 349,
+          "char_end": 421,
+          "share": 0.048600827345323186
+        },
+        {
+          "index": 6,
+          "text": "Bánh chưng hình vuông tượng trưng cho đất, gắn với truyền thuyết Lang Liêu. ",
+          "char_start": 421,
+          "char_end": 497,
+          "share": 0.06317363370343308
+        },
+        {
+          "index": 7,
+          "text": "Trẻ em được mừng tuổi bằng bao lì xì màu đỏ.\n\n",
+          "char_start": 497,
+          "char_end": 543,
+          "share": 0.09285605105963292
+        },
+        {
+          "index": 8,
+          "text": "Tết Trung Thu diễn ra vào rằm tháng tám âm lịch. ",
+          "char_start": 543,
+          "char_end": 592,
+          "share": 0.0787710366765873
+        },
+        {
+          "index": 9,
+          "text": "Trẻ em rước đèn ông sao, đèn kéo quân và xem múa lân. ",
+          "char_start": 592,
+          "char_end": 646,
+          "share": 0.050531517201988105
+        },
+        {
+          "index": 10,
+          "text": "Bánh trung thu có hai loại chính là bánh nướng và bánh dẻo. ",
+          "char_start": 646,
+          "char_end": 706,
+          "share": 0.05932940927500011
+        },
+        {
+          "index": 11,
+          "text": "Sự tích chú Cuội ngồi gốc cây đa trên cung trăng gắn với ngày lễ này.",
+          "char_start": 706,
+          "char_end": 775,
+          "share": 0.11401522851861802
+        }
+      ],
+      "elapsed_ms": 625.4675760000055,
+      "n_chunks": 12,
+      "truncated": false,
+      "nonfinite_layers": []
+    },
+    "elapsed_ms": {
+      "retrieve": 0.6398179999678177,
+      "generate": 9295.022324000001,
+      "score": 625.565464000033
+    }
+  }
+]

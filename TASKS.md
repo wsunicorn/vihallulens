@@ -4376,15 +4376,48 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   Docker (T38) không chạy trên Kaggle — vẫn chưa kiểm với GPU, notebook ghi rõ.
 
-  ### Việc cần chạy
+  ### Phiên Kaggle 11/09: ba smoke test qua, phần sinh câu trả lời hỏng
 
-  1. Mở `notebooks/t40_demo_t4.ipynb` trên Kaggle, GPU T4, mount dataset dữ liệu thô (ô 4 cần
-     `vihallu_train.csv` để lấy một mẫu có nhãn).
-  2. Chạy tới hết ô 9. Khoảng 10 phút.
-  3. Tải `ket_qua_t40` về (bốn file nhỏ), dán JSON vào PR, tick T40 cùng ba dòng "kèm từ" ở dưới.
+  9/9 ô chạy, 208 giây. Notebook và ba JSON commit vào `notebooks/` và `results/t40/`.
 
-  Ba ví dụ ở ô 5 và bốn câu hỏi ở ô 6 là **để nhìn**: bộ phát hiện không được huấn luyện trên
-  chúng, nhãn ra sao ghi vậy, đừng chọn lại câu cho đẹp.
+| Kiểm | Kết quả |
+|---|---|
+| T36 — nạp thư viện thật | 110 s, VRAM 5.562 MB. Ba ví dụ: trung thực → `no` 0,001 · nội tại → `intrinsic` 0,998 · ngoại lai → `extrinsic` 1,000. **Cả ba đúng**, không được huấn luyện trên chúng |
+| T37 — dịch vụ REST thật | `/health` `ok`; `/score` mẫu `vihallu_train_19` nhãn thật `no`, đoán `no` (P = 0,683); `chunk_strategy` lạ → **400** |
+| T39 — trang được phục vụ | `GET /` 200, 16.164 ký tự, đủ bốn dấu hiệu |
+| **T40 — hệ RAG** | truy xuất đúng cả bốn câu; **sinh câu trả lời ra rác** |
+
+  ### Câu trả lời sinh ra là rác, và lý do nằm ở lớp 27
+
+  Cả bốn câu trả lời bắt đầu bằng `![](https://cdn…` rồi lặp `!-!-!-`, dù prompt đúng chat
+  template mục 8 và giải mã tham lam. Đây không phải ảo giác, đây là **logit NaN**:
+
+  - Token id **0** của Qwen2.5 là `!` (kiểm bằng tokenizer). `argmax` trên véc-tơ toàn NaN trả về
+    chỉ số 0. Văn bản ngập `!` đúng như dự đoán.
+  - T07 đo được **lớp 27 tràn số ở 20/20 mẫu** trong `float16`. Bộ phát hiện né bằng cách không
+    hook lớp đó — `nonfinite_layers=[]` trong JSON là vì thế. Nhưng **dòng dư vẫn đi qua lớp 27
+    rồi vào LM head**. Chấm điểm bằng teacher forcing không dùng logit nên vô hại; sinh thì chết.
+
+  Nói gọn: **cấu hình `float16` + bỏ lớp 27 làm bộ phát hiện rẻ chính là cấu hình làm cùng mô
+  hình ấy không sinh được gì.** Điều này phải ghi vào phần hạn chế của lập luận chi phí biên
+  (Bảng 8): "lượt đọc hệ RAG dù sao cũng trả" chỉ đúng khi hệ RAG sinh bằng mô hình đọc, mà trên
+  T4 ở `float16` thì mô hình đọc không sinh được. Trên Ampere trở lên có `bfloat16` gốc, vấn đề
+  biến mất.
+
+  Một chi tiết đáng giữ: bộ phát hiện gán **`extrinsic`, rủi ro 1,000** cho cả bốn câu rác — nó
+  nhận ra văn bản không bám ngữ cảnh, kể cả khi văn bản ấy vô nghĩa.
+
+  ### Quyết định cần chốt: sinh câu trả lời bằng gì
+
+  Đổi mô hình sinh là quyết định kiến trúc chưa có trong `CLAUDE.md`, nên dừng hỏi theo mục 6.4.
+
+| | Cách | VRAM thêm | Tốc độ trên T4 | Câu chuyện demo |
+|---|---|---|---|---|
+| **A** | Qwen2.5-1.5B-Instruct `bfloat16` làm bộ sinh riêng (T31: 0 lớp tràn, 2.718 MB) | ~2,7 GB → tổng ~8,3 GB | bf16 giả lập, ước 10–20 s một câu | bộ sinh **khác** bộ đọc — kiến trúc RAG thông thường, bộ phát hiện chấm bất kỳ bộ sinh nào |
+| B | chính Qwen2.5-7B nạp thêm bản `bfloat16` | ~5,5 GB → tổng ~11 GB | 4,4× chậm, ước 40–60 s một câu | giữ "một mô hình làm cả" nhưng là hai bản nạp |
+| C | không sinh; người dùng gõ câu trả lời | 0 | — | demo yếu hơn: hỏi rồi phải tự gõ đáp |
+
+  Nghiêng về **A**.
 
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
     `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.
