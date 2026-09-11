@@ -1454,6 +1454,15 @@ Ba điều khiến cột biên đáng tin ở mức giả thiết, ghi để ng�
 Điều nó **chưa** tính: bật `output_attentions` vô hiệu hóa FlashAttention, nên một hệ RAG dùng
 FlashAttention sẽ phải trả thêm để lấy được ma trận chú ý. Đó là chi phí biên thật và chưa ai đo.
 
+**Và một điều khoản phần cứng, đo được ở T40 (11/09/2026).** Lập luận "lượt đọc dù sao cũng
+trả" giả định hệ RAG sinh câu trả lời **bằng chính mô hình đọc**. Trên T4 ở `float16` — cấu hình
+đã chốt cho bộ phát hiện — mô hình ấy **không sinh được**: lớp 27 tràn số (T07), bộ phát hiện né
+bằng cách không đọc lớp đó, nhưng dòng dư vẫn đi qua lớp 27 vào LM head, logit thành NaN và
+`argmax` trả về token 0 = `!`. Cả bốn câu trả lời của demo ra `![](…!-!-`. Sinh được thì phải
+`bfloat16`, tức trên T4 là **một bản nạp thứ hai** và giải mã chậm khoảng bốn lần. Chi phí biên
+"gần 0" vì thế chỉ đúng trên phần cứng có `bfloat16` gốc (Ampere trở lên), nơi một bản duy nhất
+vừa đọc vừa viết. Phải viết kèm khi trình bày Bảng 8.
+
 ### Hai ô của Bảng 1 sai, và bảng này chứng minh điều đó
 
 Bảng 1 ghi E02 tốn **464 ms** và E03 tốn **528 ms**. Hai con số ấy không thể cùng đúng: E02 và E03

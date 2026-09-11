@@ -102,6 +102,7 @@ class HealthResponse(BaseModel):
     device: str | None
     vram_allocated_mb: float | None
     vram_reserved_mb: float | None
+    generator: str | None = None   # bộ sinh của demo, nạp lười ở câu hỏi đầu tiên
     requests_served: int
     uptime_s: float
 
@@ -271,6 +272,8 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
             device=getattr(getattr(det, "extractor", None), "device", None) if loaded else None,
             vram_allocated_mb=allocated,
             vram_reserved_mb=reserved,
+            generator=(state["rag"].generator.describe()
+                       if state["rag"] is not None and state["rag"].generator_loaded else None),
             requests_served=state["requests"],
             uptime_s=time.time() - state["started"],
         )
