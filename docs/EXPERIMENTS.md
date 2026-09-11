@@ -871,13 +871,74 @@ không bị đụng tới:
 Nói cách khác, E12 củng cố đúng cái kết luận mục 5.7 của báo cáo giữa kỳ đã nêu: **định vị đúng
 và phân loại đúng là hai việc khác nhau.** Bây giờ có thêm một phép đo trực tiếp cho vế thứ hai.
 
-### Việc phải làm trước khi viết chương 7
+### Hai việc để lại — làm xong ở T35B, 11/09/2026
 
-1. Chạy lại E12 trên **ISE-DSC01** — ngữ cảnh 22,6 đoạn thay vì 5,3. Nếu dấu vẫn âm ở đó thì kết
-   luận vững; nếu đảo dấu thì nó phụ thuộc số đoạn, và đó lại là một phát hiện khác.
-2. Chạy một mức phụ **bề mặt + chunk-aware, không có lookback gộp**, để đo trực tiếp mức chồng
-   lấn giả thuyết ở trên thay vì suy đoán.
-3. Không sửa lại khung E12 cho ra số đẹp. Khung hiện tại đã chạy hai cách và cả hai cùng dấu.
+Cả hai chạy trên máy cá nhân, **0 giây GPU**, đọc lại shard E07 (`15ef31521fd6`). Khung bốn mức giữ
+nguyên; mức phụ ghi vào `extra["extra_levels"]` qua cờ `--extra-level`, không chèn vào bảng.
+
+#### Bảng 4b — E12 trên ISE-DSC01, đặt cạnh ViHallu
+
+| Bộ | Cách gộp đầu | Chỉ bề mặt | + lookback gộp | + chunk-aware | **chênh** | + ổn định |
+|---|---|---|---|---|---|---|
+| ViHallu | dev chọn riêng | 0,6562 | 0,7653 | 0,7388 | **−0,0266** | 0,7746 |
+| ViHallu | gộp chung k=32 | 0,6562 | 0,7759 | 0,7688 | **−0,0071** | 0,7746 |
+| ISE-DSC01 | dev chọn riêng | 0,4767 | 0,7837 | 0,7839 | **+0,0002** | 0,7918 |
+| ISE-DSC01 | gộp chung k=32 | 0,4767 | 0,6554 | 0,6950 | **+0,0396** | 0,7024 |
+
+Test ISE-DSC01 có 3.646 mẫu nên khoảng tin cậy hẹp, khoảng ±0,014.
+
+**Việc 1 trả lời: ở 22,6 đoạn, chênh là +0,0002.** Không âm như ViHallu, cũng không dương — bằng
+không, với sai số nhỏ hơn cả ViHallu. Kết luận "đóng góp riêng không phân biệt được với 0"
+**vững, và không phụ thuộc số đoạn**.
+
+Dòng gộp chung của ISE-DSC01 cho +0,0396 và cần đọc kỹ, vì nó là một hiện tượng khác. Khóa cách
+gộp ở 32 đầu làm lookback gộp **mất 0,128** trên bộ này (0,6554 so với 0,7837 khi dùng đủ 758
+cột) — ngữ cảnh 22,6 đoạn cần nhiều đầu hơn ngữ cảnh 5,3 đoạn. Bốn khối chunk-aware ở k=32 thêm
+128 cột **từ chính 32 đầu ấy**, và một phần thông tin bị cắt đi quay lại theo đường đó. Đây là
+"thêm cột từ cùng những đầu", không phải "thêm thông tin": khi lookback được dùng đủ bề rộng thì
+phần cộng thêm biến mất. Chế độ gộp chung — vốn được thêm ở T29 để cột chênh sạch trên ViHallu —
+tạo ra một hiện tượng giả trên bộ nhiều đoạn. **Chế độ dev chọn riêng là chế độ đọc đúng cho
+ISE-DSC01.**
+
+Hai điều phụ đọc được từ bảng:
+
+- **Đặc trưng bề mặt yếu hơn hẳn trên ISE-DSC01**: 0,4767 so với 0,6562. Câu khẳng định do người
+  viết không mang dấu vết độ dài và trùng lặp như phản hồi GPT-4o. Chú ý vì thế cộng thêm **+0,31**
+  ở đây so với +0,11 trên ViHallu — tín hiệu chú ý quan trọng hơn đúng ở chỗ bề mặt bất lực.
+- **Nhóm ổn định là nhóm duy nhất cộng thêm dương ở cả bốn dòng** (+0,0057 tới +0,0358).
+
+#### Bảng 4c — Mức phụ: chồng lấn giữa chunk-aware và lookback gộp
+
+Mức phụ chấm **bề mặt + chunk-aware, bỏ lookback gộp**. Từ ba mức có chung gốc bề mặt tính được:
+
+    chồng lấn = gain(lookback một mình) + gain(chunk-aware một mình) − gain(cả hai)
+
+Bằng 0 là hai nhóm cộng được vào nhau; dương là mang cùng một thông tin; bằng đúng gain của
+chunk-aware là **mọi thứ chunk-aware mang, lookback đã mang rồi**.
+
+| Bộ | Cách gộp | lookback một mình | chunk-aware một mình | cả hai | **chồng lấn** | chồng lấn / chunk riêng |
+|---|---|---|---|---|---|---|
+| ViHallu | dev | +0,1091 | +0,0232 | +0,0825 | +0,0497 | 214 % |
+| ViHallu | gộp chung | +0,1197 | +0,0237 | +0,1126 | +0,0308 | 130 % |
+| ISE-DSC01 | dev | +0,3070 | +0,2268 | +0,3072 | **+0,2266** | **99,9 %** |
+| ISE-DSC01 | gộp chung | +0,1787 | +0,1438 | +0,2183 | +0,1042 | 72 % |
+
+**Việc 2 trả lời, và nó sửa lại giả thuyết cũ.** Mục trên đoán chunk-aware chồng lấn với **đặc
+trưng bề mặt**. Số đo nói khác: chunk-aware một mình cộng thêm +0,0232 trên ViHallu và **+0,2268**
+trên ISE-DSC01 so với bề mặt — tức nó *có* mang tín hiệu mà bề mặt không có, và mang khá nhiều
+khi ngữ cảnh dài. Thứ nó chồng lấn là **lookback gộp**: trên ISE-DSC01 ở chế độ dev, 99,9 % phần
+chunk-aware cộng thêm nằm sẵn trong lookback. Trên ViHallu tỷ lệ vượt 100 %, nghĩa là đặt
+chunk-aware lên trên lookback còn kéo điểm xuống — đúng cột chênh âm của Bảng 4.
+
+Kết luận gộp cả T29 và T35B, viết cho chương 7:
+
+> Năm đại lượng hình dạng phân bố chú ý **có** mang tín hiệu phát hiện ảo giác — càng nhiều đoạn
+> càng mang nhiều — nhưng đó là **cùng một tín hiệu** mà tỷ lệ lookback gộp đã mang, đo được ở
+> mức 99,9 % trên ngữ cảnh 22,6 đoạn. Chúng không cộng thêm gì vào bộ phát hiện, và điều này
+> không phụ thuộc số đoạn.
+
+Cái chúng có mà lookback không có là **đầu ra chỉ được đoạn nào** — Bảng 2, 2b, 2c — và đó vẫn là
+đóng góp thật, chỉ không phải đóng góp về điểm phân loại.
 
 ### Bảng 5 — Mô hình đọc (E13, ViHallu)
 

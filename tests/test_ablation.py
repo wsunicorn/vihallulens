@@ -60,3 +60,46 @@ def test_levels_are_cumulative_so_the_delta_column_means_what_it_says():
 def test_the_widest_level_is_the_configured_contribution():
     assert LEVELS[-1][1] == ("basic", "chunk_aware", "stability")
     assert LEVELS[0][1] == ()
+
+
+# ---------------------------------------------------------------- T35B: the extra level
+
+def test_levels_table_still_has_exactly_four_cumulative_rows():
+    """T35B added ``--extra-level`` as a separate output, not a fifth row.
+
+    Bảng 4 and the two E12 rows already in runs.jsonl are four rows. A fifth row appended to
+    LEVELS would make every later run incomparable with them, so the table's shape is locked.
+    """
+    assert len(LEVELS) == 4
+    assert LEVELS[0][1] == ()
+    for earlier, later in zip(LEVELS, LEVELS[1:], strict=False):
+        assert set(earlier[1]) <= set(later[1]), "các mức phải cộng dồn"
+
+
+def test_extra_level_matrix_has_surface_and_only_the_named_groups():
+    """Surface + chunk_aware, no lookback: 2 surface columns plus four chunk blocks."""
+    n_layers, n_heads = 2, 3
+    record = {
+        "lookback_total": [0.5] * (n_layers * n_heads),
+        "lookback_context": [0.4] * (n_layers * n_heads),
+        "chunk_entropy": [0.1] * (n_layers * n_heads),
+        "chunk_max_share": [0.9] * (n_layers * n_heads),
+        "chunk_gini": [0.2] * (n_layers * n_heads),
+        "top1_top2_gap": [0.3] * (n_layers * n_heads),
+        "chunk_drift": [0.05] * (n_layers * n_heads),
+        "self_attention": [0.0] * (n_layers * n_heads),
+    }
+    surface = np.array([[12.0, 0.7]])
+
+    with_lookback = level_matrix([record], ("basic", "chunk_aware"), n_layers, n_heads,
+                                 "all", None, surface)
+    without = level_matrix([record], ("chunk_aware",), n_layers, n_heads, "all", None, surface)
+
+    # Removing the basic group removes exactly its blocks' columns and nothing else, and the
+    # two surface columns stay at the front where the head ranking expects them.
+    from vihallulens.features.assemble import blocks_for
+
+    basic_columns = len(blocks_for(["basic"])) * n_layers * n_heads
+    assert with_lookback.shape[1] - without.shape[1] == basic_columns
+    assert without.shape[1] == 2 + len(blocks_for(["chunk_aware"])) * n_layers * n_heads
+    assert without[0, :2].tolist() == [12.0, 0.7]
