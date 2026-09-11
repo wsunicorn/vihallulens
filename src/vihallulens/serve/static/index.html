@@ -69,15 +69,21 @@
   #hero { height: 260vh; position: relative; background: #000; }
   #stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #1a1410 0%, #000 65%); }
   #motes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  #title { position: absolute; left: 0; right: 0; top: 11%; transform: none; text-align: center; margin: 0; z-index: 1; pointer-events: none; padding: 0 16px; will-change: transform, opacity; }
+  #title { position: absolute; left: 0; right: 0; top: 9%; transform: none; text-align: center; margin: 0; z-index: 1; pointer-events: none; padding: 0 16px; will-change: transform, opacity; }
   #title .t1 { display: block; font-size: clamp(16px, 2.2vw, 28px); font-weight: 500; letter-spacing: .02em; color: var(--muted); margin-bottom: .3em; }
-  #title .t2 { display: block; font-size: clamp(56px, 12.5vw, 200px); font-weight: 800; letter-spacing: -.05em; line-height: .9; color: var(--accent);
+  #title .t2 { display: block; font-size: clamp(40px, calc((100vw - 48px) / 10.4), 190px); font-weight: 800; letter-spacing: -.05em; line-height: .9; color: var(--accent);
                text-shadow: 0 0 60px rgba(255,157,28,.25); white-space: nowrap; }
-  #title .t3 { display: block; font-size: clamp(14px, 1.6vw, 20px); color: var(--muted); margin-top: 1em; }
+  .side { position: absolute; top: 58%; transform: translateY(-50%); width: min(300px, 26vw); z-index: 3; font-size: .95rem; color: var(--muted); transition: opacity .3s; }
+  .side.left { left: max(24px, calc(50% - 36vmin - 300px)); } .side.right { right: max(24px, calc(50% - 36vmin - 300px)); text-align: right; }
+  .side p { margin: 0 0 10px; } .side p b { color: var(--ink); }
+  .side .stat { margin-bottom: 14px; } .side .stat b { display: block; font-size: 1.9rem; font-weight: 800; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .side .stat span { font-size: .82rem; display: block; }
+  @media (max-width: 1100px) { .side { display: none; } }
   .layer { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); will-change: transform, opacity; }
   .layer img, .layer svg.fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
   .layer .eye { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
-  .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 45% 40%, #ffd27a 0%, var(--amber) 45%, #b85a00 100%);
+  .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%;
+                      background: repeating-conic-gradient(from 0deg, rgba(0,0,0,.10) 0deg 3deg, transparent 3deg 9deg), radial-gradient(circle at 45% 40%, #ffd27a 0%, var(--amber) 42%, #c65f00 78%, #6a2e00 100%);
                       box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 32px 6px rgba(255,157,28,.35); transition: filter .5s, box-shadow .5s; }
   .layer .eye .pupil { position: absolute; left: 50%; top: 50%; width: 52%; height: 52%; border-radius: 50%; background: #06040a;
                        transform: translate(-50%, -50%); transition: transform .12s ease-out, width .4s, height .4s; }
@@ -112,15 +118,17 @@
           animation: bob 2s ease-in-out infinite; transition: opacity .4s; }
   @keyframes bob { 50% { transform: translate(-50%, 6px); } }
   /* the torch: everything dark except around the pointer */
-  #torch { position: absolute; inset: 0; z-index: 6; pointer-events: none; transition: opacity .5s;
-           background: radial-gradient(circle 330px at var(--tx, 50%) var(--ty, 55%), transparent 0, rgba(0,0,0,.15) 45%, rgba(0,0,0,.82) 100%); }
-  #torch.off { opacity: 0; }
+  /* the torch is a mask on the owl itself: feathers show only around the pointer, text is never dimmed */
+  #face.torch { -webkit-mask-image: radial-gradient(circle 34% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.9) 40%, rgba(0,0,0,.12) 100%);
+                mask-image: radial-gradient(circle 34% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.9) 40%, rgba(0,0,0,.12) 100%); }
+  #face.torch .eye { filter: none; }
+  #torch { display: none; }
   @media (max-width: 860px) {
     #hero { height: 220vh; }
     #face { width: min(110vw, 520px); top: 60%; }
     #prof { width: min(70vh, 84vw); }
     #intro { top: auto; bottom: 14px; left: 16px; right: 16px; width: auto; padding: 18px 20px; }
-    #title .t2 { font-size: clamp(40px, 12.5vw, 200px); }
+    #title .t2 { font-size: clamp(34px, calc((100vw - 32px) / 10.4), 190px); }
     #branch { display: none; }
   }
   /* ---------- reveal on scroll ---------- */
@@ -357,10 +365,18 @@
   <div id="stage">
     <canvas id="motes"></canvas>
     <h1 id="title">
-      <span class="t1">Mô hình ngôn ngữ, khi trả lời, đang</span>
-      <span class="t2">NHÌN VÀO ĐÂU</span>
-      <span class="t3">Phát hiện ảo giác cho hệ RAG tiếng Việt từ chính ánh nhìn của mô hình đọc</span>
+      <span class="t1">Mô hình có thể bịa chữ. Ánh mắt của nó thì không.</span>
+      <span class="t2">MẮT KHÔNG NÓI DỐI</span>
     </h1>
+    <aside class="side left" id="side-l">
+      <p><b>Đừng hỏi mô hình nói gì. Hỏi nó đang nhìn vào đâu.</b></p>
+      <p>Khi Qwen2.5 đọc lại câu trả lời cùng ngữ cảnh, phân bố chú ý của nó lên <b>từng đoạn</b> đủ để lật mặt một câu bịa — không LLM giám khảo, không tinh chỉnh.</p>
+    </aside>
+    <aside class="side right" id="side-r">
+      <div class="stat"><b>87,8 %</b><span>chỉ đúng đoạn chứa bằng chứng, giữa 22,6 đoạn</span></div>
+      <div class="stat"><b>579</b><span>tham số — bộ phân loại khớp trong vài giây trên CPU</span></div>
+      <div class="stat"><b>16</b><span>thí nghiệm, 3 bộ dữ liệu, 4 mô hình đọc, một card T4</span></div>
+    </aside>
     <div class="layer" id="face"></div>
     <div id="branch"><img src="img/branch.webp" alt="" onerror="this.parentElement.remove()"></div>
     <div class="layer" id="prof"></div>
@@ -742,17 +758,17 @@ GET  /health       loading | ok | error</code></pre>
 
   // ---------------------------------------------------------------- pointer → eyes, torch
   let px = innerWidth / 2, py = innerHeight * .45, raf = null;
-  const torch = $("torch"), torchBtn = $("torch-btn");
+  const torchBtn = $("torch-btn"); let progress = 0;
   let torchOn = !touch && !reduced;
-  const paintTorch = () => { torch.classList.toggle("off", !torchOn); torchBtn.style.opacity = torchOn ? "1" : ".5"; };
+  const paintTorch = () => { $("face").classList.toggle("torch", torchOn && progress < .45); torchBtn.style.opacity = torchOn ? "1" : ".5"; };
   paintTorch();
   torchBtn.onclick = () => { torchOn = !torchOn; paintTorch(); };
   addEventListener("pointermove", (e) => { px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(look); }, { passive: true });
   function look() {
     raf = null;
     layers.forEach((l) => l.look(px, py));
-    const r = $("stage").getBoundingClientRect();
-    torch.style.setProperty("--tx", (px - r.left) + "px"); torch.style.setProperty("--ty", (py - r.top) + "px");
+    const f = $("face"), r = f.getBoundingClientRect();
+    if (r.width) { f.style.setProperty("--fx", (100 * (px - r.left) / r.width).toFixed(1) + "%"); f.style.setProperty("--fy", (100 * (py - r.top) / r.height).toFixed(1) + "%"); }
   }
   setInterval(() => layers.forEach((l) => { if (Math.random() < .3) l.blink(); }), 2200);
 
@@ -760,7 +776,6 @@ GET  /health       loading | ok | error</code></pre>
   const hero = $("hero"), stage = $("stage"), title = $("title"), intro = $("intro"), hint = $("hint"), nav = $("nav"), branch = $("branch");
   const ease = (t) => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
   const span = (p, a, b) => ease((p - a) / (b - a));
-  let progress = 0;
   function beats() {
     const total = hero.offsetHeight - innerHeight;
     progress = window.__pinBeat ?? Math.max(0, Math.min(1, scrollY / Math.max(1, total)));
@@ -785,7 +800,8 @@ GET  /health       loading | ok | error</code></pre>
     intro.classList.toggle("on", s3 > .6);
     if (prof) prof.setVariant(s3 > .5 ? "point" : "base");
     hint.style.opacity = p < .05 ? "1" : "0";
-    torch.style.opacity = torchOn ? (1 - span(p, .45, .75)).toFixed(3) : "0";
+    paintTorch();
+    $("side-l").style.opacity = $("side-r").style.opacity = (1 - span(p, .05, .3)).toFixed(3);
     nav.classList.toggle("solid", scrollY > innerHeight * .3);
     $("progress").style.width = (100 * scrollY / (document.documentElement.scrollHeight - innerHeight)).toFixed(2) + "%";
     if (!raf) raf = requestAnimationFrame(look);
