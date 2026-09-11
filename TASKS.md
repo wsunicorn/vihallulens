@@ -3847,7 +3847,89 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   python scripts/run_chunk_aware.py --config configs/e15_chunk_viwikifc.yaml
 ```
 
-- [ ] **T34** · M · E16 khái quát hóa chéo bộ
+- [x] **T34** · M · E16 khái quát hóa chéo bộ — hoàn thành 11/09/2026
+  - **Kiểm tra:** bốn lệnh `scripts/run_cross_dataset.py` dưới đây ✅, bốn dòng `e16_*` trong
+    `results/runs.jsonl` ✅, Bảng 7 `docs/EXPERIMENTS.md` có số ✅.
+
+  ### Task này để làm gì
+
+  CH3 có hai vế. Vế đầu — chú ý cộng thêm bao nhiêu so với bề mặt — E12 trả lời rồi. Vế sau —
+  **có khái quát hóa ra ngoài phân phối huấn luyện không** — là việc của task này. Mọi bảng khác
+  huấn luyện và chấm trong một bộ; bảng này huấn luyện trên bộ này, chấm trên bộ kia.
+
+  Cơ sở để thử: E15 vừa đo được với cùng Qwen2.5-7B thì **cùng những đầu** `l17_h4`, `l5_h7` dẫn
+  đầu trên cả ba bộ. Đầu không đổi giữa các bộ thì bộ phân loại mới có lý do để chuyển.
+
+  **0 giây GPU** — đọc lại shard của E02/E03 và E07.
+
+  ### Quy trình, và hai chỗ nó có thể lặng lẽ gian
+
+  1. **Cách gộp đầu chọn trên dev của bộ nguồn**, y hệt `run_chunk_aware.py`. Bộ đích chỉ được
+     đụng một lần, để chấm. Chọn trên dev đích hay dev gộp thì phân bố nhãn của đích lọt vào mô
+     hình và số chuyển bộ bị thổi lên.
+  2. **Cùng một mô hình đã khớp chấm trên cả hai tập test.** Điểm trên test nguồn vì thế là phép
+     kiểm tái lập tích hợp: nó *chính là* E03 hay E07, phải trùng từng chữ số. **Cả bốn lượt
+     trùng.**
+
+  Hai cấu hình phải giống nhau ở mọi thứ trừ `dataset`, và script **khẳng định** chứ không giả
+  định: hai shard trích bằng mô hình khác hoặc chunker khác cho véc-tơ cùng độ dài mà cột khác
+  nghĩa, bộ phân loại vẫn chạy và vẫn trả về một con số. `tests/test_cross_dataset.py` có 10 ca,
+  sáu ca là sáu cách hai cấu hình lệch nhau mà script phải từ chối.
+
+  ### Kết quả
+
+| Nguồn → đích | Nhóm | Chéo bộ | Đích tự chấm | Sụt | Nhị phân |
+|---|---|---|---|---|---|
+| ViHallu → ISE-DSC01 | lookback | **0,4301** | 0,7851 | −0,3550 | 0,6309 |
+| ViHallu → ISE-DSC01 | chunk-aware | **0,3584** | 0,7919 | −0,4334 | 0,6640 |
+| ISE-DSC01 → ViHallu | lookback | **0,5540** | 0,7451 | −0,1911 | 0,7838 |
+| ISE-DSC01 → ViHallu | chunk-aware | **0,5521** | 0,7567 | −0,2047 | 0,7756 |
+
+  Mức ngẫu nhiên ba lớp khoảng 0,33. **Không chiều nào chuyển được tới mức dùng.** Chiều ViHallu →
+  ISE-DSC01 rơi gần ngẫu nhiên; chiều ngược giữ 0,55 nhưng vẫn dưới baseline bề mặt E01 (0,6562).
+  ECE sụp từ 0,03–0,11 lên 0,29–0,37 — đoán sai mà tự tin.
+
+  ### Mỗi chiều mất đúng một lớp — và giải thích được
+
+| Chiều | Lớp gần như biến mất | Đoán / thật | Dồn đi đâu |
+|---|---|---|---|
+| ViHallu → ISE-DSC01 | `extrinsic` | 82 / 1.286 | 988 vào `intrinsic` |
+| ISE-DSC01 → ViHallu | `intrinsic` | 72 / 234 | 136 vào `extrinsic` |
+
+  Lớp `no` chuyển được ở cả hai chiều. Lý do nằm ở **định nghĩa nhãn**: `extrinsic` của ViHallu là
+  GPT-4o *bịa* thêm — mô hình không nhìn ngữ cảnh; `extrinsic` của ISE-DSC01 là NEI — câu do
+  người viết, mô hình vẫn nhìn, chỉ không tìm thấy. Hai dấu vết chú ý khác nhau. T13 đã đo chuyện
+  này từ phía nhãn (67 % NEI thật sự là ngoại lai); E16 đo nó từ phía đặc trưng.
+
+  ### Cái chuyển được là "trung thực hay không"
+
+  Cột nhị phân lên 0,78 và 0,63–0,66 — trên mức ngẫu nhiên nhị phân 0,50 ở cả bốn dòng. Cùng
+  phát hiện với Bảng 1: **phần khó, và phần không chuyển được, nằm ở ranh giới nội tại–ngoại
+  lai.** Tín hiệu "có bám vào ngữ cảnh không" là của mô hình đọc và chuyển được; tín hiệu "bám
+  sai kiểu nào" gắn với cách từng bộ định nghĩa "sai".
+
+  ### Chunk-aware chuyển kém hơn lookback, lần thứ năm, và lần này ngoài nhiễu
+
+  Chiều khó: 0,4301 so với 0,3584, chênh **−0,0717** — hơn hai lần độ rộng khoảng tin cậy 0,031.
+  Năm đại lượng hình dạng học trên 5,3 đoạn rồi gặp 24,5 đoạn. Đây là phép đo duy nhất trong năm
+  phép cho dấu âm **rõ ràng ngoài nhiễu**.
+
+  ### Lệnh đã chạy
+
+```
+  python scripts/run_cross_dataset.py --source configs/e03_chunk_sentence_vihallu.yaml \
+      --target configs/e07_chunk_aware_isedsc01.yaml --reference-run e03_chunk_aware
+  python scripts/run_cross_dataset.py --source configs/e02_lookback_vihallu.yaml \
+      --target configs/e07_baseline_lookback_isedsc01.yaml --reference-run e02_lookback_lens
+  python scripts/run_cross_dataset.py --source configs/e07_chunk_aware_isedsc01.yaml \
+      --target configs/e03_chunk_sentence_vihallu.yaml --reference-run e07_chunk_aware_isedsc01
+  python scripts/run_cross_dataset.py --source configs/e07_baseline_lookback_isedsc01.yaml \
+      --target configs/e02_lookback_vihallu.yaml --reference-run e07_baseline_lookback_isedsc01
+```
+
+  Cờ `--reference-run` tồn tại vì E02 và E03 ghi trong `runs.jsonl` dưới tên ngắn hơn tên trong
+  cấu hình. Chiều ISE-DSC01 → ViHallu chunk-aware mất 717 giây chọn cách gộp đầu trên 29.077 mẫu.
+
 - [ ] **T35** · LM · Phân tích sai sót
   - Lấy 100 mẫu dự đoán sai, phân loại kiểu lỗi, viết nhận xét.
   - Tách kết quả theo `meta.prompt_type`: so macro-F1 trên nhóm `noisy` (prompt bị bỏ dấu) với phần còn lại, theo yêu cầu ở `docs/EXPERIMENTS.md`.
