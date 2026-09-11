@@ -30,7 +30,8 @@ STATIC = ROOT / "src" / "vihallulens" / "serve" / "static"
 RIG = STATIC / "owl.json"
 IMG = STATIC / "img"
 
-# Amber: hue around 20-45° (of 360), saturated, bright. Feathers are grey/brown and much darker.
+# Amber: hue around 12-55° (of 360), saturated, bright. Feathers are grey/brown and much darker.
+# A small white highlight inside the eye is fine (bounding box below), a dark pupil is fine too.
 HUE = (12 / 360, 55 / 360)
 MIN_SAT = 0.55
 MIN_VAL = 0.55
@@ -70,8 +71,11 @@ def components(mask: np.ndarray) -> list[tuple[int, float, float, float]]:
         if len(pts) < 200:
             continue
         arr = np.asarray(pts)
-        cy, cx = arr.mean(axis=0)
-        r = float(np.sqrt(len(pts) / np.pi))
+        # Centre and radius from the bounding box, not the area: a highlight or a painted pupil
+        # punches a hole in the amber blob and would shrink an area-based radius.
+        (y0, x0), (y1, x1) = arr.min(axis=0), arr.max(axis=0)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        r = float(max(x1 - x0, y1 - y0) + 1) / 2
         out.append((len(pts), float(cx), float(cy), r))
     out.sort(reverse=True)
     return out
