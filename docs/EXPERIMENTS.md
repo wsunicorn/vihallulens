@@ -1209,12 +1209,89 @@ luyện trên bộ này có cơ sở để chuyển sang bộ kia — và E16 đ
 
 ### Bảng 7 — Khái quát hóa chéo bộ (E16)
 
-| Huấn luyện trên | Đánh giá trên | macro-F1 | Sụt so với cùng bộ |
+Chạy 11/09/2026 trên máy cá nhân, **0 giây GPU** — đọc lại shard `8c49fc0417f1` (ViHallu) và
+`15ef31521fd6` (ISE-DSC01), cùng Qwen2.5-7B, cùng lưới 27 × 28. Cách gộp đầu chọn trên **dev của
+bộ nguồn**; bộ đích chỉ được đụng tới một lần, để chấm. Cùng một mô hình đã khớp chấm trên cả hai
+tập test, nên điểm trên test nguồn là phép kiểm tái lập tích hợp: **cả bốn lượt trùng E02, E03,
+E07 từng chữ số.**
+
+| Huấn luyện trên | Đánh giá trên | Nhóm | macro-F1 chéo bộ [KTC 95 %] | Đích tự chấm | Sụt | Nhị phân chéo | ECE |
+|---|---|---|---|---|---|---|---|
+| ViHallu | ISE-DSC01 | lookback gộp | **0,4301** [0,4146–0,4456] | 0,7851 | **−0,3550** | 0,6309 | 0,372 |
+| ViHallu | ISE-DSC01 | chunk-aware | **0,3584** [0,3450–0,3719] | 0,7919 | **−0,4334** | 0,6640 | 0,354 |
+| ISE-DSC01 | ViHallu | lookback gộp | **0,5540** [0,5179–0,5913] | 0,7451 | **−0,1911** | 0,7838 | 0,291 |
+| ISE-DSC01 | ViHallu | chunk-aware | **0,5521** [0,5160–0,5897] | 0,7567 | **−0,2047** | 0,7756 | 0,297 |
+
+Cột "Đích tự chấm" là điểm khi huấn luyện *và* chấm trên chính bộ đích (E02/E03 cho ViHallu,
+E07 cho ISE-DSC01). Cột "Sụt" so với cột đó — đó mới là giá của việc đổi phân phối. Mức ngẫu
+nhiên của macro-F1 ba lớp là khoảng 0,33.
+
+### Tín hiệu không khái quát hóa được thành bộ phát hiện ba lớp — câu trả lời cho nửa sau CH3
+
+Hai chiều đều sụt nặng, và sụt **bất đối xứng**. Huấn luyện trên ViHallu rồi chấm ISE-DSC01 rơi
+về **gần mức ngẫu nhiên** (0,36–0,43). Chiều ngược lại giữ được 0,55 — tốt hơn, nhưng vẫn **dưới
+cả baseline bề mặt E01** của ViHallu (0,6562). Bộ lớn hơn, ngữ cảnh dài hơn, đa dạng hơn thì
+chuyển đi tốt hơn; nhưng không chiều nào chuyển được tới mức dùng.
+
+Hiệu chỉnh xác suất **sụp hoàn toàn**: ECE 0,29–0,37 khi chéo bộ, so với 0,03–0,11 khi cùng bộ.
+Mô hình chéo bộ không chỉ đoán sai mà **tự tin khi đoán sai** — với bài toán mà người dùng cần
+biết mức tin cậy, đó là kiểu hỏng tệ nhất.
+
+### Mỗi chiều mất đúng một lớp, và đó là lớp hai bộ định nghĩa khác nhau
+
+Ma trận nhầm lẫn giải thích được toàn bộ con số, và cách giải thích này quan trọng hơn con số.
+
+| Chiều | Lớp gần như biến mất | Mô hình đoán lớp đó | Thật sự có | Dồn đi đâu |
+|---|---|---|---|---|
+| ViHallu → ISE-DSC01, chunk-aware | **`extrinsic`** | 82 / 3.646 | 1.286 | 988 vào `intrinsic` |
+| ISE-DSC01 → ViHallu, chunk-aware | **`intrinsic`** | 72 / 700 | 234 | 136 vào `extrinsic` |
+
+Lớp `no` chuyển được ở cả hai chiều: 62 % và 82 % đúng. Hai lớp ảo giác thì mỗi chiều mất một.
+
+Lý do nằm ở **định nghĩa nhãn**, không nằm ở đặc trưng. `extrinsic` của ViHallu là phản hồi do
+GPT-4o **bịa** thêm nội dung ngữ cảnh không có; `extrinsic` của ISE-DSC01 là nhãn NEI — một câu
+khẳng định **do người viết** mà ngữ cảnh không xác nhận cũng không bác bỏ. Hai thứ ấy để lại hai
+dấu vết chú ý khác nhau: mô hình "bịa" thì không nhìn vào ngữ cảnh, còn một câu NEI của người thì
+mô hình vẫn nhìn, chỉ không tìm thấy. T13 đã đo được chuyện này từ phía nhãn — chỉ 67 % NEI của
+ViWikiFC thật sự là ngoại lai — và E16 đo được nó từ phía đặc trưng.
+
+`intrinsic` cũng vậy theo chiều ngược: REFUTED của ISE-DSC01 là câu bị bằng chứng bác thẳng, còn
+`intrinsic` của ViHallu là LLM đọc ngữ cảnh rồi nói lệch. Cùng tên lớp, khác cơ chế.
+
+### Cái chuyển được là "trung thực hay không", cái không chuyển được là "ảo giác kiểu nào"
+
+Cột nhị phân nói rõ điều này. Gộp hai lớp ảo giác làm một thì điểm chéo bộ lên **0,78** ở chiều
+ISE-DSC01 → ViHallu và **0,63–0,66** ở chiều ngược — cao hơn hẳn ba lớp và **trên** mức ngẫu
+nhiên nhị phân 0,50 ở cả bốn dòng.
+
+Đây là cùng một phát hiện với Bảng 1, nơi mọi phương pháp đều được thêm 0,10–0,16 khi bỏ đòi
+hỏi gọi đúng tên loại: **phần khó — và phần không chuyển được — nằm ở ranh giới nội tại–ngoại
+lai.** Tín hiệu "mô hình có bám vào ngữ cảnh không" là thuộc tính của mô hình đọc và chuyển
+được giữa các bộ; tín hiệu "nó bám sai kiểu nào" thì gắn với cách từng bộ định nghĩa "sai".
+
+### Chunk-aware chuyển kém hơn lookback gộp, lần thứ năm
+
+| Chiều | lookback gộp | chunk-aware | chênh |
 |---|---|---|---|
-| ViHallu | ViHallu | | — |
-| ViHallu | ISE-DSC01 | | |
-| ISE-DSC01 | ISE-DSC01 | | — |
-| ISE-DSC01 | ViHallu | | |
+| ViHallu → ISE-DSC01 | 0,4301 | 0,3584 | **−0,0717** |
+| ISE-DSC01 → ViHallu | 0,5540 | 0,5521 | −0,0019 |
+
+Ở chiều khó, năm đại lượng hình dạng **kéo điểm xuống 0,07** — chúng học hình dạng phân bố trên
+5,3 đoạn rồi gặp 24,5 đoạn. Ở chiều dễ thì ngang nhau. Đây là phép đo thứ năm về đóng góp của
+chunk-aware, độc lập với bốn phép trước, và là phép duy nhất cho **dấu âm rõ ràng ngoài nhiễu**:
+0,0717 lớn hơn hai lần độ rộng khoảng tin cậy 0,031 của dòng đó.
+
+Ghép với E13 (chunk-aware không chuyển giữa hai họ mô hình) và E14 (đảo dấu qua ba cỡ): hình
+dạng phân bố chú ý **gắn với cả mô hình lẫn bộ dữ liệu**, còn tỷ lệ gộp thì bền hơn với cả hai.
+
+### Điều bảng này KHÔNG nói
+
+Nó không nói tín hiệu chú ý vô dụng ngoài phân phối huấn luyện — cột nhị phân bác điều đó. Nó nói
+**bộ phân loại ba lớp huấn luyện trên một bộ không dùng được trên bộ khác**, vì ba lớp ấy không
+cùng nghĩa giữa hai bộ. Muốn một bộ phát hiện dùng chung thì hoặc huấn luyện gộp trên nhiều bộ,
+hoặc chấp nhận bài toán nhị phân. Cả hai đều là hướng phát triển cho chương 8, không phải việc
+của đề tài này.
+
 
 ### Bảng 8 — Đánh đổi độ chính xác và chi phí (E11, ViHallu)
 
