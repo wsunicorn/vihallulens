@@ -155,17 +155,22 @@ mô tả phân bố trên đúng các đoạn ấy.
 ## Hệ RAG minh họa
 
 Dịch vụ kèm một hệ RAG tối giản trên **21 tài liệu ngắn về Việt Nam** (`serve/demo_corpus.jsonl`):
-truy xuất BM25, sinh câu trả lời bằng **chính mô hình đọc đang nạp** (cùng chat template đã chốt ở
-mục 8 `CLAUDE.md`, giải mã tham lam), rồi chấm câu trả lời ấy. Trên trang quan sát là ô "Hỏi hệ
+truy xuất BM25, sinh câu trả lời bằng **một bản thứ hai của Qwen2.5-7B nạp ở `bfloat16`** (cùng
+chat template đã chốt ở mục 8 `CLAUDE.md`, giải mã tham lam), rồi chấm câu trả lời ấy bằng bộ phát
+hiện. Vì sao không dùng chính bản `float16` đang nạp để sinh: lớp 27 của nó tràn số — bộ phát hiện
+né được bằng cách không đọc lớp đó, nhưng LM head thì không né được, và logit NaN cho ra toàn `!`.
+Bản `bfloat16` tốn thêm ~5,5 GB và giải mã chậm hơn khoảng bốn lần trên T4 (Turing không có bf16
+gốc); nạp lười ở câu hỏi đầu tiên. Trên trang quan sát là ô "Hỏi hệ
 RAG"; qua API là `POST /demo/ask {question, top_k?}`; qua dòng lệnh:
 
 ```bash
 python scripts/demo_rag.py --question "Đỉnh núi cao nhất Đông Dương là gì?" --out results/demo.json
 ```
 
-Một mô hình làm cả hai việc — đó cũng chính là thiết lập mà lập luận chi phí ở Bảng 8
-`docs/EXPERIMENTS.md` mô tả: lượt đọc hệ RAG dù sao cũng trả, và bộ phát hiện đọc đặc trưng từ đúng
-lượt ấy.
+Cùng trọng số đọc và viết — nhưng ở hai kiểu số. Lập luận chi phí biên ở Bảng 8
+`docs/EXPERIMENTS.md` ("lượt đọc hệ RAG dù sao cũng trả") vì thế mang một điều khoản phần cứng:
+trên T4 ở `float16`, mô hình đọc không phải là bộ sinh. Trên Ampere trở lên, `bfloat16` là kiểu số
+gốc và một bản duy nhất làm cả hai việc.
 
 ## Chạy bằng Docker
 
