@@ -132,6 +132,26 @@ loại ảo giác, và chỉ phán đoán nhị phân mới chuyển được gi
 tỷ trọng chú ý trung bình trên mọi lớp và đầu — chính đại lượng E06 đã đo hit@1 87,8 % so với đoạn
 bằng chứng vàng — không phải thứ bộ phân loại đọc.
 
+## Chạy dịch vụ REST
+
+```bash
+python scripts/serve.py --bundle models/e03_chunk_aware.pkl --port 8000
+```
+
+Ba endpoint theo `docs/SPEC.md` §2.6, tài liệu tương tác ở `http://127.0.0.1:8000/docs`:
+
+| Endpoint | Nhận | Trả |
+|---|---|---|
+| `POST /score` | `{context, response, question?, chunk_strategy?}` | `{label, proba, risk_score, chunk_attention, elapsed_ms, …}` |
+| `POST /score/batch` | `{items: [...]}`, tối đa 64 | `{results: [...], elapsed_ms}` |
+| `GET /health` | — | mô hình đã nạp chưa, tên mô hình, VRAM đang giữ, số request đã chấm |
+
+Mô hình nạp **một lần lúc khởi động** (khoảng một phút với Qwen2.5-7B NF4 trên T4). `GET /health`
+trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do nếu nạp hỏng; hai route chấm
+điểm trả **503** trong lúc chờ. `chunk_strategy` phải trùng cách chia đoạn bộ phát hiện được khớp
+cùng — gửi cách khác bị từ chối **400** chứ không bị lặng lẽ bỏ qua, vì năm đặc trưng hình dạng
+mô tả phân bố trên đúng các đoạn ấy.
+
 ## Chạy trên Kaggle
 
 Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi script. Không viết logic trong notebook.

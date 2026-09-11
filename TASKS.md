@@ -4205,11 +4205,49 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Bảng 8 chỉ ra 3B là điểm cân bằng chi phí — muốn đổi thì chạy lại `run_chunk_aware.py` với
   config E14 và `--save-bundle`, không phải sửa code.
 
-- [ ] **T37** · L · Dịch vụ REST API ba endpoint theo `docs/SPEC.md`
+- [x] **T37** · L · Dịch vụ REST API ba endpoint theo `docs/SPEC.md` — hoàn thành 11/09/2026
+  - **Kiểm tra:** `tests/test_serve.py` 11 ca qua `TestClient` với bộ phát hiện giả, không GPU ✅;
+    `python scripts/serve.py --help` ✅; README có mục "Chạy dịch vụ REST" ✅. Lượt chạy **thật**
+    với mô hình nằm ở phiên Kaggle của T40 — máy cá nhân không có CUDA.
+
+  ### Task này để làm gì
+
+  Ba endpoint ở mục 2.6 `SPEC.md`. Sau T36 thì đây là lớp mỏng: `POST /score` gọi
+  `HallucinationDetector.score` rồi trả `result.to_dict()`, vốn đã đúng schema.
+
+  ### Ba chỗ dịch vụ có thể sai lặng lẽ, và cách chặn
+
+| Chỗ | Chặn thế nào |
+|---|---|
+| Trả lời trước khi mô hình nạp xong | nạp trong `lifespan` lúc khởi động; `/health` trả `loading` → `ok` → hoặc `error` kèm lý do; hai route chấm trả **503** cho tới khi nạp xong |
+| Nhận `chunk_strategy` khác cách bộ phát hiện được khớp | so với `detector.chunking.strategy`, khác thì **400** với thông báo nêu cách đúng — không lặng lẽ bỏ qua, không lặng lẽ chia theo cách lạ |
+| Lô có một phần tử hỏng | kiểm cả lô **trước** khi chấm phần tử nào; hỏng là 400 cả lô, không trả hai kết quả lẫn một lỗi |
+
+  Chỗ thứ hai đáng nói vì SPEC viết `chunk_strategy` như một tham số tự do. Nó không tự do:
+  năm đặc trưng hình dạng mô tả phân bố trên đúng các đoạn mà E05 đã chọn (câu, `min_words=5`),
+  chia khác thì bộ phân loại nhận véc-tơ khác nghĩa và vẫn trả nhãn. Nên trường vẫn nhận, nhưng
+  chỉ nhận đúng giá trị.
+
+  ### Factory thay vì app toàn cục
+
+  `create_app(detector=None, bundle_path=…, device=…, load_on_startup=True)`. Test tiêm bộ phát
+  hiện giả và chạy đủ ba route không GPU; server thật để `detector=None` và nạp lúc khởi động.
+  `/health` đọc VRAM qua `torch.cuda.memory_allocated/reserved`, trả `null` khi không có CUDA
+  thay vì hỏng.
+
+  ### Chưa chạy thật, và nói rõ
+
+  `from_pretrained` cần GPU. Máy cá nhân không có CUDA nên 11 ca test chỉ chứng minh **hợp
+  đồng** của dịch vụ, chưa chứng minh nó chấm đúng với mô hình thật. Phần đó là smoke test chạy
+  tay trên Kaggle — SPEC §5 quy định vậy cho mọi thứ cần GPU — và T40 (demo đầu cuối) là chỗ
+  hợp lý để làm, vì demo dù sao cũng phải bật server. Ghi vào T40.
+
 - [ ] **T38** · L · Dockerfile, chạy được bằng một lệnh
 - [ ] **T39** · L · Giao diện quan sát: tô màu chunk theo tỷ trọng chú ý
 - [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu
   - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra.
+  - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
+    `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.
 
 ---
 
