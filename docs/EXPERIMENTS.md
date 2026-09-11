@@ -1163,13 +1163,6 @@ ma trận càng chiếm tỷ trọng lớn.
 nên cột chi phí tái lập được trong phiên. Ghi cả quan sát này vào phần bàn luận thay vì lặng lẽ
 báo con số trung bình.
 
-Nguyên nhân là T4 thuộc kiến trúc Turing, không có `bfloat16` gốc nên phải giả lập. Mà 1.5B thì
-**bắt buộc** dùng `bfloat16`: ở `float16` nó tràn số trên cả 28 lớp, 20/20 mẫu.
-
-Nên nấc lùi cuối của mục 5 `CLAUDE.md` có hình dạng như sau, và phải nói đúng như vậy khi trình
-bày: **nó mua được bộ nhớ, không mua được thời gian.** Đúng hình dạng bài học đã ghi ở nấc 1 của
-cùng mục ấy, nơi hạ `max_context_tokens` giảm 25 % VRAM mà lại *tăng* giờ GPU.
-
 Con số này gắn với **T4**. Trên Ampere trở lên `bfloat16` nhanh ngang `float16` và cả nghịch lý
 biến mất.
 

@@ -4588,16 +4588,21 @@ tuần 7, đã chạy sớm ngày 31/08" thì vừa đúng tiến độ vừa đ
 | 7 | 18/09 | T25–T27: E06, E07, E08 — hết giai đoạn 4 | 31/08–01/09 | đã soạn |
 | 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | đã soạn |
 | 9 | 02/10 | Gửi báo cáo giữa kỳ — **hạn 04/10** | — | đã soạn |
-| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | 02–10/09 | chưa soạn |
-| 11 | 16/10 | T32–T35: E11, E15, E16, phân tích sai sót | 10–11/09 | chưa soạn |
-| 12–13 | 23/10, 30/10 | T36–T40: thư viện, REST, Docker, trang quan sát, demo RAG | 11/09 | chưa soạn |
+| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | 02–10/09 | đã soạn 11/09 |
+| 11 | 16/10 | T32–T35: E11, E15, E16, phân tích sai sót | 10–11/09 | đã soạn 11/09 |
+| 12 | 23/10 | T36–T38: thư viện, REST, Docker | 11/09 | đã soạn 11/09 |
+| 13 | 30/10 | T39–T40: trang quan sát, demo RAG, rà soát; khép giai đoạn 7 | 11/09 | đã soạn 11/09 |
+| 14–15 | 06/11, 13/11 | T42–T47: viết báo cáo | chưa làm | **chưa soạn — chỉ soạn khi việc đã làm** |
 
 **Tuần 9 dùng chung một lá thư với báo cáo giữa kỳ.** `Email_giua_ky.md` đính kèm cả quyển báo
 cáo giữa kỳ lẫn `Bao_cao_tuan_09`. Quy trình đòi thư hàng tuần và đòi nộp giữa kỳ ở tuần 8–9;
 một lá thư làm cả hai, đúng ghi chú về ba email quan trọng của kỳ. Không gửi thư tuần 9 riêng.
 
-Tuần 5 tới tuần 9 đã soạn xong hết — báo cáo `.docx` và thư `.md`/`.html` đều sẵn. Từ giờ tới
-04/10 chỉ còn việc **đọc lại rồi gửi đúng ngày**. Nếu trong khoảng đó có kết quả mới hoặc GVHD
+Tuần 5 tới tuần 13 đã soạn xong hết — báo cáo `.docx` và thư `.md`/`.html` đều sẵn. Từ giờ tới
+30/10 chỉ còn việc **đọc lại rồi gửi đúng ngày**. Mỗi thư `.md` có phần "Lưu ý" ở đầu ghi thứ
+phải sửa tay lúc gửi (góp ý của thầy đã nhận, việc hôm soạn chưa xong mà tới ngày gửi đã xong).
+Câu "sớm hơn kế hoạch" trong `loi_mo_dau_som` nay có tham số `som=`: tuần 10–11 là năm tuần,
+tuần 12 sáu tuần, tuần 13 bảy tuần — con số thật, không phải ba tuần cố định. Nếu trong khoảng đó có kết quả mới hoặc GVHD
 góp ý làm đổi hướng thì chạy lại script tuần tương ứng, đừng sửa tay file `.docx`.
 
 Bản nháp tuần 6 có ô `[ chưa có số ]` đã bỏ. Nó tồn tại vì lúc đó tuần 6 được hiểu là mang nội
