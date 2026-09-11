@@ -53,6 +53,9 @@ dependencies = [
 dev = [
     "pytest",
     "ruff",
+    # Biểu đồ cho báo cáo: T35 (phân bố lỗi), báo cáo giữa kỳ (UniversityRequirements/Reports).
+    # Để ở nhóm dev chứ không ở lõi vì thư viện và dịch vụ không vẽ gì.
+    "matplotlib",
 ]
 
 [build-system]

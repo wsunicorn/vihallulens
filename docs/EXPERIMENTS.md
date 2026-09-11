@@ -166,6 +166,19 @@ Ngoài số tổng, mọi thí nghiệm chạy trên ViHallu phải báo thêm m
 
 Lý do: prompt `noisy` bị bỏ dấu tiếng Việt nên tokenize ra chuỗi token khác hẳn, làm thay đổi số token của câu hỏi và do đó thay đổi mẫu số của lookback ratio. Nếu không tách, không phân biệt được "mô hình phát hiện ảo giác" với "mô hình phát hiện prompt bị nhiễu". Đây cũng là một kết quả phụ có giá trị công bố: tín hiệu chú ý bền tới đâu khi đầu vào bị bỏ dấu — một dạng nhiễu rất đặc thù tiếng Việt.
 
+**Đo ở T35 (11/09/2026) trên E03, tập test ViHallu**, bằng `scripts/error_analysis.py`:
+
+| Nhóm | n | macro-F1 [KTC 95 %] | Sai | Tỷ lệ sai |
+|---|---|---|---|---|
+| `noisy` | 23 | 0,7798 [0,5765–0,9151] | 5 | 21,7 % |
+| còn lại | 677 | 0,7558 [0,7235–0,7866] | 164 | 24,2 % |
+
+Chênh **+0,0239** nghiêng về phía `noisy`, và khoảng tin cậy của nhóm ấy rộng **0,34** vì chỉ có 23
+mẫu. Kết luận đọc được: **không có bằng chứng prompt bị bỏ dấu làm bộ phát hiện kém đi** — nếu
+có tác động thì nó nhỏ hơn mức 23 mẫu phân biệt được. Mô hình không "phát hiện prompt nhiễu"
+thay vì phát hiện ảo giác. Phần này phải đi kèm khoảng tin cậy khi trình bày, đừng trích riêng
+con số điểm.
+
 ### E10 — Baseline LLM giám khảo
 
 Mốc so sánh thứ ba, và là mốc mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì, E09 đọc được nhưng phải tinh chỉnh trước, còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
@@ -1394,6 +1407,90 @@ Bài học chung: **hai dòng dùng chung một `extraction_hash` phải dùng c
 lý do bảng này sinh bằng script — `scripts/build_tradeoff.py` lấy chi phí từ mô hình đọc chứ không
 từ dòng kết quả, nên không viết lại được kiểu sai ấy. `tests/test_tradeoff.py` khóa hành vi đó lại
 bằng một ca kiểm riêng.
+
+### Bảng 9 — Phân tích sai sót (T35, E03 trên ViHallu)
+
+Khớp lại đúng mô hình E03 (`topk_heads k=32`, 192 chiều) và đối chiếu với `y_pred` đã lưu ở
+T22: **700/700 trùng**. Tập test 700 mẫu, sai **169** (24,1 %). Lấy 100 mẫu sai theo tỷ lệ cặp
+nhầm, seed 42, ghi `results/error_analysis.csv` kèm cột `ghi_chu_tay` cho lượt đọc tay. Biểu đồ
+`results/error_analysis.png`.
+
+#### Cặp nhầm — toàn bộ 169 mẫu sai
+
+| Cặp (thật → đoán) | Số mẫu | % số mẫu của lớp thật |
+|---|---|---|
+| `intrinsic` → `extrinsic` | **46** | 19,7 % |
+| `extrinsic` → `intrinsic` | **36** | 15,9 % |
+| `intrinsic` → `no` | 33 | 14,1 % |
+| `no` → `intrinsic` | 27 | 11,2 % |
+| `extrinsic` → `no` | 16 | 7,1 % |
+| `no` → `extrinsic` | 11 | 4,6 % |
+
+**82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** Chỉ 27 lỗi (16 %) là bỏ sót
+ảo giác thành `no`. Đây là cùng một ranh giới mà Bảng 1 (cột nhị phân), Bảng 4 và Bảng 7 đều chỉ
+vào: bộ phát hiện *thấy* ảo giác tốt hơn hẳn *gọi tên* nó.
+
+#### Nhãn cấu trúc — tự động, mỗi mẫu có thể mang nhiều nhãn
+
+| Nhãn | Có mặt / 169 | Nghĩa |
+|---|---|---|
+| `tu_tin_sai` | 55 | sai mà xác suất lớp đoán ≥ 0,70 |
+| `phan_van` | 34 | hai lớp cao nhất cách nhau < 0,10 |
+| `chep_lai_ma_sai` | **23** | phản hồi chép ≥ 80 % từ vựng ngữ cảnh mà vẫn bị gán ảo giác |
+| `prompt_noisy` | 5 | prompt bị bỏ dấu |
+| `mot_doan` | 0 | ngữ cảnh một đoạn — không xảy ra ở ViHallu |
+| `dien_dat_lai` | 0 | trung thực mà diễn đạt khác hẳn — không xảy ra |
+| `phan_hoi_ngan` | 0 | phản hồi dưới 8 từ — không xảy ra |
+| `khac` | 69 | không rơi vào mẫu nào |
+
+Hai nhãn bằng 0 tự chúng là kết quả: phản hồi GPT-4o trong ViHallu **luôn dài và luôn chép nhiều
+từ ngữ cảnh**, kể cả khi trung thực. Nên "diễn đạt lại" không phải nguồn lỗi, và 41 % lỗi (`khac`)
+không có lý do cấu trúc nào — mô hình sai ở vùng xác suất giữa, với đầu vào trông bình thường.
+
+#### Đọc tay 8 mẫu — năm hình dạng lỗi
+
+Tám mẫu đọc trong lượt này là **đọc thăm dò để đặt tên hình dạng**, không phải lượt gán nhãn
+100 mẫu; lượt ấy là việc hai tác giả làm bằng cột `ghi_chu_tay`. Các mẫu nêu dưới đây tra được
+theo `sample_id` trong CSV.
+
+**1. Ảo giác một mệnh đề trong phản hồi chép lại** — nhóm `chep_lai_ma_sai`, 23 mẫu, mô hình
+tự tin 0,90–0,97 rằng đó là `no`. Phản hồi chép gần nguyên văn ngữ cảnh rồi **thêm đúng một mệnh
+đề**: "…nhưng không đóng vai trò là trung tâm hành chính của Constantinople" — ngữ cảnh không nói
+thế. Đặc trưng của đề tài lấy trung bình trên toàn bộ token phản hồi, nên một mệnh đề bịa nằm
+giữa ba câu chép lại bị **trung bình hóa mất**. Đây là hạn chế cấu trúc của cách tính, không phải
+của bộ phân loại, và nó chỉ thẳng vào hướng phát triển: chấm theo **đoạn của phản hồi** thay vì
+theo cả phản hồi.
+
+**2. Phản hồi trộn hai loại ảo giác dưới một nhãn** — phần lớn 82 lỗi `intrinsic` ↔ `extrinsic`.
+Mẫu The Immortal World Tour: "khoảng 1 triệu đô mỗi buổi" bóp méo con số 57 triệu của ngữ cảnh
+(nội tại) **và** "nhận nhiều lời khen từ giới phê bình" là bịa hoàn toàn (ngoại lai). Nhãn chỉ
+cho một loại; mô hình chọn loại kia với 0,84. Sơ đồ ba lớp **ép một nhãn lên một phản hồi có
+hai lỗi**, và phần "nhầm" ở đây một phần là của sơ đồ nhãn.
+
+**3. Phủ định lật ngược bằng chính từ ngữ của ngữ cảnh** — mẫu Đế quốc La Mã Thần thánh: ngữ cảnh
+"không phải là một quốc gia liên bang", phản hồi "thực chất là một quốc gia liên bang". Trùng lặp
+từ vựng 0,50, mô hình đọc đúng đoạn — nhưng phân bố chú ý *giống nhau* dù khẳng định hay phủ định.
+Chú ý cho biết mô hình **nhìn vào đâu**, không cho biết nó **nói gì về chỗ đó**. Đây là giới hạn
+bản chất của tín hiệu, không sửa được bằng đặc trưng hình dạng.
+
+**4. Câu hỏi có tiền đề sai** — 13 trên 700 câu hỏi test mang nguyên tiền tố **"Adversarial
+Question:"** — prompt sinh dữ liệu lọt vào câu hỏi. Tỷ lệ sai của nhóm này **38,5 %** so với
+23,9 %, nhưng n = 13 nên chỉ là quan sát. Mẫu "kim tự tháp trên sao Hỏa": câu hỏi giả định điều
+sai, phản hồi chấp nhận tiền đề rồi bịa tiếp (cung điện, khu vườn). Nhãn `intrinsic`, mô hình
+`extrinsic` — và cách gọi của mô hình **bảo vệ được**. Ghi lại như một điểm chất lượng dữ liệu:
+`meta.prompt_type` không bắt được loại này.
+
+**5. Nhãn có thể tranh cãi** — mẫu tinh tinh: phản hồi "5 triệu năm", ngữ cảnh "6,5 triệu năm",
+nhãn `no`. Mô hình đoán `intrinsic` với biên 0,08. Trong 8 mẫu đọc có 2–3 mẫu thuộc dạng này;
+**không suy ra tỷ lệ** từ 8, nhưng đủ để lượt đọc 100 mẫu phải có một cột riêng cho "nhãn đúng
+hay mô hình đúng".
+
+#### Điều rút ra cho chương 7
+
+Ba trong năm hình dạng — trộn hai loại, phủ định lật ngược, một mệnh đề bịa giữa phần chép — đều
+là **giới hạn của việc chấm cả phản hồi bằng một véc-tơ chú ý trung bình**, không phải lỗi huấn
+luyện. Chúng chỉ cùng một hướng: chấm theo đoạn phản hồi, và tách "nhìn vào đâu" khỏi "nói gì".
+Hai hình dạng còn lại là chất lượng nhãn và chất lượng câu hỏi của bộ dữ liệu.
 
 ## 6. Các mốc so sánh đã công bố
 
