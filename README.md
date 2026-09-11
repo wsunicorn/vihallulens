@@ -152,6 +152,21 @@ trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do n�
 cùng — gửi cách khác bị từ chối **400** chứ không bị lặng lẽ bỏ qua, vì năm đặc trưng hình dạng
 mô tả phân bố trên đúng các đoạn ấy.
 
+## Hệ RAG minh họa
+
+Dịch vụ kèm một hệ RAG tối giản trên **21 tài liệu ngắn về Việt Nam** (`serve/demo_corpus.jsonl`):
+truy xuất BM25, sinh câu trả lời bằng **chính mô hình đọc đang nạp** (cùng chat template đã chốt ở
+mục 8 `CLAUDE.md`, giải mã tham lam), rồi chấm câu trả lời ấy. Trên trang quan sát là ô "Hỏi hệ
+RAG"; qua API là `POST /demo/ask {question, top_k?}`; qua dòng lệnh:
+
+```bash
+python scripts/demo_rag.py --question "Đỉnh núi cao nhất Đông Dương là gì?" --out results/demo.json
+```
+
+Một mô hình làm cả hai việc — đó cũng chính là thiết lập mà lập luận chi phí ở Bảng 8
+`docs/EXPERIMENTS.md` mô tả: lượt đọc hệ RAG dù sao cũng trả, và bộ phát hiện đọc đặc trưng từ đúng
+lượt ấy.
+
 ## Chạy bằng Docker
 
 ```bash

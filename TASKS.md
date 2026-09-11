@@ -4340,8 +4340,52 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Lý thành Trần, thổi dân số), ngoại lai (bịa tháp Eiffel và tàu điện ngầm). Để T40 và buổi bảo vệ
   bấm một cái là thấy.
 
-- [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu
+- [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu —
+  **công cụ sẵn sàng 11/09/2026, chờ MỘT phiên Kaggle ~10 phút**
   - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra.
+
+  ### Hệ RAG: truy xuất → sinh trả lời → chấm, một mô hình làm cả
+
+  `src/vihallulens/serve/rag.py`. Kho 21 tài liệu ngắn về Việt Nam tôi tự viết
+  (`serve/demo_corpus.jsonl`, mỗi bài 3–5 câu để chunker theo câu có việc). Truy xuất bằng
+  `EvidenceIndex` BM25 của T16 — kho demo dựng theo đúng cột kho bằng chứng nên dùng lại nguyên
+  lớp đó. Sinh câu trả lời bằng **chính mô hình đọc đang nạp** trong `AttentionExtractor`: cùng
+  chat template mục 8 `CLAUDE.md` với `add_generation_prompt`, giải mã tham lam 160 token, nên
+  câu trả lời sinh ra từ đúng chuỗi mà bộ phát hiện sẽ chấm. Không nạp mô hình thứ hai — và đó
+  cũng chính là thiết lập mà lập luận chi phí biên ở Bảng 8 mô tả.
+
+  Ba mặt: `POST /demo/ask` và `GET /demo/corpus` trong API; ô "Hỏi hệ RAG" trên trang, hỏi xong
+  tự điền ba ô đầu vào và vẽ kết quả; `scripts/demo_rag.py --question … --out …` cho Kaggle.
+
+  Kiểm không GPU: BM25 lấy đúng top-1 cho bốn câu thử (Sa Pa, Tết, Điện Biên Phủ, Phong Nha);
+  năm ca test qua `TestClient` với `generator=` giả — `DemoRAG` nhận `generator` để thay được
+  phần sinh, cùng nếp `loader=` của T38. Test khóa: bộ ba đưa vào chấm **chính là** ngữ cảnh đã
+  truy xuất, câu hỏi, và câu trả lời đã sinh.
+
+  ### Một phiên Kaggle gom bốn smoke test GPU
+
+  `notebooks/t40_demo_t4.ipynb`, nạp mô hình **một lần** rồi kiểm cả bốn thứ T36–T40 chưa kiểm
+  được trên máy không CUDA:
+
+| Ô | Kiểm | Thuộc |
+|---|---|---|
+| 5 | `HallucinationDetector.from_pretrained` rồi `score` ba ví dụ | T36 |
+| 6 | hệ RAG, bốn câu hỏi | T40 |
+| 7 | uvicorn chạy **thật** trong luồng: `/health` → `ok`, `/score` một mẫu ViHallu có nhãn, `/demo/ask`, và 400 cho `chunk_strategy` lạ | T37 |
+| 8 | `GET /` trả trang HTML | T39 |
+
+  Docker (T38) không chạy trên Kaggle — vẫn chưa kiểm với GPU, notebook ghi rõ.
+
+  ### Việc cần chạy
+
+  1. Mở `notebooks/t40_demo_t4.ipynb` trên Kaggle, GPU T4, mount dataset dữ liệu thô (ô 4 cần
+     `vihallu_train.csv` để lấy một mẫu có nhãn).
+  2. Chạy tới hết ô 9. Khoảng 10 phút.
+  3. Tải `ket_qua_t40` về (bốn file nhỏ), dán JSON vào PR, tick T40 cùng ba dòng "kèm từ" ở dưới.
+
+  Ba ví dụ ở ô 5 và bốn câu hỏi ở ô 6 là **để nhìn**: bộ phát hiện không được huấn luyện trên
+  chúng, nhãn ra sao ghi vậy, đừng chọn lại câu cho đẹp.
+
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
     `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.
   - **Kèm từ T38:** nếu có máy GPU với Docker, `docker compose up --build` rồi chờ `/health` =
