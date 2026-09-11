@@ -50,15 +50,20 @@ Trả về chỉ số chunk chứa câu bằng chứng, hoặc `None` nếu khô
 ```python
 class AttentionExtractor:
     def __init__(self, model_name: str, quantization: str = "nf4",
-                 max_context_tokens: int = 4096, device: str = "cuda")
+                 max_context_tokens: int = 4096, device: str = "cuda",
+                 layers: list[int] | None = None, exclude_layers: list[int] | None = None,
+                 compute_dtype: str = "float16")
     def extract(self, context: str, question: str, response: str,
                 chunks: list[Chunk]) -> AttentionFeatures
 ```
 
 Yêu cầu hiện thực bắt buộc:
 
-- Nạp mô hình với `attn_implementation="eager"` và `torch_dtype=torch.float16`.
-- Lượng tử hóa 4-bit NF4 qua `bitsandbytes`, `bnb_4bit_compute_dtype=torch.float16`.
+- Nạp mô hình với `attn_implementation="eager"` và kiểu số `compute_dtype` (mặc định
+  `float16`; Qwen2.5-1.5B phải `bfloat16`, xem mục 3 `CLAUDE.md`).
+- Lượng tử hóa 4-bit NF4 qua `bitsandbytes`, `bnb_4bit_compute_dtype` cùng kiểu số ấy.
+- `exclude_layers` bỏ lớp tràn số khỏi lưới (lớp 27 của Qwen2.5-7B, lớp 30–31 của Sailor2);
+  `layer_indices` trong kết quả ghi lại lưới thật.
 - **Không dùng `output_attentions=True` ở mức `model(...)`.** Thay vào đó đăng ký `forward_hook` trên từng `self_attn` module.
 - Trong hook: nhận `attn_weights` shape `(batch, n_heads, q_len, k_len)`, tính ngay các tổng cần thiết theo từng chunk, ghi vào bộ tích lũy, rồi `del` tensor.
 - Ghép prompt theo mẫu: ngữ cảnh, câu hỏi, rồi phản hồi. Ghi lại `response_token_start` để biết vùng token nào là phần cần chấm.
@@ -82,6 +87,8 @@ class AttentionFeatures:
     truncated: bool
     peak_vram_mb: float
     elapsed_ms: float
+    chunks: list[Chunk]              # các đoạn còn lại sau khi cắt, đánh số lại — E06 cần để tìm
+                                     # đoạn bằng chứng (rỗng ở bản ghi trước T25)
     layer_indices: list[int]         # lớp thật sự được trích, đã bỏ lớp trong exclude_layers
     nonfinite_layers: list[int]      # lớp có nan/inf, phải rỗng thì kết quả mới dùng được
     row_sum_mean: float              # tổng hàng attention, khỏe mạnh là 1,0
@@ -107,8 +114,12 @@ Từ `AttentionFeatures` sinh véc-tơ đặc trưng cho bộ phân loại:
 Mọi đặc trưng tính riêng cho từng cặp (lớp, đầu), sau đó có ba chế độ gộp: `all` giữ nguyên, `mean_over_heads`, `topk_heads` chọn k đầu tốt nhất theo validation.
 
 ```python
-build_feature_matrix(features: list[AttentionFeatures], config: FeatureConfig) -> np.ndarray
+build_feature_matrix(records, groups, n_layers, n_heads, mode="all", keep=None) -> np.ndarray
 ```
+
+`records` là bản ghi đọc từ shard `.npz`, `groups` là danh sách nhóm đặc trưng, `mode`/`keep` là
+cách gộp đầu và các cặp (lớp, đầu) được giữ — chính bốn tham số này được `DetectorBundle` lưu
+lại để chấm mẫu mới (mục 2.4).
 
 ### 2.4. `vihallulens.detect`
 
@@ -138,7 +149,10 @@ Trên cùng là `vihallulens.pipeline.HallucinationDetector` — một lời g�
 
 Mặc định `LogisticRegression` đa lớp, `class_weight="balanced"`. Cho phép cấu hình đổi sang `LinearSVC` hoặc `LightGBM` để so sánh, nhưng mặc định phải là tuyến tính vì đó là luận điểm về chi phí thấp.
 
-Kèm module hiệu chỉnh xác suất (`sklearn.calibration.CalibratedClassifierCV`) và hàm chọn ngưỡng theo chi phí sai lệch.
+Hiệu chỉnh xác suất **không hiện thực**: ECE được đo thẳng trong `compute_metrics` (mục 2.5)
+và báo cáo ở Bảng 1 — chunk-aware đã kéo ECE từ 0,109 xuống 0,044 mà không cần hiệu chỉnh thêm,
+nên `CalibratedClassifierCV` trong bản đặc tả đầu bị bỏ. Ngưỡng quyết định cũng không chọn theo
+chi phí: `risk_score = 1 − P(no)` được trả về nguyên để hệ RAG tự đặt ngưỡng.
 
 ### 2.5. `vihallulens.evaluation`
 
@@ -159,11 +173,22 @@ Sinh bảng kết quả để dán vào báo cáo.
 
 ### 2.6. `vihallulens.serve`
 
-FastAPI, ba endpoint:
+FastAPI (`serve/app.py`, hàm `create_app`). Ba endpoint chấm điểm theo bản đặc tả đầu, thêm hai
+endpoint của hệ RAG minh họa (T40) và trang quan sát (T39):
 
-- `POST /score` — nhận `{context, question, response, chunk_strategy}`, trả `{label, proba, chunk_attention, risk_score, elapsed_ms}`
-- `POST /score/batch` — nhận danh sách, trả danh sách
-- `GET /health` — trả trạng thái mô hình đã nạp và VRAM đang dùng
+| Route | Nhận | Trả |
+|---|---|---|
+| `POST /score` | `{context, response, question?, chunk_strategy?}` | `{label, proba, risk_score, chunk_attention, elapsed_ms, n_chunks, truncated, nonfinite_layers}` |
+| `POST /score/batch` | `{items: [...]}`, tối đa 64 | `{results: [...], elapsed_ms}` |
+| `GET /health` | — | `{status, error, version, model_loaded, bundle, reading_model, chunking, device, vram_allocated_mb, vram_reserved_mb, generator, requests_served, uptime_s}` |
+| `POST /demo/ask` | `{question, top_k?}` | `{question, retrieved, context, answer, score, elapsed_ms}` |
+| `GET /demo/corpus` | — | 21 tài liệu của kho minh họa |
+| `GET /` | — | trang quan sát `serve/static/index.html` |
+
+Quy ước: `status` là `loading` cho tới khi mô hình nạp xong, `ok` sau đó, `error` kèm lý do khi
+nạp hỏng; hai route chấm điểm trả **503** trong lúc chờ. `chunk_strategy` phải trùng cách chia
+đoạn bộ phát hiện được khớp cùng, khác thì **400**. `chunk_attention` mỗi phần tử là
+`{index, text, char_start, char_end, share}` với `context[char_start:char_end] == text`.
 
 Giao diện quan sát: một trang HTML tĩnh, hiển thị ngữ cảnh với các chunk được tô màu theo tỷ trọng chú ý, kèm điểm rủi ro. Không dùng framework frontend nặng — HTML + JS thuần là đủ.
 
@@ -183,6 +208,8 @@ extractor:
   model_name: Qwen/Qwen2.5-7B-Instruct
   quantization: nf4
   max_context_tokens: 4096
+  compute_dtype: float16      # float16 | bfloat16 | float32
+  exclude_layers: [27]        # lớp tràn số ở float16, đo ở T07
 features:
   groups: [basic, chunk_aware, stability]
   head_aggregation: topk_heads
@@ -202,6 +229,8 @@ scripts/split_data.py       --only vihallu
 scripts/extract_features.py --config configs/xxx.yaml --split train|dev|test
 scripts/run_chunk_aware.py  --config configs/xxx.yaml [--save-bundle models/xxx.pkl]
 scripts/probe_vram.py       --model Qwen/Qwen2.5-7B-Instruct --seq-len 4096
+scripts/serve.py            --bundle models/e03_chunk_aware.pkl --port 8000
+scripts/demo_rag.py         --question "..." [--out ket_qua.json]
 ```
 
 `train_detector.py` và `evaluate.py` trong bản đặc tả đầu gộp thành `run_chunk_aware.py`: chọn
