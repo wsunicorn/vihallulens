@@ -4018,9 +4018,69 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   của task, và nó không tự động hóa được.
 
 
-- [ ] **T35B** · M · Hai việc E12 để lại — **0 giây GPU**
-  - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl`, Bảng 4 `docs/EXPERIMENTS.md` có thêm
-    cột ISE-DSC01 và một dòng mức phụ, kèm kết luận về dấu.
+- [x] **T35B** · M · Hai việc E12 để lại — **0 giây GPU** — hoàn thành 11/09/2026
+  - **Kiểm tra:** bốn dòng `e12_*` trong `results/runs.jsonl` đều có `extra_levels` ✅, Bảng 4b và
+    4c `docs/EXPERIMENTS.md` có số ✅, kết luận về dấu ✅.
+
+  ### Kết quả
+
+  **Việc 1 — E12 trên ISE-DSC01, 22,6 đoạn:** chênh của chunk-aware là **+0,0002** ở chế độ dev
+  chọn riêng. Không âm như ViHallu (−0,0266 / −0,0071), không dương — bằng không, với khoảng tin
+  cậy hẹp hơn nhờ 3.646 mẫu test. Kết luận "không phân biệt được với 0" **vững, không phụ thuộc số
+  đoạn**.
+
+  Chế độ gộp chung cho +0,0396 và đó là hiện tượng giả: khóa 32 đầu làm lookback gộp mất 0,128
+  trên bộ này, rồi 128 cột chunk-aware **từ chính 32 đầu ấy** nhặt lại một phần. Khi lookback dùng
+  đủ 758 cột thì phần cộng thêm biến mất. Chế độ gộp chung được thêm ở T29 để cột chênh sạch trên
+  ViHallu; trên bộ nhiều đoạn nó tạo hiện tượng giả, và chế độ dev chọn riêng mới là chế độ đọc
+  đúng. Ghi rõ ở Bảng 4b.
+
+  **Việc 2 — mức phụ bề mặt + chunk-aware, bỏ lookback:** đo được chồng lấn bằng số,
+  `gain(lookback) + gain(chunk) − gain(cả hai)`. Trên ISE-DSC01 chế độ dev: **99,9 %** phần
+  chunk-aware cộng thêm nằm sẵn trong lookback. Trên ViHallu tỷ lệ vượt 100 % — đặt chunk-aware
+  lên lookback còn kéo điểm xuống.
+
+  Nó **sửa lại giả thuyết** của T29: chunk-aware không chồng lấn với bề mặt (một mình nó cộng
+  +0,2268 trên ISE-DSC01 so với bề mặt, tức có mang tín hiệu riêng và mang nhiều khi ngữ cảnh
+  dài). Thứ nó chồng lấn là **lookback gộp**, gần trọn.
+
+  ### Kết luận gộp T29 + T35B cho chương 7
+
+  > Năm đại lượng hình dạng **có** mang tín hiệu, càng nhiều đoạn càng mang nhiều, nhưng là cùng
+  > một tín hiệu lookback gộp đã mang — 99,9 % ở 22,6 đoạn. Không cộng thêm gì vào bộ phát hiện,
+  > không phụ thuộc số đoạn. Cái chúng có mà lookback không có là đầu ra chỉ được đoạn nào.
+
+  ### Cách làm
+
+  Không chèn dòng thứ năm vào `LEVELS` — bảng bốn dòng phải giữ nguyên hình dạng để so được với
+  lượt E12 đã ghi. Thay vào đó `run_ablation.py` có cờ `--extra-level GROUPS`, chấm thêm một mức
+  không cộng dồn bằng **cùng hàm `score_level`** với bốn dòng chính, ghi vào `extra["extra_levels"]`.
+  Kiểm tái lập: chạy lại ViHallu gộp chung sau khi refactor cho **đúng bốn số của Bảng 4**
+  (0,6562 / 0,7759 / 0,7688 / 0,7746). `tests/test_ablation.py` thêm hai ca: `LEVELS` khóa ở bốn
+  dòng cộng dồn, và ma trận mức phụ bỏ đúng các cột của khối `basic`.
+
+  Cấu hình mới `e12_ablation_isedsc01.yaml` dùng lại hash `15ef31521fd6` của E07. Lượt dev chọn
+  riêng trên 29.077 mẫu mất 1.904 giây.
+
+```
+  python scripts/run_ablation.py --config configs/e12_ablation_isedsc01.yaml --extra-level chunk_aware
+  python scripts/run_ablation.py --config configs/e12_ablation_isedsc01.yaml --extra-level chunk_aware \
+      --fixed-aggregation "topk_heads k=32"
+  python scripts/run_ablation.py --config configs/e12_ablation_vihallu.yaml --extra-level chunk_aware
+  python scripts/run_ablation.py --config configs/e12_ablation_vihallu.yaml --extra-level chunk_aware \
+      --fixed-aggregation "topk_heads k=32"
+```
+
+  Bốn dòng E12 cũ trong `runs.jsonl` thay bằng bốn dòng mới cùng tên, cùng số, có thêm
+  `extra_levels`.
+
+  ### Hai điều phụ đọc được
+
+  Đặc trưng bề mặt trên ISE-DSC01 chỉ đạt 0,4767 (ViHallu 0,6562): câu khẳng định do người viết
+  không mang dấu vết độ dài và trùng lặp như phản hồi GPT-4o. Chú ý vì thế cộng thêm +0,31 ở đây
+  so với +0,11 trên ViHallu — quan trọng hơn đúng ở chỗ bề mặt bất lực. Và nhóm ổn định là nhóm
+  duy nhất cộng thêm dương ở cả bốn dòng.
+
 
   ### Vì sao task này tồn tại
 

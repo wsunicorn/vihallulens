@@ -1,0 +1,38 @@
+# E12 trên ISE-DSC01 — việc 1 của T35B, ghi ở "Việc phải làm trước khi viết chương 7" của T29.
+#
+# Bảng 4 đo trên ViHallu, trung bình 5,3 đoạn mỗi ngữ cảnh: chunk-aware cộng thêm một số âm nhỏ
+# (-0,0071 / -0,0266). Với 5 đoạn thì entropy và Gini gần như không có chỗ để phân biệt. ISE-DSC01
+# có 22,6 đoạn — nếu năm đại lượng hình dạng có ích thật thì chỗ chúng phải có ích nhất là đây.
+#
+#   dấu vẫn âm ở 22,6 đoạn  -> kết luận "không phân biệt được với 0" VỮNG, không phụ thuộc số đoạn
+#   dấu đảo thành dương     -> đóng góp PHỤ THUỘC số đoạn — một phát hiện khác hẳn
+#
+# Hai khả năng đều là kết quả dùng được. Đọc lại shard 15ef31521fd6 của E07, 0 giây GPU.
+
+run_name: e12_ablation_isedsc01
+
+dataset:
+  name: isedsc01
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  # Mức rộng nhất, tức dòng cuối của bảng ablation. Ba mức hẹp hơn do script tự cắt ra; danh sách
+  # ở đây chỉ nói shard phải chứa đủ những khối nào.
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
