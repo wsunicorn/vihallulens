@@ -59,8 +59,12 @@ Kết quả chạy ghi vào `/kaggle/working/`, tải về máy rồi commit t�
 ```bash
 git clone https://github.com/wsunicorn/vihallulens.git
 cd vihallulens
-uv pip install -e .
+uv sync --extra dev      # tạo .venv đúng phiên bản trong uv.lock, kèm pytest/ruff/matplotlib
 ```
+
+`uv.lock` khóa đúng phiên bản từng thư viện (kể cả `scikit-learn 1.9.x` mà bundle trong
+`models/` cần), nên máy khác `uv sync` là được y hệt môi trường này. Chạy lệnh bằng
+`uv run python ...` hoặc kích hoạt `.venv`.
 
 Tải bốn bộ dữ liệu từ nguồn ở mục [Dữ liệu](#dữ-liệu), đặt vào `data/raw/` **đúng tên file dưới đây** rồi chuẩn hóa:
 
@@ -138,13 +142,16 @@ bằng chứng vàng — không phải thứ bộ phân loại đọc.
 python scripts/serve.py --bundle models/e03_chunk_aware.pkl --port 8000
 ```
 
-Trang quan sát ở `http://127.0.0.1:8000/` — dán ngữ cảnh, câu hỏi, câu trả lời, bấm Chấm: ngữ cảnh được tô màu theo tỷ trọng chú ý mỗi đoạn nhận được, kèm điểm rủi ro và xác suất ba lớp. HTML + JS thuần, không framework. Ba endpoint theo `docs/SPEC.md` §2.6, tài liệu tương tác ở `http://127.0.0.1:8000/docs`:
+Trang quan sát ở `http://127.0.0.1:8000/` — dán ngữ cảnh, câu hỏi, câu trả lời, bấm Chấm: ngữ cảnh được tô màu theo tỷ trọng chú ý mỗi đoạn nhận được, kèm điểm rủi ro và xác suất ba lớp. HTML + JS thuần, không framework. Các route theo `docs/SPEC.md` §2.6, tài liệu tương tác ở `http://127.0.0.1:8000/docs`:
 
 | Endpoint | Nhận | Trả |
 |---|---|---|
 | `POST /score` | `{context, response, question?, chunk_strategy?}` | `{label, proba, risk_score, chunk_attention, elapsed_ms, …}` |
 | `POST /score/batch` | `{items: [...]}`, tối đa 64 | `{results: [...], elapsed_ms}` |
-| `GET /health` | — | mô hình đã nạp chưa, tên mô hình, VRAM đang giữ, số request đã chấm |
+| `GET /health` | — | mô hình đã nạp chưa, tên mô hình, VRAM đang giữ, bộ sinh đã nạp chưa, số request đã chấm |
+| `POST /demo/ask` | `{question, top_k?}` | tài liệu truy xuất, câu trả lời sinh ra, và điểm của nó (mục dưới) |
+| `GET /demo/corpus` | — | 21 tài liệu của kho minh họa |
+| `GET /` | — | trang quan sát |
 
 Mô hình nạp **một lần lúc khởi động** (khoảng một phút với Qwen2.5-7B NF4 trên T4). `GET /health`
 trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do nếu nạp hỏng; hai route chấm
@@ -193,9 +200,13 @@ Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi
 ```python
 !git clone https://github.com/wsunicorn/vihallulens.git /kaggle/working/vihallulens
 %cd /kaggle/working/vihallulens
-!pip install -e . -q
-!python scripts/extract_features.py --config configs/example.yaml
+!pip install -q --no-deps -e .                 # torch/transformers dùng bản Kaggle có sẵn
+!pip install -q -U bitsandbytes rank-bm25 "scikit-learn>=1.9,<2"
+!python scripts/extract_features.py --config configs/example.yaml --split test
 ```
+
+`--no-deps` là cố ý: kéo cả cây phụ thuộc về sẽ cài lại torch mất hàng chục phút và có thể lệch
+CUDA của Kaggle. Đổi lại phải tự cài những gói Kaggle không có sẵn — bài học T27 và T40.
 
 Khóa API lấy từ Kaggle Secrets, không viết thẳng vào notebook:
 
