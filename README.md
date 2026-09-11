@@ -155,22 +155,22 @@ mô tả phân bố trên đúng các đoạn ấy.
 ## Hệ RAG minh họa
 
 Dịch vụ kèm một hệ RAG tối giản trên **21 tài liệu ngắn về Việt Nam** (`serve/demo_corpus.jsonl`):
-truy xuất BM25, sinh câu trả lời bằng **một bản thứ hai của Qwen2.5-7B nạp ở `bfloat16`** (cùng
-chat template đã chốt ở mục 8 `CLAUDE.md`, giải mã tham lam), rồi chấm câu trả lời ấy bằng bộ phát
-hiện. Vì sao không dùng chính bản `float16` đang nạp để sinh: lớp 27 của nó tràn số — bộ phát hiện
-né được bằng cách không đọc lớp đó, nhưng LM head thì không né được, và logit NaN cho ra toàn `!`.
-Bản `bfloat16` tốn thêm ~5,5 GB và giải mã chậm hơn khoảng bốn lần trên T4 (Turing không có bf16
-gốc); nạp lười ở câu hỏi đầu tiên. Trên trang quan sát là ô "Hỏi hệ
+truy xuất BM25, sinh câu trả lời bằng **Qwen2.5-3B nạp ở `bfloat16`** (cùng chat template đã chốt
+ở mục 8 `CLAUDE.md`, giải mã tham lam), rồi chấm câu trả lời ấy bằng bộ phát hiện. Vì sao không
+dùng chính bản 7B `float16` đang nạp để sinh: lớp 27 của nó tràn số — bộ phát hiện né được bằng
+cách không đọc lớp đó, nhưng LM head thì không né được, và logit NaN cho ra toàn `!`. Vì sao không
+nạp thêm 7B `bfloat16`: hai bản 7B không nằm chung một card 16 GB (thử ngày 11/09, hết bộ nhớ lúc
+nạp). 3B là cỡ lớn nhất của bậc thang còn vừa cạnh bộ đọc; nạp lười ở câu hỏi đầu tiên, đổi bằng
+`scripts/serve.py --generator`. Trên trang quan sát là ô "Hỏi hệ
 RAG"; qua API là `POST /demo/ask {question, top_k?}`; qua dòng lệnh:
 
 ```bash
 python scripts/demo_rag.py --question "Đỉnh núi cao nhất Đông Dương là gì?" --out results/demo.json
 ```
 
-Cùng trọng số đọc và viết — nhưng ở hai kiểu số. Lập luận chi phí biên ở Bảng 8
-`docs/EXPERIMENTS.md` ("lượt đọc hệ RAG dù sao cũng trả") vì thế mang một điều khoản phần cứng:
-trên T4 ở `float16`, mô hình đọc không phải là bộ sinh. Trên Ampere trở lên, `bfloat16` là kiểu số
-gốc và một bản duy nhất làm cả hai việc.
+Lập luận chi phí biên ở Bảng 8 `docs/EXPERIMENTS.md` ("lượt đọc hệ RAG dù sao cũng trả") vì thế
+mang một điều khoản phần cứng: trên T4 ở `float16`, mô hình đọc không phải là bộ sinh, và bộ sinh
+phải là một mô hình khác. Trên card lớn hơn có `bfloat16` gốc, một bản 7B duy nhất làm cả hai việc.
 
 ## Chạy bằng Docker
 

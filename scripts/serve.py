@@ -29,13 +29,18 @@ def main() -> int:
     parser.add_argument("--host", default="127.0.0.1",
                         help="127.0.0.1 chỉ nhận kết nối từ máy này; 0.0.0.0 để mở ra ngoài")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--generator", default=None,
+                        help="mô hình sinh câu trả lời cho hệ RAG demo, nạp lười ở câu hỏi đầu "
+                             "tiên; mặc định Qwen2.5-3B bfloat16 — cỡ lớn nhất còn vừa cạnh bộ "
+                             "đọc 7B trên card 16 GB")
     args = parser.parse_args()
 
     import uvicorn
 
     from vihallulens.serve.app import create_app
 
-    app = create_app(bundle_path=args.bundle, device=args.device)
+    app = create_app(bundle_path=args.bundle, device=args.device,
+                     generator_model=args.generator)
     print(f"  bundle   : {args.bundle}")
     print(f"  thiết bị : {args.device}")
     print(f"  địa chỉ  : http://{args.host}:{args.port}  (tài liệu ở /docs)")
