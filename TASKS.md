@@ -4417,19 +4417,28 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 | B | chính Qwen2.5-7B nạp thêm bản `bfloat16` | ~5,5 GB → tổng ~11 GB | 4,4× chậm, ước 40–60 s một câu | giữ "một mô hình làm cả" nhưng là hai bản nạp |
 | C | không sinh; người dùng gõ câu trả lời | 0 | — | demo yếu hơn: hỏi rồi phải tự gõ đáp |
 
-  **Chốt 11/09/2026: B.** Tiêu chí người dùng đặt ra là *chất lượng đánh giá tốt nhất, không lo
-  GPU Kaggle*. Bộ phát hiện không đổi dù bộ sinh là gì, nên thứ quyết định chất lượng demo là câu
-  trả lời phải mạch lạc và cùng cỡ với mô hình chính — 7B hơn 1.5B, và giữ đúng tinh thần "cùng
-  trọng số đọc và viết". `AnswerGenerator` trong `serve/rag.py`: NF4, `bfloat16`, `sdpa`, không
-  hook; `DemoRAG` nạp lười ở câu hỏi đầu tiên; `/health` báo bộ sinh đã nạp chưa. Test dùng bộ
-  sinh giả có `generate()`.
+  **Chốt 11/09/2026: B, rồi vật lý ép về 3B.** Tiêu chí người dùng đặt ra là *chất lượng đánh
+  giá tốt nhất, không lo GPU Kaggle*. Bộ phát hiện không đổi dù bộ sinh là gì, nên thứ quyết định
+  là câu trả lời phải mạch lạc — chọn B, nạp thêm 7B `bfloat16`.
 
-  Điều khoản phần cứng ghi vào Bảng 8 `docs/EXPERIMENTS.md` và README.
+  **Lượt 11/09 lần 2: hết bộ nhớ ngay lúc nạp bản 7B thứ hai.** Bộ đọc giữ 5.573 MB; nạp 7B cần
+  đỉnh tạm 8–9 GB (T31 đo 7B một mình đỉnh 8.428 MB) → 14,30/14,56 GiB. Hai bản 7B **không nằm
+  chung một T4**, và mục 2 `CLAUDE.md` nói mọi thứ phải vừa 16 GB — đây là ràng buộc vật lý, không
+  phải sở thích. Trong tiêu chí đã đặt, thứ lớn nhất còn vừa là **Qwen2.5-3B `bfloat16`**: T31 đo
+  0 lớp tràn, đỉnh 4.117 MB một mình; 5,5 + ~5 GB nạp tạm ≈ 10,5 GB. Mặc định `GENERATOR_MODEL`
+  trong `serve/rag.py`, đổi bằng `scripts/serve.py --generator` khi card lớn hơn.
+
+  `AnswerGenerator`: NF4, `bfloat16`, `sdpa`, không hook; `DemoRAG` nạp lười ở câu hỏi đầu tiên;
+  `/health` báo bộ sinh đã nạp chưa. Test dùng bộ sinh giả có `generate()`. Notebook đặt
+  `PYTORCH_ALLOC_CONF=expandable_segments:True` trước khi nạp, bài học T30.
+
+  Điều khoản phần cứng ghi vào Bảng 8 `docs/EXPERIMENTS.md` và README, nay nói rõ: trên T4 bộ
+  sinh và bộ đọc là **hai mô hình**, lượt đọc của bộ phát hiện là chi phí thêm thật.
 
   ### Việc cần chạy lại
 
-  Save Version `notebooks/t40_demo_t4.ipynb` bản mới. Ô 6 giờ in VRAM trước và sau khi bộ sinh
-  nạp — tổng hai bản khoảng 11 GB, phải dưới 15 GB. Khoảng 12 phút. Tải `ket_qua_t40` về, tôi tick.
+  Save Version `notebooks/t40_demo_t4.ipynb` bản mới. Ô 6 in VRAM trước và sau khi bộ sinh nạp —
+  tổng phải quanh 10–11 GB. Khoảng 10 phút. Tải `ket_qua_t40` về, tôi tick.
 
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
     `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.

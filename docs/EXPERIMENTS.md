@@ -1459,9 +1459,12 @@ trả" giả định hệ RAG sinh câu trả lời **bằng chính mô hình đ
 đã chốt cho bộ phát hiện — mô hình ấy **không sinh được**: lớp 27 tràn số (T07), bộ phát hiện né
 bằng cách không đọc lớp đó, nhưng dòng dư vẫn đi qua lớp 27 vào LM head, logit thành NaN và
 `argmax` trả về token 0 = `!`. Cả bốn câu trả lời của demo ra `![](…!-!-`. Sinh được thì phải
-`bfloat16`, tức trên T4 là **một bản nạp thứ hai** và giải mã chậm khoảng bốn lần. Chi phí biên
-"gần 0" vì thế chỉ đúng trên phần cứng có `bfloat16` gốc (Ampere trở lên), nơi một bản duy nhất
-vừa đọc vừa viết. Phải viết kèm khi trình bày Bảng 8.
+`bfloat16`, tức **một mô hình thứ hai**: nạp thêm bản 7B `bfloat16` thì hết bộ nhớ ngay lúc nạp
+(bộ đọc giữ 5,5 GB, nạp 7B cần đỉnh tạm 8–9 GB, tổng 14,3/14,56 GiB), nên demo dùng Qwen2.5-3B
+`bfloat16` — cỡ lớn nhất còn vừa. Chi phí biên "gần 0" vì thế chỉ đúng trên phần cứng có
+`bfloat16` gốc và đủ bộ nhớ (Ampere trở lên), nơi một bản 7B duy nhất vừa đọc vừa viết. Trên T4
+thì bộ sinh và bộ đọc là hai mô hình, và lượt đọc của bộ phát hiện là chi phí thêm thật. Phải
+viết kèm khi trình bày Bảng 8.
 
 ### Hai ô của Bảng 1 sai, và bảng này chứng minh điều đó
 

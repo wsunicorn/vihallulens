@@ -3,7 +3,7 @@
 Twenty-one short Vietnamese documents, BM25 retrieval, an answer from Qwen2.5-7B, and the
 detector's verdict on that answer.
 
-**The answer comes from a second copy of the reading model, loaded in bfloat16.** The first
+**The answer comes from a second model, Qwen2.5-3B, loaded in bfloat16.** The first
 version of this module generated with the detector's own extractor — one model, zero extra
 VRAM — and the Kaggle run of 11/09/2026 returned ``![](https://cdn…!-!-!-`` for every question.
 That is not a hallucination, it is ``argmax`` over NaN logits: token id 0 of Qwen2.5 is ``!``.
@@ -13,10 +13,11 @@ forcing never reads the logits, so scoring is unaffected. Generation reads nothi
 
 So the configuration that makes the detector cheap — float16, layer 27 dropped — is the one that
 makes the same model unable to write. ``bfloat16`` has float32's exponent range and does not
-overflow (T31 measured 0 non-finite layers), at the price of a second 5,5 GB copy and, on a T4
-without native bfloat16, roughly four times slower decoding. On Ampere and later the cost
-vanishes. The marginal-cost argument of Bảng 8 therefore carries a hardware clause, recorded
-there.
+overflow (T31 measured 0 non-finite layers). A second 7B copy in bfloat16 was tried first and
+did not fit beside the reader on a T4 (OOM while loading); Qwen2.5-3B does, with no overflowing
+layer either. On a T4 without native bfloat16 decoding is roughly four times slower. On Ampere
+and later, with more memory and native bfloat16, one 7B copy could do both jobs. The
+marginal-cost argument of Bảng 8 therefore carries a hardware clause, recorded there.
 
 The generation prompt is the locked template of CLAUDE.md §8 with ``add_generation_prompt``
 instead of a filled assistant turn, so the answer is produced from exactly the string the
@@ -43,6 +44,11 @@ DEMO_CORPUS = Path(__file__).parent / "demo_corpus.jsonl"
 DEFAULT_TOP_K = 3
 MAX_NEW_TOKENS = 160
 GENERATOR_DTYPE = "bfloat16"
+# The largest model of the ladder that fits NEXT TO the 7B reader on a 16 GB card. A second 7B
+# copy does not: the reader holds 5,5 GB and loading another 7B peaks at 8–9 GB transient
+# (Kaggle, 11/09/2026: OOM at 14,3 of 14,56 GiB). 3B in bfloat16 peaks at 4,1 GB alone (T31)
+# and has no overflowing layer. Override per call when the card is bigger.
+GENERATOR_MODEL = "Qwen/Qwen2.5-3B-Instruct"
 
 
 def load_corpus(path: Path | str = DEMO_CORPUS) -> pd.DataFrame:
@@ -146,29 +152,28 @@ class DemoRAG:
     """Retrieve → answer → score, over the bundled demo corpus.
 
     ``generator`` is anything with ``generate(context, question) -> str``. Absent, an
-    :class:`AnswerGenerator` is loaded **lazily on the first question**, with the same model
-    name as the detector's reading model and ``bfloat16`` compute — a second 5,5 GB copy, for
-    the reason in the module docstring. Tests pass a fake.
+    :class:`AnswerGenerator` for ``generator_model`` (default Qwen2.5-3B) is loaded **lazily on
+    the first question** in ``bfloat16`` — a second model, for the reason in the module
+    docstring. Tests pass a fake.
     """
 
     def __init__(self, detector, corpus: pd.DataFrame | None = None, top_k: int = DEFAULT_TOP_K,
-                 generator=None, generator_dtype: str = GENERATOR_DTYPE):
+                 generator=None, generator_model: str = GENERATOR_MODEL,
+                 generator_dtype: str = GENERATOR_DTYPE):
         self.detector = detector
         self.corpus = corpus if corpus is not None else load_corpus()
         self.index = EvidenceIndex(self.corpus)
         self.top_k = top_k
         self._generator = generator
+        self.generator_model = generator_model
         self.generator_dtype = generator_dtype
 
     @property
     def generator(self):
         if self._generator is None:
-            name = self.detector.bundle.config.get("extractor", {}).get("model_name")
-            if not name:
-                raise ValueError("bundle không ghi model_name của mô hình đọc — không biết nạp "
-                                 "bộ sinh nào")
             device = getattr(self.detector.extractor, "device", "cuda")
-            self._generator = AnswerGenerator.from_pretrained(name, self.generator_dtype, device)
+            self._generator = AnswerGenerator.from_pretrained(
+                self.generator_model, self.generator_dtype, device)
         return self._generator
 
     @property
