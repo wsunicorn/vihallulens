@@ -288,3 +288,29 @@ def test_index_has_the_rag_panel(rag_client):
     client, _ = rag_client
     page = client.get("/").text
     assert "/demo/ask" in page and 'id="ask"' in page
+
+
+# ---------------------------------------------------------------- landing page (T39B)
+
+def test_static_files_are_served_after_the_routes(client):
+    """replay.json and img/ come from the static mount; the mount must not shadow /health."""
+    client, _ = client
+    assert client.get("/health").status_code == 200
+    r = client.get("/replay.json")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["examples"]) == 3 and len(data["questions"]) == 5
+    for ex in data["examples"]:
+        for c in ex["score"]["chunk_attention"]:
+            assert ex["context"][c["char_start"]:c["char_end"]] == c["text"]
+    assert client.get("/img/khong-co.webp").status_code == 404
+
+
+def test_replay_json_matches_results_t40():
+    """The page shows results/t40 verbatim; a stale replay.json would show stale numbers."""
+    import subprocess
+
+    root = Path(__file__).resolve().parents[1]
+    done = subprocess.run([sys.executable, str(root / "scripts" / "build_replay.py"), "--check"],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
