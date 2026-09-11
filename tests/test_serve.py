@@ -219,3 +219,59 @@ def test_index_is_not_in_the_openapi_schema(client):
     paths = client.get("/openapi.json").json()["paths"]
     assert "/" not in paths
     assert set(paths) >= {"/score", "/score/batch", "/health"}
+
+
+# ---------------------------------------------------------------- T40: the demo RAG
+
+def fake_generator(extractor, context, question):  # noqa: ARG001 - signature fixed by DemoRAG
+    return "Câu trả lời sinh từ ngữ cảnh."
+
+
+@pytest.fixture
+def rag_client():
+    detector = FakeDetector()
+    app = create_app(detector=detector, load_on_startup=False, generator=fake_generator)
+    with TestClient(app) as client:
+        yield client, detector
+
+
+def test_demo_corpus_is_readable_without_a_model():
+    app = create_app(detector=None, load_on_startup=False)
+    with TestClient(app) as client:
+        docs = client.get("/demo/corpus").json()
+    assert len(docs) >= 20
+    assert {"id", "title", "text"} <= set(docs[0])
+    assert any(d["title"] == "Sa Pa" for d in docs)
+
+
+def test_demo_ask_retrieves_answers_and_scores(rag_client):
+    client, detector = rag_client
+    r = client.post("/demo/ask", json={"question": "Đỉnh núi cao nhất Đông Dương là gì?"})
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert out["retrieved"][0]["title"] == "Sa Pa"            # BM25 found the right document
+    assert out["answer"] == "Câu trả lời sinh từ ngữ cảnh."
+    assert "Fansipan" in out["context"]
+    assert out["score"]["label"] in ("no", "intrinsic", "extrinsic")
+    assert set(out["elapsed_ms"]) == {"retrieve", "generate", "score"}
+    # The scored triple is exactly the retrieved context, the question, and the generated answer.
+    assert detector.calls[-1] == (out["context"], out["question"], out["answer"])
+
+
+def test_demo_ask_respects_top_k(rag_client):
+    client, _ = rag_client
+    body = {"question": "Huế là kinh đô của triều nào?", "top_k": 1}
+    out = client.post("/demo/ask", json=body).json()
+    assert len(out["retrieved"]) == 1 and out["retrieved"][0]["title"] == "Huế"
+
+
+def test_demo_ask_is_503_before_the_model_loads():
+    app = create_app(detector=None, load_on_startup=False)
+    with TestClient(app) as client:
+        assert client.post("/demo/ask", json={"question": "x"}).status_code == 503
+
+
+def test_index_has_the_rag_panel(rag_client):
+    client, _ = rag_client
+    page = client.get("/").text
+    assert "/demo/ask" in page and 'id="ask"' in page

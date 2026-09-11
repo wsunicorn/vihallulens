@@ -77,6 +77,20 @@ class BatchResponse(BaseModel):
     elapsed_ms: float
 
 
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1)
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+class AskResponse(BaseModel):
+    question: str
+    retrieved: list[dict]
+    context: str
+    answer: str
+    score: ScoreResponse
+    elapsed_ms: dict[str, float]
+
+
 class HealthResponse(BaseModel):
     status: str                 # loading | ok | error | not_loaded
     error: str | None = None    # lý do khi status == "error"
@@ -107,7 +121,8 @@ def vram_mb() -> tuple[float | None, float | None]:
 
 
 def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
-               device: str = "cuda", load_on_startup: bool = True, loader=None) -> FastAPI:
+               device: str = "cuda", load_on_startup: bool = True, loader=None,
+               generator=None) -> FastAPI:
     """Build the service.
 
     ``detector`` given: use it as is (tests, or a caller that already holds one).
@@ -126,7 +141,7 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
     in one that blocks on an event.
     """
     state = {"detector": detector, "started": time.time(), "requests": 0, "error": None,
-             "loading": False}
+             "loading": False, "rag": None}
 
     def default_loader():
         from vihallulens.pipeline import HallucinationDetector
@@ -193,6 +208,32 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
         started = time.perf_counter()
         results = [score_one(det, item) for item in batch.items]
         return BatchResponse(results=results, elapsed_ms=(time.perf_counter() - started) * 1000)
+
+    def rag():
+        """The demo RAG, built once from the loaded detector (T40)."""
+        det = current()
+        if state["rag"] is None:
+            from vihallulens.serve.rag import DemoRAG
+
+            state["rag"] = DemoRAG(det, generator=generator)
+        return state["rag"]
+
+    @app.post("/demo/ask", response_model=AskResponse)
+    def demo_ask(item: AskRequest) -> AskResponse:
+        """Retrieve from the bundled corpus, answer with the reading model, score the answer."""
+        try:
+            out = rag().ask(item.question, item.top_k)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        state["requests"] += 1
+        return AskResponse(**{**out.to_dict(), "score": ScoreResponse(**out.score)})
+
+    @app.get("/demo/corpus")
+    def demo_corpus() -> list[dict]:
+        """The demo documents. Readable before the model is: it is a file, not a GPU."""
+        from vihallulens.serve.rag import corpus_documents, load_corpus
+
+        return corpus_documents(load_corpus())
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
