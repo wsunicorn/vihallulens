@@ -4527,6 +4527,65 @@ cho cả ba ví dụ lúc xem trên máy không GPU là do bộ phát lại tron
 kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát hiện — trên Kaggle ba ví dụ ra
 `no` 0,001 / `intrinsic` 0,998 / `extrinsic` 1,000. Giao diện còn nhiều chỗ cần đẹp hơn, để sau.
 
+- [x] **T39B** · LM · Trang chủ kể chuyện: landing page + công cụ + mascot, chế độ phát lại — hoàn
+  thành 11/09/2026 (việc thêm ngoài kế hoạch, theo yêu cầu 11/09; không tính vào 52 task)
+  - **Kiểm tra:** `GET /` 200; `GET /replay.json` 200 và khớp `results/t40` (`build_replay.py
+    --check`); mount tĩnh không che `/health`; JS parse sạch; ảnh chụp headless Edge cả trang ở
+    hai theme, console không lỗi ✅. `pytest` 783.
+
+  ### Vì sao làm, và làm gì
+
+  Trang T39 là công cụ trần: hai ô nhập, một bảng. Người dùng muốn một trang giới thiệu đủ đề
+  tài, có ảnh, có linh thú, có hoạt ảnh — để bảo vệ và để người ngoài hiểu trong hai phút. Bốn
+  quyết định chốt 11/09: **thay** trang `/` (một file vừa landing vừa công cụ), **CSS + JS
+  thuần** (SPEC §2.6, chạy offline trong Docker), ảnh minh họa **kết hợp** ChatGPT sinh + SVG
+  tôi vẽ, mascot **cú mèo Lens**.
+
+  Ẩn dụ xuyên suốt: *chú ý là ánh nhìn*. Chín phần: hero (sơ đồ chú ý chảy từ token trả lời
+  về đoạn ngữ cảnh) → ba loại phản hồi (ba thẻ chấm thật từ T36) → cơ chế 5 bước → chunk-aware
+  với thanh trượt minh họa entropy/Gini → số liệu (bộ đếm + bảng đánh đổi rút gọn) → "Nói
+  thẳng" (năm phép đo cùng nói chunk-aware không cộng thêm điểm) → demo → hệ thống → nhóm.
+
+  ### Mascot và hero — bản 2, cùng ngày, theo ảnh mẫu và `sample.html` người dùng đưa
+
+  Bản 1 là cú SVG hoạt hình. Người dùng muốn cú **ngầu**, mắt sắc như ảnh cú đại bàng thật, kính
+  nhà khoa học, hero kiểu FluxBuilder: tiêu đề khổng lồ căn giữa, mascot đè lên. Cách mượn từ
+  sample: mascot là **ảnh raster** + **đồng tử là lớp DOM riêng** đặt theo tọa độ cấu hình. Vì
+  ảnh do GPT image sinh, mắt trong ảnh phải là đĩa hổ phách trơn; `scripts/calibrate_owl.py`
+  tìm hai đĩa bằng ngưỡng màu, ghi `static/owl.json`, nén sang WebP — bạn thay ảnh, chạy một
+  lệnh, đồng tử vẫn đúng chỗ. Chưa có ảnh thì SVG thay chỗ với tọa độ mắt biết trước.
+
+  Hero ghim 260vh, ba nhịp theo cuộn: (0) tối đen, hai mắt sáng chớp một lần, mặt cú hiện dần
+  đè lên chữ **NHÌN VÀO ĐÂU**; (1) mặt lùi xa, tiêu đề co lên đầu; (2) Giáo sư Lens đậu trên
+  cành hòa hình vào, tấm giới thiệu trượt vào, cánh giơ ra (đổi ảnh biến thể). Bốn ý người
+  dùng duyệt: **đèn pin con trỏ** (hero tối, vùng sáng quanh con trỏ, có nút tắt, tự tắt khi
+  cuộn qua), **mắt đổi màu theo phán quyết** (`hue-rotate` lớp mống mắt: hổ phách / vàng nheo /
+  đỏ mở to), **hạt chú ý** (canvas, đốm sáng trôi về mắt ở hero và về cột cao nhất ở mục
+  chunk-aware), **tối làm mặc định**. Cú góc phải là cửa sổ tròn vào chính ảnh mặt, cùng rig.
+
+  Kiểm bằng Edge headless: `?noboot` bỏ màn mở đầu, `?p=0.6` ghim hero ở một nhịp để chụp.
+  Một cái bẫy đã gặp: headless đóng băng transition CSS giữa chừng nên mí mắt trông "kẹt" — chỉ
+  là ảnh chụp, không phải lỗi trang; đã chuyển chớp mắt mở màn sang JS để khỏi lẫn.
+
+  ### Chế độ phát lại — giải bài toán "máy không có GPU"
+
+  `/health` không `ok` (hoặc không có dịch vụ nào) → trang nạp `replay.json` và hiện đúng kết
+  quả phiên Kaggle 11/09: ba ví dụ T36, năm câu RAG. `scripts/build_replay.py` là **đường duy
+  nhất** từ `results/t40/*.json` tới file này; test `--check` bắt file cũ. Ba nút ví dụ cũng
+  đọc từ đó, nên hết cảnh trang một chuỗi, notebook một chuỗi (lỗi đã bắt ở đợt rà soát).
+  Hệ quả: thư mục `static/` chép nguyên lên GitHub Pages là có trang giới thiệu chạy được.
+
+  ### Ảnh
+
+  `static/img/PROMPTS.md` ghi tên file, kích thước, prompt GPT image cho năm ảnh (mặt cận, giáo
+  sư, giáo sư giơ cánh, cành cây, minh họa chunk-aware) và hai lệnh hiệu chuẩn. Chưa có file thì
+  trang tự lùi về SVG — không có ô trống. Ảnh mẫu người dùng đưa (`sample.html` 718 KB) **không
+  commit**, là tài liệu tham khảo bên ngoài.
+
+  ### Chưa làm
+
+  Chưa có mắt người xem trên máy GPU với mô hình thật; hoạt ảnh chưa đo trên điện thoại cũ.
+
 ---
 
 ## Giai đoạn 8 — Viết báo cáo (tuần 14–15)

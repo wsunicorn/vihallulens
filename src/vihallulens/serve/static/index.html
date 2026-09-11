@@ -1,281 +1,977 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>vihallulens — quan sát chú ý</title>
+<title>vihallulens — nhìn vào đâu</title>
+<meta name="description" content="Phát hiện ảo giác cho hệ RAG tiếng Việt bằng tín hiệu chú ý nội tại của mô hình đọc. Khóa luận tốt nghiệp, Trường Đại học Công nghiệp TP.HCM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
 <style>
-  :root {
-    --bg: #fafaf7; --ink: #1c1c1a; --muted: #6b6b66; --line: #e2e1dc; --card: #ffffff;
-    --ok: #2f7d4f; --warn: #b8860b; --bad: #b3261e; --accent: #8a4b08;
-    --attn-h: 28; /* hue for attention tint */
+  /* ---------- tokens: night + amber first; paper is the alternate ---------- */
+  :root, html[data-theme="dark"] {
+    --bg: #0b0a0d; --bg2: #14121a; --card: #1b1822; --ink: #efe7d8; --muted: #a79d8c;
+    --line: #2d2936; --accent: #f0a23a; --accent-2: #ffcf7a; --accent-ink: #ffd9a0;
+    --ok: #7bcf95; --warn: #e9be4c; --bad: #ff7a70; --owl: #8d6a45; --owl-2: #d9b07a;
+    --amber: #ff9d1c; --attn: 32 90% 58%; --shadow: 0 16px 50px -20px rgba(0,0,0,.9);
+    color-scheme: dark;
+  }
+  html[data-theme="light"] {
+    --bg: #faf7f1; --bg2: #f1ebe0; --card: #ffffff; --ink: #1d1a17; --muted: #6e675d;
+    --line: #e6dfd2; --accent: #b0561a; --accent-2: #e0a04a; --accent-ink: #7a3c0f;
+    --ok: #2f7d4f; --warn: #b8860b; --bad: #b3261e; --owl: #6b4a2b; --owl-2: #c69a63;
+    --amber: #f08a00; --attn: 28 80% 55%; --shadow: 0 12px 40px -18px rgba(60,40,10,.35);
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.55 -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
-  header { padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--card);
-           display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-  header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
-  header .sub { color: var(--muted); font-size: 13px; }
-  #health { margin-left: auto; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-  #health .dot { width: 9px; height: 9px; border-radius: 50%; background: #bbb; }
-  #health.ok .dot { background: var(--ok); } #health.error .dot { background: var(--bad); }
+         font: 16px/1.6 "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         overflow-x: hidden; transition: background .4s, color .4s; }
+  a { color: var(--accent); }
+  h1, h2, h3 { line-height: 1.15; margin: 0 0 .4em; letter-spacing: -.01em; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; }
+  h3 { font-size: 1.1rem; font-weight: 600; }
+  p { margin: 0 0 1em; }
+  .muted { color: var(--muted); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 84px 0; position: relative; }
+  section.alt { background: var(--bg2); }
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+  .lead { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+  pre { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+  button, .btn { font: inherit; border-radius: 999px; padding: 10px 18px; cursor: pointer; border: 1px solid var(--line);
+                 background: var(--card); color: var(--ink); transition: transform .15s, box-shadow .15s, background .2s; }
+  button:hover, .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  button.primary, .btn.primary { background: var(--accent); color: #140c02; border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn { text-decoration: none; display: inline-block; }
+
+  /* ---------- top bar ---------- */
+  #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); z-index: 60; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: background .4s, border-color .4s; border-bottom: 1px solid transparent; }
+  nav.solid { backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 80%, transparent); border-color: var(--line); }
+  nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
+  nav .brand { font-weight: 800; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); }
+  nav .brand .mini { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; position: relative; background: #000; box-shadow: 0 0 0 1px var(--accent); }
+  nav .links { display: flex; gap: 14px; margin-left: auto; font-size: .9rem; }
+  nav .links a { color: var(--muted); text-decoration: none; } nav .links a:hover { color: var(--ink); }
+  @media (max-width: 760px) { nav .links { display: none; } }
+  #health { font-size: .8rem; display: flex; align-items: center; gap: 7px; color: var(--muted); white-space: nowrap; }
+  #health .dot { width: 9px; height: 9px; border-radius: 50%; background: #777; }
+  #health.ok .dot { background: var(--ok); } #health.error .dot, #health.replay .dot { background: var(--warn); }
   #health.loading .dot { background: var(--warn); animation: pulse 1.2s infinite; }
   @keyframes pulse { 50% { opacity: .35; } }
-  main { max-width: 1180px; margin: 0 auto; padding: 22px 28px 48px;
-         display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
-  textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
-             font: inherit; resize: vertical; background: #fff; }
-  textarea:focus { outline: 2px solid #d9c3a1; border-color: transparent; }
+  #theme, #torch-btn { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+
+  /* ---------- hero: pinned stage, three beats driven by scroll ---------- */
+  #hero { height: 260vh; position: relative; background: #000; }
+  #stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #1a1410 0%, #000 65%); }
+  #motes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #title { position: absolute; left: 0; right: 0; top: 11%; transform: none; text-align: center; margin: 0; z-index: 1; pointer-events: none; padding: 0 16px; will-change: transform, opacity; }
+  #title .t1 { display: block; font-size: clamp(16px, 2.2vw, 28px); font-weight: 500; letter-spacing: .02em; color: var(--muted); margin-bottom: .3em; }
+  #title .t2 { display: block; font-size: clamp(56px, 12.5vw, 200px); font-weight: 800; letter-spacing: -.05em; line-height: .9; color: var(--accent);
+               text-shadow: 0 0 60px rgba(255,157,28,.25); white-space: nowrap; }
+  #title .t3 { display: block; font-size: clamp(14px, 1.6vw, 20px); color: var(--muted); margin-top: 1em; }
+  .layer { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); will-change: transform, opacity; }
+  .layer img, .layer svg.fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+  .layer .eye { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
+  .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 45% 40%, #ffd27a 0%, var(--amber) 45%, #b85a00 100%);
+                      box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 32px 6px rgba(255,157,28,.35); transition: filter .5s, box-shadow .5s; }
+  .layer .eye .pupil { position: absolute; left: 50%; top: 50%; width: 52%; height: 52%; border-radius: 50%; background: #06040a;
+                       transform: translate(-50%, -50%); transition: transform .12s ease-out, width .4s, height .4s; }
+  .layer .eye .pupil::after { content: ""; position: absolute; left: 22%; top: 16%; width: 30%; height: 30%; border-radius: 50%; background: rgba(255,255,255,.85); }
+  .layer .eye .lid { position: absolute; inset: -2%; border-radius: 50%; background: #0e0b08; transform: scaleY(0); transform-origin: 50% 0; transition: transform .1s; }
+  .layer.blink .eye .lid { transform: scaleY(1); }
+  .layer.think .eye:nth-child(3) .lid { transform: scaleY(.55); }
+  .layer.sleep .eye .lid { transform: scaleY(.92); }
+  /* verdict colours */
+  html.v-no .eye .iris { filter: hue-rotate(0deg) saturate(1.1); }
+  html.v-intrinsic .eye .iris { filter: hue-rotate(18deg) saturate(1.3) brightness(1.05); box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 40px 8px rgba(233,190,76,.45); }
+  html.v-intrinsic .eye .lid { transform: scaleY(.45); }
+  html.v-extrinsic .eye .iris { filter: hue-rotate(-28deg) saturate(1.6) brightness(1.1); box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 46px 10px rgba(255,80,60,.5); }
+  html.v-extrinsic .eye .pupil { width: 68%; height: 68%; }
+  html.v-no .eye .pupil { width: 46%; height: 46%; }
+  /* boot: black, eyes only */
+  body.boot #stage > *:not(.layer):not(#motes) { opacity: 0; }
+  body.boot .layer img, body.boot .layer svg.fallback { opacity: 0; }
+  .layer img, .layer svg.fallback { transition: opacity 1.2s ease; }
+  #face { width: min(76vmin, 760px); aspect-ratio: 1; z-index: 2; top: 62%; }
+  #prof { width: min(78vh, 620px); aspect-ratio: 4/5; z-index: 2; opacity: 0; pointer-events: none; }
+  #branch { position: absolute; left: -4%; bottom: 6%; width: 70vw; max-width: 900px; z-index: 3; opacity: 0; pointer-events: none; }
+  #branch img { width: 100%; display: block; }
+  #intro { position: absolute; z-index: 4; left: 50%; top: 50%; width: min(520px, 92vw); transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
+           background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 20px; padding: 26px 28px; box-shadow: var(--shadow); }
+  #intro.on { pointer-events: auto; }
+  #intro h1 { font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 800; }
+  #intro h1 span { color: var(--accent); }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .hero-meta { margin-top: 18px; font-size: .82rem; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  #hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 5; color: var(--muted); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+          animation: bob 2s ease-in-out infinite; transition: opacity .4s; }
+  @keyframes bob { 50% { transform: translate(-50%, 6px); } }
+  /* the torch: everything dark except around the pointer */
+  #torch { position: absolute; inset: 0; z-index: 6; pointer-events: none; transition: opacity .5s;
+           background: radial-gradient(circle 330px at var(--tx, 50%) var(--ty, 55%), transparent 0, rgba(0,0,0,.15) 45%, rgba(0,0,0,.82) 100%); }
+  #torch.off { opacity: 0; }
+  @media (max-width: 860px) {
+    #hero { height: 220vh; }
+    #face { width: min(110vw, 520px); top: 60%; }
+    #prof { width: min(70vh, 84vw); }
+    #intro { top: auto; bottom: 14px; left: 16px; right: 16px; width: auto; padding: 18px 20px; }
+    #title .t2 { font-size: clamp(40px, 12.5vw, 200px); }
+    #branch { display: none; }
+  }
+  /* ---------- reveal on scroll ---------- */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal[data-delay="1"] { transition-delay: .12s; } .reveal[data-delay="2"] { transition-delay: .24s; } .reveal[data-delay="3"] { transition-delay: .36s; }
+
+  /* ---------- cards ---------- */
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 860px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+  .card.kind { position: relative; overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+  .card.kind:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .card.kind .tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .kind.no .tag { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .kind.intrinsic .tag { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .kind.extrinsic .tag { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+  .card.kind q { display: block; font-style: italic; color: var(--muted); margin: 8px 0 10px; }
+  .card.kind .verdict-mini { font-size: .85rem; display: flex; justify-content: space-between; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 8px; }
+
+  /* ---------- mechanism steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 26px; position: relative; }
+  @media (max-width: 860px) { .steps { grid-template-columns: 1fr 1fr; } }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; position: relative; }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .85rem;
+             background: var(--bg2); color: var(--accent); margin-bottom: 10px; transition: background .4s, color .4s, transform .4s; }
+  .step.in .n { background: var(--accent); color: #fff; transform: scale(1.08); }
+  .step h3 { font-size: .98rem; } .step p { font-size: .86rem; color: var(--muted); margin: 0; }
+  .step svg { width: 100%; height: 64px; margin: 6px 0 4px; }
+
+  /* ---------- chunk-aware comparison ---------- */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+  @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 10px 6px 0; border-bottom: 1px solid var(--line); }
+  .bars .b { flex: 1; background: linear-gradient(180deg, hsla(var(--attn), .85), hsla(var(--attn), .35)); border-radius: 6px 6px 0 0; transition: height .35s cubic-bezier(.2,.8,.2,1); min-height: 3px; position: relative; }
+  .bars .b i { position: absolute; top: -20px; left: 0; right: 0; text-align: center; font-size: .7rem; color: var(--muted); font-style: normal; }
+  .bars.one .b { background: linear-gradient(180deg, #9a938a, #cfc8bd); }
+  .slider { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: .9rem; }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  .stat-inline { display: flex; gap: 18px; font-size: .85rem; margin-top: 8px; color: var(--muted); flex-wrap: wrap; }
+  .stat-inline b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---------- numbers ---------- */
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .nums { grid-template-columns: 1fr 1fr; } }
+  .num { padding: 20px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .num .v { font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .num .k { font-size: .85rem; color: var(--muted); }
+  table.res { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 18px; }
+  table.res th, table.res td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.res th { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  table.res td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  table.res tr.us td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .tablewrap { overflow-x: auto; }
+
+  /* ---------- honest ---------- */
+  .honest { border-left: 4px solid var(--accent); padding-left: 18px; }
+  .honest ul { padding-left: 18px; } .honest li { margin-bottom: 8px; }
+  .measure { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 18px; }
+  @media (max-width: 860px) { .measure { grid-template-columns: repeat(2, 1fr); } }
+  .measure div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: .82rem; }
+  .measure b { display: block; font-size: 1.2rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---------- demo tool ---------- */
+  #demo .tool { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 900px) { #demo .tool { grid-template-columns: 1fr; } }
+  .tool h3.h { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin: 12px 0 4px; }
+  textarea, input[type=text] { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; background: var(--card); color: var(--ink); }
+  textarea { resize: vertical; }
+  textarea:focus, input[type=text]:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); border-color: transparent; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
-  button { font: inherit; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--line); background: #fff; }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
   .examples { display: flex; gap: 6px; flex-wrap: wrap; }
-  .examples button { font-size: 13px; padding: 5px 10px; }
-  #context-view { line-height: 1.9; font-size: 15.5px; white-space: pre-wrap; }
-  .chunk { border-radius: 4px; padding: 1px 2px; transition: background .2s; position: relative; }
+  .examples button { font-size: .85rem; padding: 6px 12px; }
+  #context-view { line-height: 1.9; font-size: 1rem; white-space: pre-wrap; }
+  .chunk { border-radius: 4px; padding: 1px 2px; transition: background .25s; position: relative; }
   .chunk:hover { outline: 1.5px solid var(--accent); }
-  .chunk .tag { position: absolute; top: -1.35em; left: 0; font-size: 11px; color: var(--accent);
-                background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px;
-                display: none; white-space: nowrap; }
-  .chunk:hover .tag { display: block; }
+  .chunk .ttip { position: absolute; top: -1.5em; left: 0; font-size: .72rem; color: var(--accent); background: var(--card); border: 1px solid var(--line);
+                 border-radius: 4px; padding: 0 6px; display: none; white-space: nowrap; }
+  .chunk:hover .ttip { display: block; }
   .verdict { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
-  .label { font-size: 22px; font-weight: 600; }
+  .label { font-size: 1.5rem; font-weight: 700; }
   .label.no { color: var(--ok); } .label.intrinsic { color: var(--warn); } .label.extrinsic { color: var(--bad); }
   .risk { flex: 1; }
   .risk .bar { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #cfe8d6, #f3dfa0, #f0b7b2); position: relative; }
-  .risk .pin { position: absolute; top: -5px; width: 3px; height: 22px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
-  .risk .num { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .proba { display: grid; grid-template-columns: 90px 1fr 52px; gap: 8px 10px; align-items: center; font-size: 13px; }
-  .proba .track { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
-  .proba .fill { height: 100%; background: #c9a36b; }
-  .meta { color: var(--muted); font-size: 12.5px; margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
-  .note { font-size: 12.5px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin-top: 14px; }
+  .risk .pin { position: absolute; top: -5px; width: 3px; height: 22px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); transition: left .5s cubic-bezier(.2,.8,.2,1); }
+  .risk .num { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+  .proba { display: grid; grid-template-columns: 110px 1fr 56px; gap: 8px 10px; align-items: center; font-size: .85rem; }
+  .proba .track { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+  .proba .fill { height: 100%; background: var(--accent-2); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .meta { color: var(--muted); font-size: .8rem; margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .note { font-size: .82rem; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin-top: 14px; }
   .warn { color: var(--bad); }
-  .legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 8px; }
-  .legend .grad { width: 120px; height: 10px; border-radius: 5px;
-                  background: linear-gradient(90deg, hsla(28,80%,55%,0.05), hsla(28,80%,55%,0.85)); }
-  .chunks-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  .legend { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); margin-top: 8px; }
+  .legend .grad { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, hsla(var(--attn), .05), hsla(var(--attn), .85)); }
+  .chunks-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 10px; }
   .chunks-table td { padding: 4px 6px; border-top: 1px solid var(--line); vertical-align: top; }
   .chunks-table td.n { color: var(--muted); width: 32px; } .chunks-table td.s { text-align: right; width: 64px; font-variant-numeric: tabular-nums; }
   #error { color: var(--bad); margin-top: 10px; white-space: pre-wrap; }
+  .banner { border-radius: 12px; padding: 12px 16px; font-size: .9rem; margin-bottom: 18px; border: 1px solid var(--line); background: var(--card); display: none; }
+  .banner.replay { display: block; border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+  .rag-out { font-size: .88rem; color: var(--muted); margin-top: 10px; }
+  .rag-out .ans { color: var(--ink); background: var(--bg2); padding: 10px 12px; border-radius: 10px; margin-top: 6px; }
+
+  /* ---------- system ---------- */
+  .sys .card h3 { display: flex; align-items: center; gap: 8px; }
+
+  /* ---------- team / footer ---------- */
+  footer { padding: 40px 0 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  .people { display: flex; gap: 24px; flex-wrap: wrap; margin: 16px 0; }
+  .people div b { color: var(--ink); display: block; }
+
+  /* ---------- the owl ---------- */
+  .owl svg { width: 100%; height: 100%; overflow: visible; }
+  .owl .wing { transform-origin: var(--ox) var(--oy); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .owl.flap .wing.l { transform: rotate(-22deg); } .owl.flap .wing.r { transform: rotate(22deg); }
+  .owl .pupil { transition: transform .12s ease-out; }
+  .owl .lid { transform-origin: center top; transform: scaleY(0); transition: transform .12s; }
+  .owl.blink .lid, .owl.sleep .lid { transform: scaleY(1); }
+  .owl .lid-happy { opacity: 0; transition: opacity .2s; } .owl.happy .lid-happy { opacity: 1; }
+  .owl.happy .pupil { transform: translateY(1px) !important; }
+  .owl .brow { transform-origin: center; transition: transform .3s; opacity: 0; }
+  .owl.alert .brow { opacity: 1; transform: translateY(-5px) rotate(-8deg); } .owl.alert .brow.r { transform: translateY(-5px) rotate(8deg); }
+  .owl.alert .pupil { transform: scale(.7) !important; }
+  .owl.think .lid.r { transform: scaleY(.55); }
+  .owl .tuft { transform-origin: bottom center; transition: transform .3s; }
+  .owl.alert .tuft.l { transform: rotate(-14deg) translateY(-3px); } .owl.alert .tuft.r { transform: rotate(14deg) translateY(-3px); }
+  .owl .monocle { transform-origin: 50% 50%; transition: transform .5s; }
+  .owl.sleep .monocle { transform: translateY(14px) rotate(12deg); }
+  .owl .zz { opacity: 0; font: 700 16px "Be Vietnam Pro", sans-serif; fill: var(--muted); }
+  .owl.sleep .zz { animation: zz 2.4s ease-in-out infinite; }
+  .owl.sleep .zz.b { animation-delay: .8s; }
+  @keyframes zz { 0% { opacity: 0; transform: translate(0,0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(10px,-26px); } }
+  .owl.shake { animation: shake .4s; }
+  @keyframes shake { 25% { transform: translateX(-4px) rotate(-2deg); } 75% { transform: translateX(4px) rotate(2deg); } }
+  .owl.nod { animation: nod .6s; }
+  @keyframes nod { 30% { transform: translateY(6px) rotate(3deg); } 70% { transform: translateY(0) rotate(-2deg); } }
+  .owl.tilt { transform: rotate(-6deg); }
+  .owl { transition: transform .4s; }
+  #buddy.hidden { display: none; }
+  #buddy .bubble { position: absolute; right: 100%; bottom: 60%; margin-right: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px;
+                   font-size: .8rem; width: max-content; max-width: 220px; box-shadow: var(--shadow); opacity: 0; transform: translateX(6px); transition: opacity .25s, transform .25s; pointer-events: none; }
+  #buddy .bubble.show { opacity: 1; transform: none; }
+  #buddy-off { position: fixed; right: 20px; bottom: 126px; z-index: 45; font-size: .7rem; padding: 3px 9px; opacity: .6; }
+  @media (max-width: 760px) { #buddy-off { bottom: 100px; } }
+
+  /* images from ChatGPT drop into these frames; the SVG fallback shows while the file is missing */
+  .art { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg2); border: 1px solid var(--line); aspect-ratio: 16/10; }
+  .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .art .fallback { position: absolute; inset: 0; display: none; }
+  .art.no-img img { display: none; } .art.no-img .fallback { display: block; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* companion + nav mini: the face image in a round window, eyes rig on top */
+  #buddy { position: fixed; right: 18px; bottom: 18px; width: 92px; height: 92px; z-index: 45; cursor: pointer; filter: drop-shadow(0 8px 14px rgba(0,0,0,.45)); }
+  #buddy-face, #mini { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform: none; border-radius: 50%; overflow: hidden; background: #000; border: 2px solid var(--line); }
+  #mini { position: relative; display: inline-block; border-width: 1px; }
+  #buddy-face img, #mini img { object-fit: cover; }
+  .layer svg.fallback { overflow: visible; }
+  @media (max-width: 760px) { #buddy { width: 70px; height: 70px; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>vihallulens</h1>
-  <span class="sub">phản hồi có bám vào ngữ cảnh không — đọc từ phân bố chú ý của mô hình</span>
-  <div id="health" class="loading"><span class="dot"></span><span id="health-text">đang kiểm dịch vụ…</span></div>
-</header>
+<div id="progress"></div>
 
-<main>
-  <section class="card" style="grid-column: 1 / -1">
-    <h2>Hỏi hệ RAG minh họa — 21 tài liệu về Việt Nam</h2>
-    <div class="row" style="margin-top:0">
-      <input id="rag-q" type="text" placeholder="Ví dụ: Đỉnh núi cao nhất Đông Dương là gì?"
-             style="flex:1; min-width:260px; font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:8px">
-      <button class="primary" id="ask" disabled>Hỏi</button>
-      <span id="ask-busy" class="sub" style="display:none">truy xuất → sinh trả lời → chấm…</span>
+<template id="owl-tpl">
+  <svg viewBox="0 0 200 220" aria-hidden="true">
+    <defs>
+      <clipPath id="eyeL"><circle cx="72" cy="96" r="24"/></clipPath>
+      <clipPath id="eyeR"><circle cx="128" cy="96" r="24"/></clipPath>
+    </defs>
+    <!-- wings -->
+    <path class="wing l" style="--ox:62px;--oy:120px" d="M62 120 C 30 130, 22 170, 40 196 C 58 186, 66 160, 66 130 Z" fill="var(--owl)"/>
+    <path class="wing r" style="--ox:138px;--oy:120px" d="M138 120 C 170 130, 178 170, 160 196 C 142 186, 134 160, 134 130 Z" fill="var(--owl)"/>
+    <!-- body -->
+    <path d="M100 40 C 150 40, 166 90, 162 150 C 158 196, 130 208, 100 208 C 70 208, 42 196, 38 150 C 34 90, 50 40, 100 40 Z" fill="var(--owl)"/>
+    <ellipse cx="100" cy="158" rx="40" ry="42" fill="var(--owl-2)" opacity=".9"/>
+    <g fill="var(--owl)" opacity=".35">
+      <path d="M86 140 l7 10 l7 -10 Z"/><path d="M100 140 l7 10 l7 -10 Z"/><path d="M93 158 l7 10 l7 -10 Z"/><path d="M79 158 l7 10 l7 -10 Z"/><path d="M107 158 l7 10 l7 -10 Z"/>
+      <path d="M86 176 l7 10 l7 -10 Z"/><path d="M100 176 l7 10 l7 -10 Z"/>
+    </g>
+    <!-- tufts -->
+    <path class="tuft l" d="M62 52 L 48 18 L 80 44 Z" fill="var(--owl)"/>
+    <path class="tuft r" d="M138 52 L 152 18 L 120 44 Z" fill="var(--owl)"/>
+    <!-- face disc -->
+    <path d="M100 58 C 130 58, 150 80, 150 106 C 150 128, 128 140, 100 140 C 72 140, 50 128, 50 106 C 50 80, 70 58, 100 58 Z" fill="var(--owl-2)"/>
+    <!-- eyes -->
+    <circle cx="72" cy="96" r="24" fill="#fff"/><circle cx="128" cy="96" r="24" fill="#fff"/>
+    <g class="pupil" data-eye="l"><circle cx="72" cy="96" r="12" fill="#3a2a16"/><circle cx="72" cy="96" r="6" fill="#111"/><circle cx="76" cy="91" r="3" fill="#fff"/></g>
+    <g class="pupil" data-eye="r"><circle cx="128" cy="96" r="12" fill="#3a2a16"/><circle cx="128" cy="96" r="6" fill="#111"/><circle cx="132" cy="91" r="3" fill="#fff"/></g>
+    <!-- lids: clipped rects that scale down from the top -->
+    <g clip-path="url(#eyeL)"><rect class="lid l" x="48" y="72" width="48" height="48" fill="var(--owl-2)"/></g>
+    <g clip-path="url(#eyeR)"><rect class="lid r" x="104" y="72" width="48" height="48" fill="var(--owl-2)"/></g>
+    <!-- happy lids: lower curve covering the bottom half -->
+    <g class="lid-happy"><path d="M48 100 Q 72 76 96 100 L 96 122 L 48 122 Z" fill="var(--owl-2)"/><path d="M104 100 Q 128 76 152 100 L 152 122 L 104 122 Z" fill="var(--owl-2)"/></g>
+    <!-- brows -->
+    <path class="brow l" d="M52 70 Q 72 62 92 72" stroke="var(--owl)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path class="brow r" d="M108 72 Q 128 62 148 70" stroke="var(--owl)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- monocle on the right eye -->
+    <g class="monocle">
+      <circle cx="128" cy="96" r="29" fill="none" stroke="#c9a24a" stroke-width="4"/>
+      <circle cx="128" cy="96" r="26" fill="hsla(200,80%,80%,.12)"/>
+      <path d="M154 108 q 8 18 2 40" stroke="#c9a24a" stroke-width="2" fill="none" stroke-dasharray="2 3"/>
+    </g>
+    <!-- beak & feet -->
+    <path d="M100 114 l -7 -3 l 7 18 l 7 -18 Z" fill="#e0912e"/>
+    <path d="M78 206 l -8 10 M78 206 l 0 12 M78 206 l 8 10" stroke="#e0912e" stroke-width="4" stroke-linecap="round"/>
+    <path d="M122 206 l -8 10 M122 206 l 0 12 M122 206 l 8 10" stroke="#e0912e" stroke-width="4" stroke-linecap="round"/>
+    <text class="zz a" x="150" y="50">z</text><text class="zz b" x="162" y="40">Z</text>
+  </svg>
+</template>
+
+
+<nav id="nav">
+  <div class="wrap">
+    <a class="brand" href="#hero"><span class="mini layer" id="mini"></span>vihallulens</a>
+    <div class="links">
+      <a href="#problem">Vấn đề</a><a href="#how">Cơ chế</a><a href="#chunk">Chunk-aware</a><a href="#numbers">Số liệu</a>
+      <a href="#honest">Nói thẳng</a><a href="#demo">Demo</a><a href="#system">Hệ thống</a>
     </div>
-    <div class="examples" id="rag-examples" style="margin-top:8px"></div>
-    <div id="rag-out" class="note" style="display:none; margin-top:12px"></div>
-  </section>
+    <div id="health" class="loading"><span class="dot"></span><span id="health-text">đang kiểm dịch vụ…</span></div>
+    <button id="torch-btn" title="Bật/tắt đèn pin" aria-label="Đèn pin">🔦</button>
+    <button id="theme" title="Đổi sáng/tối" aria-label="Đổi giao diện sáng tối">☾</button>
+  </div>
+</nav>
 
-  <section class="card">
-    <h2>Đầu vào</h2>
-    <div class="examples" id="examples"></div>
-    <label for="context">Ngữ cảnh đã truy xuất</label>
-    <textarea id="context" rows="9" placeholder="Dán các đoạn văn bản mà hệ RAG đã truy xuất…"></textarea>
-    <label for="question">Câu hỏi <span style="font-weight:normal">(để trống với bài kiểm chứng)</span></label>
-    <textarea id="question" rows="2"></textarea>
-    <label for="response">Câu trả lời cần chấm</label>
-    <textarea id="response" rows="4"></textarea>
-    <div class="row">
-      <button class="primary" id="score" disabled>Chấm</button>
-      <span id="busy" class="sub" style="display:none">đang chạy mô hình đọc…</span>
+<!-- ============================================================ 1. hero: pinned stage -->
+<section id="hero">
+  <div id="stage">
+    <canvas id="motes"></canvas>
+    <h1 id="title">
+      <span class="t1">Mô hình ngôn ngữ, khi trả lời, đang</span>
+      <span class="t2">NHÌN VÀO ĐÂU</span>
+      <span class="t3">Phát hiện ảo giác cho hệ RAG tiếng Việt từ chính ánh nhìn của mô hình đọc</span>
+    </h1>
+    <div class="layer" id="face"></div>
+    <div id="branch"><img src="img/branch.webp" alt="" onerror="this.parentElement.remove()"></div>
+    <div class="layer" id="prof"></div>
+    <div id="intro">
+      <div class="eyebrow">Khóa luận tốt nghiệp · Khoa học dữ liệu · ĐH Công nghiệp TP.HCM</div>
+      <h1>Nghiên cứu và xây dựng hệ thống phát hiện ảo giác cho LLM tăng cường truy xuất tiếng Việt <span>dựa trên tín hiệu chú ý nội tại</span></h1>
+      <p class="muted" style="margin:0">Khi mô hình đọc lại câu trả lời cùng ngữ cảnh, phân bố chú ý của nó lên <b>từng đoạn</b> đủ để phân biệt trung thực, ảo giác nội tại, ảo giác ngoại lai — không LLM giám khảo, không tinh chỉnh, bộ phân loại 579 tham số.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#demo">Thử ngay</a>
+        <a class="btn" href="#how">Cơ chế trong 30 giây</a>
+        <a class="btn" href="https://github.com/wsunicorn/vihallulens" target="_blank" rel="noopener">Mã nguồn</a>
+      </div>
+      <div class="hero-meta"><span>Nguyễn Ngọc Lân · Nguyễn Tấn Minh</span><span>GVHD: ThS. Trương Vĩnh Linh</span><span>2026</span></div>
     </div>
-    <div id="error"></div>
-  </section>
+    <div id="torch"></div>
+    <div id="hint">cuộn để cú đậu xuống ↓</div>
+  </div>
+</section>
 
-  <section class="card" id="result" style="display:none">
-    <h2>Kết quả</h2>
-    <div class="verdict">
-      <div class="label" id="label">—</div>
-      <div class="risk">
-        <div class="bar"><div class="pin" id="pin" style="left:0%"></div></div>
-        <div class="num">điểm rủi ro <b id="risk">—</b> = 1 − P(trung thực)</div>
+<!-- ============================================================ 2. problem -->
+<section id="problem" class="alt">
+  <div class="wrap">
+    <div class="eyebrow reveal">Vấn đề</div>
+    <h2 class="reveal">Một câu trả lời trông rất ổn có thể không bám vào ngữ cảnh</h2>
+    <p class="lead reveal" data-delay="1">Hệ RAG truy xuất tài liệu rồi để mô hình viết. Ba chuyện có thể xảy ra. Rê chuột lên từng thẻ — cú Lens sẽ cho biết nó nghĩ gì.
+      Ba ví dụ này được chấm thật trên T4, không ai dàn dựng.</p>
+    <div class="grid3" id="kinds"></div>
+    <p class="muted reveal" style="margin-top:16px;font-size:.9rem">Ngữ cảnh chung của ba thẻ: <i>Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý…</i></p>
+  </div>
+</section>
+
+<!-- ============================================================ 3. how -->
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow reveal">Cơ chế, 30 giây</div>
+    <h2 class="reveal">Đọc lại câu trả lời cùng ngữ cảnh, xem chú ý rơi vào đâu</h2>
+    <p class="lead reveal" data-delay="1">Không sinh token mới. Một lượt đọc duy nhất (teacher forcing), và ma trận chú ý được cộng dồn <em>ngay trong từng lớp</em> rồi giải phóng — nhờ đó
+      ngữ cảnh 4.096 token vừa trong 16 GB của một card T4.</p>
+    <div class="steps">
+      <div class="step reveal"><div class="n">1</div>
+        <svg viewBox="0 0 120 64"><rect x="6" y="8" width="108" height="14" rx="4" fill="hsla(var(--attn),.25)"/><rect x="6" y="28" width="60" height="10" rx="4" fill="var(--line)"/><rect x="6" y="44" width="80" height="10" rx="4" fill="var(--accent-2)"/></svg>
+        <h3>Ghép prompt</h3><p>Ngữ cảnh + câu hỏi ở lượt <code>user</code>, câu trả lời cần chấm ở lượt <code>assistant</code>. Mẫu chốt một lần, không đổi.</p></div>
+      <div class="step reveal" data-delay="1"><div class="n">2</div>
+        <svg viewBox="0 0 120 64"><g fill="none" stroke="var(--accent)" stroke-width="2"><rect x="10" y="10" width="100" height="44" rx="8"/><path d="M30 32h60M30 22h60M30 42h60" opacity=".5"/></g></svg>
+        <h3>Một lượt đọc</h3><p>Qwen2.5-7B lượng tử hóa 4-bit, <code>float16</code>, bỏ lớp 27 vì tràn số. 437 ms một mẫu.</p></div>
+      <div class="step reveal" data-delay="2"><div class="n">3</div>
+        <svg viewBox="0 0 120 64"><g stroke="var(--accent)" stroke-width="1.5" fill="none"><path d="M20 50 C 40 10, 60 10, 80 50"/><path d="M40 50 C 55 20, 75 20, 100 50" opacity=".6"/><path d="M10 50 C 20 30, 30 30, 50 50" opacity=".4"/></g><circle cx="60" cy="52" r="3" fill="var(--accent)"/></svg>
+        <h3>Hook trong lớp</h3><p>Mỗi lớp, mỗi đầu: cộng phần chú ý của token phản hồi rơi vào <em>từng đoạn</em> ngữ cảnh, rồi xóa ma trận.</p></div>
+      <div class="step reveal" data-delay="3"><div class="n">4</div>
+        <svg viewBox="0 0 120 64"><g fill="hsla(var(--attn),.6)"><rect x="12" y="40" width="14" height="14"/><rect x="32" y="16" width="14" height="38"/><rect x="52" y="30" width="14" height="24"/><rect x="72" y="46" width="14" height="8"/><rect x="92" y="36" width="14" height="18"/></g></svg>
+        <h3>Đặc trưng theo đoạn</h3><p>Tỷ lệ gộp (Lookback Lens) + entropy, tỷ trọng lớn nhất, Gini, khoảng cách top-1/top-2, độ trôi.</p></div>
+      <div class="step reveal" data-delay="3"><div class="n">5</div>
+        <svg viewBox="0 0 120 64"><path d="M10 50 L 110 14" stroke="var(--accent)" stroke-width="2"/><g fill="var(--ok)"><circle cx="30" cy="30" r="3"/><circle cx="50" cy="22" r="3"/></g><g fill="var(--bad)"><circle cx="70" cy="46" r="3"/><circle cx="90" cy="40" r="3"/></g></svg>
+        <h3>Hồi quy logistic</h3><p>579 tham số, khớp trong vài giây trên CPU. Ba lớp: trung thực, nội tại, ngoại lai. Trả cả điểm rủi ro.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 4. chunk-aware -->
+<section id="chunk" class="alt">
+  <div class="wrap">
+    <div class="eyebrow reveal">Đóng góp</div>
+    <h2 class="reveal">Chunk-aware: không hỏi "nhìn ngữ cảnh bao nhiêu", mà hỏi "nhìn đoạn nào"</h2>
+    <p class="lead reveal" data-delay="1">Lookback Lens gộp cả ngữ cảnh thành một con số. Tách theo đoạn thì có thêm <em>hình dạng</em> của phân bố — và đầu ra chỉ được đoạn nào.
+      Kéo thanh trượt để thấy hai cách nhìn khác nhau ra sao (minh họa, không phải số đo).</p>
+    <div class="compare reveal" data-delay="2">
+      <div class="card">
+        <h3>Lookback Lens gốc — một khối</h3>
+        <div class="bars one" id="bars-one"><div class="b"><i id="one-v">62 %</i></div></div>
+        <p class="muted" style="font-size:.85rem;margin-top:10px">Tỷ lệ chú ý rơi vào ngữ cảnh so với phần đã sinh. Phân bố nhọn hay tản đều cho <b>cùng một số</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Chunk-aware — theo từng đoạn</h3>
+        <div style="position:relative"><div class="bars" id="bars-many"></div><canvas id="bars-motes" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas></div>
+        <div class="slider"><span>tản</span><input type="range" id="focus" min="0" max="100" value="70"><span>tập trung</span></div>
+        <div class="stat-inline"><span>entropy <b id="s-ent">—</b></span><span>tỷ trọng lớn nhất <b id="s-max">—</b></span><span>Gini <b id="s-gini">—</b></span></div>
       </div>
     </div>
-    <div class="proba" id="proba"></div>
-    <div class="meta" id="meta"></div>
-
-    <h2 style="margin-top:20px">Ngữ cảnh — tô theo tỷ trọng chú ý mỗi đoạn nhận được</h2>
-    <div id="context-view"></div>
-    <div class="legend"><span>ít</span><div class="grad"></div><span>nhiều</span><span style="margin-left:8px">· rê chuột lên đoạn để xem %</span></div>
-    <table class="chunks-table" id="chunks"></table>
-
-    <div class="note">
-      Màu cho biết mô hình <b>nhìn vào đâu</b> khi sinh câu trả lời, không cho biết câu trả lời
-      <b>nói gì về chỗ đó</b>. Đo ở E06: đoạn được nhìn nhiều nhất trùng đoạn chứa bằng chứng
-      87,8 % số lần giữa 22,6 đoạn. Đo ở T35: một câu phủ định lật ngược ngữ cảnh vẫn tô đúng
-      đoạn ấy. Điểm rủi ro là con số nên hành động theo; nhãn ba lớp có sai số rộng hơn.
+    <div class="grid2" style="margin-top:28px">
+      <div class="art reveal" data-delay="1">
+        <img src="img/chunk-aware.webp" alt="Minh họa chú ý rơi vào từng đoạn ngữ cảnh" loading="lazy" onerror="this.parentElement.classList.add('no-img')">
+        <svg class="fallback" viewBox="0 0 400 250" aria-hidden="true">
+          <rect width="400" height="250" fill="var(--bg2)"/>
+          <g font-family="inherit" font-size="11" fill="var(--muted)">
+            <rect x="30" y="40" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.12)"/><text x="40" y="57">đoạn 1</text>
+            <rect x="30" y="76" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.55)"/><text x="40" y="93">đoạn 2 ← 48 %</text>
+            <rect x="30" y="112" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.2)"/><text x="40" y="129">đoạn 3</text>
+            <rect x="30" y="148" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.08)"/><text x="40" y="165">đoạn 4</text>
+            <rect x="120" y="200" width="160" height="24" rx="12" fill="var(--accent)"/><text x="145" y="216" fill="#fff">câu trả lời</text>
+            <g stroke="var(--accent)" stroke-dasharray="3 4" fill="none"><path d="M200 200 C 200 150, 120 130, 60 89"/><path d="M200 200 C 220 170, 300 160, 340 89"/></g>
+          </g>
+        </svg>
+      </div>
+      <div class="reveal" data-delay="2">
+        <h3>Điều đo được</h3>
+        <ul class="muted" style="padding-left:18px">
+          <li>Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng <b>87,8 %</b> số lần, giữa trung bình 22,6 đoạn — gấp <b>14,29×</b> chọn hú họa (E06, ISE-DSC01).</li>
+          <li>Lặp lại trên bộ thứ hai với sai lệch <b>0,003</b> — thuộc tính của mô hình đọc, không của một bộ dữ liệu (E08).</li>
+          <li>Bỏ câu bằng chứng đi thì phân bố đổi đúng hướng dự đoán ở cả bốn đại lượng, 71–75 % số cặp (E08).</li>
+          <li>Chia theo <b>câu</b> thắng cả bốn cấu hình cửa sổ token, kể cả đối chứng không chồng lấn — ranh giới ngữ nghĩa mới là thứ quan trọng (E05).</li>
+        </ul>
+      </div>
     </div>
-  </section>
-</main>
+  </div>
+</section>
+
+<!-- ============================================================ 5. numbers -->
+<section id="numbers">
+  <div class="wrap">
+    <div class="eyebrow reveal">Số liệu</div>
+    <h2 class="reveal">16 thí nghiệm, 3 bộ dữ liệu, 4 mô hình đọc</h2>
+    <div class="nums reveal" data-delay="1">
+      <div class="num"><div class="v" data-count="87.8" data-suffix=" %">0</div><div class="k">hit@1 so với đoạn bằng chứng vàng</div></div>
+      <div class="num"><div class="v" data-count="0.7567" data-dec="4">0</div><div class="k">macro-F1 ViHallu, chunk-aware (E03)</div></div>
+      <div class="num"><div class="v" data-count="700" data-suffix="/700">0</div><div class="k">phán đoán tái lập từ bundle đã lưu</div></div>
+      <div class="num"><div class="v" data-count="579">0</div><div class="k">tham số của bộ phân loại</div></div>
+      <div class="num"><div class="v" data-count="0.044" data-dec="3">0</div><div class="k">ECE — hiệu chỉnh tốt nhất Bảng 1</div></div>
+      <div class="num"><div class="v" data-count="120" data-prefix="≈" data-suffix="k">0</div><div class="k">lượt đọc đã trích trên Kaggle T4</div></div>
+      <div class="num"><div class="v" data-count="781">0</div><div class="k">ca kiểm thử tự động, không cần GPU</div></div>
+      <div class="num"><div class="v" data-count="3710" data-suffix=" MB">0</div><div class="k">VRAM đỉnh với mô hình đọc 3B</div></div>
+    </div>
+    <div class="tablewrap reveal" data-delay="2">
+      <table class="res">
+        <thead><tr><th>Phương pháp (ViHallu, test 700)</th><th class="r">macro-F1</th><th class="r">ms/mẫu</th><th class="r">Tham số huấn luyện</th><th>Cần gì</th></tr></thead>
+        <tbody>
+          <tr><td>Baseline bề mặt (độ dài, trùng lặp từ)</td><td class="r">0,656</td><td class="r">0,001</td><td class="r">9</td><td>CPU</td></tr>
+          <tr><td>Gemini giám khảo (300 mẫu)</td><td class="r">0,664</td><td class="r">8.194</td><td class="r">0</td><td>API ngoài, dữ liệu rời máy</td></tr>
+          <tr><td>PhoBERT-large tinh chỉnh</td><td class="r">0,749</td><td class="r">12,3</td><td class="r">369 triệu</td><td>GPU + tinh chỉnh</td></tr>
+          <tr><td>XLM-R-large tinh chỉnh</td><td class="r"><b>0,776</b></td><td class="r">25,2</td><td class="r">560 triệu</td><td>GPU + tinh chỉnh</td></tr>
+          <tr class="us"><td>Lookback gộp, Qwen2.5-7B</td><td class="r">0,745</td><td class="r">437,6</td><td class="r">2.271</td><td>GPU, lượt đọc có sẵn</td></tr>
+          <tr class="us"><td><b>Chunk-aware, Qwen2.5-7B</b></td><td class="r">0,757</td><td class="r">437,6</td><td class="r"><b>579</b></td><td>GPU, lượt đọc có sẵn</td></tr>
+          <tr class="us"><td>Lookback gộp, Qwen2.5-3B</td><td class="r">0,735</td><td class="r"><b>222,7</b></td><td class="r"><b>195</b></td><td>GPU, lượt đọc có sẵn</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted reveal" style="font-size:.85rem;margin-top:10px">Khoảng tin cậy 95 % của mọi dòng rộng khoảng 0,065 — XLM-R và chunk-aware chồng nhau. Bảng đầy đủ, kèm khoảng tin cậy, ở <code>docs/EXPERIMENTS.md</code>.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 6. honest -->
+<section id="honest" class="alt">
+  <div class="wrap">
+    <div class="eyebrow reveal">Nói thẳng</div>
+    <h2 class="reveal">Điều chúng tôi đo được — và điều chúng tôi không</h2>
+    <div class="grid2">
+      <div class="honest reveal" data-delay="1">
+        <h3>Chunk-aware <em>không</em> cộng thêm điểm phân loại</h3>
+        <p class="muted">Năm phép đo độc lập — thêm đặc trưng bề mặt, đổi họ mô hình, đổi cỡ mô hình, đổi bộ dữ liệu, chuyển chéo bộ — cùng nói: năm đại lượng hình dạng mang tín hiệu thật,
+          nhưng là <b>cùng một tín hiệu</b> tỷ lệ gộp đã mang, đo được ở mức <b>99,9 %</b> chồng lấn trên ngữ cảnh 22,6 đoạn.</p>
+        <div class="measure">
+          <div>E03 · ViHallu<b>+0,012</b></div><div>E12 · thêm bề mặt<b>−0,007</b></div><div>E13 · Sailor2<b>−0,026</b></div><div>E14 · 3B / 1.5B<b>−0,013 / +0,011</b></div><div>E15 · ViWikiFC<b>−0,001</b></div>
+        </div>
+      </div>
+      <div class="honest reveal" data-delay="2">
+        <h3>Nhưng nó cho thứ tỷ lệ gộp không cho được</h3>
+        <ul class="muted">
+          <li><b>Đầu ra chỉ được đoạn nào</b> — 87,8 % trùng đoạn bằng chứng. Tỷ lệ gộp chỉ trả một con số.</li>
+          <li><b>Trung thực hay không</b> chuyển được giữa các bộ dữ liệu (nhị phân 0,63–0,78); <b>ảo giác kiểu nào</b> thì không, vì hai bộ định nghĩa "ngoại lai" khác nhau (E16).</li>
+          <li>Thu mô hình đọc 4,7 lần chỉ mất 0,022 macro-F1; nấc 3B nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ (E14).</li>
+          <li>Trên T4, mô hình đọc <code>float16</code> <b>không sinh được</b> câu trả lời — lớp 27 tràn số. Lập luận "chi phí biên gần 0" chỉ đúng trên phần cứng có <code>bfloat16</code> gốc.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7. demo -->
+<section id="demo">
+  <div class="wrap">
+    <div class="eyebrow reveal">Demo</div>
+    <h2 class="reveal">Hỏi hệ RAG minh họa, hoặc chấm một câu trả lời bất kỳ</h2>
+    <div id="mode-banner" class="banner"></div>
+    <div class="card reveal" data-delay="1" style="margin-bottom:22px">
+      <h3 class="h">Hỏi hệ RAG — 21 tài liệu ngắn về Việt Nam · BM25 → Qwen2.5-3B sinh trả lời → bộ phát hiện chấm</h3>
+      <div class="row" style="margin-top:0">
+        <input id="rag-q" type="text" placeholder="Ví dụ: Đỉnh núi cao nhất Đông Dương là gì?" style="flex:1;min-width:240px">
+        <button class="primary" id="ask" disabled>Hỏi</button>
+        <span id="ask-busy" class="muted" style="display:none;font-size:.85rem">truy xuất → sinh trả lời → chấm…</span>
+      </div>
+      <div class="examples" id="rag-examples" style="margin-top:10px"></div>
+      <div id="rag-out" class="rag-out" style="display:none"></div>
+    </div>
+
+    <div class="tool">
+      <div class="card reveal" data-delay="1">
+        <h3 class="h">Đầu vào</h3>
+        <div class="examples" id="examples"></div>
+        <label for="context">Ngữ cảnh đã truy xuất</label>
+        <textarea id="context" rows="8" placeholder="Dán các đoạn văn bản mà hệ RAG đã truy xuất…"></textarea>
+        <label for="question">Câu hỏi <span style="font-weight:normal">(để trống với bài kiểm chứng)</span></label>
+        <textarea id="question" rows="2"></textarea>
+        <label for="response">Câu trả lời cần chấm</label>
+        <textarea id="response" rows="4"></textarea>
+        <div class="row">
+          <button class="primary" id="score" disabled>Chấm</button>
+          <span id="busy" class="muted" style="display:none;font-size:.85rem">đang chạy mô hình đọc…</span>
+        </div>
+        <div id="error"></div>
+      </div>
+
+      <div class="card reveal" data-delay="2" id="result" style="display:none">
+        <h3 class="h">Kết quả</h3>
+        <div class="verdict">
+          <div class="label" id="label">—</div>
+          <div class="risk">
+            <div class="bar"><div class="pin" id="pin" style="left:0%"></div></div>
+            <div class="num">điểm rủi ro <b id="risk">—</b> = 1 − P(trung thực)</div>
+          </div>
+        </div>
+        <div class="proba" id="proba"></div>
+        <div class="meta" id="meta"></div>
+        <h3 class="h" style="margin-top:20px">Ngữ cảnh — tô theo tỷ trọng chú ý mỗi đoạn nhận được</h3>
+        <div id="context-view"></div>
+        <div class="legend"><span>ít</span><div class="grad"></div><span>nhiều</span><span style="margin-left:8px">· rê chuột lên đoạn để xem %</span></div>
+        <table class="chunks-table" id="chunks"></table>
+        <div class="note">Màu cho biết mô hình <b>nhìn vào đâu</b> khi sinh câu trả lời, không cho biết câu trả lời <b>nói gì về chỗ đó</b>.
+          Đo ở E06: đoạn được nhìn nhiều nhất trùng đoạn chứa bằng chứng 87,8 % số lần. Đo ở T35: một câu phủ định lật ngược ngữ cảnh vẫn tô đúng đoạn ấy.
+          Điểm rủi ro là con số nên hành động theo; nhãn ba lớp có sai số rộng hơn.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 8. system -->
+<section id="system" class="alt sys">
+  <div class="wrap">
+    <div class="eyebrow reveal">Hệ thống</div>
+    <h2 class="reveal">Ba cách dùng, một bộ phát hiện 11,5 KB</h2>
+    <div class="grid3">
+      <div class="card reveal" data-delay="1"><h3>📦 Thư viện</h3>
+<pre><code>from vihallulens import HallucinationDetector
+
+det = HallucinationDetector.from_pretrained(
+    "models/e03_chunk_aware.pkl")
+r = det.score(context, question, response)
+r.label, r.risk_score, r.chunk_attention</code></pre>
+        <p class="muted" style="font-size:.85rem">Bundle mang cả công thức dựng cột — 32 đầu chú ý đã chọn, lưới lớp — và từ chối bản ghi trích trên lưới khác.</p></div>
+      <div class="card reveal" data-delay="2"><h3>🔌 REST</h3>
+<pre><code>python scripts/serve.py --port 8000
+
+POST /score        {context, question, response}
+POST /score/batch  {items: [...]}   # ≤ 64
+POST /demo/ask     {question}
+GET  /health       loading | ok | error</code></pre>
+        <p class="muted" style="font-size:.85rem">Mô hình nạp trong luồng nền; <code>/health</code> báo đúng trạng thái. Gửi cách chia đoạn khác cách đã khớp → 400, không lặng lẽ bỏ qua.</p></div>
+      <div class="card reveal" data-delay="3"><h3>🐳 Docker</h3>
+<pre><code>docker compose up --build
+# ảnh 10,5 GB, trọng số 15 GB tải vào volume
+# GET /health → ok khi mô hình đã nạp</code></pre>
+        <p class="muted" style="font-size:.85rem">Cần GPU NVIDIA. Không có GPU thì báo lỗi sau 6 giây thay vì tải 15 GB rồi mới hỏng.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 9. team -->
+<footer>
+  <div class="wrap">
+    <h2 style="font-size:1.4rem">Nhóm</h2>
+    <div class="people">
+      <div><b>Nguyễn Ngọc Lân</b>22635801</div>
+      <div><b>Nguyễn Tấn Minh</b>22643511</div>
+      <div><b>GVHD: ThS. Trương Vĩnh Linh</b>Khoa Khoa học dữ liệu, Trường Đại học Công nghiệp TP.HCM</div>
+    </div>
+    <p>Mở rộng từ <a href="https://arxiv.org/abs/2407.07071" target="_blank" rel="noopener">Lookback Lens (Chuang và cộng sự, EMNLP 2024)</a>. Dữ liệu: ViHallu, ISE-DSC01, ViWikiFC. Mô hình đọc: Qwen2.5-7B/3B/1.5B, Sailor2-8B.
+      Mọi số trên trang chép từ <code>results/</code> và <code>docs/EXPERIMENTS.md</code> trong <a href="https://github.com/wsunicorn/vihallulens" target="_blank" rel="noopener">kho mã</a>.</p>
+    <p id="replay-credit" style="display:none">Chế độ phát lại: kết quả trên trang là bản ghi từ phiên Kaggle 11/09/2026 (Tesla T4), không tính lại trên máy này.</p>
+  </div>
+</footer>
+
+
+<!-- corner companion: a round window onto the owl's face -->
+<div id="buddy" title="Cú Lens"><div class="bubble" id="bubble"></div><div class="layer" id="buddy-face"></div></div>
+<button id="buddy-off" title="Ẩn linh thú">ẩn cú</button>
 
 <script>
 (function () {
+  "use strict";
   const $ = (id) => document.getElementById(id);
   const LABEL_VI = { no: "trung thực", intrinsic: "ảo giác nội tại", extrinsic: "ảo giác ngoại lai" };
   const ORDER = ["no", "intrinsic", "extrinsic"];
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const touch = matchMedia("(hover: none)").matches;
+  const root = document.documentElement;
 
-  const EXAMPLES = [
-    {
-      name: "Trung thực",
-      context: "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. Dân số nội thành khoảng tám triệu người. Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
-      question: "Hà Nội từng có tên gọi nào?",
-      response: "Hà Nội từng mang tên Thăng Long dưới triều Lý."
-    },
-    {
-      name: "Nội tại",
-      context: "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. Dân số nội thành khoảng tám triệu người. Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
-      question: "Hà Nội từng có tên gọi nào?",
-      response: "Hà Nội từng mang tên Thăng Long dưới triều Trần, khi dân số đã lên tới hai mươi triệu người."
-    },
-    {
-      name: "Ngoại lai",
-      context: "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. Dân số nội thành khoảng tám triệu người. Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
-      question: "Hà Nội có những công trình nổi tiếng nào?",
-      response: "Hà Nội nổi tiếng với tháp Eiffel thu nhỏ ở hồ Tây và tuyến tàu điện ngầm dài nhất Đông Nam Á."
-    }
-  ];
+  // ---------------------------------------------------------------- theme (dark first)
+  const savedTheme = new URLSearchParams(location.search).get("theme") || (() => { try { return localStorage.getItem("theme"); } catch (e) { return null; } })();
+  if (savedTheme === "light" || savedTheme === "dark") root.dataset.theme = savedTheme;
+  const themeBtn = $("theme");
+  const paintTheme = () => { themeBtn.textContent = root.dataset.theme === "dark" ? "☀" : "☾"; };
+  paintTheme();
+  themeBtn.onclick = () => { root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark"; try { localStorage.setItem("theme", root.dataset.theme); } catch (e) {} paintTheme(); layers.forEach((l) => l.blink()); };
 
-  // -- health ------------------------------------------------------------------------------
-  let ready = false;
-  async function health() {
-    try {
-      const r = await fetch("/health");
-      const h = await r.json();
-      const box = $("health");
-      box.className = h.status === "ok" ? "ok" : (h.status === "error" ? "error" : "loading");
-      const model = h.reading_model ? ` · ${h.reading_model.split("/").pop()}` : "";
-      const vram = h.vram_allocated_mb != null ? ` · ${Math.round(h.vram_allocated_mb)} MB VRAM` : "";
-      $("health-text").textContent =
-        h.status === "ok" ? `sẵn sàng${model}${vram} · ${h.requests_served} lượt` :
-        h.status === "error" ? `lỗi nạp mô hình: ${h.error || ""}` :
-        h.status === "not_loaded" ? "mô hình chưa nạp" : "đang nạp mô hình đọc…";
-      ready = h.status === "ok";
-      $("score").disabled = !ready; $("ask").disabled = !ready;
-    } catch (e) {
-      $("health").className = "error";
-      $("health-text").textContent = "không gọi được /health";
-      $("score").disabled = true; $("ask").disabled = true;
-    }
+  // ---------------------------------------------------------------- owl layers: raster image + DOM eyes
+  // owl.json (written by scripts/calibrate_owl.py) says where the amber discs are in each image.
+  // Without it — or without the image — an SVG stand-in with known eye positions is used.
+  const FALLBACK = {
+    face: { eyes: [{ cx: .36, cy: .47, r: .085 }, { cx: .64, cy: .47, r: .085 }], svg: faceSVG },
+    prof: { eyes: [{ cx: .36, cy: .384, r: .12 }, { cx: .64, cy: .384, r: .12 }], svg: profSVG },
+  };
+  function faceSVG() {
+    return `<svg class="fallback" viewBox="0 0 200 200" aria-hidden="true">
+      <defs><radialGradient id="fg" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#3a332c"/><stop offset=".7" stop-color="#1c1814"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+      <circle cx="100" cy="100" r="98" fill="url(#fg)"/>
+      <path d="M40 40 L 58 12 L 72 46 Z M160 40 L 142 12 L 128 46 Z" fill="#241f1a"/>
+      <path d="M100 62 C 132 62, 156 84, 156 108 C 156 134, 130 150, 100 150 C 70 150, 44 134, 44 108 C 44 84, 68 62, 100 62 Z" fill="#2e2822"/>
+      <g fill="none" stroke="#3d352d" stroke-width="1.2" opacity=".8">${[...Array(9)].map((_, i) => `<path d="M${52 + i * 12} 150 q 4 -14 8 -30"/>`).join("")}</g>
+      <circle cx="72" cy="94" r="22" fill="#15110d"/><circle cx="128" cy="94" r="22" fill="#15110d"/>
+      <path d="M100 104 l -6 -3 l 6 22 l 6 -22 Z" fill="#c8862a"/>
+      <g fill="none" stroke="#d8b25a" stroke-width="2.2"><circle cx="72" cy="94" r="25"/><circle cx="128" cy="94" r="25"/><path d="M97 94 h 6 M47 92 l -12 -4 M153 92 l 12 -4"/></g>
+    </svg>`;
   }
-  health();
-  setInterval(health, 5000);
-
-  // -- examples ----------------------------------------------------------------------------
-  EXAMPLES.forEach((ex) => {
-    const b = document.createElement("button");
-    b.textContent = ex.name;
-    b.onclick = () => { $("context").value = ex.context; $("question").value = ex.question; $("response").value = ex.response; };
-    $("examples").appendChild(b);
+  function profSVG() {
+    const tpl = $("owl-tpl").content.firstElementChild.cloneNode(true);
+    tpl.classList.add("fallback"); tpl.setAttribute("viewBox", "0 0 200 250");
+    tpl.querySelectorAll(".pupil, .lid, .lid-happy, .brow, .zz").forEach((n) => n.remove());
+    tpl.insertAdjacentHTML("beforeend", `<path d="M-10 226 C 40 216, 90 232, 130 222 C 160 214, 190 224, 215 218" stroke="#3b2a1a" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M40 222 q -6 -14 -14 -20 M150 220 q 8 -12 18 -16" stroke="#3b2a1a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <g fill="none" stroke="#d8b25a" stroke-width="2"><circle cx="72" cy="96" r="26"/><circle cx="128" cy="96" r="26"/><path d="M98 96 h 4"/></g>
+      <path d="M78 130 q 22 34 44 0" stroke="#f3ede4" stroke-width="7" fill="none" opacity=".9"/>`);
+    tpl.querySelector(".monocle")?.remove();
+    return tpl.outerHTML;
+  }
+  class OwlLayer {
+    constructor(host, kind, rig) {
+      this.host = host; this.kind = kind; this.eyes = [];
+      const cfg = rig && rig[kind];
+      this.cfg = cfg || FALLBACK[kind];
+      host.innerHTML = "";
+      if (cfg && cfg.file) {
+        const img = document.createElement("img"); img.src = cfg.file; img.alt = ""; img.decoding = "async";
+        img.onerror = () => { this.cfg = FALLBACK[kind]; this.build(FALLBACK[kind].svg()); };
+        this.img = img; host.appendChild(img);
+        if (cfg.aspect) host.style.aspectRatio = String(cfg.aspect);
+        this.buildEyes();
+      } else this.build(FALLBACK[kind].svg());
+    }
+    build(svg) { this.host.querySelectorAll("img, svg.fallback, .eye").forEach((n) => n.remove()); this.host.insertAdjacentHTML("afterbegin", svg); this.buildEyes(); }
+    buildEyes() {
+      this.host.querySelectorAll(".eye").forEach((n) => n.remove()); this.eyes = [];
+      this.cfg.eyes.forEach((e, i) => {
+        const el = document.createElement("div"); el.className = "eye";
+        // r is a fraction of the image WIDTH; height uses the aspect so the eye stays round
+        const ar = this.cfg.aspect || (this.kind === "prof" ? 0.8 : 1);
+        el.style.left = (100 * e.cx) + "%"; el.style.top = (100 * e.cy) + "%";
+        el.style.width = (200 * e.r) + "%"; el.style.height = (200 * e.r * ar) + "%";
+        el.innerHTML = `<div class="iris"></div><div class="pupil"></div><div class="lid"></div>`;
+        this.host.appendChild(el); this.eyes.push(el);
+      });
+    }
+    setVariant(name) { if (!this.img || !this.cfg[name] && name !== "base") return; const want = name === "base" ? this.cfg.file : this.cfg[name]; if (this.img.getAttribute("src") !== want) this.img.src = want; }
+    look(px, py) {
+      if (this.host.classList.contains("sleep")) return;
+      this.eyes.forEach((el) => {
+        const r = el.getBoundingClientRect(); if (!r.width) return;
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2, dx = px - cx, dy = py - cy, d = Math.hypot(dx, dy) || 1;
+        const m = Math.min(1, d / 300) * r.width * 0.22;
+        el.querySelector(".pupil").style.transform = `translate(calc(-50% + ${(dx / d * m).toFixed(1)}px), calc(-50% + ${(dy / d * m).toFixed(1)}px))`;
+      });
+    }
+    blink(ms = 140) { this.host.classList.add("blink"); setTimeout(() => this.host.classList.remove("blink"), ms); }
+    screenEyes() { return this.eyes.map((el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, on: r.width > 0 && getComputedStyle(this.host).opacity !== "0" }; }); }
+  }
+  const layers = [];
+  let face, prof, buddyFace, mini;
+  fetch("owl.json", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).catch(() => null).then((rig) => {
+    face = new OwlLayer($("face"), "face", rig); prof = new OwlLayer($("prof"), "prof", rig);
+    buddyFace = new OwlLayer($("buddy-face"), "face", rig); mini = new OwlLayer($("mini"), "face", rig);
+    layers.push(face, prof, buddyFace, mini);
+    boot();
   });
 
-  // -- rendering ---------------------------------------------------------------------------
-  function esc(s) { return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  // ---------------------------------------------------------------- boot: two eyes in the dark, one blink, then the face
+  function boot() {
+    if (reduced || !document.body.classList.contains("boot")) { document.body.classList.remove("boot"); return; }
+    setTimeout(() => face.blink(180), 700);
+    setTimeout(() => { document.body.classList.remove("boot"); }, 1300);
+  }
+  if (!new URLSearchParams(location.search).has("noboot")) document.body.classList.add("boot");
 
+  // ---------------------------------------------------------------- pointer → eyes, torch
+  let px = innerWidth / 2, py = innerHeight * .45, raf = null;
+  const torch = $("torch"), torchBtn = $("torch-btn");
+  let torchOn = !touch && !reduced;
+  const paintTorch = () => { torch.classList.toggle("off", !torchOn); torchBtn.style.opacity = torchOn ? "1" : ".5"; };
+  paintTorch();
+  torchBtn.onclick = () => { torchOn = !torchOn; paintTorch(); };
+  addEventListener("pointermove", (e) => { px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(look); }, { passive: true });
+  function look() {
+    raf = null;
+    layers.forEach((l) => l.look(px, py));
+    const r = $("stage").getBoundingClientRect();
+    torch.style.setProperty("--tx", (px - r.left) + "px"); torch.style.setProperty("--ty", (py - r.top) + "px");
+  }
+  setInterval(() => layers.forEach((l) => { if (Math.random() < .3) l.blink(); }), 2200);
+
+  // ---------------------------------------------------------------- hero beats driven by scroll
+  const hero = $("hero"), stage = $("stage"), title = $("title"), intro = $("intro"), hint = $("hint"), nav = $("nav"), branch = $("branch");
+  const ease = (t) => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+  const span = (p, a, b) => ease((p - a) / (b - a));
+  let progress = 0;
+  function beats() {
+    const total = hero.offsetHeight - innerHeight;
+    progress = window.__pinBeat ?? Math.max(0, Math.min(1, scrollY / Math.max(1, total)));
+    const p = progress;
+    // beat 1 (0 → .55): the face recedes, the title shrinks to the top
+    const s1 = span(p, 0, .55);
+    $("face").style.transform = `translate(-50%, calc(-50% - ${(s1 * 10).toFixed(1)}vh)) scale(${(1.18 - .45 * s1).toFixed(3)})`;
+    $("face").style.opacity = (1 - span(p, .38, .58)).toFixed(3);
+    title.style.transform = `translateY(${(-s1 * 60).toFixed(1)}%) scale(${(1 - .5 * s1).toFixed(3)})`;
+    title.style.opacity = (1 - span(p, .5, .7)).toFixed(3);
+    // beat 2 (.4 → .7): the professor lands on the branch
+    const s2 = span(p, .42, .68);
+    $("prof").style.opacity = s2.toFixed(3);
+    $("prof").style.transform = `translate(calc(-50% + ${(s2 * 14).toFixed(1)}vw), calc(-50% + ${(30 - 30 * s2).toFixed(1)}px)) scale(${(.85 + .15 * s2).toFixed(3)})`;
+    if (branch) { branch.style.opacity = s2.toFixed(3); branch.style.transform = `translateX(${(-40 + 40 * s2).toFixed(1)}px)`; }
+    // beat 3 (.68 → .92): the intro card slides in, the wing points at it
+    const s3 = span(p, .68, .92);
+    intro.style.opacity = s3.toFixed(3);
+    intro.style.transform = matchMedia("(max-width: 860px)").matches
+      ? `translateY(${(40 - 40 * s3).toFixed(1)}px)`
+      : `translate(calc(-50% - 24vw), calc(-50% + ${(40 - 40 * s3).toFixed(1)}px))`;
+    intro.classList.toggle("on", s3 > .6);
+    if (prof) prof.setVariant(s3 > .5 ? "point" : "base");
+    hint.style.opacity = p < .05 ? "1" : "0";
+    torch.style.opacity = torchOn ? (1 - span(p, .45, .75)).toFixed(3) : "0";
+    nav.classList.toggle("solid", scrollY > innerHeight * .3);
+    $("progress").style.width = (100 * scrollY / (document.documentElement.scrollHeight - innerHeight)).toFixed(2) + "%";
+    if (!raf) raf = requestAnimationFrame(look);
+  }
+  addEventListener("scroll", beats, { passive: true }); addEventListener("resize", beats); beats();
+  // ?p=0.6 pins the hero at that beat (for screenshots and tuning); scrolling is ignored
+  { const q = new URLSearchParams(location.search).get("p"); if (q !== null) { window.__pinBeat = parseFloat(q); beats(); } }
+
+  // ---------------------------------------------------------------- motes: attention as light drifting to where the owl looks
+  class Motes {
+    constructor(canvas, targets, n) { this.c = canvas; this.ctx = canvas.getContext("2d"); this.targets = targets; this.n = n; this.p = []; this.on = true; this.tick = this.tick.bind(this); requestAnimationFrame(this.tick); }
+    tick() {
+      if (reduced) return;
+      const c = this.c, r = c.getBoundingClientRect(); if (!r.width) { requestAnimationFrame(this.tick); return; }
+      if (c.width !== r.width | 0 || c.height !== r.height | 0) { c.width = r.width; c.height = r.height; }
+      const ctx = this.ctx; ctx.clearRect(0, 0, c.width, c.height);
+      const T = this.targets().filter((t) => t.on).map((t) => ({ x: t.x - r.left, y: t.y - r.top }));
+      if (T.length && this.on) {
+        while (this.p.length < this.n) this.p.push({ x: Math.random() * c.width, y: Math.random() * c.height, vx: 0, vy: 0, a: Math.random(), s: 1 + Math.random() * 2 });
+        for (const m of this.p) {
+          const t = T[Math.floor(m.a * T.length) % T.length]; const dx = t.x - m.x, dy = t.y - m.y, d = Math.hypot(dx, dy) || 1;
+          m.vx += dx / d * .06 + (Math.random() - .5) * .25; m.vy += dy / d * .06 + (Math.random() - .5) * .25; m.vx *= .96; m.vy *= .96; m.x += m.vx; m.y += m.vy;
+          if (d < 18) { m.x = Math.random() * c.width; m.y = Math.random() * c.height; m.vx = m.vy = 0; }
+          ctx.beginPath(); ctx.arc(m.x, m.y, m.s, 0, 7); ctx.fillStyle = `rgba(255,170,60,${(0.25 + 0.5 * Math.min(1, 120 / d)).toFixed(2)})`; ctx.fill();
+        }
+      }
+      requestAnimationFrame(this.tick);
+    }
+  }
+  new Motes($("motes"), () => { const src = progress < .5 ? face : prof; return src ? src.screenEyes() : []; }, 70);
+
+  // ---------------------------------------------------------------- moods and the companion
+  const buddy = $("buddy"), bubble = $("bubble");
+  let bubbleT = null, verdictT = null;
+  function say(text) { if (buddy.classList.contains("hidden")) return; bubble.textContent = text; bubble.classList.add("show"); clearTimeout(bubbleT); bubbleT = setTimeout(() => bubble.classList.remove("show"), 3200); }
+  function verdict(label, ms = 4000) {
+    root.classList.remove("v-no", "v-intrinsic", "v-extrinsic"); root.classList.add("v-" + label);
+    layers.forEach((l) => l.blink(120));
+    clearTimeout(verdictT); verdictT = setTimeout(() => root.classList.remove("v-" + label), ms);
+    say(label === "no" ? "Bám sát ngữ cảnh. Tôi yên tâm." : label === "intrinsic" ? "Có đọc ngữ cảnh… mà nói lệch. Nội tại." : "Chỗ này không có trong ngữ cảnh!");
+  }
+  let idle = 0;
+  setInterval(() => { idle += 1; if (idle === 25) { layers.forEach((l) => l.host.classList.add("sleep")); say("…zzz"); } }, 1000);
+  const wake = () => { if (idle >= 25) { layers.forEach((l) => { l.host.classList.remove("sleep"); l.blink(160); }); say("Ơ, tôi đây."); } idle = 0; };
+  ["pointermove", "scroll", "keydown", "click", "touchstart"].forEach((ev) => addEventListener(ev, wake, { passive: true }));
+  buddy.addEventListener("click", () => say(["Kéo xuống demo thử đi!", "Tôi nhìn đoạn nào, tô đoạn đó.", "87,8 % — không phải hú họa.", "Đừng tin nhãn ba lớp quá, hãy tin điểm rủi ro."][Math.floor(Math.random() * 4)]));
+  $("buddy-off").onclick = () => { buddy.classList.add("hidden"); $("buddy-off").style.display = "none"; };
+  const said = new Set();
+  const notes = { problem: "Ba thẻ này chấm thật đấy, rê thử.", how: "Tôi không sinh chữ — chỉ đọc lại.", chunk: "Kéo thanh trượt xem hình dạng đổi.", numbers: "Số nào cũng có trong results/.", honest: "Phần này hội đồng sẽ hỏi. Nói trước.", demo: "Đến lượt bạn.", system: "pip install rồi ba dòng là xong." };
+  const sectionIO = new IntersectionObserver((entries) => entries.forEach((en) => { const id = en.target.id; if (en.isIntersecting && !said.has(id) && notes[id]) { said.add(id); say(notes[id]); } }), { threshold: .35 });
+  Object.keys(notes).forEach((id) => { const s = $(id); if (s) sectionIO.observe(s); });
+
+  // ---------------------------------------------------------------- reveal + counters
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("in"); if (en.target.dataset.count) count(en.target); io.unobserve(en.target); } }), { threshold: .18 });
+  document.querySelectorAll(".reveal, .step, [data-count]").forEach((el) => io.observe(el));
+  function count(el) {
+    const to = parseFloat(el.dataset.count), dec = +(el.dataset.dec || 0), pre = el.dataset.prefix || "", suf = el.dataset.suffix || "";
+    const fmt = (v) => pre + v.toLocaleString("vi-VN", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
+    if (reduced) { el.textContent = fmt(to); return; }
+    const t0 = performance.now(), dur = 1400;
+    (function step(t) { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(to * e); if (k < 1) requestAnimationFrame(step); })(t0);
+  }
+
+  // ---------------------------------------------------------------- chunk-aware slider (illustration) + motes to the tallest bar
+  (function slider() {
+    const many = $("bars-many"), n = 6; const bars = [];
+    for (let i = 0; i < n; i++) { const b = document.createElement("div"); b.className = "b"; b.innerHTML = "<i></i>"; many.appendChild(b); bars.push(b); }
+    let peakEl = bars[2];
+    function draw(f) {
+      const k = f / 100, peak = 2; const raw = bars.map((_, i) => Math.exp(-Math.pow(i - peak, 2) / (0.35 + 6 * (1 - k))));
+      const sum = raw.reduce((a, b) => a + b, 0), p = raw.map((v) => v / sum);
+      bars.forEach((b, i) => { b.style.height = (100 * p[i] * 1.6).toFixed(1) + "%"; b.firstChild.textContent = Math.round(100 * p[i]) + " %"; });
+      const ent = -p.reduce((a, v) => a + v * Math.log(v), 0) / Math.log(n), mx = Math.max(...p);
+      const s = [...p].sort((a, b) => a - b), gini = s.reduce((a, v, i) => a + (2 * (i + 1) - n - 1) * v, 0) / n;
+      $("s-ent").textContent = ent.toFixed(2); $("s-max").textContent = Math.round(100 * mx) + " %"; $("s-gini").textContent = gini.toFixed(2);
+      $("one-v").textContent = "62 %"; $("bars-one").firstElementChild.style.height = "62%";
+      peakEl = bars[p.indexOf(mx)];
+    }
+    $("focus").addEventListener("input", (e) => draw(+e.target.value)); draw(70);
+    const cv = $("bars-motes");
+    if (cv) new Motes(cv, () => { const r = peakEl.getBoundingClientRect(); return [{ x: r.left + r.width / 2, y: r.top + 10, on: true }]; }, 28);
+  })();
+
+  // ---------------------------------------------------------------- data: live or replay
+  let ready = false, replay = null, mode = "live";
+  async function loadReplay() { if (replay) return replay; const r = await fetch("replay.json", { cache: "no-store" }); replay = await r.json(); return replay; }
+  function setMode(m, why) {
+    mode = m; const b = $("mode-banner");
+    if (m === "replay") {
+      b.className = "banner replay";
+      b.innerHTML = `<b>Chế độ phát lại.</b> ${why} Kết quả dưới đây là bản ghi của chính trang này chạy trên Tesla T4 (Kaggle, 11/09/2026): năm câu hỏi RAG và ba ví dụ. Chấm văn bản tự do cần mô hình đọc — chạy <code>python scripts/serve.py</code> trên máy có GPU.`;
+      $("replay-credit").style.display = ""; $("ask").disabled = false; $("score").disabled = true; $("rag-q").placeholder = "Chọn một trong năm câu hỏi đã chạy…";
+    } else { b.className = "banner"; $("replay-credit").style.display = "none"; }
+  }
+  async function health() {
+    try {
+      const r = await fetch("/health"); const h = await r.json(); const box = $("health");
+      box.className = h.status === "ok" ? "ok" : (h.status === "error" ? "error" : "loading");
+      const model = h.reading_model ? ` · ${h.reading_model.split("/").pop()}` : ""; const vram = h.vram_allocated_mb != null ? ` · ${Math.round(h.vram_allocated_mb)} MB` : "";
+      $("health-text").textContent = h.status === "ok" ? `sẵn sàng${model}${vram}` : h.status === "error" ? "lỗi nạp mô hình" : h.status === "not_loaded" ? "mô hình chưa nạp" : "đang nạp mô hình đọc…";
+      ready = h.status === "ok";
+      if (ready) { if (mode !== "live") setMode("live"); $("score").disabled = false; $("ask").disabled = false; }
+      else if (h.status === "error" || h.status === "not_loaded") { await loadReplay(); setMode("replay", h.status === "error" ? `Dịch vụ không nạp được mô hình (${h.error || "không rõ"}).` : "Dịch vụ chạy nhưng chưa nạp mô hình."); box.className = "replay"; $("health-text").textContent = "phát lại kết quả Kaggle"; }
+    } catch (e) {
+      ready = false; $("health").className = "replay"; $("health-text").textContent = "phát lại kết quả Kaggle";
+      try { await loadReplay(); setMode("replay", "Không có dịch vụ nào ở địa chỉ này."); } catch (e2) { $("health").className = "error"; $("health-text").textContent = "không có dịch vụ, không có replay.json"; }
+    }
+  }
+  health(); setInterval(() => { if (mode === "live" || !replay) health(); }, 5000);
+  loadReplay().then(fillExamples).catch(() => fillExamples({ examples: [], questions: [] }));
+  function fillExamples(data) {
+    const kinds = $("kinds"); kinds.innerHTML = "";
+    data.examples.forEach((ex, i) => {
+      const lab = ex.score.label; const card = document.createElement("div"); card.className = `card kind ${lab} reveal`; card.dataset.delay = String(i + 1);
+      card.innerHTML = `<span class="tag">${LABEL_VI[lab]}</span><h3>${esc(ex.name)}</h3><q>${esc(ex.response)}</q>
+        <div class="verdict-mini"><span>bộ phát hiện: <b class="label ${lab}" style="font-size:.9rem">${LABEL_VI[lab]}</b></span><span>rủi ro <b>${ex.score.risk_score.toFixed(3)}</b></span></div>`;
+      card.addEventListener("pointerenter", () => verdict(lab, 2500));
+      card.addEventListener("click", () => { useExample(ex); location.hash = "#demo"; });
+      kinds.appendChild(card); io.observe(card);
+      const b = document.createElement("button"); b.textContent = ex.name; b.onclick = () => useExample(ex); $("examples").appendChild(b);
+    });
+    $("rag-examples").innerHTML = "";
+    data.questions.forEach((q) => { const b = document.createElement("button"); b.textContent = q.question; b.onclick = () => { $("rag-q").value = q.question; if (mode === "replay") ask(); }; $("rag-examples").appendChild(b); });
+  }
+  function useExample(ex) { $("context").value = ex.context; $("question").value = ex.question; $("response").value = ex.response; if (mode === "replay") renderResult(ex.score, ex.context, true); }
+
+  // ---------------------------------------------------------------- rendering
+  function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
   function renderContext(context, chunks) {
     // Slice the ORIGINAL string by char offsets so what is shown is exactly what was scored.
-    // Gaps between chunks (whitespace the chunker skipped) are kept, untinted.
-    const max = Math.max(...chunks.map((c) => c.share), 1e-9);
-    const sorted = [...chunks].sort((a, b) => a.char_start - b.char_start);
+    const max = Math.max(...chunks.map((c) => c.share), 1e-9); const sorted = [...chunks].sort((a, b) => a.char_start - b.char_start);
     let html = "", pos = 0;
     for (const c of sorted) {
       if (c.char_start > pos) html += esc(context.slice(pos, c.char_start));
       const alpha = 0.06 + 0.8 * (c.share / max);
-      html += `<span class="chunk" style="background:hsla(28,80%,55%,${alpha.toFixed(3)})" data-i="${c.index}">` +
-              `<span class="tag">đoạn ${c.index + 1} · ${(100 * c.share).toFixed(1)} %</span>` +
-              esc(context.slice(c.char_start, c.char_end)) + `</span>`;
+      html += `<span class="chunk" style="background:hsla(32,90%,58%,${alpha.toFixed(3)})" data-i="${c.index}"><span class="ttip">đoạn ${c.index + 1} · ${(100 * c.share).toFixed(1)} %</span>${esc(context.slice(c.char_start, c.char_end))}</span>`;
       pos = c.char_end;
     }
     if (pos < context.length) html += esc(context.slice(pos));
     $("context-view").innerHTML = html;
-
-    const rows = [...chunks].sort((a, b) => b.share - a.share);
-    $("chunks").innerHTML = rows.map((c) =>
-      `<tr><td class="n">${c.index + 1}</td><td>${esc(c.text)}</td><td class="s">${(100 * c.share).toFixed(1)} %</td></tr>`).join("");
+    $("chunks").innerHTML = [...chunks].sort((a, b) => b.share - a.share).map((c) => `<tr><td class="n">${c.index + 1}</td><td>${esc(c.text)}</td><td class="s">${(100 * c.share).toFixed(1)} %</td></tr>`).join("");
+    if (!reduced) { const spans = [...document.querySelectorAll("#context-view .chunk")].sort((a, b) => +a.dataset.i - +b.dataset.i); spans.forEach((s, i) => { s.style.opacity = "0"; setTimeout(() => { s.style.transition = "opacity .35s"; s.style.opacity = "1"; }, 90 * i); }); }
   }
-
-  function renderResult(out, context) {
-    $("result").style.display = "";
-    const lab = $("label");
-    lab.textContent = LABEL_VI[out.label] || out.label;
-    lab.className = "label " + out.label;
-    $("risk").textContent = out.risk_score.toFixed(3);
-    $("pin").style.left = (100 * out.risk_score).toFixed(1) + "%";
-    $("proba").innerHTML = ORDER.map((k) => {
-      const p = out.proba[k] ?? 0;
-      return `<div>${LABEL_VI[k]}</div><div class="track"><div class="fill" style="width:${(100 * p).toFixed(1)}%"></div></div><div>${(100 * p).toFixed(1)} %</div>`;
-    }).join("");
-    const meta = [`${out.n_chunks} đoạn`, `${Math.round(out.elapsed_ms)} ms`];
+  function renderResult(out, context, replayed) {
+    $("result").style.display = ""; $("result").classList.add("in");
+    const lab = $("label"); lab.textContent = LABEL_VI[out.label] || out.label; lab.className = "label " + out.label;
+    $("risk").textContent = out.risk_score.toFixed(3); $("pin").style.left = (100 * out.risk_score).toFixed(1) + "%";
+    $("proba").innerHTML = ORDER.map((k) => { const p = out.proba[k] ?? 0; return `<div>${LABEL_VI[k]}</div><div class="track"><div class="fill" style="width:${(100 * p).toFixed(1)}%"></div></div><div>${(100 * p).toFixed(1)} %</div>`; }).join("");
+    const meta = [`${out.n_chunks} đoạn`, `${Math.round(out.elapsed_ms)} ms${replayed ? " (trên T4)" : ""}`];
     if (out.truncated) meta.push(`<span class="warn">ngữ cảnh bị cắt bớt vì vượt trần token</span>`);
     if (out.nonfinite_layers && out.nonfinite_layers.length) meta.push(`<span class="warn">lớp tràn số: ${out.nonfinite_layers.join(", ")}</span>`);
+    if (replayed) meta.push(`<span>phát lại từ Kaggle 11/09/2026</span>`);
     $("meta").innerHTML = meta.join(" · ");
     renderContext(context, out.chunk_attention);
+    verdict(out.label, 6000);
   }
 
-  // -- the demo RAG ------------------------------------------------------------------------
-  const RAG_QUESTIONS = ["Đỉnh núi cao nhất Đông Dương là gì?", "Ai chỉ huy chiến dịch Điện Biên Phủ?",
-                         "Phở xuất hiện ở đâu và khi nào?", "Hồ Hoàn Kiếm gắn với truyền thuyết nào?"];
-  RAG_QUESTIONS.forEach((q) => {
-    const b = document.createElement("button"); b.textContent = q;
-    b.onclick = () => { $("rag-q").value = q; };
-    $("rag-examples").appendChild(b);
-  });
-  $("ask").onclick = async () => {
-    const question = $("rag-q").value.trim();
-    if (!question) return;
+  // ---------------------------------------------------------------- RAG + scoring
+  async function ask() {
+    const question = $("rag-q").value.trim(); if (!question) return;
     $("ask").disabled = true; $("ask-busy").style.display = ""; $("rag-out").style.display = "none";
     try {
-      const r = await fetch("/demo/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) });
-      const out = await r.json();
-      if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
+      let out;
+      if (mode === "replay") { const data = await loadReplay(); out = data.questions.find((q) => q.question === question); if (!out) throw new Error("Chế độ phát lại chỉ có năm câu đã chạy trên Kaggle — bấm một nút bên dưới."); await new Promise((r) => setTimeout(r, reduced ? 0 : 500)); }
+      else { const r = await fetch("/demo/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }); out = await r.json(); if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail)); }
       $("context").value = out.context; $("question").value = out.question; $("response").value = out.answer;
-      const docs = out.retrieved.map((d) => `${d.title} (${d.score.toFixed(1)})`).join(" · ");
-      const t = out.elapsed_ms;
-      $("rag-out").innerHTML = `Truy xuất: ${esc(docs)}<br>Thời gian: truy xuất ${Math.round(t.retrieve)} ms · sinh trả lời ${Math.round(t.generate)} ms · chấm ${Math.round(t.score)} ms`;
+      const docs = out.retrieved.map((d) => `${d.title} (${d.score.toFixed(1)})`).join(" · "); const t = out.elapsed_ms;
+      $("rag-out").innerHTML = `Truy xuất: ${esc(docs)} · truy xuất ${Math.round(t.retrieve)} ms · sinh ${Math.round(t.generate)} ms · chấm ${Math.round(t.score)} ms<div class="ans">${esc(out.answer)}</div>`;
       $("rag-out").style.display = "";
-      renderResult(out.score, out.context);
-    } catch (e) {
-      $("rag-out").textContent = "Không hỏi được: " + e.message; $("rag-out").style.display = "";
-    } finally {
-      $("ask-busy").style.display = "none"; $("ask").disabled = !ready;
-    }
-  };
-
-  // -- scoring -----------------------------------------------------------------------------
+      renderResult(out.score, out.context, mode === "replay");
+      $("result").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+    } catch (e) { $("rag-out").textContent = "Không hỏi được: " + e.message; $("rag-out").style.display = ""; }
+    finally { $("ask-busy").style.display = "none"; $("ask").disabled = !(ready || mode === "replay"); }
+  }
+  $("ask").onclick = ask; $("rag-q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });
   $("score").onclick = async () => {
     const body = { context: $("context").value, question: $("question").value, response: $("response").value };
     $("error").textContent = "";
     if (!body.context.trim() || !body.response.trim()) { $("error").textContent = "Cần có ngữ cảnh và câu trả lời."; return; }
-    $("score").disabled = true; $("busy").style.display = "";
+    $("score").disabled = true; $("busy").style.display = ""; layers.forEach((l) => l.host.classList.add("think"));
     try {
       const r = await fetch("/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const out = await r.json();
-      if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
-      renderResult(out, body.context);
-    } catch (e) {
-      $("error").textContent = "Không chấm được: " + e.message;
-    } finally {
-      $("busy").style.display = "none"; $("score").disabled = !ready;
-    }
+      const out = await r.json(); if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
+      renderResult(out, body.context, false);
+    } catch (e) { $("error").textContent = "Không chấm được: " + e.message; }
+    finally { $("busy").style.display = "none"; $("score").disabled = !ready; layers.forEach((l) => l.host.classList.remove("think")); }
   };
 })();
 </script>
