@@ -148,6 +148,13 @@ def main() -> int:
              "dev chọn riêng cho từng mức; chạy cả hai rồi so, vì cột chênh của bản mặc định "
              "trộn 'thêm đặc trưng' với 'đổi số cột'.",
     )
+    parser.add_argument(
+        "--extra-level", metavar="GROUPS", default=None,
+        help="chấm THÊM một mức không cộng dồn, ví dụ 'chunk_aware' = bề mặt + chunk-aware, bỏ "
+             "lookback gộp. Ghi vào extra['extra_levels'], KHÔNG chèn vào bảng bốn dòng — bảng "
+             "đó phải giữ nguyên hình dạng để so được với lượt E12 đã ghi. Nhiều nhóm thì cách "
+             "nhau bằng dấu phẩy. Thêm ở T35B để đo thẳng mức chồng lấn tín hiệu.",
+    )
     args = parser.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -207,7 +214,8 @@ def main() -> int:
                                   len(blocks_for(list(widest))), n_layers, n_heads)
         del full
 
-    for name, groups in LEVELS:
+    def score_level(name: str, groups: tuple[str, ...]) -> dict:
+        """Fit and score one feature set — the same code for the four rows and any extra."""
         if args.fixed_aggregation and groups:
             mode, _, k_text = args.fixed_aggregation.partition(" k=")
             keep = shared_order[:int(k_text)] if k_text else None
@@ -224,30 +232,35 @@ def main() -> int:
         predicted = model.predict(test)
         scored = compute_metrics(labels["test"], predicted)
         interval = bootstrap_ci(labels["test"], predicted, seed=seed)
-        low, high = interval["macro_f1_lo"], interval["macro_f1_hi"]
-
-        macro = float(scored["macro_f1"])
-        delta = None if previous is None else macro - previous
-        previous = macro
-
         label = mode if keep is None else f"{mode} k={len(keep)}"
-        rows_out.append({
+        row = {
             "level": name, "groups": list(groups), "aggregation": label,
-            "n_features": int(train.shape[1]), "macro_f1": macro,
-            "ci_low": float(low), "ci_high": float(high), "delta": delta,
+            "n_features": int(train.shape[1]), "macro_f1": float(scored["macro_f1"]),
+            "ci_low": float(interval["macro_f1_lo"]), "ci_high": float(interval["macro_f1_hi"]),
             "binary_macro_f1": float(scored["binary_macro_f1"]),
             "per_class": {lb: float(scored[f"f1_{lb}"]) for lb in LABELS},
             "dev_trials": len(trials),
-        })
-
+        }
         print()
         print(f"  {name}")
-        print(f"    cách gộp dev chọn : {label}  ({train.shape[1]:,} cột, "
-              f"{len(trials)} ứng viên)" if trials else
-              f"    cách gộp          : không có đầu nào để gộp ({train.shape[1]} cột)")
-        print(f"    macro-F1 test     : {macro:.4f} [{low:.4f}; {high:.4f}]"
-              + ("" if delta is None else f"   chênh {delta:+.4f}"))
-        del train, test, model
+        if trials:
+            print(f"    cách gộp dev chọn : {label}  ({train.shape[1]:,} cột, "
+                  f"{len(trials)} ứng viên)")
+        elif groups:
+            print(f"    cách gộp chung    : {label}  ({train.shape[1]:,} cột)")
+        else:
+            print(f"    cách gộp          : không có đầu nào để gộp ({train.shape[1]} cột)")
+        print(f"    macro-F1 test     : {row['macro_f1']:.4f} [{row['ci_low']:.4f}; "
+              f"{row['ci_high']:.4f}]")
+        return row
+
+    for name, groups in LEVELS:
+        row = score_level(name, groups)
+        row["delta"] = None if previous is None else row["macro_f1"] - previous
+        previous = row["macro_f1"]
+        if row["delta"] is not None:
+            print(f"    chênh so mức trên : {row['delta']:+.4f}")
+        rows_out.append(row)
 
     print()
     print("-" * 84)
@@ -265,6 +278,44 @@ def main() -> int:
     print("  Đây là con số trả lời CH3 cho phần đóng góp của đề tài. Nếu nó gần bằng không thì"
           " phải viết thẳng như vậy trong báo cáo.")
 
+    # -- the non-cumulative extra level, kept OUT of rows_out ---------------------------------
+    # Bảng 4 stacks groups, so it cannot say whether chunk-aware carries anything the surface
+    # pair does not — chunk-aware is only ever scored on top of lookback. Scoring surface +
+    # chunk-aware with lookback removed answers that directly, and comparing the three gains
+    # puts a number on how much the two attention groups overlap:
+    #     overlap = gain(lookback alone) + gain(chunk alone) - gain(both)
+    # Zero means additive; positive means they carry the same information; negative would mean
+    # they help each other. Written to its own key so the four-row table stays comparable with
+    # the E12 rows already in runs.jsonl.
+    extra_rows = []
+    if args.extra_level:
+        groups = tuple(g.strip() for g in args.extra_level.split(",") if g.strip())
+        print()
+        print("-" * 84)
+        print("MỨC PHỤ — không cộng dồn, không chèn vào bảng trên")
+        print("-" * 84)
+        extra = score_level(f"bề mặt + {' + '.join(groups)}", groups)
+        extra_rows.append(extra)
+        base = rows_out[0]["macro_f1"]
+        gain_extra = extra["macro_f1"] - base
+        print(f"    so với chỉ bề mặt : {gain_extra:+.4f}")
+        if groups == ("chunk_aware",):
+            gain_look = rows_out[1]["macro_f1"] - base
+            gain_both = rows_out[2]["macro_f1"] - base
+            overlap = gain_look + gain_extra - gain_both
+            extra.update({"gain_over_surface": gain_extra,
+                          "gain_lookback_over_surface": gain_look,
+                          "gain_both_over_surface": gain_both, "overlap": overlap})
+            print()
+            print(f"  {'':<36}{'cộng thêm vào bề mặt':>22}")
+            print(f"  {'lookback gộp một mình':<36}{gain_look:>+22.4f}")
+            print(f"  {'chunk-aware một mình':<36}{gain_extra:>+22.4f}")
+            print(f"  {'cả hai':<36}{gain_both:>+22.4f}")
+            print(f"  {'chồng lấn = riêng + riêng − cả hai':<36}{overlap:>+22.4f}")
+            print()
+            print("  Đọc: chồng lấn ≈ 0 là hai nhóm cộng được vào nhau; dương là chúng mang cùng"
+                  " một thông tin; âm là chúng bổ trợ nhau.")
+
     elapsed = time.perf_counter() - started
     log_result(
         run_name=run_name, config=cfg.model_dump(), path=args.results_path,
@@ -274,11 +325,12 @@ def main() -> int:
         # No GPU was used: this experiment refits a linear classifier on shards the reading
         # model produced weeks ago. peak_vram_mb is 0 for that reason, not because it was
         # left unmeasured.
-        extra={"ablation": rows_out, "seconds": round(elapsed, 1),
+        extra={"ablation": rows_out, "extra_levels": extra_rows,
+               "seconds": round(elapsed, 1),
                "ms_per_sample": round(elapsed * 1000 / len(records["test"]), 3),
                "peak_vram_mb": 0, "reused_extraction": run},
     )
-    print(f"\n  Đã ghi results/runs.jsonl  ({elapsed:.1f} giây, 0 giây GPU)")
+    print(f"\n  Đã ghi {args.results_path}  ({elapsed:.1f} giây, 0 giây GPU)")
     return 0
 
 
