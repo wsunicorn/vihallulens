@@ -1,0 +1,140 @@
+[
+  {
+    "vi_du": "trung thuc",
+    "question": "Hà Nội từng có tên gọi nào?",
+    "response": "Hà Nội từng mang tên Thăng Long dưới triều Lý.",
+    "label": "no",
+    "proba": {
+      "no": 0.9989240224039299,
+      "intrinsic": 0.0009970708715433202,
+      "extrinsic": 7.890672452687879e-05
+    },
+    "risk_score": 0.0010759775960701434,
+    "chunk_attention": [
+      {
+        "index": 0,
+        "text": "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. ",
+        "char_start": 0,
+        "char_end": 53,
+        "share": 0.23860657216051095
+      },
+      {
+        "index": 1,
+        "text": "Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. ",
+        "char_start": 53,
+        "char_end": 133,
+        "share": 0.35254619422182304
+      },
+      {
+        "index": 2,
+        "text": "Dân số nội thành khoảng tám triệu người. ",
+        "char_start": 133,
+        "char_end": 174,
+        "share": 0.1559996442458625
+      },
+      {
+        "index": 3,
+        "text": "Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
+        "char_start": 174,
+        "char_end": 243,
+        "share": 0.2528475893718037
+      }
+    ],
+    "elapsed_ms": 1308.918597999991,
+    "n_chunks": 4,
+    "truncated": false,
+    "nonfinite_layers": []
+  },
+  {
+    "vi_du": "noi tai",
+    "question": "Hà Nội từng có tên gọi nào?",
+    "response": "Hà Nội từng mang tên Thăng Long dưới triều Trần, khi dân số đã lên tới hai mươi triệu người.",
+    "label": "intrinsic",
+    "proba": {
+      "no": 0.0017777519046221785,
+      "intrinsic": 0.965016583686044,
+      "extrinsic": 0.03320566440933378
+    },
+    "risk_score": 0.9982222480953779,
+    "chunk_attention": [
+      {
+        "index": 0,
+        "text": "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. ",
+        "char_start": 0,
+        "char_end": 53,
+        "share": 0.23003984163974495
+      },
+      {
+        "index": 1,
+        "text": "Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. ",
+        "char_start": 53,
+        "char_end": 133,
+        "share": 0.3140653153878926
+      },
+      {
+        "index": 2,
+        "text": "Dân số nội thành khoảng tám triệu người. ",
+        "char_start": 133,
+        "char_end": 174,
+        "share": 0.20982623709555268
+      },
+      {
+        "index": 3,
+        "text": "Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
+        "char_start": 174,
+        "char_end": 243,
+        "share": 0.2460686058768101
+      }
+    ],
+    "elapsed_ms": 252.65327900001466,
+    "n_chunks": 4,
+    "truncated": false,
+    "nonfinite_layers": []
+  },
+  {
+    "vi_du": "ngoai lai",
+    "question": "Hà Nội có những công trình nổi tiếng nào?",
+    "response": "Hà Nội nổi tiếng với tháp Eiffel thu nhỏ ở hồ Tây và tuyến tàu điện ngầm dài nhất Đông Nam Á.",
+    "label": "extrinsic",
+    "proba": {
+      "no": 0.00021472237637365778,
+      "intrinsic": 0.04713221164643246,
+      "extrinsic": 0.952653065977194
+    },
+    "risk_score": 0.9997852776236263,
+    "chunk_attention": [
+      {
+        "index": 0,
+        "text": "Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. ",
+        "char_start": 0,
+        "char_end": 53,
+        "share": 0.3164282725203623
+      },
+      {
+        "index": 1,
+        "text": "Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý. ",
+        "char_start": 53,
+        "char_end": 133,
+        "share": 0.21134593588605122
+      },
+      {
+        "index": 2,
+        "text": "Dân số nội thành khoảng tám triệu người. ",
+        "char_start": 133,
+        "char_end": 174,
+        "share": 0.19364759338014934
+      },
+      {
+        "index": 3,
+        "text": "Khí hậu Hà Nội có bốn mùa rõ rệt, mùa đông có thể xuống dưới mười độ.",
+        "char_start": 174,
+        "char_end": 243,
+        "share": 0.278578198213437
+      }
+    ],
+    "elapsed_ms": 259.392661999982,
+    "n_chunks": 4,
+    "truncated": false,
+    "nonfinite_layers": []
+  }
+]
