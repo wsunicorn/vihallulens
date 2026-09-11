@@ -123,7 +123,7 @@ def vram_mb() -> tuple[float | None, float | None]:
 
 def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
                device: str = "cuda", load_on_startup: bool = True, loader=None,
-               generator=None) -> FastAPI:
+               generator=None, generator_model: str | None = None) -> FastAPI:
     """Build the service.
 
     ``detector`` given: use it as is (tests, or a caller that already holds one).
@@ -214,9 +214,10 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
         """The demo RAG, built once from the loaded detector (T40)."""
         det = current()
         if state["rag"] is None:
-            from vihallulens.serve.rag import DemoRAG
+            from vihallulens.serve.rag import GENERATOR_MODEL, DemoRAG
 
-            state["rag"] = DemoRAG(det, generator=generator)
+            state["rag"] = DemoRAG(det, generator=generator,
+                                   generator_model=generator_model or GENERATOR_MODEL)
         return state["rag"]
 
     @app.post("/demo/ask", response_model=AskResponse)
