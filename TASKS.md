@@ -3722,10 +3722,58 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   phải đo xen kẽ với ít nhất một nấc khác trong cùng phiên — đo riêng thì lại rơi vào đúng cái bẫy
   hạ xung mà mục 5 `CLAUDE.md` cảnh báo.
 
-- [ ] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc —
-  **công cụ sẵn sàng 10/09/2026, chờ chạy MỘT phiên Kaggle ~2 giờ 30**
-  - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl`, Bảng 6 `docs/EXPERIMENTS.md` có số ở
-    dòng "Phương pháp của nhóm".
+- [x] **T33** · M · E15 đối chứng ngoài trên ViWikiFC split gốc — hoàn thành 11/09/2026
+  - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl` ✅, Bảng 6 `docs/EXPERIMENTS.md` có số ở
+    hai dòng của nhóm ✅.
+
+  ### Kết quả
+
+  Phiên Kaggle 10/09 trích 20.919 mẫu trong 138 phút, **0 lỗi, 0 tràn số**, 395 ms/mẫu — sát phép
+  chiếu 424 ms của T31. Chấm trên máy cá nhân, tập test gốc 2.091 mẫu.
+
+| Phương pháp | Đầu vào | Acc | macro-F1 [KTC 95 %] |
+|---|---|---|---|
+| InfoXLM large (bài gốc) | bằng chứng vàng | — | 86,51 |
+| SemViQA (bài SemViQA) | câu tự truy xuất | VC 83,88 | — |
+| **Lookback gộp, Qwen2.5-7B** | toàn bộ `context` | 70,73 | **70,66** [68,72–72,55] |
+| **Chunk-aware, Qwen2.5-7B** | toàn bộ `context` | 70,59 | **70,54** [68,57–72,48] |
+
+  ### Cột "đầu vào" quyết định cách đọc, và phải nói thẳng khoảng cách
+
+  InfoXLM 86,51 nhận **đúng câu bằng chứng vàng** rồi phân loại — bài toán dễ hơn hẳn bài toán
+  của nhóm là đọc cả ngữ cảnh rồi tự tìm chỗ cần nhìn. Con số ấy là trần của một bài toán khác,
+  không phải mốc để vượt.
+
+  Mốc so được nhất là **SemViQA VC Acc 83,88** — verdict accuracy của hệ đầu cuối. Nhóm đạt
+  **70,73**. **Kém 13 điểm**, và phải viết đúng như vậy. Ba thứ làm khoảng cách nhỏ hơn con số
+  trần trụi, cả ba đều đo được: rò rỉ 100 % ngữ cảnh nâng số của bộ mã hóa 560 triệu tham số
+  nhiều hơn nâng số của 2.271 tham số; 33 % nhãn NEI lẫn loại; và không tinh chỉnh gì, chạy CPU.
+
+  ### Chunk-aware bằng lookback, lần thứ tư, đo chặt nhất
+
+  Chênh **−0,0012** trên **2.091** mẫu — gấp ba cỡ test ViHallu — nên khoảng tin cậy hẹp còn 0,038
+  và hai khoảng chồng gần khít. Bộ này còn thiên vị chunk-aware nhẹ (5,9 % mẫu một đoạn). Bốn phép
+  đo độc lập, bốn cách đổi biến, cùng một câu trả lời — bảng đầy đủ ở mục Bảng 6.
+
+  ### Phát hiện thêm: cùng đầu chú ý dẫn đầu trên cả ba bộ
+
+  Với cùng Qwen2.5-7B, `l17_h4` nằm trong top-2 ở **cả ba** bộ ViHallu, ISE-DSC01, ViWikiFC; `l5_h7`
+  ở top-3 của hai bộ. Ghép với E13/E14 nơi đổi mô hình thì đầu dời chỗ hẳn:
+
+  > **Vị trí đầu mang tín hiệu là thuộc tính của mô hình đọc, không phải của bộ dữ liệu.**
+
+  Đây là cơ sở trực tiếp cho T34 / E16: đầu không đổi giữa các bộ thì bộ phân loại huấn luyện
+  trên bộ này mới có lý do để chuyển sang bộ kia.
+
+  ### Lấy kết quả về: chỉ ba shard là thật sự mới
+
+  `ket_qua_t33` mang về 9 file. Hai YAML và `leakage_report.md` chỉ khác kiểu xuống dòng; hai sổ
+  `runs_t33.jsonl`, `feasibility_t33.jsonl` trùng từng byte với bản trên máy vì phiên này không
+  chấm gì; `leakage_report_viwikifc.md` lặp lại đúng mục viwikifc của báo cáo chung. Ba shard
+  1.130 MB vào `data/processed/`, còn lại xóa. Ô lấy kết quả làm đúng việc của nó — chép **mọi**
+  thứ có thể cần — và việc phân loại lúc về là chuyện của máy cá nhân.
+
+  ### Phần dựng công cụ, ghi ngày 10/09
 
   ### Task này để làm gì
 
