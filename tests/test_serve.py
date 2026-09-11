@@ -198,3 +198,24 @@ def test_health_reports_a_failed_load_with_the_reason():
         assert "không có CUDA" in health["error"]
         r = client.post("/score", json={"context": "c", "response": "r"})
         assert r.status_code == 503 and "không có CUDA" in r.json()["detail"]
+
+
+# ---------------------------------------------------------------- T39: the observation page
+
+def test_index_serves_the_observation_page(client):
+    client, _ = client
+    r = client.get("/")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/html")
+    page = r.text
+    # It must use the API's own field names, or a schema change would break it silently.
+    for marker in ("/score", "/health", "chunk_attention", "risk_score", "char_start", "char_end"):
+        assert marker in page, marker
+    assert "<script src=" not in page   # HTML + JS thuần, không framework, đúng SPEC §2.6
+
+
+def test_index_is_not_in_the_openapi_schema(client):
+    client, _ = client
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/" not in paths
+    assert set(paths) >= {"/score", "/score/batch", "/health"}

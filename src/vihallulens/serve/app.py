@@ -26,12 +26,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from vihallulens import __version__
 from vihallulens.pipeline import DEFAULT_BUNDLE
 
 MAX_BATCH = 64
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 # ---------------------------------------------------------------- schemas
@@ -191,6 +193,16 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
         started = time.perf_counter()
         results = [score_one(det, item) for item in batch.items]
         return BatchResponse(results=results, elapsed_ms=(time.perf_counter() - started) * 1000)
+
+    @app.get("/", include_in_schema=False)
+    def index() -> FileResponse:
+        """The observation page (T39): plain HTML and JS, no framework, per SPEC §2.6.
+
+        It talks to the same two endpoints a programmatic client would, so what it shows is
+        exactly what ``/score`` returns — the chunk tint is ``chunk_attention[i].share`` sliced
+        over the original context by ``char_start``/``char_end``.
+        """
+        return FileResponse(STATIC_DIR / "index.html", media_type="text/html; charset=utf-8")
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
