@@ -107,10 +107,38 @@ def find_eyes(path: Path, eye: str) -> tuple[list[dict], tuple[int, int]]:
             for _, cx, cy, rx, ry in eyes], (w, h)
 
 
-def to_webp(src: Path, dst: Path, max_side: int) -> int:
+def key_black(img):
+    """Make a solid near-black background transparent by flooding in from the image borders.
+
+    GPT image sometimes ignores "transparent background" and paints black. Flooding from the
+    edges keeps the owl's own dark feathers, which are enclosed by lighter pixels, opaque.
+    """
+    from PIL import ImageDraw
+
+    rgb = img.convert("RGB")
+    marker = (255, 0, 255)
+    w, h = rgb.size
+    for x, y in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (w // 2, 0), (w // 2, h - 1),
+                 (0, h // 2), (w - 1, h // 2)):
+        if sum(rgb.getpixel((x, y))) < 90:
+            ImageDraw.floodfill(rgb, (x, y), marker, thresh=28)
+    arr = np.asarray(rgb)
+    hit = (arr[..., 0] == 255) & (arr[..., 1] == 0) & (arr[..., 2] == 255)
+    out = np.asarray(img.convert("RGBA")).copy()
+    out[hit, 3] = 0
+    from PIL import Image
+
+    return Image.fromarray(out, "RGBA"), int(hit.mean() * 100)
+
+
+def to_webp(src: Path, dst: Path, max_side: int, key: bool = False) -> int:
     from PIL import Image
 
     img = Image.open(src).convert("RGBA")
+    alpha = np.asarray(img)[..., 3]
+    if key and alpha.min() == 255:  # fully opaque: nothing transparent yet, key the black out
+        img, pct = key_black(img)
+        print(f"  {src.name}: nền đen đặc → khử {pct} % điểm ảnh thành trong suốt")
     if max(img.size) > max_side:
         k = max_side / max(img.size)
         img = img.resize((round(img.width * k), round(img.height * k)), Image.LANCZOS)
@@ -130,6 +158,8 @@ def main() -> int:
     parser.add_argument("--eye", choices=tuple(EYE_HUES), default="cyan",
                         help="màu mắt trong ảnh: cyan (theo img/original.jpg) hay amber")
     parser.add_argument("--max-side", type=int, default=1600)
+    parser.add_argument("--key-black", action="store_true",
+                        help="ảnh nền đen đặc (không có kênh alpha) → khử nền từ mép ảnh")
     parser.add_argument("--show", action="store_true")
     args = parser.parse_args()
 
@@ -142,12 +172,12 @@ def main() -> int:
 
     eyes, (w, h) = find_eyes(args.image, args.eye)
     name = f"owl-{args.layer}.webp"
-    size = to_webp(args.image, IMG / name, args.max_side)
+    size = to_webp(args.image, IMG / name, args.max_side, args.key_black)
     entry = {"file": f"img/{name}", "aspect": round(w / h, 4), "eyes": eyes}
     entry["variants"] = {}
     for vname, vpath in args.variant:
         vfile = f"owl-{args.layer}-{vname}.webp"
-        vsize = to_webp(Path(vpath), IMG / vfile, args.max_side)
+        vsize = to_webp(Path(vpath), IMG / vfile, args.max_side, args.key_black)
         try:
             veyes, _ = find_eyes(Path(vpath), args.eye)
         except SystemExit:
