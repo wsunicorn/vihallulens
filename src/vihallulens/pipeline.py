@@ -129,6 +129,20 @@ class HallucinationDetector:
         dropped is served on exactly that. Overrides are for ``device`` and the like, not for
         swapping the model: E13 and E14 measured what happens when the model changes.
         """
+        # Fail before downloading anything. Asked for CUDA on a host without it, the extractor
+        # would first pull the 15 GB of Qwen2.5-7B weights and only then hit the bitsandbytes
+        # error — measured at T38 in the Docker image, where /health sat at "loading" through
+        # the whole download. NF4 has no CPU path, so there is nothing to fall back to.
+        if str(device).startswith("cuda"):
+            import torch
+
+            if not torch.cuda.is_available():
+                raise RuntimeError(
+                    "yêu cầu device='cuda' nhưng máy này không có CUDA. Mô hình đọc lượng tử "
+                    "hóa NF4 qua bitsandbytes không chạy được trên CPU — cần GPU, hoặc chạy "
+                    "trên Kaggle/Colab."
+                )
+
         from vihallulens.extract.attention import AttentionExtractor
 
         bundle = DetectorBundle.load(bundle_path)

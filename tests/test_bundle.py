@@ -202,3 +202,14 @@ def test_attention_per_chunk_sums_to_one():
     shares = attention_per_chunk(FakeFeatures(rng, chunks))
     assert shares.shape == (4,)
     assert abs(shares.sum() - 1.0) < 1e-6
+
+
+def test_from_pretrained_fails_fast_without_cuda(monkeypatch, tmp_path, fitted):
+    """Asked for CUDA on a CPU host, refuse before touching the network or the 15 GB weights."""
+    import torch
+
+    bundle, *_ = fitted
+    path = bundle.save(tmp_path / "b.pkl")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    with pytest.raises(RuntimeError, match="không có CUDA"):
+        HallucinationDetector.from_pretrained(path, device="cuda")

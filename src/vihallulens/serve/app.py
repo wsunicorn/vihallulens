@@ -20,6 +20,7 @@ the bundle, and refused with 400 when it differs. Silently ignoring it would be 
 
 from __future__ import annotations
 
+import threading
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -75,7 +76,8 @@ class BatchResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str
+    status: str                 # loading | ok | error | not_loaded
+    error: str | None = None    # lý do khi status == "error"
     version: str
     model_loaded: bool
     bundle: str | None
@@ -103,26 +105,45 @@ def vram_mb() -> tuple[float | None, float | None]:
 
 
 def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
-               device: str = "cuda", load_on_startup: bool = True) -> FastAPI:
+               device: str = "cuda", load_on_startup: bool = True, loader=None) -> FastAPI:
     """Build the service.
 
     ``detector`` given: use it as is (tests, or a caller that already holds one).
-    ``detector`` absent: load ``bundle_path`` on ``device`` at startup, unless
-    ``load_on_startup`` is False — then ``/health`` reports the model as not loaded and the
-    scoring routes answer 503 until something sets ``app.state.detector``.
+    ``detector`` absent: load ``bundle_path`` on ``device`` **in a background thread** started
+    at startup, unless ``load_on_startup`` is False. The port opens immediately either way;
+    ``/health`` says ``loading`` until the thread finishes, then ``ok`` or ``error`` with the
+    reason, and the scoring routes answer 503 in the meantime.
+
+    Why a thread: uvicorn does not accept connections until the lifespan startup returns. A
+    synchronous load there — a minute for the 7B model, far longer on a first run that has to
+    download 15 GB — left the port closed for exactly the period ``/health`` exists to report on.
+    Found at T38 by starting the image and watching ``/health`` time out for 150 seconds.
+
+    ``loader`` is the callable that produces the detector; it defaults to
+    ``HallucinationDetector.from_pretrained(bundle_path, device)`` and exists so a test can hand
+    in one that blocks on an event.
     """
-    state = {"detector": detector, "started": time.time(), "requests": 0, "error": None}
+    state = {"detector": detector, "started": time.time(), "requests": 0, "error": None,
+             "loading": False}
+
+    def default_loader():
+        from vihallulens.pipeline import HallucinationDetector
+
+        return HallucinationDetector.from_pretrained(bundle_path, device)
+
+    def load_in_background():
+        state["loading"] = True
+        try:
+            state["detector"] = (loader or default_loader)()
+        except Exception as error:  # keep serving /health so the failure is visible
+            state["error"] = f"{type(error).__name__}: {error}"
+        finally:
+            state["loading"] = False
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if state["detector"] is None and load_on_startup:
-            from vihallulens.pipeline import HallucinationDetector
-
-            try:
-                state["detector"] = HallucinationDetector.from_pretrained(bundle_path, device)
-            except Exception as error:  # keep serving /health so the failure is visible
-                state["error"] = f"{type(error).__name__}: {error}"
-        app.state.detector = state["detector"]
+            threading.Thread(target=load_in_background, name="nap-mo-hinh", daemon=True).start()
         yield
 
     app = FastAPI(
@@ -133,9 +154,9 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
     )
 
     def current():
-        det = getattr(app.state, "detector", None) or state["detector"]
+        det = state["detector"]
         if det is None:
-            detail = "mô hình chưa nạp"
+            detail = "mô hình đang nạp" if state["loading"] else "mô hình chưa nạp"
             if state["error"]:
                 detail += f" — {state['error']}"
             raise HTTPException(status_code=503, detail=detail)
@@ -173,12 +194,21 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
-        det = getattr(app.state, "detector", None) or state["detector"]
+        det = state["detector"]
         allocated, reserved = vram_mb()
         loaded = det is not None
         bundle = det.bundle if loaded else None
+        if loaded:
+            status = "ok"
+        elif state["error"]:
+            status = "error"
+        elif state["loading"] or load_on_startup:
+            status = "loading"
+        else:
+            status = "not_loaded"
         return HealthResponse(
-            status="ok" if loaded else ("error" if state["error"] else "loading"),
+            status=status,
+            error=state["error"],
             version=__version__,
             model_loaded=loaded,
             bundle=bundle.describe() if bundle else None,

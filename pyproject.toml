@@ -32,8 +32,10 @@ dependencies = [
     "pandas",
     "pyarrow",
     "numpy",
-    # Bộ phân loại và đánh giá
-    "scikit-learn",
+    # Bộ phân loại và đánh giá. Trần major vì bundle trong models/ là pickle của sklearn: đổi
+    # major là đổi định dạng pickle. Đo ở T38: bundle ghi bằng 1.9.0 nạp trên 1.9.1 trong ảnh
+    # Docker cho 700/700 phán đoán trùng, nhưng sklearn tự cảnh báo và không hứa gì qua major.
+    "scikit-learn>=1.9,<2",
     # Cấu hình
     "pydantic",
     "pyyaml",

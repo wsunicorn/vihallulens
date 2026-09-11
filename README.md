@@ -152,6 +152,20 @@ trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do n�
 cùng — gửi cách khác bị từ chối **400** chứ không bị lặng lẽ bỏ qua, vì năm đặc trưng hình dạng
 mô tả phân bố trên đúng các đoạn ấy.
 
+## Chạy bằng Docker
+
+```bash
+docker compose up --build
+```
+
+Một lệnh, lên dịch vụ ở `http://localhost:8000`. Cần Docker có GPU (NVIDIA Container Toolkit trên
+Linux, Docker Desktop với WSL2 GPU trên Windows). Lần đầu tải trọng số Qwen2.5-7B (~15 GB) vào
+volume `hf-cache`; các lần sau dùng lại. Trọng số **không nướng vào ảnh**. `GET /health` báo `ok`
+khi mô hình đã nạp — `HEALTHCHECK` của ảnh cũng dựa vào đúng trạng thái đó, không phải chỉ cổng mở.
+
+`HF_TOKEN` không bắt buộc; có thì đặt trong `.env` cạnh `docker-compose.yml`, compose tự đọc. Không
+bao giờ viết khóa vào Dockerfile hay YAML.
+
 ## Chạy trên Kaggle
 
 Notebook trong `notebooks/` chỉ làm ba việc: clone repo, cài đặt, gọi script. Không viết logic trong notebook.

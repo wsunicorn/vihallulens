@@ -1,0 +1,32 @@
+# Một lệnh:  docker compose up --build
+#
+# Cần Docker có hỗ trợ GPU (NVIDIA Container Toolkit trên Linux, hoặc Docker Desktop với WSL2 GPU
+# trên Windows). Không có GPU thì container lên được nhưng /health sẽ báo `error` — bitsandbytes
+# NF4 không chạy trên CPU, và đó là ràng buộc của mô hình chứ không phải của ảnh.
+#
+# HF_TOKEN không bắt buộc (Qwen2.5 không khóa quyền), nhưng có thì tải nhanh hơn và ít bị giới hạn
+# tốc độ. Đặt trong file .env cạnh file này — compose tự đọc — đúng quy tắc mục 2 CLAUDE.md:
+# khóa chỉ ở .env, không bao giờ ở YAML hay ảnh.
+
+services:
+  vihallulens:
+    build: .
+    image: vihallulens:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      # Trọng số Qwen2.5-7B (~15 GB) tải một lần vào đây, các lần chạy sau dùng lại.
+      - hf-cache:/cache/huggingface
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  hf-cache:

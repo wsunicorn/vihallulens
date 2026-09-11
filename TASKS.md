@@ -4242,12 +4242,70 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   tay trên Kaggle — SPEC §5 quy định vậy cho mọi thứ cần GPU — và T40 (demo đầu cuối) là chỗ
   hợp lý để làm, vì demo dù sao cũng phải bật server. Ghi vào T40.
 
-- [ ] **T38** · L · Dockerfile, chạy được bằng một lệnh
+- [x] **T38** · L · Dockerfile, chạy được bằng một lệnh — hoàn thành 11/09/2026
+  - **Kiểm tra:** `docker build` thành công, ảnh 10,5 GB ✅; trong container bundle nạp và chấm
+    lại 700 bản ghi test cho **700/700** trùng ✅; `docker compose config` hợp lệ ✅; container
+    khởi động không GPU thì `/health` trả `error` kèm lý do sau 6 giây ✅. Lượt chạy **có GPU**
+    vẫn thuộc phiên Kaggle của T40.
+
+  ### Một lệnh
+
+```
+  docker compose up --build
+```
+
+  Ảnh nền `pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime` — có sẵn torch, CUDA 12.4, Python 3.11
+  (mục 3 `CLAUDE.md`) — nên bước cài phụ thuộc không tải lại torch; `uv pip install --system`
+  thấy torch đã có và bỏ qua. Trọng số Qwen2.5-7B (~15 GB) **không nướng vào ảnh**: tải lần đầu
+  vào volume `hf-cache`, các lần sau dùng lại. `HF_TOKEN` tùy chọn, đọc từ `.env` theo đúng
+  mục 2 `CLAUDE.md`. `.dockerignore` loại `data/`, `results/`, `notebooks/`, `tests/`,
+  `UniversityRequirements/` — ảnh chỉ mang thứ dịch vụ cần.
+
+  ### Build thật, và build thật bắt được hai lỗi mà test giả không thấy
+
+  Docker Desktop trên máy cá nhân build được (không có GPU nên không chạy được mô hình, nhưng
+  chạy được mọi thứ khác). Hai lỗi lộ ra khi **bật container lên** thay vì chỉ build:
+
+  **1. `/health` không trả lời gì suốt 150 giây.** Ở T37 tôi viết "`/health` báo `loading` trong
+  lúc nạp mô hình" — mà code không làm được thế: `lifespan` nạp mô hình **đồng bộ**, và uvicorn
+  không mở cổng cho tới khi `lifespan` trả về. Cả phút nạp (hay cả 15 GB tải ở lần đầu) là cả
+  quãng cổng đóng — đúng quãng `/health` tồn tại để báo. 11 ca test T37 không thấy vì chúng tiêm
+  sẵn bộ phát hiện và bỏ qua bước nạp. Sửa: nạp trong **luồng nền**, cổng mở ngay; `/health` có
+  bốn trạng thái `loading | ok | error | not_loaded` kèm trường `error` nêu lý do; route chấm trả
+  503 "đang nạp". Thêm `loader=` vào `create_app` để test tiêm được một loader chặn trên `Event`,
+  và ba ca test mới bắt đúng chuỗi `loading` → `ok` và `loading` → `error`.
+
+  **2. Tải 15 GB rồi mới biết không có GPU.** Sau khi sửa lỗi 1, container không GPU nằm ở
+  `loading` mãi — vì `AttentionExtractor` tải trọng số **trước** rồi mới vấp bitsandbytes. Sửa
+  ở `from_pretrained`: `device='cuda'` mà `torch.cuda.is_available()` sai thì `RuntimeError`
+  ngay, nói rõ NF4 không có đường CPU. Sau sửa: `/health` báo `error` sau **6 giây**, không tải gì.
+
+  Cả hai đều là lỗi của T37, tìm thấy ở T38, sửa trong PR này. 13 ca `test_serve.py`, 12 ca
+  `test_bundle.py`.
+
+  ### sklearn: một cảnh báo đáng để mắt
+
+  Bundle pickle bằng sklearn **1.9.0** ở máy, ảnh có **1.9.1**. sklearn cảnh báo
+  `InconsistentVersionWarning` khi nạp. Phép kiểm dứt điểm: mount shard test vào container, chấm
+  lại 700 bản ghi → **700/700 trùng** — khác phiên bản nhỏ không đổi phán đoán nào. Nhưng qua
+  major thì sklearn không hứa gì, nên `pyproject` chặn `scikit-learn>=1.9,<2`, cùng kiểu với
+  trần của `transformers`.
+
+  ### Chưa chạy với GPU, nói rõ
+
+  Máy cá nhân không có CUDA nên ảnh chưa từng chấm một request thật. Ba thứ đã chứng minh:
+  ảnh build được, gói và bundle nạp đúng bên trong, đường khởi động và đường hỏng của dịch vụ
+  đúng như thiết kế. Thứ chưa chứng minh là `docker compose up` trên máy có GPU cho `/health` =
+  `ok` — phần đó ghi vào T40 cùng smoke test của T37. Ảnh 10,5 GB đang nằm trên máy anh, xóa bằng
+  `docker rmi vihallulens:latest` nếu cần chỗ.
+
 - [ ] **T39** · L · Giao diện quan sát: tô màu chunk theo tỷ trọng chú ý
 - [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu
   - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra.
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
     `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.
+  - **Kèm từ T38:** nếu có máy GPU với Docker, `docker compose up --build` rồi chờ `/health` =
+    `ok`; không có thì ghi rõ ảnh chỉ mới kiểm đường hỏng.
 
 ---
 
