@@ -754,7 +754,7 @@ GET  /health       loading | ok | error</code></pre>
       step(0);
     }
     wave() {
-      const f = this.has("wave") ? [["point", 200], ["wave", 260], ["point", 220], ["wave", 260], ["point", 220]] : [["point", 260], ["base", 220], ["point", 260], ["base", 220], ["point", 300]];
+      const f = this.has("wave") ? [["wave", 300], ["base", 220], ["wave", 300], ["base", 220], ["wave", 360]] : [["point", 260], ["base", 220], ["point", 260], ["base", 220], ["point", 300]];
       this.play(f);
     }
     // pointer-driven body language: the face turns its head (3D tilt), the professor leans on his feet
@@ -1033,7 +1033,7 @@ GET  /health       loading | ok | error</code></pre>
     const body = { context: $("context").value, question: $("question").value, response: $("response").value };
     $("error").textContent = "";
     if (!body.context.trim() || !body.response.trim()) { $("error").textContent = "Cần có ngữ cảnh và câu trả lời."; return; }
-    $("score").disabled = true; $("busy").style.display = ""; layers.forEach((l) => l.host.classList.add("think"));
+    $("score").disabled = true; $("busy").style.display = ""; layers.forEach((l) => l.host.classList.add("think")); if (prof && prof.has("think")) prof.setVariant("think");
     try {
       const r = await fetch("/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const out = await r.json(); if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
