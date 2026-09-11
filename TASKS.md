@@ -1461,7 +1461,8 @@ Thiếu đặc trưng của tập train: data/processed/vihallu_train_3d2dae5c78
 
 - [x] **T21** · L · Đặc trưng chunk-aware — **xong 29/08/2026**
   - Hiện thực `chunk_entropy`, `chunk_max_share`, `chunk_gini`, `top1_top2_gap`, `chunk_drift`.
-  - **Kiểm tra:** `pytest tests/test_features.py` xanh với đầu vào đã biết đáp án.
+  - **Kiểm tra:** `pytest tests/test_features.py` xanh với đầu vào đã biết đáp án — file thật tên
+    `tests/test_chunk_features.py`.
 
   **Task này để làm gì.** Đây là **phần đóng góp của đề tài**. Lookback Lens hỏi ma trận chú ý đúng một câu: *bao nhiêu phần chú ý rơi vào ngữ cảnh*. Năm đặc trưng này hỏi câu thứ hai: **phần đó trải ra trên các đoạn ngữ cảnh như thế nào**.
 
@@ -4496,6 +4497,36 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   báo cáo. Mọi số liệu trong báo cáo lấy từ `results/` và các bảng ở `docs/EXPERIMENTS.md`, không
   gõ tay.
 
+### Rà soát toàn repo trước khi viết — 11/09/2026
+
+Đọc lại mọi file được commit để tìm chỗ tài liệu nói khác mã hoặc khác kết quả. Cách kiểm: mọi
+đường dẫn `scripts/…`, `configs/…`, `results/…` nhắc trong bảy file `.md` phải tồn tại (0 thiếu);
+21 file `configs/*.yaml` nạp qua pydantic (21/21); 30 script chạy `--help` (30/30); bundle
+`models/e03_chunk_aware.pkl` khớp sidecar `.json`; mọi macro-F1 trong `docs/EXPERIMENTS.md` đối
+chiếu với `results/runs.jsonl`. Số liệu **không có chỗ nào sai**. Chỗ lệch là tài liệu đi chậm
+hơn mã, sửa hết trong một PR:
+
+| File | Lệch | Sửa |
+|---|---|---|
+| `docs/SPEC.md` §2.6 | "ba endpoint", thiếu `/demo/ask`, `/demo/corpus`, `GET /`; schema thiếu `n_chunks`, `truncated`, `nonfinite_layers`, các trường `/health` | bảng route đúng mã |
+| `docs/SPEC.md` §2.2 | chữ ký `AttentionExtractor` thiếu `layers`, `exclude_layers`, `compute_dtype`; `AttentionFeatures` thiếu trường `chunks` (thêm ở T25); "torch_dtype=float16" cứng | theo mã |
+| `docs/SPEC.md` §2.3 | `build_feature_matrix(features, config)` không phải chữ ký thật | `(records, groups, n_layers, n_heads, mode, keep)` |
+| `docs/SPEC.md` §2.4 | hứa `CalibratedClassifierCV` và chọn ngưỡng theo chi phí — chưa bao giờ làm | ghi rõ không hiện thực và vì sao |
+| `docs/SPEC.md` §3, §4 | ví dụ config thiếu `compute_dtype`, `exclude_layers`; CLI thiếu `serve.py`, `demo_rag.py` | bổ sung |
+| `docs/EXPERIMENTS.md` Bảng 1 | dòng "Chunk-aware (E05)" trống từ bản đầu | bỏ, ghi chú E05 là bước chọn và kết quả chính là dòng E03 |
+| `docs/DATA.md` §4B | "sẽ chốt ở T07" | đã chốt |
+| `README.md` | "ba endpoint"; lệnh Kaggle `pip install -e .` khác cách notebook thật làm (`--no-deps` + cài tay); chưa nhắc `uv sync` | sửa theo thực tế |
+| `CLAUDE.md` §9 | bố cục thiếu `models/`, `Dockerfile`, `uv.lock` | thêm |
+| `serve/static/index.html` | ví dụ "Ngoại lai" thừa đuôi "khánh thành năm 2015" so với ô 5 notebook T40 — hai bản cùng một ví dụ mà khác chữ | dùng đúng chuỗi đã chấm trên Kaggle (`extrinsic` 1,000) |
+| `results/runs.jsonl` | `e08_extrinsic_viwikifc` có hai dòng cùng `config_hash`, cùng commit, khác nhau ở chữ số thứ 16 của p-value | giữ dòng sau, 36 → 35 dòng |
+| `TASKS.md` | T21 ghi `tests/test_features.py` nhưng file thật là `test_chunk_features.py`; bảng tuần báo cáo còn ghi "chờ T30, T31", "chưa chạy" | sửa; tuần 10–13 có ngày chạy thật |
+
+Điều rút ra cho lúc viết: `docs/SPEC.md` là bản đặc tả **trước** khi làm, nên mọi chữ ký hàm
+trong báo cáo phải chép từ mã, không chép từ SPEC. Việc trang quan sát hiện "trung thực 0,500"
+cho cả ba ví dụ lúc xem trên máy không GPU là do bộ phát lại trong scratchpad không tra được
+kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát hiện — trên Kaggle ba ví dụ ra
+`no` 0,001 / `intrinsic` 0,998 / `extrinsic` 1,000. Giao diện còn nhiều chỗ cần đẹp hơn, để sau.
+
 ---
 
 ## Giai đoạn 8 — Viết báo cáo (tuần 14–15)
@@ -4557,8 +4588,9 @@ tuần 7, đã chạy sớm ngày 31/08" thì vừa đúng tiến độ vừa đ
 | 7 | 18/09 | T25–T27: E06, E07, E08 — hết giai đoạn 4 | 31/08–01/09 | đã soạn |
 | 8 | 25/09 | T28: soạn báo cáo giữa kỳ | 02/09 | đã soạn |
 | 9 | 02/10 | Gửi báo cáo giữa kỳ — **hạn 04/10** | — | đã soạn |
-| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | E12 xong 02/09 | chờ T30, T31 |
-| 11 | 16/10 | T32–T35 | chưa chạy | chưa soạn |
+| 10 | 09/10 | T29–T31: E12, Sailor2, bậc thang mô hình | 02–10/09 | chưa soạn |
+| 11 | 16/10 | T32–T35: E11, E15, E16, phân tích sai sót | 10–11/09 | chưa soạn |
+| 12–13 | 23/10, 30/10 | T36–T40: thư viện, REST, Docker, trang quan sát, demo RAG | 11/09 | chưa soạn |
 
 **Tuần 9 dùng chung một lá thư với báo cáo giữa kỳ.** `Email_giua_ky.md` đính kèm cả quyển báo
 cáo giữa kỳ lẫn `Bao_cao_tuan_09`. Quy trình đòi thư hàng tuần và đòi nộp giữa kỳ ở tuần 8–9;

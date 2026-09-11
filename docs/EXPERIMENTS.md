@@ -235,7 +235,7 @@ Khi so với E10 (Gemini giám khảo) nhớ rằng hai cột chi phí không c�
 
 Cùng code, chỉ đổi `model_name`. Ngoài so sánh macro-F1, đo thêm **vị trí các đầu chú ý có ích nhất** (theo trọng số của bộ phân loại tuyến tính) và kiểm tra chúng có nằm ở cùng lớp/đầu giữa hai mô hình không. Đây là câu hỏi khoa học mới: huấn luyện chuyên sâu tiếng Việt có dịch chuyển vị trí các đầu sao chép không.
 
-## 5. Bảng kết quả cần điền
+## 5. Bảng kết quả
 
 Điền vào đây khi có số. Ô trống nghĩa là chưa chạy.
 
@@ -252,7 +252,9 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 | Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
 | **Lookback gộp (E02)** ¶ | **0,745** [0,711–0,776] | 0,843 | 0,896 | 0,890 | 0,793 | **0,731** | 0,712 | 0,109 | 438 | 8.328 |
 | **Chunk-aware câu (E03)** ¶ | 0,757 [0,724–0,789] | 0,864 | 0,894 | 0,915 | 0,823 | 0,686 | **0,762** | **0,044** | 438 | 8.328 |
-| **Chunk-aware (E05)** | | | | | | | | | | |
+
+Dòng "Chunk-aware (E05)" của bản đặc tả đầu không còn: E05 là bước **chọn** cách chia đoạn
+(Bảng 3), và cách được chọn — chia theo câu, `min_words=5` — chính là dòng E03 ở trên.
 
 Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
 

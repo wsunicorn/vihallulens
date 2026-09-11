@@ -186,9 +186,12 @@ Vị trí hai vùng được tìm bằng cách **dò chuỗi trong prompt đã r
 │   ├── DATA.md            # schema và chuẩn hóa dữ liệu
 │   ├── EXPERIMENTS.md     # kế hoạch thực nghiệm và bảng kết quả
 │   └── REFERENCES.md      # bài báo nền, công thức gốc Lookback Lens
+├── models/                # bundle bộ phát hiện đã khớp (pkl + json sidecar), thư viện và API nạp lên
 ├── notebooks/             # notebook chạy trên Kaggle, chỉ gọi hàm từ src
 ├── results/               # kết quả thí nghiệm dạng jsonl/csv
 ├── scripts/               # entry point CLI
 ├── src/vihallulens/
-└── tests/
+├── tests/
+├── Dockerfile             # ảnh GPU cho dịch vụ REST (T38), docker-compose.yml đi kèm
+└── uv.lock                # khóa phiên bản thư viện, `uv sync` tái lập môi trường
 ```

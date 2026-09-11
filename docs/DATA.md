@@ -122,7 +122,7 @@ Ngữ cảnh, tính trên từng mẫu:
 | ViWikiFC | 16.738 | 1.479 | 1,36 | 183 | 388 | 536 | 805 |
 | ViFactCheck | 5.062 | 1.035 | 1,33 | 823 | 1.519 | 2.687 | 4.696 |
 
-Ngữ cảnh + câu hỏi + phản hồi, và số mẫu bị cắt theo `max_context_tokens` (chưa kể phần khung của mẫu prompt, sẽ chốt ở T07):
+Ngữ cảnh + câu hỏi + phản hồi, và số mẫu bị cắt theo `max_context_tokens` (chưa kể phần khung của mẫu prompt — đã chốt ở T07, mục 8 `CLAUDE.md`):
 
 | Bộ | p50 | p99 | Dài nhất | Vượt 2.048 | Vượt 4.096 |
 |---|---|---|---|---|---|
