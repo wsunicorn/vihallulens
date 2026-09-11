@@ -4340,9 +4340,11 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Lý thành Trần, thổi dân số), ngoại lai (bịa tháp Eiffel và tàu điện ngầm). Để T40 và buổi bảo vệ
   bấm một cái là thấy.
 
-- [ ] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu —
-  **công cụ sẵn sàng 11/09/2026, chờ MỘT phiên Kaggle ~10 phút**
-  - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra.
+- [x] **T40** · M · Hệ thống RAG minh họa tối giản, khoảng 20 tài liệu mẫu — hoàn thành
+  11/09/2026, phiên Kaggle lần 3
+  - **Kiểm tra:** demo chạy đầu cuối, hỏi một câu và thấy điểm rủi ro hiện ra ✅ — bốn câu qua
+    truy xuất → sinh → chấm, thêm một câu qua `POST /demo/ask`. Log phiên ở
+    `results/t40/kaggle_log_2026-09-11_lan3.txt`. Kết quả chi tiết ở cuối mục này.
 
   ### Hệ RAG: truy xuất → sinh trả lời → chấm, một mô hình làm cả
 
@@ -4435,15 +4437,57 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Điều khoản phần cứng ghi vào Bảng 8 `docs/EXPERIMENTS.md` và README, nay nói rõ: trên T4 bộ
   sinh và bộ đọc là **hai mô hình**, lượt đọc của bộ phát hiện là chi phí thêm thật.
 
-  ### Việc cần chạy lại
+  ### Ba dòng "kèm từ"
 
-  Save Version `notebooks/t40_demo_t4.ipynb` bản mới. Ô 6 in VRAM trước và sau khi bộ sinh nạp —
-  tổng phải quanh 10–11 GB. Khoảng 10 phút. Tải `ket_qua_t40` về, tôi tick.
+  - **Kèm từ T37:** ✅ uvicorn chạy thật trong luồng, `/health` `ok` (VRAM 7.644 MB), `/score`
+    mẫu `vihallu_train_19` nhãn thật `no` → đoán `no` rủi ro 0,317, `/demo/ask` 200,
+    `chunk_strategy` lạ → 400.
+  - **Kèm từ T38:** ❌ chưa — Kaggle không chạy Docker, máy cá nhân không có GPU. Ảnh mới kiểm
+    đường hỏng (T38). Ghi vào hạn chế, không giả vờ đã kiểm.
+  - **Kèm từ T39:** ✅ `GET /` 200, 16.164 ký tự, đủ dấu hiệu. Nhìn bằng mắt vẫn chưa có.
 
-  - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
-    `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.
-  - **Kèm từ T38:** nếu có máy GPU với Docker, `docker compose up --build` rồi chờ `/health` =
-    `ok`; không có thì ghi rõ ảnh chỉ mới kiểm đường hỏng.
+  ### Kết quả phiên lần 3
+
+  Bộ sinh Qwen2.5-3B `bfloat16` nạp trong 34 giây, VRAM từ 5.572 lên **7.644 MB** (đỉnh 7.837) —
+  còn dư gần 7 GB, con số 10,5 GB tôi ước là quá tay. Câu đầu sinh 34 giây (gồm khởi động
+  kernel), ba câu sau 2–6 giây.
+
+| Câu hỏi | Tài liệu top-1 | Câu trả lời (rút gọn) | Nhãn | Rủi ro |
+|---|---|---|---|---|
+| Đỉnh núi cao nhất Đông Dương? | Sa Pa | "…đỉnh Fansipan, nằm gần thị xã Sa Pa thuộc tỉnh Lào Cai." | `no` | 0,008 |
+| Ai chỉ huy chiến dịch Điện Biên Phủ? | Điện Biên Phủ | "Đại tướng Võ Nguyên Giáp chỉ huy…" | `no` | 0,135 |
+| Phở xuất hiện ở đâu và khi nào? | Phở | "…miền Bắc… đầu thế kỷ 20. Không có thông tin cụ thể về thời điểm chính xác…" | `extrinsic` | 0,883 |
+| Hồ Hoàn Kiếm gắn với truyền thuyết nào? | Hà Nội | "…vua Lê Lợi trả gươm **sau khi đánh đuổi giặc Minh**… sau đó **trở về dinh thự**." | `extrinsic` | 0,997 |
+| Vịnh Hạ Long thuộc tỉnh nào? (qua API) | Vịnh Hạ Long | "Vịnh Hạ Long thuộc tỉnh Quảng Ninh." | `no` | 0,018 |
+
+  Đọc từng dòng, thẳng thắn:
+
+  - **Hai câu trung thực chấm đúng** với rủi ro rất thấp. Câu Fansipan và câu Hạ Long gần như
+    chép ngữ cảnh.
+  - **Câu Hồ Hoàn Kiếm là ảo giác ngoại lai thật, và bộ phát hiện bắt được.** Ngữ cảnh chỉ nói
+    "gắn với truyền thuyết vua Lê Lợi trả gươm". Bộ sinh 3B thêm "sau khi đánh đuổi giặc Minh"
+    (đúng ngoài đời, nhưng **không có trong ngữ cảnh**) và bịa hẳn "trở về dinh thự". Đây chính
+    là định nghĩa ngoại lai của ViHallu, và là kết quả demo đẹp nhất vì **không ai dàn dựng** —
+    mô hình tự bịa, bộ phát hiện tự bắt.
+  - **Câu Phở là ca tranh cãi.** Ngữ cảnh có "Phở xuất hiện ở miền Bắc vào đầu thế kỷ hai mươi".
+    Câu trả lời nói đúng điều đó rồi thêm "không có thông tin cụ thể về thời điểm chính xác" — một
+    nhận xét siêu ngữ, không sai nhưng cũng không nằm trong ngữ cảnh — rồi lặp lại ý đầu. Bộ phát
+    hiện gán `extrinsic` 0,883. Có thể đọc là báo động nhầm; cũng có thể đọc là nó bắt phần "không
+    có thông tin" vốn không lấy từ ngữ cảnh. Ghi nguyên trạng, và đây đúng loại mẫu T35 gọi là
+    "nhãn có thể tranh cãi" — chỉ khác là lần này không có nhãn người.
+
+  Bốn trên năm phán đoán rõ ràng đúng, một ca tranh cãi. Không chọn lại câu hỏi.
+
+  ### Còn thiếu gì
+
+  Lần này chỉ có log về, chưa có notebook đã chạy và ba JSON của lượt 3. Bản notebook đã chạy
+  đang commit là lượt 1 (sinh ra rác, 315d1e1) — nó là minh chứng cho phát hiện lớp 27, nhưng
+  chưa phải minh chứng cho demo chạy được. Nếu tải được lượt 3 về thì commit đè notebook và ba
+  JSON; không thì log này là bản ghi.
+
+  **Giai đoạn 7 khép lại: 41/52 task.** Từ đây là viết — T41 (E17, tùy chọn) rồi T42–T47 chương
+  báo cáo. Mọi số liệu trong báo cáo lấy từ `results/` và các bảng ở `docs/EXPERIMENTS.md`, không
+  gõ tay.
 
 ---
 
