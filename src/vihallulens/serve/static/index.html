@@ -73,7 +73,7 @@
   #title .t1 { display: block; font-size: clamp(16px, 2.2vw, 28px); font-weight: 500; letter-spacing: .02em; color: var(--muted); margin-bottom: .3em; }
   #title .t2 { display: block; font-size: clamp(40px, calc((100vw - 48px) / 10.4), 190px); font-weight: 800; letter-spacing: -.05em; line-height: .9; color: var(--accent);
                text-shadow: 0 0 60px rgba(255,157,28,.25); white-space: nowrap; }
-  .side { position: absolute; top: 58%; transform: translateY(-50%); width: min(300px, 26vw); z-index: 3; font-size: .95rem; color: var(--muted); transition: opacity .3s; }
+  .side { position: absolute; top: 58%; transform: translateY(-50%); width: min(300px, 26vw); z-index: 3; font-size: .95rem; color: var(--muted); transition: opacity .3s; text-shadow: 0 2px 12px #000, 0 0 30px #000; }
   .side.left { left: max(24px, calc(50% - 36vmin - 300px)); } .side.right { right: max(24px, calc(50% - 36vmin - 300px)); text-align: right; }
   .side p { margin: 0 0 10px; } .side p b { color: var(--ink); }
   .side .stat { margin-bottom: 14px; } .side .stat b { display: block; font-size: 1.9rem; font-weight: 800; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -84,7 +84,7 @@
   .layer .eye { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
   .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%;
                       background: repeating-conic-gradient(from 0deg, rgba(0,0,0,.10) 0deg 3deg, transparent 3deg 9deg), radial-gradient(circle at 45% 40%, #ffd27a 0%, var(--amber) 42%, #c65f00 78%, #6a2e00 100%);
-                      box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 32px 6px rgba(255,157,28,.35); transition: filter .5s, box-shadow .5s; }
+                      box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 48px 10px rgba(255,157,28,.45), 0 0 140px 30px rgba(255,140,20,.18); transition: filter .5s, box-shadow .5s; }
   .layer .eye .pupil { position: absolute; left: 50%; top: 50%; width: 52%; height: 52%; border-radius: 50%; background: #06040a;
                        transform: translate(-50%, -50%); transition: transform .12s ease-out, width .4s, height .4s; }
   .layer .eye .pupil::after { content: ""; position: absolute; left: 22%; top: 16%; width: 30%; height: 30%; border-radius: 50%; background: rgba(255,255,255,.85); }
@@ -105,7 +105,7 @@
   body.boot .layer .eye .iris { transition: box-shadow 1s; }
   body.boot .layer img, body.boot .layer svg.fallback { opacity: 0; }
   .layer img, .layer svg.fallback { transition: opacity 1.2s ease; }
-  #face { width: min(76vmin, 760px); aspect-ratio: 1; z-index: 2; top: 62%; }
+  #face { width: min(108vmin, 1100px); aspect-ratio: 1; z-index: 2; top: 60%; }
   #prof { width: min(78vh, 620px); aspect-ratio: 4/5; z-index: 2; opacity: 0; pointer-events: none; }
   #branch { position: absolute; left: -4%; bottom: 6%; width: 70vw; max-width: 900px; z-index: 3; opacity: 0; pointer-events: none; }
   #branch img { width: 100%; display: block; }
@@ -122,12 +122,12 @@
   /* the torch: everything dark except around the pointer */
   /* the torch is a mask on the owl itself: feathers show only around the pointer, text is never dimmed */
   #face.torch > img, #face.torch > svg.fallback {
-    -webkit-mask-image: radial-gradient(ellipse 30% 30% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.06) 100%);
-    mask-image: radial-gradient(ellipse 30% 30% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.06) 100%); }
+    -webkit-mask-image: radial-gradient(ellipse 26% 26% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.05) 100%);
+    mask-image: radial-gradient(ellipse 26% 26% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.05) 100%); }
   #torch { display: none; }
   @media (max-width: 860px) {
     #hero { height: 220vh; }
-    #face { width: min(110vw, 520px); top: 60%; }
+    #face { width: min(150vw, 720px); top: 58%; }
     #prof { width: min(70vh, 84vw); }
     #intro { top: auto; bottom: 14px; left: 16px; right: 16px; width: auto; padding: 18px 20px; }
     #title .t2 { font-size: clamp(34px, calc((100vw - 32px) / 10.4), 190px); }
@@ -786,7 +786,7 @@ GET  /health       loading | ok | error</code></pre>
     const p = progress;
     // beat 1 (0 → .55): the face recedes, the title shrinks to the top
     const s1 = span(p, 0, .55);
-    $("face").style.transform = `translate(-50%, calc(-50% - ${(s1 * 10).toFixed(1)}vh)) scale(${(1.18 - .45 * s1).toFixed(3)})`;
+    $("face").style.transform = `translate(-50%, calc(-50% - ${(s1 * 8).toFixed(1)}vh)) scale(${(1.42 - .72 * s1).toFixed(3)})`;
     $("face").style.opacity = (1 - span(p, .38, .58)).toFixed(3);
     title.style.transform = `translateY(${(-s1 * 60).toFixed(1)}%) scale(${(1 - .5 * s1).toFixed(3)})`;
     title.style.opacity = (1 - span(p, .5, .7)).toFixed(3);
