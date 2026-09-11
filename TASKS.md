@@ -4563,6 +4563,13 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
   đỏ mở to), **hạt chú ý** (canvas, đốm sáng trôi về mắt ở hero và về cột cao nhất ở mục
   chunk-aware), **tối làm mặc định**. Cú góc phải là cửa sổ tròn vào chính ảnh mặt, cùng rig.
 
+  Góp ý lượt 2 (cùng ngày): chữ bị đèn pin che, tiêu đề chưa "bá đạo", cú SVG trông giả. Sửa:
+  đèn pin thành **mask trên lớp mặt cú** nên chữ không bao giờ tối; bố cục chia hai bên —
+  tiêu đề trên cùng, tấm ý tưởng bên trái, ba con số bên phải, không dòng nào nằm sau mặt cú;
+  tiêu đề mới **"MẮT KHÔNG NÓI DỐI"** với dòng dẫn "Mô hình có thể bịa chữ. Ánh mắt của nó thì
+  không."; prompt viết lại bám ảnh cú đại bàng tham chiếu, hai phong cách (3D siêu thực / cú
+  bông 3D); script hiệu chuẩn đo bán kính theo khung bao nên chịu được đồng tử và điểm sáng.
+
   Kiểm bằng Edge headless: `?noboot` bỏ màn mở đầu, `?p=0.6` ghim hero ở một nhịp để chụp.
   Một cái bẫy đã gặp: headless đóng băng transition CSS giữa chừng nên mí mắt trông "kẹt" — chỉ
   là ảnh chụp, không phải lỗi trang; đã chuyển chớp mắt mở màn sang JS để khỏi lẫn.
