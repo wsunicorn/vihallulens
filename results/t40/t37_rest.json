@@ -13,10 +13,11 @@
       "stride": null
     },
     "device": "cuda",
-    "vram_allocated_mb": 5571.37408,
-    "vram_reserved_mb": 7453.278208,
+    "vram_allocated_mb": 7644.461056,
+    "vram_reserved_mb": 11672.748032,
+    "generator": null,
     "requests_served": 0,
-    "uptime_s": 1.0923590660095215
+    "uptime_s": 1.0841362476348877
   },
   "score_request": {
     "context": "Thập kỷ 1970, Ayatollah Ruhollah Khomeini chiếm được cảm tình của đa số dân Iran. Những người Hồi giáo, cộng sản và những người theo đường lối tự do tiến hành cuộc Cách mạng Iran năm 1979, triều đình Shah bỏ chạy khỏi đất nước, sau đó Khomeini lên nắm quyền lực lập ra một nhà nước Cộng hòa Hồi giáo. Hệ thống mới lập ra những luật lệ Hồi giáo và quy định quyền cai trị trực tiếp ở mức cao nhất từ trước tới nay cho giới tăng lữ. Chính phủ chỉ trích mạnh mẽ phương Tây, đặc biệt là Mỹ vì đã ủng hộ triều đình Shah. Các quan hệ với phương Tây trở nên đặc biệt căng thẳng năm 1979, sau khi các sinh viên Iran bắt giữ các nhân viên Đại sứ quán Mỹ. Sau này, Iran đã tìm cách xuất khẩu cuộc cách mạng của mình ra nước ngoài, ủng hộ các nhóm quân sự chống phương Tây như nhóm Hezbollah ở Liban. Từ năm 1980 đến 1988, Iran và nước láng giềng Iraq lao vào một cuộc chiến đẫm máu Chiến tranh Iran-Iraq.",
@@ -84,7 +85,7 @@
         "share": 0.1838259435754948
       }
     ],
-    "elapsed_ms": 510.87553299998945,
+    "elapsed_ms": 463.81115600001976,
     "n_chunks": 7,
     "truncated": false,
     "nonfinite_layers": []
@@ -112,96 +113,96 @@
       }
     ],
     "context": "Vịnh Hạ Long thuộc tỉnh Quảng Ninh, có khoảng hai nghìn hòn đảo đá vôi. UNESCO công nhận vịnh là di sản thiên nhiên thế giới lần đầu năm 1994. Tên gọi Hạ Long có nghĩa là rồng đáp xuống, theo truyền thuyết về đàn rồng bảo vệ đất nước. Hang Sửng Sốt là một trong những hang động lớn nhất trong vịnh.\n\nPhú Quốc là đảo lớn nhất Việt Nam, thuộc tỉnh Kiên Giang, nằm trong vịnh Thái Lan. Đảo nổi tiếng với nước mắm và hồ tiêu. Phú Quốc trở thành thành phố đảo đầu tiên của Việt Nam vào năm 2021. Vườn quốc gia Phú Quốc chiếm hơn một nửa diện tích đảo.\n\nĐà Nẵng là thành phố trực thuộc trung ương ở miền Trung, nằm bên vịnh Đà Nẵng. Cầu Rồng bắc qua sông Hàn khánh thành năm 2013 và phun lửa vào tối cuối tuần. Bán đảo Sơn Trà nằm ngay cạnh thành phố và là nơi sinh sống của loài voọc chà vá chân nâu. Sân bay Đà Nẵng là một trong ba sân bay quốc tế lớn nhất cả nước.",
-    "answer": "![](https://cdn.pixabay.com!-/photo/2017/05/!-18-36-37!-/ha-long!_-!-_!-_bay!_-!-_!-_!-_view!_-!-_!-_from!_-!-_!-_!-_mountain!_.jpg)\n\n![](https://media!-.tstatic!-.net!-/img!-/2020!-/11!-/1!-2!-/1200x630!-/ha!_-long!_-!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_!-_",
+    "answer": "Vịnh Hạ Long thuộc tỉnh Quảng Ninh.",
     "score": {
-      "label": "extrinsic",
+      "label": "no",
       "proba": {
-        "no": 2.8194294850182203e-06,
-        "intrinsic": 0.00901367299495251,
-        "extrinsic": 0.9909835075755626
+        "no": 0.9821777279010916,
+        "intrinsic": 0.01667530567562988,
+        "extrinsic": 0.0011469664232785948
       },
-      "risk_score": 0.999997180570515,
+      "risk_score": 0.01782227209890841,
       "chunk_attention": [
         {
           "index": 0,
           "text": "Vịnh Hạ Long thuộc tỉnh Quảng Ninh, có khoảng hai nghìn hòn đảo đá vôi. ",
           "char_start": 0,
           "char_end": 72,
-          "share": 0.15198193765118276
+          "share": 0.2867776904953713
         },
         {
           "index": 1,
           "text": "UNESCO công nhận vịnh là di sản thiên nhiên thế giới lần đầu năm 1994. Tên gọi Hạ Long có nghĩa là rồng đáp xuống, theo truyền thuyết về đàn rồng bảo vệ đất nước. ",
           "char_start": 72,
           "char_end": 235,
-          "share": 0.09684011676082147
+          "share": 0.08745238008779188
         },
         {
           "index": 2,
           "text": "Hang Sửng Sốt là một trong những hang động lớn nhất trong vịnh.\n\n",
           "char_start": 235,
           "char_end": 300,
-          "share": 0.09816007669112738
+          "share": 0.07457953625420609
         },
         {
           "index": 3,
           "text": "Phú Quốc là đảo lớn nhất Việt Nam, thuộc tỉnh Kiên Giang, nằm trong vịnh Thái Lan. ",
           "char_start": 300,
           "char_end": 383,
-          "share": 0.08590835246086898
+          "share": 0.11334240232205613
         },
         {
           "index": 4,
           "text": "Đảo nổi tiếng với nước mắm và hồ tiêu. ",
           "char_start": 383,
           "char_end": 422,
-          "share": 0.06474342429345527
+          "share": 0.040411620982521
         },
         {
           "index": 5,
           "text": "Phú Quốc trở thành thành phố đảo đầu tiên của Việt Nam vào năm 2021. Vườn quốc gia Phú Quốc chiếm hơn một nửa diện tích đảo.\n\n",
           "char_start": 422,
           "char_end": 548,
-          "share": 0.07981232496891046
+          "share": 0.062403276159694036
         },
         {
           "index": 6,
           "text": "Đà Nẵng là thành phố trực thuộc trung ương ở miền Trung, nằm bên vịnh Đà Nẵng. ",
           "char_start": 548,
           "char_end": 627,
-          "share": 0.08350045096043318
+          "share": 0.07834216728852003
         },
         {
           "index": 7,
           "text": "Cầu Rồng bắc qua sông Hàn khánh thành năm 2013 và phun lửa vào tối cuối tuần. ",
           "char_start": 627,
           "char_end": 705,
-          "share": 0.09583456021213049
+          "share": 0.05638842014760667
         },
         {
           "index": 8,
           "text": "Bán đảo Sơn Trà nằm ngay cạnh thành phố và là nơi sinh sống của loài voọc chà vá chân nâu. ",
           "char_start": 705,
           "char_end": 796,
-          "share": 0.09203617718211188
+          "share": 0.050488682473575464
         },
         {
           "index": 9,
           "text": "Sân bay Đà Nẵng là một trong ba sân bay quốc tế lớn nhất cả nước.",
           "char_start": 796,
           "char_end": 861,
-          "share": 0.1511825788189583
+          "share": 0.14981382378865746
         }
       ],
-      "elapsed_ms": 679.7873730000106,
+      "elapsed_ms": 370.80096699997966,
       "n_chunks": 10,
       "truncated": false,
       "nonfinite_layers": []
     },
     "elapsed_ms": {
-      "retrieve": 0.44886599999927057,
-      "generate": 9178.827013999979,
-      "score": 679.871004000006
+      "retrieve": 0.4055499999822132,
+      "generate": 6706.3271719999875,
+      "score": 370.8718429999749
     }
   },
   "bad_strategy_status": 400
