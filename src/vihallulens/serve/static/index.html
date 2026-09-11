@@ -74,6 +74,18 @@
 </header>
 
 <main>
+  <section class="card" style="grid-column: 1 / -1">
+    <h2>Hỏi hệ RAG minh họa — 21 tài liệu về Việt Nam</h2>
+    <div class="row" style="margin-top:0">
+      <input id="rag-q" type="text" placeholder="Ví dụ: Đỉnh núi cao nhất Đông Dương là gì?"
+             style="flex:1; min-width:260px; font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:8px">
+      <button class="primary" id="ask" disabled>Hỏi</button>
+      <span id="ask-busy" class="sub" style="display:none">truy xuất → sinh trả lời → chấm…</span>
+    </div>
+    <div class="examples" id="rag-examples" style="margin-top:8px"></div>
+    <div id="rag-out" class="note" style="display:none; margin-top:12px"></div>
+  </section>
+
   <section class="card">
     <h2>Đầu vào</h2>
     <div class="examples" id="examples"></div>
@@ -158,11 +170,11 @@
         h.status === "error" ? `lỗi nạp mô hình: ${h.error || ""}` :
         h.status === "not_loaded" ? "mô hình chưa nạp" : "đang nạp mô hình đọc…";
       ready = h.status === "ok";
-      $("score").disabled = !ready;
+      $("score").disabled = !ready; $("ask").disabled = !ready;
     } catch (e) {
       $("health").className = "error";
       $("health-text").textContent = "không gọi được /health";
-      $("score").disabled = true;
+      $("score").disabled = true; $("ask").disabled = true;
     }
   }
   health();
@@ -218,6 +230,35 @@
     $("meta").innerHTML = meta.join(" · ");
     renderContext(context, out.chunk_attention);
   }
+
+  // -- the demo RAG ------------------------------------------------------------------------
+  const RAG_QUESTIONS = ["Đỉnh núi cao nhất Đông Dương là gì?", "Ai chỉ huy chiến dịch Điện Biên Phủ?",
+                         "Phở xuất hiện ở đâu và khi nào?", "Hồ Hoàn Kiếm gắn với truyền thuyết nào?"];
+  RAG_QUESTIONS.forEach((q) => {
+    const b = document.createElement("button"); b.textContent = q;
+    b.onclick = () => { $("rag-q").value = q; };
+    $("rag-examples").appendChild(b);
+  });
+  $("ask").onclick = async () => {
+    const question = $("rag-q").value.trim();
+    if (!question) return;
+    $("ask").disabled = true; $("ask-busy").style.display = ""; $("rag-out").style.display = "none";
+    try {
+      const r = await fetch("/demo/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) });
+      const out = await r.json();
+      if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
+      $("context").value = out.context; $("question").value = out.question; $("response").value = out.answer;
+      const docs = out.retrieved.map((d) => `${d.title} (${d.score.toFixed(1)})`).join(" · ");
+      const t = out.elapsed_ms;
+      $("rag-out").innerHTML = `Truy xuất: ${esc(docs)}<br>Thời gian: truy xuất ${Math.round(t.retrieve)} ms · sinh trả lời ${Math.round(t.generate)} ms · chấm ${Math.round(t.score)} ms`;
+      $("rag-out").style.display = "";
+      renderResult(out.score, out.context);
+    } catch (e) {
+      $("rag-out").textContent = "Không hỏi được: " + e.message; $("rag-out").style.display = "";
+    } finally {
+      $("ask-busy").style.display = "none"; $("ask").disabled = !ready;
+    }
+  };
 
   // -- scoring -----------------------------------------------------------------------------
   $("score").onclick = async () => {
