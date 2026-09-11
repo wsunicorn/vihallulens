@@ -4417,7 +4417,19 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 | B | chính Qwen2.5-7B nạp thêm bản `bfloat16` | ~5,5 GB → tổng ~11 GB | 4,4× chậm, ước 40–60 s một câu | giữ "một mô hình làm cả" nhưng là hai bản nạp |
 | C | không sinh; người dùng gõ câu trả lời | 0 | — | demo yếu hơn: hỏi rồi phải tự gõ đáp |
 
-  Nghiêng về **A**.
+  **Chốt 11/09/2026: B.** Tiêu chí người dùng đặt ra là *chất lượng đánh giá tốt nhất, không lo
+  GPU Kaggle*. Bộ phát hiện không đổi dù bộ sinh là gì, nên thứ quyết định chất lượng demo là câu
+  trả lời phải mạch lạc và cùng cỡ với mô hình chính — 7B hơn 1.5B, và giữ đúng tinh thần "cùng
+  trọng số đọc và viết". `AnswerGenerator` trong `serve/rag.py`: NF4, `bfloat16`, `sdpa`, không
+  hook; `DemoRAG` nạp lười ở câu hỏi đầu tiên; `/health` báo bộ sinh đã nạp chưa. Test dùng bộ
+  sinh giả có `generate()`.
+
+  Điều khoản phần cứng ghi vào Bảng 8 `docs/EXPERIMENTS.md` và README.
+
+  ### Việc cần chạy lại
+
+  Save Version `notebooks/t40_demo_t4.ipynb` bản mới. Ô 6 giờ in VRAM trước và sau khi bộ sinh
+  nạp — tổng hai bản khoảng 11 GB, phải dưới 15 GB. Khoảng 12 phút. Tải `ket_qua_t40` về, tôi tick.
 
   - **Kèm từ T37:** smoke test thật của dịch vụ REST trên Kaggle — bật `scripts/serve.py`, gọi
     `/health` tới khi `ok`, gọi `/score` một mẫu ViHallu có nhãn, dán JSON trả về vào PR.

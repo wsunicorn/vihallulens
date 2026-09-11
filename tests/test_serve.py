@@ -223,8 +223,19 @@ def test_index_is_not_in_the_openapi_schema(client):
 
 # ---------------------------------------------------------------- T40: the demo RAG
 
-def fake_generator(extractor, context, question):  # noqa: ARG001 - signature fixed by DemoRAG
-    return "Câu trả lời sinh từ ngữ cảnh."
+class FakeGenerator:
+    def __init__(self):
+        self.calls = []
+
+    def generate(self, context, question):
+        self.calls.append((context, question))
+        return "Câu trả lời sinh từ ngữ cảnh."
+
+    def describe(self):
+        return "fake generator"
+
+
+fake_generator = FakeGenerator()
 
 
 @pytest.fixture
@@ -252,6 +263,8 @@ def test_demo_ask_retrieves_answers_and_scores(rag_client):
     assert out["retrieved"][0]["title"] == "Sa Pa"            # BM25 found the right document
     assert out["answer"] == "Câu trả lời sinh từ ngữ cảnh."
     assert "Fansipan" in out["context"]
+    assert fake_generator.calls[-1] == (out["context"], out["question"])   # same context it scored
+    assert client.get("/health").json()["generator"] == "fake generator"
     assert out["score"]["label"] in ("no", "intrinsic", "extrinsic")
     assert set(out["elapsed_ms"]) == {"retrieve", "generate", "score"}
     # The scored triple is exactly the retrieved context, the question, and the generated answer.
