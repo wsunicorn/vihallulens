@@ -27,6 +27,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from vihallulens import __version__
@@ -278,5 +279,11 @@ def create_app(detector=None, bundle_path: Path | str = DEFAULT_BUNDLE,
             requests_served=state["requests"],
             uptime_s=time.time() - state["started"],
         )
+
+    # Everything else the page needs — replay.json (the T40 results it shows when no model is
+    # loaded), images under img/ — is served straight from the static directory. Mounted LAST so
+    # it only answers paths no route above claimed; the same directory copied as-is to any
+    # static host (GitHub Pages) works because the page only uses relative paths.
+    app.mount("/", StaticFiles(directory=STATIC_DIR), name="static")
 
     return app
