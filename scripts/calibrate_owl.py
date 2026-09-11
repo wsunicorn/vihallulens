@@ -51,8 +51,8 @@ def eye_mask(rgba: np.ndarray, eye: str) -> np.ndarray:
     return alpha & (h >= lo) & (h <= hi) & (s >= MIN_SAT) & (v >= MIN_VAL)
 
 
-def components(mask: np.ndarray) -> list[tuple[int, float, float, float]]:
-    """(size, cx, cy, r) of each 4-connected blob, largest first. Pure numpy flood fill."""
+def components(mask: np.ndarray) -> list[tuple[int, float, float, float, float]]:
+    """(size, cx, cy, rx, ry) of each 4-connected blob, largest first. Pure numpy flood fill."""
     from collections import deque
 
     h, w = mask.shape
@@ -79,8 +79,8 @@ def components(mask: np.ndarray) -> list[tuple[int, float, float, float]]:
         # punches a hole in the amber blob and would shrink an area-based radius.
         (y0, x0), (y1, x1) = arr.min(axis=0), arr.max(axis=0)
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        r = float(max(x1 - x0, y1 - y0) + 1) / 2
-        out.append((len(pts), float(cx), float(cy), r))
+        rx, ry = float(x1 - x0 + 1) / 2, float(y1 - y0 + 1) / 2
+        out.append((len(pts), float(cx), float(cy), rx, ry))
     out.sort(reverse=True)
     return out
 
@@ -101,8 +101,10 @@ def find_eyes(path: Path, eye: str) -> tuple[list[dict], tuple[int, int]]:
                          "đĩa màu trơn (xem PROMPTS.md), hoặc thử --eye khác")
     eyes = sorted(blobs[:2], key=lambda b: b[1])  # left eye first
     sw, sh = rgba.shape[1], rgba.shape[0]
-    return [{"cx": round(cx / sw, 4), "cy": round(cy / sh, 4), "r": round(r / sw, 4)}
-            for _, cx, cy, r in eyes], (w, h)
+    # r stays for older pages; rx/ry (fractions of width and height) let an oval eye be covered
+    return [{"cx": round(cx / sw, 4), "cy": round(cy / sh, 4), "r": round(max(rx, ry) / sw, 4),
+             "rx": round(rx / sw, 4), "ry": round(ry / sh, 4)}
+            for _, cx, cy, rx, ry in eyes], (w, h)
 
 
 def to_webp(src: Path, dst: Path, max_side: int) -> int:
@@ -142,17 +144,23 @@ def main() -> int:
     name = f"owl-{args.layer}.webp"
     size = to_webp(args.image, IMG / name, args.max_side)
     entry = {"file": f"img/{name}", "aspect": round(w / h, 4), "eyes": eyes}
+    entry["variants"] = {}
     for vname, vpath in args.variant:
         vfile = f"owl-{args.layer}-{vname}.webp"
         vsize = to_webp(Path(vpath), IMG / vfile, args.max_side)
-        entry[vname] = f"img/{vfile}"
+        try:
+            veyes, _ = find_eyes(Path(vpath), args.eye)
+        except SystemExit:
+            veyes = eyes  # same pose, eyes not found: reuse the base positions
+            print(f"  {vname}: không tìm thấy mắt, dùng tọa độ ảnh gốc")
+        entry["variants"][vname] = {"file": f"img/{vfile}", "eyes": veyes}
         print(f"  {vfile}: {vsize / 1e3:.0f} KB")
     rig[args.layer] = entry
     RIG.write_text(json.dumps(rig, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(f"  {name}: {size / 1e3:.0f} KB, {w}×{h}")
     for i, e in enumerate(eyes):
-        print(f"  mắt {i + 1}: tâm ({e['cx']:.3f}, {e['cy']:.3f}) bán kính {e['r']:.3f} "
-              "(tỷ lệ theo bề rộng)")
+        print(f"  mắt {i + 1}: tâm ({e['cx']:.3f}, {e['cy']:.3f}) bán kính ngang {e['rx']:.3f} "
+              f"dọc {e['ry']:.3f} (tỷ lệ theo bề rộng / bề cao)")
     if size > 2_000_000:
         print("  CẢNH BÁO: ảnh trên 2 MB, hạ --max-side")
     print(f"  ghi {RIG.relative_to(ROOT)}")

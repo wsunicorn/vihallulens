@@ -4570,6 +4570,17 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
   không."; prompt viết lại bám ảnh cú đại bàng tham chiếu, hai phong cách (3D siêu thực / cú
   bông 3D); script hiệu chuẩn đo bán kính theo khung bao nên chịu được đồng tử và điểm sáng.
 
+  Lượt 3 (cùng ngày): ảnh thật về. Bộ đầu mắt cam, bộ hai mắt lam ngọc theo `original.jpg`
+  người dùng đưa; trang vẽ đè mống mắt nên đổi màu mắt không cần sinh lại. Mắt trong mặt cận
+  là hình bầu dục → script lưu `rx`/`ry` riêng. Cử động thêm, không cần ảnh mới: mặt xoay đầu
+  3D theo con trỏ, giáo sư nghiêng người trên chân, thở, gật khi `no`, rung khi `extrinsic`,
+  vẫy cánh (hai khung base/point) khi tấm giới thiệu hiện và khi bấm. Cơ chế khung hình: mỗi
+  biến thể một `<img>` nạp sẵn, bật/tắt bằng opacity, **mỗi biến thể có tọa độ mắt riêng** (ảnh
+  giơ cánh lệch khung so với ảnh gốc); PROMPTS.md liệt kê bốn cử chỉ cần ảnh (wave, think,
+  shock, happy) và trang tự dùng chúng khi có. Hai bẫy đã gặp: `hidden` thua `display:block`
+  của rule `.layer img`; `transition: opacity 1.2s` của màn mở đầu làm khung cũ mờ dần trong khi
+  mắt đã sang khung mới → giờ chỉ bật transition trong 1,3 s mở đầu.
+
   Kiểm bằng Edge headless: `?noboot` bỏ màn mở đầu, `?p=0.6` ghim hero ở một nhịp để chụp.
   Một cái bẫy đã gặp: headless đóng băng transition CSS giữa chừng nên mí mắt trông "kẹt" — chỉ
   là ảnh chụp, không phải lỗi trang; đã chuyển chớp mắt mở màn sang JS để khỏi lẫn.
