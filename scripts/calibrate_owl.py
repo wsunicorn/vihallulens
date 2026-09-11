@@ -8,7 +8,7 @@ blobs, and writes their centre and radius as fractions of the image size to
 ``serve/static/owl.json``. It also converts the PNG to a WebP with alpha, capped at
 ``--max-side`` pixels, which is what the page loads.
 
-    python scripts/calibrate_owl.py face  path/to/owl-face.png
+    python scripts/calibrate_owl.py face  path/to/owl-face.png          # --eye amber nếu mắt cam
     python scripts/calibrate_owl.py prof  path/to/owl-prof.png \
         --variant point path/to/owl-prof-point.png
     python scripts/calibrate_owl.py --show           # print the current rig
@@ -30,21 +30,25 @@ STATIC = ROOT / "src" / "vihallulens" / "serve" / "static"
 RIG = STATIC / "owl.json"
 IMG = STATIC / "img"
 
-# Amber: hue around 12-55° (of 360), saturated, bright. Feathers are grey/brown and much darker.
+# Eye colour as a hue window (fraction of 360°). Feathers are grey/brown, far less saturated.
 # A small white highlight inside the eye is fine (bounding box below), a dark pupil is fine too.
-HUE = (12 / 360, 55 / 360)
-MIN_SAT = 0.55
-MIN_VAL = 0.55
+EYE_HUES = {
+    "cyan": (160 / 360, 200 / 360),   # the turquoise of img/original.jpg (measured median 176°)
+    "amber": (12 / 360, 55 / 360),
+}
+MIN_SAT = 0.5
+MIN_VAL = 0.5
 
 
-def amber_mask(rgba: np.ndarray) -> np.ndarray:
+def eye_mask(rgba: np.ndarray, eye: str) -> np.ndarray:
     from PIL import Image
 
     img = Image.fromarray(rgba, "RGBA")
     hsv = np.asarray(img.convert("RGB").convert("HSV"), dtype=np.float32) / 255.0
     alpha = rgba[..., 3] > 128
     h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
-    return alpha & (h >= HUE[0]) & (h <= HUE[1]) & (s >= MIN_SAT) & (v >= MIN_VAL)
+    lo, hi = EYE_HUES[eye]
+    return alpha & (h >= lo) & (h <= hi) & (s >= MIN_SAT) & (v >= MIN_VAL)
 
 
 def components(mask: np.ndarray) -> list[tuple[int, float, float, float]]:
@@ -81,7 +85,7 @@ def components(mask: np.ndarray) -> list[tuple[int, float, float, float]]:
     return out
 
 
-def find_eyes(path: Path) -> tuple[list[dict], tuple[int, int]]:
+def find_eyes(path: Path, eye: str) -> tuple[list[dict], tuple[int, int]]:
     from PIL import Image
 
     img = Image.open(path).convert("RGBA")
@@ -91,10 +95,10 @@ def find_eyes(path: Path) -> tuple[list[dict], tuple[int, int]]:
         scale = 1024 / max(w, h)
         img = img.resize((round(w * scale), round(h * scale)))
     rgba = np.asarray(img)
-    blobs = components(amber_mask(rgba))
+    blobs = components(eye_mask(rgba, eye))
     if len(blobs) < 2:
-        raise SystemExit(f"chỉ tìm thấy {len(blobs)} đĩa hổ phách trong {path.name} — mắt phải là "
-                         "đĩa cam đồng nhất, không đồng tử (xem PROMPTS.md)")
+        raise SystemExit(f"chỉ tìm thấy {len(blobs)} đĩa màu {eye} trong {path.name} — mắt phải là "
+                         "đĩa màu trơn (xem PROMPTS.md), hoặc thử --eye khác")
     eyes = sorted(blobs[:2], key=lambda b: b[1])  # left eye first
     sw, sh = rgba.shape[1], rgba.shape[0]
     return [{"cx": round(cx / sw, 4), "cy": round(cy / sh, 4), "r": round(r / sw, 4)}
@@ -121,6 +125,8 @@ def main() -> int:
     parser.add_argument("image", nargs="?", type=Path, help="PNG nền trong suốt")
     parser.add_argument("--variant", nargs=2, metavar=("TEN", "PNG"), action="append", default=[],
                         help="ảnh biến thể cùng tư thế, ví dụ: --variant point owl-prof-point.png")
+    parser.add_argument("--eye", choices=tuple(EYE_HUES), default="cyan",
+                        help="màu mắt trong ảnh: cyan (theo img/original.jpg) hay amber")
     parser.add_argument("--max-side", type=int, default=1600)
     parser.add_argument("--show", action="store_true")
     args = parser.parse_args()
@@ -132,7 +138,7 @@ def main() -> int:
     if not args.image or not args.image.is_file():
         parser.error("cần đường dẫn ảnh PNG")
 
-    eyes, (w, h) = find_eyes(args.image)
+    eyes, (w, h) = find_eyes(args.image, args.eye)
     name = f"owl-{args.layer}.webp"
     size = to_webp(args.image, IMG / name, args.max_side)
     entry = {"file": f"img/{name}", "aspect": round(w / h, 4), "eyes": eyes}
