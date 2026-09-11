@@ -4380,7 +4380,7 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   ### Phiên Kaggle 11/09: ba smoke test qua, phần sinh câu trả lời hỏng
 
-  9/9 ô chạy, 208 giây. Notebook và ba JSON commit vào `notebooks/` và `results/t40/`.
+  9/9 ô chạy, 208 giây. Notebook và ba JSON lượt 1 commit ở 315d1e1 (sau bị lượt 3 đè).
 
 | Kiểm | Kết quả |
 |---|---|
@@ -4478,12 +4478,19 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   Bốn trên năm phán đoán rõ ràng đúng, một ca tranh cãi. Không chọn lại câu hỏi.
 
-  ### Còn thiếu gì
+  ### Minh chứng
 
-  Lần này chỉ có log về, chưa có notebook đã chạy và ba JSON của lượt 3. Bản notebook đã chạy
-  đang commit là lượt 1 (sinh ra rác, 315d1e1) — nó là minh chứng cho phát hiện lớp 27, nhưng
-  chưa phải minh chứng cho demo chạy được. Nếu tải được lượt 3 về thì commit đè notebook và ba
-  JSON; không thì log này là bản ghi.
+  Tick lúc đầu chỉ dựa trên log; notebook và kết quả lượt 3 về sau, commit đè lên bản lượt 1
+  (sinh ra rác, 315d1e1 — bản ấy vẫn đọc được trong lịch sử git, là minh chứng cho phát hiện lớp
+  27). Bộ đầy đủ:
+
+  - `notebooks/t40_demo_t4.ipynb` — 9/9 ô có output lượt 3, `execution_count` 1→9.
+  - `results/t40/t36_thu_vien.json`, `t37_rest.json`, `t40_rag.json` — ba JSON lượt 3.
+  - `results/t40/kaggle_log_2026-09-11_lan3.txt` — log phiên.
+
+  `t39_trang.html` không commit: file tải về là bản trình duyệt "Save as", chèn URL ký tên
+  của Google Storage và phình lên 91 KB; nội dung thật chỉ là `serve/static/index.html` đã có
+  sẵn trong repo.
 
   **Giai đoạn 7 khép lại: 41/52 task.** Từ đây là viết — T41 (E17, tùy chọn) rồi T42–T47 chương
   báo cáo. Mọi số liệu trong báo cáo lấy từ `results/` và các bảng ở `docs/EXPERIMENTS.md`, không
