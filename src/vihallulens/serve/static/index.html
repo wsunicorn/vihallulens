@@ -70,7 +70,7 @@
   #stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #1a1410 0%, #000 65%); }
   #motes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   #title { position: absolute; left: 0; right: 0; top: 9%; transform: none; text-align: center; margin: 0; z-index: 1; pointer-events: none; padding: 0 16px; will-change: transform, opacity; }
-  #title .t1 { display: block; font-size: clamp(16px, 2.2vw, 28px); font-weight: 500; letter-spacing: .02em; color: var(--muted); margin-bottom: .3em; }
+  #title .t1 { display: block; font-size: clamp(16px, 2.2vw, 28px); font-weight: 500; letter-spacing: .02em; color: var(--muted); margin-bottom: 1.1em; }
   #title .t2 { display: block; font-size: clamp(40px, calc((100vw - 48px) / 10.4), 190px); font-weight: 800; letter-spacing: -.05em; line-height: .9; color: var(--accent);
                text-shadow: 0 0 60px rgba(255,157,28,.25); white-space: nowrap; }
   .side { position: absolute; top: 58%; transform: translateY(-50%); width: min(300px, 26vw); z-index: 3; font-size: .95rem; color: var(--muted); transition: opacity .3s; text-shadow: 0 2px 12px #000, 0 0 30px #000; }
@@ -86,7 +86,10 @@
   @keyframes breath { 50% { transform: scaleY(1.012) scaleX(.996); } }
   .layer.nod .inner { animation: nod .7s; } .layer.shake .inner { animation: shake .45s; }
   .layer img, .layer svg.fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-  .layer img.off { opacity: 0 !important; }
+  .layer img { transition: opacity var(--xf, .5s) ease; }
+  .layer img.off, .layer .eye.off { opacity: 0 !important; }
+  .layer .eye { transition: opacity var(--xf, .5s) ease; }
+  .layer .eye.in { opacity: 0; }
   .layer .eye { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
   .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%;
                       --i1: #e2fffb; --i2: #2ee6d4; --i3: #0b9d92; --i4: #063a37; --g: var(--eye-glow);
@@ -719,17 +722,27 @@ GET  /health       loading | ok | error</code></pre>
       if (cfg && cfg.file) {
         // one <img> per variant, all loaded up front; a variant change only toggles which one shows
         this.imgs = {};
-        const add = (name, file) => { const img = document.createElement("img"); img.src = file; img.alt = ""; img.decoding = "async"; img.classList.toggle("off", name !== "base"); this.stage.appendChild(img); this.imgs[name] = img; return img; };
+        // every frame is shifted so its eye centre sits on the base frame's eye centre: the head
+        // stays put across poses and a cross-fade reads as the wing moving, not the owl jumping
+        const centre = (eyes) => ({ x: (eyes[0].cx + eyes[1].cx) / 2, y: (eyes[0].cy + eyes[1].cy) / 2 });
+        const c0 = centre(cfg.eyes); this.shift = { base: { dx: 0, dy: 0 } };
+        const add = (name, file) => {
+          const img = document.createElement("img"); img.src = file; img.alt = ""; img.decoding = "async"; img.classList.toggle("off", name !== "base");
+          const sh = this.shift[name]; if (sh) img.style.transform = `translate(${(100 * sh.dx).toFixed(2)}%, ${(100 * sh.dy).toFixed(2)}%)`;
+          this.stage.appendChild(img); this.imgs[name] = img; return img;
+        };
         add("base", cfg.file).onerror = () => { this.cfg = FALLBACK[kind]; this.build(FALLBACK[kind].svg()); };
-        Object.entries(cfg.variants || {}).forEach(([name, v]) => add(name, v.file));
+        Object.entries(cfg.variants || {}).forEach(([name, v]) => { const c = centre(v.eyes || cfg.eyes); this.shift[name] = { dx: c0.x - c.x, dy: c0.y - c.y }; add(name, v.file); });
         this.img = this.imgs.base;
         if (cfg.aspect) host.style.aspectRatio = String(cfg.aspect);
         this.buildEyes(cfg.eyes);
       } else this.build(FALLBACK[kind].svg());
     }
     build(svg) { this.stage.querySelectorAll("img, svg.fallback").forEach((n) => n.remove()); this.img = null; this.imgs = null; this.stage.insertAdjacentHTML("afterbegin", svg); this.buildEyes(this.cfg.eyes); }
-    buildEyes(eyes) {
-      this.stage.querySelectorAll(".eye").forEach((n) => n.remove()); this.eyes = [];
+    buildEyes(eyes, fade) {
+      // old eyes fade out with their frame instead of vanishing, new ones fade in
+      this.stage.querySelectorAll(".eye").forEach((n) => { if (fade) { n.classList.add("off"); setTimeout(() => n.remove(), 700); } else n.remove(); });
+      this.eyes = [];
       const ar = this.cfg.aspect || (this.kind === "prof" ? 0.8 : 1), k = 1.06;  // a hair larger than the painted disc
       eyes.forEach((e) => {
         const el = document.createElement("div"); el.className = "eye";
@@ -737,24 +750,28 @@ GET  /health       loading | ok | error</code></pre>
         el.style.left = (100 * e.cx) + "%"; el.style.top = (100 * e.cy) + "%";
         el.style.width = (200 * rx * k) + "%"; el.style.height = (200 * ry * k) + "%";
         el.innerHTML = `<div class="iris"></div><div class="pupil"></div><div class="lid"></div>`;
+        if (fade) { el.classList.add("in"); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("in"))); }
         this.stage.appendChild(el); this.eyes.push(el);
       });
     }
     has(name) { return !!(this.cfg.variants && this.cfg.variants[name]); }
-    setVariant(name) {
+    setVariant(name, ms = 500) {
       if (!this.img) return;
       const v = name === "base" ? { file: this.cfg.file, eyes: this.cfg.eyes } : this.cfg.variants && this.cfg.variants[name];
       if (!v || this.variant === name) return;
-      this.variant = name; Object.entries(this.imgs).forEach(([n, img]) => { img.classList.toggle("off", n !== name); }); this.buildEyes(v.eyes || this.cfg.eyes);
+      this.host.style.setProperty("--xf", ms + "ms");
+      this.variant = name; Object.entries(this.imgs).forEach(([n, img]) => { img.classList.toggle("off", n !== name); });
+      const sh = (this.shift && this.shift[name]) || { dx: 0, dy: 0 };
+      this.buildEyes((v.eyes || this.cfg.eyes).map((e) => ({ ...e, cx: e.cx + sh.dx, cy: e.cy + sh.dy })), true);
     }
     // play a list of [variant, ms] frames, then return to base
     play(frames, done) {
       if (!this.img || this.busy) return; this.busy = true;
-      const step = (i) => { if (i >= frames.length) { this.setVariant("base"); this.busy = false; done && done(); return; } this.setVariant(frames[i][0]); setTimeout(() => step(i + 1), frames[i][1]); };
+      const step = (i) => { if (i >= frames.length) { this.setVariant("base", 400); this.busy = false; done && done(); if (typeof beats === "function") beats(); return; } this.setVariant(frames[i][0], Math.round(frames[i][1] * .75)); setTimeout(() => step(i + 1), frames[i][1]); };
       step(0);
     }
     wave() {
-      const f = this.has("wave") ? [["wave", 300], ["base", 220], ["wave", 300], ["base", 220], ["wave", 360]] : [["point", 260], ["base", 220], ["point", 260], ["base", 220], ["point", 300]];
+      const f = this.has("wave") ? [["wave", 420], ["base", 320], ["wave", 420], ["base", 320], ["wave", 480]] : [["point", 380], ["base", 300], ["point", 380], ["base", 300], ["point", 420]];
       this.play(f);
     }
     // pointer-driven body language: the face turns its head (3D tilt), the professor leans on his feet
@@ -823,16 +840,28 @@ GET  /health       loading | ok | error</code></pre>
     const total = hero.offsetHeight - innerHeight;
     progress = window.__pinBeat ?? Math.max(0, Math.min(1, scrollY / Math.max(1, total)));
     const p = progress;
-    // beat 1 (0 → .55): the face recedes, the title shrinks to the top
-    const s1 = span(p, 0, .55);
-    $("face").style.transform = `translate(-50%, calc(-50% - ${(s1 * 8).toFixed(1)}vh)) scale(${(1.42 - .72 * s1).toFixed(3)})`;
-    $("face").style.opacity = (1 - span(p, .38, .58)).toFixed(3);
+    // beat 1 (0 → .62): the face shrinks and travels so that its eyes land exactly on the
+    // professor's eyes (final pose of beat 2), then the two dissolve into each other
+    const s1 = span(p, 0, .62), F = $("face"), P = $("prof"), mobile = matchMedia("(max-width: 860px)").matches;
+    const st = stage.getBoundingClientRect();
+    const fe = face ? face.cfg.eyes : FALLBACK.face.eyes, pe = prof ? prof.cfg.eyes : FALLBACK.prof.eyes;
+    const fW = F.offsetWidth, fH = F.offsetHeight, pW = P.offsetWidth, pH = P.offsetHeight;
+    const profCx = st.width / 2 + (mobile ? 0 : .14 * innerWidth), profCy = st.height / 2;        // final professor centre
+    const pEyeX = profCx + ((pe[0].cx + pe[1].cx) / 2 - .5) * pW, pEyeY = profCy + ((pe[0].cy + pe[1].cy) / 2 - .5) * pH;
+    const pEyeD = Math.abs(pe[1].cx - pe[0].cx) * pW, fEyeD = Math.abs(fe[1].cx - fe[0].cx) * fW;
+    const sEnd = pEyeD / fEyeD, s0 = 1.42, sc = s0 + (sEnd - s0) * s1;
+    const fEyeOffY = ((fe[0].cy + fe[1].cy) / 2 - .5) * fH, fEyeOffX = ((fe[0].cx + fe[1].cx) / 2 - .5) * fW;
+    const cx0 = st.width / 2, cy0 = st.height * (mobile ? .58 : .60);                                  // where the face starts
+    const cxEnd = pEyeX - fEyeOffX * sEnd, cyEnd = pEyeY - fEyeOffY * sEnd;
+    const cx = cx0 + (cxEnd - cx0) * s1, cy = cy0 + (cyEnd - cy0) * s1;
+    F.style.transform = `translate(calc(-50% + ${(cx - cx0).toFixed(1)}px), calc(-50% + ${(cy - cy0).toFixed(1)}px)) scale(${sc.toFixed(4)})`;
+    F.style.opacity = (1 - span(p, .5, .66)).toFixed(3);
     title.style.transform = `translateY(${(-s1 * 60).toFixed(1)}%) scale(${(1 - .5 * s1).toFixed(3)})`;
-    title.style.opacity = (1 - span(p, .5, .7)).toFixed(3);
-    // beat 2 (.4 → .7): the professor lands on the branch
-    const s2 = span(p, .42, .68);
-    $("prof").style.opacity = s2.toFixed(3);
-    $("prof").style.transform = `translate(calc(-50% + ${(s2 * 14).toFixed(1)}vw), calc(-50% + ${(30 - 30 * s2).toFixed(1)}px)) scale(${(.85 + .15 * s2).toFixed(3)})`;
+    title.style.opacity = (1 - span(p, .45, .65)).toFixed(3);
+    // beat 2 (.46 → .68): the professor fades in already in place — the eyes never move
+    const s2 = span(p, .46, .68);
+    P.style.opacity = s2.toFixed(3);
+    P.style.transform = `translate(calc(-50% + ${(mobile ? 0 : 14)}vw), -50%) scale(1)`;
     if (branch) { branch.style.opacity = s2.toFixed(3); branch.style.transform = `translateX(${(-40 + 40 * s2).toFixed(1)}px)`; }
     // beat 3 (.68 → .92): the intro card slides in, the wing points at it
     const s3 = span(p, .68, .92);
@@ -841,7 +870,7 @@ GET  /health       loading | ok | error</code></pre>
       ? `translateY(${(40 - 40 * s3).toFixed(1)}px)`
       : `translate(calc(-50% - 24vw), calc(-50% + ${(40 - 40 * s3).toFixed(1)}px))`;
     intro.classList.toggle("on", s3 > .6);
-    if (prof && !prof.busy) prof.setVariant(s3 > .5 ? "point" : "base");
+    if (prof && !prof.busy) prof.setVariant(s3 > .5 ? "point" : "base", 700);
     if (prof && s3 > .6 && !window.__waved) { window.__waved = true; setTimeout(() => { prof.wave(); say("Chào! Tôi là Lens, người gác đêm của trang này."); }, 300); }
     hint.style.opacity = p < .05 ? "1" : "0";
     paintTorch();
