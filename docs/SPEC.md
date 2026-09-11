@@ -118,7 +118,23 @@ class LookbackDetector:
     def predict(self, X) -> np.ndarray
     def predict_proba(self, X) -> np.ndarray
     def save(self, path) / load(path)
+
+class DetectorBundle:            # thêm ở T36
+    detector: LookbackDetector
+    groups, mode, keep, layer_indices, n_heads   # công thức dựng cột
+    def vector(self, record) -> np.ndarray       # bản ghi shard -> đúng hàng ma trận lúc khớp
+    def predict_record(self, record) -> (label, proba)
+    def save(self, path) / load(path)
 ```
+
+`LookbackDetector.save` chỉ lưu bộ phân loại — không lưu nó đọc cột nào. `DetectorBundle` là thứ
+phải lưu để chấm được mẫu mới: nó mang cả công thức dựng cột và **từ chối** bản ghi trích trên
+lưới lớp khác (E13/E14 đo được cùng chỉ số cột ở hai mô hình khác nhau thì khác nghĩa). Kiểm ở
+T36: bundle E03 chấm lại 700 bản ghi test từng bản một cho **700/700** trùng `y_pred` đã ghi.
+
+Trên cùng là `vihallulens.pipeline.HallucinationDetector` — một lời gọi từ
+`(context, question, response)` tới đúng schema `/score` ở mục 2.6, nạp bằng
+`from_pretrained(bundle_path)`.
 
 Mặc định `LogisticRegression` đa lớp, `class_weight="balanced"`. Cho phép cấu hình đổi sang `LinearSVC` hoặc `LightGBM` để so sánh, nhưng mặc định phải là tuyến tính vì đó là luận điểm về chi phí thấp.
 
@@ -182,11 +198,16 @@ Validate bằng pydantic. Hash của config ghi kèm kết quả để tái lậ
 
 ```
 scripts/normalize_data.py   --dataset vihallu
-scripts/extract_features.py --config configs/xxx.yaml
-scripts/train_detector.py   --config configs/xxx.yaml
-scripts/evaluate.py         --config configs/xxx.yaml
+scripts/split_data.py       --only vihallu
+scripts/extract_features.py --config configs/xxx.yaml --split train|dev|test
+scripts/run_chunk_aware.py  --config configs/xxx.yaml [--save-bundle models/xxx.pkl]
 scripts/probe_vram.py       --model Qwen/Qwen2.5-7B-Instruct --seq-len 4096
 ```
+
+`train_detector.py` và `evaluate.py` trong bản đặc tả đầu gộp thành `run_chunk_aware.py`: chọn
+cách gộp đầu trên dev, chấm test một lần, ghi `results/runs.jsonl`, và lưu bundle nếu được yêu
+cầu. Tách hai bước ra thì bước "huấn luyện" không có gì để ghi — bộ phân loại 579 tham số khớp
+trong vài giây và chỉ có nghĩa cùng với con số dev đã chọn nó.
 
 Mỗi script phải chạy được độc lập trên Kaggle bằng `!python scripts/xxx.py --config ...` sau khi `git clone` và `uv pip install -e .`.
 

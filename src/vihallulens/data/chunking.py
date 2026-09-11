@@ -278,3 +278,30 @@ def locate_evidence_chunk(
 def reindex(chunks: list[Chunk]) -> list[Chunk]:
     """Renumber chunks so ``index`` matches position, after any of them were dropped."""
     return [replace(chunk, index=position) for position, chunk in enumerate(chunks)]
+
+
+def chunking_arguments(chunking, tokenizer=None) -> dict:
+    """Everything :func:`chunk_context` needs, read off a ``ChunkingConfig``.
+
+    Written as its own function because of the bug it exists to prevent. Until T23 the caller
+    passed only ``strategy`` and ``min_words``, which is all the sentence strategy wants — so
+    E02 and E03 ran fine and nothing looked wrong. ``token_window`` needs a tokenizer and a
+    window, and without them it raises on the very first sample: a failure that would have cost
+    a whole Kaggle session to discover, at the far end of a fifty-minute model load.
+
+    ``chunk_context`` takes ``**kwargs`` and ignores what a strategy does not use, so a missing
+    key is silently accepted rather than refused. That is why the mapping lives here, in one
+    place a CPU test can check, instead of being spelled out at the call site. Moved from
+    ``scripts/extract_features.py`` at T36 so the serving pipeline chunks a request exactly the
+    way training chunked its rows.
+    """
+    if chunking.strategy == "token_window":
+        if tokenizer is None:
+            raise ValueError("chia theo cửa sổ token cần tokenizer")
+        return {
+            "strategy": "token_window",
+            "tokenizer": tokenizer,
+            "window_size": chunking.window_size,
+            "stride": chunking.stride,
+        }
+    return {"strategy": chunking.strategy, "min_words": chunking.min_words}

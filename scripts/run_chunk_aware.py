@@ -41,10 +41,13 @@ from vihallulens.evaluation.metrics import (  # noqa: E402
 )
 from vihallulens.features.assemble import (  # noqa: E402
     GROUP_BLOCKS,
+    MIXED,
     blocks_for,
     build_feature_matrix,
+    build_matrix,
     column_names,
     drop_nonfinite,
+    mixed_names,
     rank_heads,
 )
 
@@ -68,16 +71,9 @@ BASELINE_GROUPS = ["basic"]
 # with six blocks, wide enough to keep more than a handful of heads.
 TOPK_GRID = (8, 16, 32, 64)
 
-# A seventh candidate, added after the first E03 run exposed a gap in the search space. Keeping
-# k heads shrinks *every* block, including the single narrow one — so the chosen k=32 gave the
-# aggregate lookback ratio 32 columns where E02 had 756, and E03 lost 0,045 on the intrinsic
-# class that those columns carried.
-#
-# The search space simply did not contain "keep the cheap block whole and thin the wide ones",
-# which means E03 could not be guaranteed to contain E02 as a special case. It can now. The
-# candidate is scored on dev like every other one; it is not chosen because it looked good on
-# test, and the first run's numbers are reported alongside rather than replaced.
-MIXED = "mixed_all_basic_topk_rest"
+# ``matrix_for`` stays as a name for the two scripts that import it; the body moved to the
+# library at T36 as ``build_matrix`` so a saved detector can rebuild its own columns.
+matrix_for = build_matrix
 
 
 def load_split(processed_dir: Path, run: str, dataset: str, split: str):
@@ -94,40 +90,6 @@ def load_split(processed_dir: Path, run: str, dataset: str, split: str):
     records = sorted(load_done(path).values(), key=lambda record: record["sample_id"])
     records, dropped = drop_nonfinite(records)
     return records, path, dropped
-
-
-def split_groups(groups) -> tuple[list[str], list[str]]:
-    """Separate the aggregate lookback group from the chunk-shape ones."""
-    wide = [group for group in groups if group != "basic"]
-    return (["basic"] if "basic" in groups else []), wide
-
-
-def build_mixed(records, groups, n_layers, n_heads, keep):
-    """All heads for ``basic``, only the chosen ones for the wide blocks."""
-    narrow, wide = split_groups(groups)
-    parts = []
-    if narrow:
-        parts.append(build_feature_matrix(records, narrow, n_layers, n_heads, "all"))
-    if wide:
-        parts.append(build_feature_matrix(records, wide, n_layers, n_heads, "topk_heads", keep))
-    return np.hstack(parts)
-
-
-def mixed_names(groups, layer_indices, n_heads, keep) -> list[str]:
-    narrow, wide = split_groups(groups)
-    names = []
-    if narrow:
-        names += column_names(blocks_for(narrow), layer_indices, n_heads, "all")
-    if wide:
-        names += column_names(blocks_for(wide), layer_indices, n_heads, "topk_heads", keep)
-    return names
-
-
-def matrix_for(records, groups, n_layers, n_heads, mode, keep):
-    """One entry point for every candidate, mixed included."""
-    if mode == MIXED:
-        return build_mixed(records, groups, n_layers, n_heads, keep)
-    return build_feature_matrix(records, groups, n_layers, n_heads, mode, keep)
 
 
 def select_aggregation(x_train, y_train, records, groups, n_layers, n_heads, y_dev, seed):
@@ -261,6 +223,12 @@ def main() -> int:
                         help="mặc định lấy run_name trong file cấu hình")
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED_DIR)
     parser.add_argument("--results-path", type=Path, default=Path("results/runs.jsonl"))
+    parser.add_argument(
+        "--save-bundle", type=Path, default=None, metavar="PATH",
+        help="sau khi chấm test, lưu bộ phát hiện đã khớp KÈM công thức dựng cột của nó "
+             "(nhóm đặc trưng, cách gộp đầu, chỉ số đầu giữ lại, lưới lớp) thành một "
+             "DetectorBundle. Đây là thứ pipeline và API nạp. Thêm ở T36.",
+    )
     parser.add_argument(
         "--train-sample", type=int, default=None,
         help="chỉ dùng N mẫu train, giữ nguyên tỷ lệ nhãn — để so khớp cỡ với thí nghiệm khác",
@@ -482,6 +450,34 @@ def main() -> int:
                         path=args.results_path)
     print()
     print(f"  Đã ghi {args.results_path} — config_hash {record['config_hash']}")
+
+    if args.save_bundle:
+        from vihallulens.detect.bundle import DetectorBundle
+
+        bundle = DetectorBundle(
+            detector=detector,
+            groups=groups,
+            mode=best["mode"],
+            keep=None if keep is None else [int(i) for i in keep],
+            layer_indices=[int(i) for i in layer_indices],
+            n_heads=int(n_heads),
+            run_name=run_name,
+            config=cfg.to_dict(),
+            provenance={
+                "config_hash": record["config_hash"],
+                "extraction_hash": run,
+                "head_aggregation_chosen": best["label"],
+                "dev_macro_f1": float(best["dev_macro_f1"]),
+                "test_macro_f1": float(point["macro_f1"]),
+                "test_macro_f1_ci": [float(interval["macro_f1_lo"]),
+                                     float(interval["macro_f1_hi"])],
+                "n_train": len(records["train"]),
+                "n_test": len(records["test"]),
+            },
+        )
+        saved = bundle.save(args.save_bundle)
+        size_kb = saved.stat().st_size / 1e3
+        print(f"  Đã lưu bundle {saved} ({size_kb:.1f} KB) — {bundle.describe()}")
 
     print()
     print("-" * 80)

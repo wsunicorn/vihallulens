@@ -29,14 +29,11 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vihallulens.config import extraction_hash, load_config  # noqa: E402
-from vihallulens.data.chunking import chunk_context, locate_evidence_chunk  # noqa: E402
+from vihallulens.data.chunking import chunk_context, chunking_arguments  # noqa: E402
 from vihallulens.data.loading import DEFAULT_INTERIM_DIR, load_dataset  # noqa: E402
-from vihallulens.features.chunk_aware import (  # noqa: E402
-    CHUNK_FEATURE_NAMES,
-    chunk_features,
-)
-from vihallulens.features.localization import gold_rank, mean_shares  # noqa: E402
-from vihallulens.features.lookback import DENOMINATORS, pool_over_tokens  # noqa: E402
+from vihallulens.features.chunk_aware import CHUNK_FEATURE_NAMES  # noqa: E402
+from vihallulens.features.lookback import DENOMINATORS  # noqa: E402
+from vihallulens.features.records import to_record  # noqa: E402
 
 DEFAULT_PROCESSED_DIR = Path("data/processed")
 PROGRESS_EVERY = 25
@@ -58,29 +55,6 @@ def shard_path(processed_dir: Path, run: str, dataset: str, split: str) -> Path:
     return processed_dir / f"{dataset}_{split}_{run}.jsonl"
 
 
-def chunking_arguments(chunking, tokenizer) -> dict:
-    """Everything :func:`chunk_context` needs, read off the config.
-
-    Written as its own function because of the bug it exists to prevent. Until T23 the caller
-    passed only ``strategy`` and ``min_words``, which is all the sentence strategy wants — so
-    E02 and E03 ran fine and nothing looked wrong. ``token_window`` needs a tokenizer and a
-    window, and without them it raises on the very first sample: a failure that would have cost
-    a whole Kaggle session to discover, at the far end of a fifty-minute model load.
-
-    ``chunk_context`` takes ``**kwargs`` and ignores what a strategy does not use, so a missing
-    key is silently accepted rather than refused. That is why the mapping lives here, in one
-    place a CPU test can check, instead of being spelled out at the call site.
-    """
-    if chunking.strategy == "token_window":
-        return {
-            "strategy": "token_window",
-            "tokenizer": tokenizer,
-            "window_size": chunking.window_size,
-            "stride": chunking.stride,
-        }
-    return {"strategy": chunking.strategy, "min_words": chunking.min_words}
-
-
 def load_done(path: Path) -> dict[str, dict]:
     """Read back what a previous run already computed, tolerating a truncated last line."""
     done: dict[str, dict] = {}
@@ -98,62 +72,6 @@ def load_done(path: Path) -> dict[str, dict]:
                 continue
             done[record["sample_id"]] = record
     return done
-
-
-def gold_chunk_rank(features, evidence: str) -> tuple[int | None, list[int] | None]:
-    """Where the gold evidence sits, and how each head ranked that chunk. Experiment E06.
-
-    Computed here rather than afterwards because it needs two things only this scope has:
-    the per-chunk array before it is pooled away, and — the part that is easy to get wrong —
-    the chunks that **survived truncation**. Truncation removes whole chunks and re-indexes
-    the rest, so an index found in the original chunk list would silently name a different
-    chunk, and the resulting hit@1 would be measuring nothing.
-
-    Returns ``(None, None)`` when the sample has no evidence — every NEI row of ISE-DSC01 —
-    or when the chunk holding it was one of the ones truncation dropped.
-    """
-    if not evidence or not evidence.strip() or not features.chunks:
-        return None, None
-    gold = locate_evidence_chunk(features.chunks, evidence)
-    if gold is None:
-        return None, None
-    ranks = gold_rank(mean_shares(features.lookback_per_chunk), gold)
-    return int(gold), [int(value) for value in ranks.reshape(-1)]
-
-
-def to_record(sample_id: str, label: str, features, elapsed_ms: float,
-              evidence: str = "") -> dict:
-    """One sample's row: the pooled vectors plus everything needed to audit them later.
-
-    Both families are written in one pass. The chunk-aware statistics are computed from the same
-    attention matrix as the lookback ratio, so extracting them separately would pay for the
-    reading model twice to learn nothing new.
-    """
-    row = {
-        "sample_id": sample_id,
-        "label": label,
-        "n_chunks": int(features.n_chunks),
-        "truncated": bool(features.truncated),
-        "n_scored_tokens": int(features.lookback_total.shape[2]),
-        "layer_indices": list(features.layer_indices),
-        "nonfinite_layers": list(features.nonfinite_layers),
-        "row_sum_mean": float(features.row_sum_mean),
-        "peak_vram_mb": float(features.peak_vram_mb),
-        "elapsed_ms": float(elapsed_ms),
-    }
-    for name in DENOMINATORS:
-        pooled = pool_over_tokens(getattr(features, f"lookback_{name}"))
-        row[f"lookback_{name}"] = [round(float(value), 6) for value in pooled.reshape(-1)]
-    for name, value in chunk_features(features.lookback_per_chunk).items():
-        row[name] = [round(float(item), 6) for item in value.reshape(-1)]
-
-    # Only written when the sample actually has evidence, so ViHallu rows — which have none —
-    # do not each carry 756 null integers for a column no experiment on them will ever read.
-    gold, ranks = gold_chunk_rank(features, evidence)
-    if gold is not None:
-        row["gold_chunk"] = gold
-        row["gold_rank"] = ranks
-    return row
 
 
 def main() -> int:
