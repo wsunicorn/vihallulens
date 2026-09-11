@@ -80,7 +80,13 @@
   .side .stat span { font-size: .82rem; display: block; }
   @media (max-width: 1100px) { .side { display: none; } }
   .layer { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); will-change: transform, opacity; }
+  .layer .inner, .layer .breath { position: absolute; inset: 0; transform-origin: 50% 100%; }
+  .layer .inner { transition: transform .25s ease-out; }
+  #prof .breath { animation: breath 4.2s ease-in-out infinite; }
+  @keyframes breath { 50% { transform: scaleY(1.012) scaleX(.996); } }
+  .layer.nod .inner { animation: nod .7s; } .layer.shake .inner { animation: shake .45s; }
   .layer img, .layer svg.fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+  .layer img.off { opacity: 0 !important; }
   .layer .eye { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
   .layer .eye .iris { position: absolute; inset: 0; border-radius: 50%;
                       --i1: #e2fffb; --i2: #2ee6d4; --i3: #0b9d92; --i4: #063a37; --g: var(--eye-glow);
@@ -105,9 +111,9 @@
   body.boot.lids .layer .eye .lid { transform: scaleY(1); transition: transform .35s; }
   body.boot .layer .eye .iris { transition: box-shadow 1s; }
   body.boot .layer img, body.boot .layer svg.fallback { opacity: 0; }
-  .layer img, .layer svg.fallback { transition: opacity 1.2s ease; }
+  body.fade .layer img, body.fade .layer svg.fallback { transition: opacity 1.2s ease; }  /* only for the opening fade-in */
   #face { width: min(108vmin, 1100px); aspect-ratio: 1; z-index: 2; top: 60%; }
-  #prof { width: min(78vh, 620px); aspect-ratio: 4/5; z-index: 2; opacity: 0; pointer-events: none; }
+  #prof { width: min(78vh, 620px); aspect-ratio: 4/5; z-index: 2; opacity: 0; }
   #branch { position: absolute; left: -4%; bottom: 6%; width: 70vw; max-width: 900px; z-index: 3; opacity: 0; pointer-events: none; }
   #branch img { width: 100%; display: block; }
   #intro { position: absolute; z-index: 4; left: 50%; top: 50%; width: min(520px, 92vw); transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
@@ -122,7 +128,7 @@
   @keyframes bob { 50% { transform: translate(-50%, 6px); } }
   /* the torch: everything dark except around the pointer */
   /* the torch is a mask on the owl itself: feathers show only around the pointer, text is never dimmed */
-  #face.torch > img, #face.torch > svg.fallback {
+  #face.torch img, #face.torch svg.fallback {
     -webkit-mask-image: radial-gradient(ellipse 26% 26% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.05) 100%);
     mask-image: radial-gradient(ellipse 26% 26% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.05) 100%); }
   #torch { display: none; }
@@ -703,35 +709,62 @@ GET  /health       loading | ok | error</code></pre>
     return tpl.outerHTML;
   }
   class OwlLayer {
+    // host > .inner (pointer-driven tilt/lean) > .breath (idle breathing) > img|svg + eyes
     constructor(host, kind, rig) {
-      this.host = host; this.kind = kind; this.eyes = [];
+      this.host = host; this.kind = kind; this.eyes = []; this.variant = "base"; this.busy = false;
       const cfg = rig && rig[kind];
       this.cfg = cfg || FALLBACK[kind];
-      host.innerHTML = "";
+      host.innerHTML = `<div class="inner"><div class="breath"></div></div>`;
+      this.stage = host.querySelector(".breath"); this.inner = host.querySelector(".inner");
       if (cfg && cfg.file) {
-        const img = document.createElement("img"); img.src = cfg.file; img.alt = ""; img.decoding = "async";
-        img.onerror = () => { this.cfg = FALLBACK[kind]; this.build(FALLBACK[kind].svg()); };
-        this.img = img; host.appendChild(img);
+        // one <img> per variant, all loaded up front; a variant change only toggles which one shows
+        this.imgs = {};
+        const add = (name, file) => { const img = document.createElement("img"); img.src = file; img.alt = ""; img.decoding = "async"; img.classList.toggle("off", name !== "base"); this.stage.appendChild(img); this.imgs[name] = img; return img; };
+        add("base", cfg.file).onerror = () => { this.cfg = FALLBACK[kind]; this.build(FALLBACK[kind].svg()); };
+        Object.entries(cfg.variants || {}).forEach(([name, v]) => add(name, v.file));
+        this.img = this.imgs.base;
         if (cfg.aspect) host.style.aspectRatio = String(cfg.aspect);
-        for (const k of Object.keys(cfg)) if (/^img\//.test(String(cfg[k])) && k !== "file") { const pre = new Image(); pre.src = cfg[k]; }  // variants swap instantly
-        this.buildEyes();
+        this.buildEyes(cfg.eyes);
       } else this.build(FALLBACK[kind].svg());
     }
-    build(svg) { this.host.querySelectorAll("img, svg.fallback, .eye").forEach((n) => n.remove()); this.host.insertAdjacentHTML("afterbegin", svg); this.buildEyes(); }
-    buildEyes() {
-      this.host.querySelectorAll(".eye").forEach((n) => n.remove()); this.eyes = [];
-      this.cfg.eyes.forEach((e, i) => {
+    build(svg) { this.stage.querySelectorAll("img, svg.fallback").forEach((n) => n.remove()); this.img = null; this.imgs = null; this.stage.insertAdjacentHTML("afterbegin", svg); this.buildEyes(this.cfg.eyes); }
+    buildEyes(eyes) {
+      this.stage.querySelectorAll(".eye").forEach((n) => n.remove()); this.eyes = [];
+      const ar = this.cfg.aspect || (this.kind === "prof" ? 0.8 : 1), k = 1.06;  // a hair larger than the painted disc
+      eyes.forEach((e) => {
         const el = document.createElement("div"); el.className = "eye";
-        // r is a fraction of the image WIDTH; height uses the aspect so the eye stays round
-        const ar = this.cfg.aspect || (this.kind === "prof" ? 0.8 : 1);
+        const rx = e.rx ?? e.r, ry = e.ry ?? e.r * ar;   // fractions of width / height
         el.style.left = (100 * e.cx) + "%"; el.style.top = (100 * e.cy) + "%";
-        const k = 1.06;  // a hair larger than the painted disc; the glow covers the rest
-        el.style.width = (200 * e.r * k) + "%"; el.style.height = (200 * e.r * ar * k) + "%";
+        el.style.width = (200 * rx * k) + "%"; el.style.height = (200 * ry * k) + "%";
         el.innerHTML = `<div class="iris"></div><div class="pupil"></div><div class="lid"></div>`;
-        this.host.appendChild(el); this.eyes.push(el);
+        this.stage.appendChild(el); this.eyes.push(el);
       });
     }
-    setVariant(name) { if (!this.img || !this.cfg[name] && name !== "base") return; const want = name === "base" ? this.cfg.file : this.cfg[name]; if (this.img.getAttribute("src") !== want) this.img.src = want; }
+    has(name) { return !!(this.cfg.variants && this.cfg.variants[name]); }
+    setVariant(name) {
+      if (!this.img) return;
+      const v = name === "base" ? { file: this.cfg.file, eyes: this.cfg.eyes } : this.cfg.variants && this.cfg.variants[name];
+      if (!v || this.variant === name) return;
+      this.variant = name; Object.entries(this.imgs).forEach(([n, img]) => { img.classList.toggle("off", n !== name); }); this.buildEyes(v.eyes || this.cfg.eyes);
+    }
+    // play a list of [variant, ms] frames, then return to base
+    play(frames, done) {
+      if (!this.img || this.busy) return; this.busy = true;
+      const step = (i) => { if (i >= frames.length) { this.setVariant("base"); this.busy = false; done && done(); return; } this.setVariant(frames[i][0]); setTimeout(() => step(i + 1), frames[i][1]); };
+      step(0);
+    }
+    wave() {
+      const f = this.has("wave") ? [["point", 200], ["wave", 260], ["point", 220], ["wave", 260], ["point", 220]] : [["point", 260], ["base", 220], ["point", 260], ["base", 220], ["point", 300]];
+      this.play(f);
+    }
+    // pointer-driven body language: the face turns its head (3D tilt), the professor leans on his feet
+    lean(px, py, strength = 1) {
+      const r = this.host.getBoundingClientRect(); if (!r.width) return;
+      const nx = Math.max(-1, Math.min(1, (px - (r.left + r.width / 2)) / (innerWidth / 2)));
+      const ny = Math.max(-1, Math.min(1, (py - (r.top + r.height / 2)) / (innerHeight / 2)));
+      if (this.kind === "face") this.inner.style.transform = `perspective(1200px) rotateY(${(nx * 9 * strength).toFixed(2)}deg) rotateX(${(-ny * 6 * strength).toFixed(2)}deg)`;
+      else this.inner.style.transform = `rotate(${(nx * 4 * strength).toFixed(2)}deg) translateX(${(nx * 10 * strength).toFixed(1)}px)`;
+    }
     look(px, py) {
       if (this.host.classList.contains("sleep")) return;
       this.eyes.forEach((el) => {
@@ -740,8 +773,10 @@ GET  /health       loading | ok | error</code></pre>
         const m = Math.min(1, d / 300) * r.width * 0.22;
         el.querySelector(".pupil").style.transform = `translate(calc(-50% + ${(dx / d * m).toFixed(1)}px), calc(-50% + ${(dy / d * m).toFixed(1)}px))`;
       });
+      if (this.host.id === "face" || this.host.id === "prof") this.lean(px, py);
     }
     blink(ms = 140) { this.host.classList.add("blink"); setTimeout(() => this.host.classList.remove("blink"), ms); }
+    act(cls, ms) { this.host.classList.add(cls); setTimeout(() => this.host.classList.remove(cls), ms); }
     screenEyes() { return this.eyes.map((el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, on: r.width > 0 && getComputedStyle(this.host).opacity !== "0" }; }); }
   }
   const layers = [];
@@ -759,7 +794,8 @@ GET  /health       loading | ok | error</code></pre>
     if (reduced || !document.body.classList.contains("boot")) { document.body.classList.remove("boot", "lids"); return; }
     setTimeout(() => document.body.classList.remove("lids"), 600);
     setTimeout(() => face.blink(180), 1500);
-    setTimeout(() => { document.body.classList.remove("boot"); }, 2100);
+    setTimeout(() => { document.body.classList.add("fade"); document.body.classList.remove("boot"); }, 2100);
+    setTimeout(() => document.body.classList.remove("fade"), 3500);
   }
   if (!new URLSearchParams(location.search).has("noboot")) document.body.classList.add("boot", "lids");
 
@@ -805,7 +841,8 @@ GET  /health       loading | ok | error</code></pre>
       ? `translateY(${(40 - 40 * s3).toFixed(1)}px)`
       : `translate(calc(-50% - 24vw), calc(-50% + ${(40 - 40 * s3).toFixed(1)}px))`;
     intro.classList.toggle("on", s3 > .6);
-    if (prof) prof.setVariant(s3 > .5 ? "point" : "base");
+    if (prof && !prof.busy) prof.setVariant(s3 > .5 ? "point" : "base");
+    if (prof && s3 > .6 && !window.__waved) { window.__waved = true; setTimeout(() => { prof.wave(); say("Chào! Tôi là Lens, người gác đêm của trang này."); }, 300); }
     hint.style.opacity = p < .05 ? "1" : "0";
     paintTorch();
     $("side-l").style.opacity = $("side-r").style.opacity = (1 - span(p, .05, .3)).toFixed(3);
@@ -847,6 +884,11 @@ GET  /health       loading | ok | error</code></pre>
   function verdict(label, ms = 4000) {
     root.classList.remove("v-no", "v-intrinsic", "v-extrinsic"); root.classList.add("v-" + label);
     layers.forEach((l) => l.blink(120));
+    if (prof) {
+      if (label === "no") { prof.act("nod", 700); if (prof.has("happy")) prof.play([["happy", 1800]]); }
+      else if (label === "intrinsic") { if (prof.has("think")) prof.play([["think", 2200]]); }
+      else { prof.act("shake", 450); if (prof.has("shock")) prof.play([["shock", 1800]]); }
+    }
     clearTimeout(verdictT); verdictT = setTimeout(() => root.classList.remove("v-" + label), ms);
     say(label === "no" ? "Bám sát ngữ cảnh. Tôi yên tâm." : label === "intrinsic" ? "Có đọc ngữ cảnh… mà nói lệch. Nội tại." : "Chỗ này không có trong ngữ cảnh!");
   }
@@ -856,6 +898,9 @@ GET  /health       loading | ok | error</code></pre>
   ["pointermove", "scroll", "keydown", "click", "touchstart"].forEach((ev) => addEventListener(ev, wake, { passive: true }));
   buddy.addEventListener("click", () => say(["Kéo xuống demo thử đi!", "Tôi nhìn đoạn nào, tô đoạn đó.", "87,8 % — không phải hú họa.", "Đừng tin nhãn ba lớp quá, hãy tin điểm rủi ro."][Math.floor(Math.random() * 4)]));
   $("buddy-off").onclick = () => { buddy.classList.add("hidden"); $("buddy-off").style.display = "none"; };
+  $("prof").addEventListener("click", () => { if (prof) { prof.wave(); say(["Chào bạn!", "Cuộn tiếp đi, còn nhiều lắm.", "Tôi chấm 700 mẫu, trùng 700 với chính tôi."][Math.floor(Math.random() * 3)]); } });
+  $("face").addEventListener("click", () => { if (face) { face.blink(120); setTimeout(() => face.blink(120), 260); say("Nhìn gì? Tôi mới là người nhìn."); } });
+  $("prof").style.cursor = "pointer"; $("face").style.cursor = "pointer";
   const said = new Set();
   const notes = { problem: "Ba thẻ này chấm thật đấy, rê thử.", how: "Tôi không sinh chữ — chỉ đọc lại.", chunk: "Kéo thanh trượt xem hình dạng đổi.", numbers: "Số nào cũng có trong results/.", honest: "Phần này hội đồng sẽ hỏi. Nói trước.", demo: "Đến lượt bạn.", system: "pip install rồi ba dòng là xong." };
   const sectionIO = new IntersectionObserver((entries) => entries.forEach((en) => { const id = en.target.id; if (en.isIntersecting && !said.has(id) && notes[id]) { said.add(id); say(notes[id]); } }), { threshold: .35 });
