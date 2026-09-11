@@ -1,0 +1,125 @@
+{
+  "groups": [
+    "basic",
+    "chunk_aware",
+    "stability"
+  ],
+  "mode": "topk_heads",
+  "keep": [
+    480,
+    573,
+    224,
+    675,
+    137,
+    522,
+    437,
+    635,
+    629,
+    474,
+    499,
+    497,
+    124,
+    521,
+    135,
+    691,
+    340,
+    587,
+    158,
+    156,
+    182,
+    554,
+    714,
+    744,
+    379,
+    737,
+    418,
+    468,
+    417,
+    246,
+    717,
+    210
+  ],
+  "layer_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "n_heads": 28,
+  "run_name": "e03_chunk_aware",
+  "config": {
+    "run_name": "e03_chunk_aware_sentence_vihallu",
+    "dataset": {
+      "name": "vihallu",
+      "split_seed": 42
+    },
+    "chunking": {
+      "strategy": "sentence",
+      "min_words": 5,
+      "window_size": null,
+      "stride": null
+    },
+    "extractor": {
+      "model_name": "Qwen/Qwen2.5-7B-Instruct",
+      "quantization": "nf4",
+      "max_context_tokens": 4096,
+      "device": "cuda",
+      "compute_dtype": "float16",
+      "exclude_layers": [
+        27
+      ]
+    },
+    "features": {
+      "groups": [
+        "basic",
+        "chunk_aware",
+        "stability"
+      ],
+      "head_aggregation": "all",
+      "topk": null
+    },
+    "detector": {
+      "type": "logistic_regression",
+      "class_weight": "balanced"
+    }
+  },
+  "provenance": {
+    "config_hash": "4ec8ba7ae8e8",
+    "extraction_hash": "8c49fc0417f1",
+    "head_aggregation_chosen": "topk_heads k=32",
+    "dev_macro_f1": 0.7767603509724584,
+    "test_macro_f1": 0.7567130878616751,
+    "test_macro_f1_ci": [
+      0.7242097082232333,
+      0.7885347655426854
+    ],
+    "n_train": 5600,
+    "n_test": 700
+  },
+  "version": 1,
+  "n_features": 192,
+  "n_params_trainable": 579
+}

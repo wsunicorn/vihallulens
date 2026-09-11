@@ -153,3 +153,62 @@ def drop_nonfinite(records, blocks=None):
         ]) if any(name in record for name in blocks) else np.empty(0)
         (dropped if values.size and not np.isfinite(values).all() else clean).append(record)
     return clean, dropped
+
+
+# ---------------------------------------------------------------- the mixed aggregation
+#
+# A seventh candidate for the head axis, added after the first E03 run exposed a gap in the
+# search space. ``topk_heads`` thins *every* block, including the single narrow one, so the
+# chosen k=32 gave the aggregate lookback ratio 32 columns where E02 had 756 — and E03 lost
+# 0,045 on the intrinsic class those columns carried. This mode keeps the ``basic`` block whole
+# and thins only the wide chunk-shape blocks, so the search space contains E02 as a special
+# case. Lived in ``scripts/run_chunk_aware.py`` until T36; E15 chose it on ViWikiFC, so a saved
+# detector has to be able to rebuild it.
+MIXED = "mixed_all_basic_topk_rest"
+
+
+def split_groups(groups) -> tuple[list[str], list[str]]:
+    """Separate the aggregate lookback group from the chunk-shape ones."""
+    wide = [group for group in groups if group != "basic"]
+    return (["basic"] if "basic" in groups else []), wide
+
+
+def build_mixed(records, groups, n_layers: int, n_heads: int, keep) -> np.ndarray:
+    """All heads for ``basic``, only the chosen ones for the wide blocks."""
+    narrow, wide = split_groups(groups)
+    parts = []
+    if narrow:
+        parts.append(build_feature_matrix(records, narrow, n_layers, n_heads, "all"))
+    if wide:
+        parts.append(build_feature_matrix(records, wide, n_layers, n_heads, "topk_heads", keep))
+    return np.hstack(parts)
+
+
+def mixed_names(groups, layer_indices, n_heads: int, keep) -> list[str]:
+    narrow, wide = split_groups(groups)
+    names = []
+    if narrow:
+        names += column_names(blocks_for(narrow), layer_indices, n_heads, "all")
+    if wide:
+        names += column_names(blocks_for(wide), layer_indices, n_heads, "topk_heads", keep)
+    return names
+
+
+def build_matrix(records, groups, n_layers: int, n_heads: int, mode: str,
+                 keep=None) -> np.ndarray:
+    """One entry point for every aggregation mode a detector may have been fitted with.
+
+    This is the function a saved detector must call on a new record: whichever of the seven
+    candidates dev chose at training time, the same call rebuilds the same columns in the
+    same order.
+    """
+    if mode == MIXED:
+        return build_mixed(records, groups, n_layers, n_heads, keep)
+    return build_feature_matrix(records, groups, n_layers, n_heads, mode, keep)
+
+
+def matrix_names(groups, layer_indices, n_heads: int, mode: str, keep=None) -> list[str]:
+    """Column names for :func:`build_matrix`, for whichever mode it was given."""
+    if mode == MIXED:
+        return mixed_names(groups, layer_indices, n_heads, keep)
+    return column_names(blocks_for(groups), layer_indices, n_heads, mode, keep)

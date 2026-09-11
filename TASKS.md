@@ -4140,7 +4140,71 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
 ## Giai đoạn 7 — Đóng gói hệ thống (tuần 12–13)
 
-- [ ] **T36** · L · Thư viện Python hoàn chỉnh, có docstring và ví dụ dùng
+- [x] **T36** · L · Thư viện Python hoàn chỉnh, có docstring và ví dụ dùng — hoàn thành 11/09/2026
+  - **Kiểm tra:** `from vihallulens import HallucinationDetector` ✅; bundle
+    `models/e03_chunk_aware.pkl` chấm lại 700 bản ghi test **từng bản một** cho 700/700 trùng
+    `y_pred` đã ghi ✅; `tests/test_bundle.py` 11 ca chạy không GPU ✅; README có mục "Dùng thư
+    viện" ✅.
+
+  ### Task này để làm gì
+
+  Tới T35 mọi mảnh đã có — mô hình đọc với hook, đặc trưng gộp, bộ phân loại — nhưng **chỉ các
+  script thí nghiệm biết cách nối chúng**, và mỗi script nối một kiểu hơi khác. T35 phải khớp
+  lại E03 từ đầu để có một mô hình mà soi, vì chưa từng có mô hình nào được lưu ở dạng dùng
+  được. T37 (API) cần đúng thứ đó: một lời gọi từ văn bản tới phán quyết.
+
+  ### Khoảng trống thật, đối chiếu `docs/SPEC.md`
+
+  `LookbackDetector.save/load` có rồi, nhưng nó chỉ lưu **bộ phân loại** — không lưu nó đọc cột
+  nào. Muốn chấm một mẫu mới phải biết: nhóm đặc trưng nào, cách gộp đầu nào, **32 chỉ số đầu
+  dev đã chọn**, lưới lớp nào. Bốn thứ ấy script biết lúc chạy rồi vứt đi. Thiếu chúng thì bộ
+  phân loại nhận một véc-tơ dựng sai thứ tự cột và vẫn trả về một con số.
+
+  ### Bốn mảnh đã thêm
+
+| Mảnh | Việc |
+|---|---|
+| `features/records.py` | `to_record`, `gold_chunk_rank` chuyển từ script vào thư viện — một request phải đi qua **đúng** đường một dòng train đã đi |
+| `features/assemble.py` | thêm chế độ `mixed_all_basic_topk_rest` và `build_matrix` / `matrix_names` một cửa — E15 chọn chế độ này, bundle phải dựng lại được |
+| `detect/bundle.py` | `DetectorBundle`: bộ phân loại **kèm** công thức dựng cột; `vector(record)`, `predict_record`, `save/load`, và **từ chối** bản ghi khác lưới lớp |
+| `pipeline.py` | `HallucinationDetector.score(context, question, response)` → đúng schema `/score` của SPEC; `from_pretrained` nạp bundle rồi nạp đúng mô hình đọc trong bundle |
+
+  `data/chunking.py` nhận `chunking_arguments` từ script, cùng lý do. `run_chunk_aware.py` có
+  `--save-bundle`; `matrix_for` giữ làm bí danh vì hai script khác import theo tên đó.
+
+  ### Phép kiểm quyết định
+
+  Bundle E03 (11,5 KB, 579 tham số, 192 cột) nạp lên rồi `predict_record` **từng bản ghi** của
+  tập test: **700/700** trùng `y_pred` mà T22 đã ghi. Tức bundle dựng lại đúng véc-tơ lúc khớp,
+  không phải "gần đúng". Refactor script cũng kiểm: E03 chạy lại cho 0,7567 y hệt, 749 test cũ
+  vẫn qua trước khi thêm test mới.
+
+  ### Hai quyết định trong pipeline, viết vào docstring
+
+  **`risk_score = 1 − P(no)`.** Bảng 1 và Bảng 7 đo được bộ phát hiện tách "trung thực hay không"
+  tốt hơn hẳn tách hai loại ảo giác, và E16 đo được chỉ phán đoán nhị phân mới chuyển được giữa
+  các bộ. Con số một hệ RAG nên hành động theo là con số nhị phân; `proba` ba lớp vẫn có cho ai
+  cần, kèm khoảng tin cậy rộng hơn.
+
+  **`chunk_attention` = tỷ trọng chú ý trung bình trên mọi lớp và đầu.** Đó là đại lượng E06 đã
+  chấm hit@1 87,8 % so với bằng chứng vàng, nên trang quan sát T39 tô màu đúng thứ luận văn đã
+  đánh giá. Nó **không phải** thứ bộ phân loại đọc — bộ phân loại đọc véc-tơ gộp, một tóm tắt khác
+  của cùng ma trận. Hai thứ tách bạch trong docstring để T39 không nhầm.
+
+  ### Sửa tài liệu cho khớp code
+
+  README và SPEC vẫn liệt kê `train_detector.py` và `evaluate.py` — hai script chưa bao giờ tồn
+  tại. Thực tế cả hai gộp trong `run_chunk_aware.py`, vì bước "huấn luyện" tách riêng không có
+  gì để ghi: 579 tham số khớp trong vài giây và chỉ có nghĩa cùng con số dev đã chọn nó. Đã sửa
+  cả hai file và ghi lý do.
+
+  ### Mô hình mặc định là E03, và vì sao
+
+  Mục 3 `CLAUDE.md` chốt mô hình đọc chính là Qwen2.5-7B; E03 là dòng chính của Bảng 1 với ECE
+  tốt nhất bảng (0,044). Bundle 11,5 KB nên commit thẳng vào `models/`, không cần gitignore.
+  Bảng 8 chỉ ra 3B là điểm cân bằng chi phí — muốn đổi thì chạy lại `run_chunk_aware.py` với
+  config E14 và `--save-bundle`, không phải sửa code.
+
 - [ ] **T37** · L · Dịch vụ REST API ba endpoint theo `docs/SPEC.md`
 - [ ] **T38** · L · Dockerfile, chạy được bằng một lệnh
 - [ ] **T39** · L · Giao diện quan sát: tô màu chunk theo tỷ trọng chú ý
