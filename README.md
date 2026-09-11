@@ -89,13 +89,48 @@ python scripts/normalize_data.py --dataset viwikifc
 python scripts/normalize_data.py --dataset vifactcheck
 ```
 
-Chạy một thí nghiệm:
+Chạy một thí nghiệm — trích đặc trưng trên GPU rồi chấm trên CPU:
 
 ```bash
-python scripts/extract_features.py --config configs/example.yaml
-python scripts/train_detector.py   --config configs/example.yaml
-python scripts/evaluate.py         --config configs/example.yaml
+python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml --split train
+python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml --split dev
+python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml --split test
+python scripts/run_chunk_aware.py  --config configs/e03_chunk_sentence_vihallu.yaml \
+    --save-bundle models/e03_chunk_aware.pkl
 ```
+
+Bước thứ hai chọn cách gộp đầu chú ý trên tập dev, chấm tập test đúng một lần, ghi kết quả vào
+`results/runs.jsonl`, và với `--save-bundle` thì lưu bộ phát hiện đã khớp **kèm công thức dựng
+cột của nó** — đó là thứ thư viện và API nạp lên.
+
+## Dùng thư viện
+
+```python
+from vihallulens import HallucinationDetector
+
+detector = HallucinationDetector.from_pretrained("models/e03_chunk_aware.pkl")
+result = detector.score(
+    context="Hà Nội là thủ đô của Việt Nam. Thành phố nằm bên sông Hồng.",
+    question="Hà Nội nằm ở đâu?",
+    response="Hà Nội nằm bên sông Hồng.",
+)
+result.label               # 'no' | 'intrinsic' | 'extrinsic'
+result.risk_score          # 1 − P(no): xác suất phản hồi có ảo giác, kiểu nào cũng tính
+result.proba               # {'no': …, 'intrinsic': …, 'extrinsic': …}
+result.chunk_attention     # mỗi đoạn ngữ cảnh: văn bản, vị trí ký tự, tỷ trọng chú ý nhận được
+result.to_dict()           # đúng schema POST /score trong docs/SPEC.md
+```
+
+`from_pretrained` nạp bundle rồi nạp **đúng mô hình đọc mà bundle được khớp cùng** (tên mô hình,
+lượng tử hóa, lớp bị bỏ, kiểu số đều nằm trong bundle), nên cần GPU — Qwen2.5-7B NF4 chiếm khoảng
+8,3 GB. Mọi thứ khác chạy trên CPU. Bộ phát hiện mặc định `models/e03_chunk_aware.pkl` nặng 11,5 KB
+và có 579 tham số.
+
+Hai con số cần đọc đúng. `risk_score` là con số một hệ RAG nên hành động theo: Bảng 1 và Bảng 7
+trong `docs/EXPERIMENTS.md` đo được bộ phát hiện tách "trung thực hay không" tốt hơn hẳn tách hai
+loại ảo giác, và chỉ phán đoán nhị phân mới chuyển được giữa các bộ dữ liệu. `chunk_attention` là
+tỷ trọng chú ý trung bình trên mọi lớp và đầu — chính đại lượng E06 đã đo hit@1 87,8 % so với đoạn
+bằng chứng vàng — không phải thứ bộ phân loại đọc.
 
 ## Chạy trên Kaggle
 
