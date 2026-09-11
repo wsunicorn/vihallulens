@@ -101,6 +101,8 @@
   html.v-no .eye .pupil { width: 46%; height: 46%; }
   /* boot: black, eyes only */
   body.boot #stage > *:not(.layer):not(#motes) { opacity: 0; }
+  body.boot.lids .layer .eye .lid { transform: scaleY(1); transition: transform .35s; }
+  body.boot .layer .eye .iris { transition: box-shadow 1s; }
   body.boot .layer img, body.boot .layer svg.fallback { opacity: 0; }
   .layer img, .layer svg.fallback { transition: opacity 1.2s ease; }
   #face { width: min(76vmin, 760px); aspect-ratio: 1; z-index: 2; top: 62%; }
@@ -119,9 +121,9 @@
   @keyframes bob { 50% { transform: translate(-50%, 6px); } }
   /* the torch: everything dark except around the pointer */
   /* the torch is a mask on the owl itself: feathers show only around the pointer, text is never dimmed */
-  #face.torch { -webkit-mask-image: radial-gradient(circle 34% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.9) 40%, rgba(0,0,0,.12) 100%);
-                mask-image: radial-gradient(circle 34% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.9) 40%, rgba(0,0,0,.12) 100%); }
-  #face.torch .eye { filter: none; }
+  #face.torch > img, #face.torch > svg.fallback {
+    -webkit-mask-image: radial-gradient(ellipse 30% 30% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.06) 100%);
+    mask-image: radial-gradient(ellipse 30% 30% at var(--fx, 50%) var(--fy, 50%), #000 0, rgba(0,0,0,.85) 45%, rgba(0,0,0,.06) 100%); }
   #torch { display: none; }
   @media (max-width: 860px) {
     #hero { height: 220vh; }
@@ -749,12 +751,14 @@ GET  /health       loading | ok | error</code></pre>
   });
 
   // ---------------------------------------------------------------- boot: two eyes in the dark, one blink, then the face
+  // black → lids open (600 ms) → one blink (1500 ms) → the face fades in through the torch (2100 ms)
   function boot() {
-    if (reduced || !document.body.classList.contains("boot")) { document.body.classList.remove("boot"); return; }
-    setTimeout(() => face.blink(180), 700);
-    setTimeout(() => { document.body.classList.remove("boot"); }, 1300);
+    if (reduced || !document.body.classList.contains("boot")) { document.body.classList.remove("boot", "lids"); return; }
+    setTimeout(() => document.body.classList.remove("lids"), 600);
+    setTimeout(() => face.blink(180), 1500);
+    setTimeout(() => { document.body.classList.remove("boot"); }, 2100);
   }
-  if (!new URLSearchParams(location.search).has("noboot")) document.body.classList.add("boot");
+  if (!new URLSearchParams(location.search).has("noboot")) document.body.classList.add("boot", "lids");
 
   // ---------------------------------------------------------------- pointer → eyes, torch
   let px = innerWidth / 2, py = innerHeight * .45, raf = null;
