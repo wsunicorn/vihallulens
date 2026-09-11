@@ -1,0 +1,22 @@
+# Chỉ những gì dịch vụ cần mới vào ảnh. Dữ liệu và kết quả thí nghiệm nặng hàng GB và không
+# liên quan tới việc chấm một request.
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.ipynb_checkpoints
+data
+results
+notebooks
+tests
+docs
+UniversityRequirements
+reference_papers
+.env
+.vscode
+.idea
+*.md
+!README.md

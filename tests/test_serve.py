@@ -8,6 +8,7 @@ detector was not fitted for.
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -139,12 +140,61 @@ def test_health_reports_loaded_model_and_counts_requests(client):
     assert after["uptime_s"] >= 0
 
 
-def test_scoring_is_503_until_the_model_is_loaded():
-    """A server that is still loading must say so, not raise or return garbage."""
+def test_scoring_is_503_when_nothing_will_load():
+    """No detector and no loader: the server says so, it does not raise or return garbage."""
     app = create_app(detector=None, load_on_startup=False)
     with TestClient(app) as client:
         health = client.get("/health").json()
-        assert health["model_loaded"] is False and health["status"] == "loading"
+        assert health["model_loaded"] is False and health["status"] == "not_loaded"
         r = client.post("/score", json={"context": "c", "response": "r"})
         assert r.status_code == 503
         assert "chưa nạp" in r.json()["detail"]
+
+
+def test_health_answers_while_the_model_is_still_loading():
+    """The bug T38 found: a synchronous load kept the port closed for the whole load.
+
+    The loader blocks on an event; the server must already be answering /health with
+    ``loading`` before the event is set, and switch to ``ok`` after.
+    """
+    import threading
+
+    gate = threading.Event()
+    fake = FakeDetector()
+
+    def slow_loader():
+        gate.wait(timeout=10)
+        return fake
+
+    app = create_app(detector=None, load_on_startup=True, loader=slow_loader)
+    with TestClient(app) as client:
+        health = client.get("/health").json()
+        assert health["status"] == "loading" and health["model_loaded"] is False
+        r = client.post("/score", json={"context": "c", "response": "r"})
+        assert r.status_code == 503 and "đang nạp" in r.json()["detail"]
+
+        gate.set()
+        for _ in range(100):
+            if client.get("/health").json()["status"] == "ok":
+                break
+            time.sleep(0.02)
+        health = client.get("/health").json()
+        assert health["status"] == "ok" and health["model_loaded"] is True
+        assert client.post("/score", json={"context": "c", "response": "r"}).status_code == 200
+
+
+def test_health_reports_a_failed_load_with_the_reason():
+    def broken_loader():
+        raise RuntimeError("không có CUDA")
+
+    app = create_app(detector=None, load_on_startup=True, loader=broken_loader)
+    with TestClient(app) as client:
+        for _ in range(100):
+            if client.get("/health").json()["status"] == "error":
+                break
+            time.sleep(0.02)
+        health = client.get("/health").json()
+        assert health["status"] == "error"
+        assert "không có CUDA" in health["error"]
+        r = client.post("/score", json={"context": "c", "response": "r"})
+        assert r.status_code == 503 and "không có CUDA" in r.json()["detail"]
