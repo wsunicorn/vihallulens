@@ -3930,10 +3930,93 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   Cờ `--reference-run` tồn tại vì E02 và E03 ghi trong `runs.jsonl` dưới tên ngắn hơn tên trong
   cấu hình. Chiều ISE-DSC01 → ViHallu chunk-aware mất 717 giây chọn cách gộp đầu trên 29.077 mẫu.
 
-- [ ] **T35** · LM · Phân tích sai sót
+- [x] **T35** · LM · Phân tích sai sót — phần tự động hoàn thành 11/09/2026; lượt đọc tay 100 mẫu
+  là việc của hai tác giả qua cột `ghi_chu_tay`
   - Lấy 100 mẫu dự đoán sai, phân loại kiểu lỗi, viết nhận xét.
   - Tách kết quả theo `meta.prompt_type`: so macro-F1 trên nhóm `noisy` (prompt bị bỏ dấu) với phần còn lại, theo yêu cầu ở `docs/EXPERIMENTS.md`.
-  - **Kiểm tra:** `results/error_analysis.csv` 100 dòng có cột loại lỗi và cột `prompt_type`, kèm biểu đồ phân bố và một bảng hai dòng `noisy` / còn lại.
+  - **Kiểm tra:** `python scripts/error_analysis.py --config configs/e03_chunk_sentence_vihallu.yaml
+    --reference-run e03_chunk_aware` ✅ — `results/error_analysis.csv` 100 dòng có cột `nhan_loi`,
+    `cap_nham` và `prompt_type` ✅, `results/error_analysis.png` ✅, bảng hai dòng `noisy` / còn
+    lại ở mục "Phân tích theo loại prompt" `docs/EXPERIMENTS.md` ✅.
+
+  ### Task này để làm gì
+
+  Mọi bảng trước đều là số tổng. Task này mở 169 mẫu sai của E03 ra xem **sai kiểu gì**, và trả
+  lời một yêu cầu đã treo từ đầu ở `docs/EXPERIMENTS.md`: bộ phát hiện có đang phát hiện *ảo
+  giác* hay phát hiện *prompt bị bỏ dấu*.
+
+  ### Khớp lại mô hình, không nạp lại
+
+  Bộ phân loại chưa bao giờ được lưu, chỉ `y_pred` được lưu. Nên script **khớp lại** E03 đúng
+  quy trình của `run_chunk_aware.py` rồi **đối chiếu** với `y_pred` trong `runs.jsonl`:
+  **700/700 trùng**. E16 đã chứng minh đường ống tái lập từng chữ số; phép đối chiếu này giữ
+  cho mọi số ở dưới chắc chắn là về đúng mô hình trong Bảng 1.
+
+  ### Nhãn cấu trúc, không phải phân loại tay nhúng trong code
+
+  Bảy nhãn tính từ đại lượng **đo được** — cặp nhầm, số đoạn, trùng lặp từ vựng, độ dài phản
+  hồi, xác suất lớp đoán, biên giữa hai lớp đầu, `prompt_type` — với ngưỡng ghi cứng trong
+  `TAG_ORDER` và không tinh chỉnh. Lý do: một phân loại viết ra sau khi đọc 100 mẫu chỉ mô tả
+  *100 mẫu ấy*; nhãn cấu trúc thì chạy lại y hệt trên bất kỳ lượt nào. Mỗi mẫu mang **mọi**
+  nhãn khớp (cột `co_*`) và một nhãn chính theo thứ tự ưu tiên (cột `nhan_loi`): lý do từ đầu
+  vào đứng trước phán xét về độ tự tin.
+
+  `tests/test_error_analysis.py` có 16 ca: mỗi nhãn bắn đúng điều kiện của nó, nhãn chép-lại chỉ
+  áp cho nhãn ảo giác, thứ tự ưu tiên, và bộ lấy mẫu theo tỷ lệ cặp nhầm cộng đúng 100 với làm
+  tròn phần dư lớn nhất.
+
+  ### Kết quả — chi tiết ở Bảng 9 `docs/EXPERIMENTS.md`
+
+  **82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** Chỉ 16 % là bỏ sót ảo giác
+  thành `no`. Cùng ranh giới mà Bảng 1, 4 và 7 đều chỉ vào.
+
+| Nhãn cấu trúc | Có mặt / 169 |
+|---|---|
+| `tu_tin_sai` | 55 |
+| `phan_van` | 34 |
+| `chep_lai_ma_sai` | **23** |
+| `prompt_noisy` | 5 |
+| `mot_doan`, `dien_dat_lai`, `phan_hoi_ngan` | **0** |
+| `khac` | 69 |
+
+  Ba nhãn bằng 0 tự chúng là kết quả: phản hồi GPT-4o luôn dài và luôn chép nhiều, kể cả khi
+  trung thực.
+
+  **`noisy` so với còn lại: 0,7798 [0,5765–0,9151] so với 0,7558 [0,7235–0,7866], chênh +0,0239.**
+  Không có bằng chứng prompt bỏ dấu làm bộ phát hiện kém đi. Chỉ 23 mẫu nên khoảng tin cậy rộng
+  0,34 — trình bày phải kèm khoảng.
+
+  ### Đọc tay 8 mẫu để đặt tên hình dạng — năm hình dạng
+
+  1. **Ảo giác một mệnh đề trong phản hồi chép lại** (`chep_lai_ma_sai`, 23 mẫu, tự tin
+     0,90–0,97 là `no`): đặc trưng lấy trung bình trên toàn phản hồi nên một mệnh đề bịa giữa ba
+     câu chép bị trung bình hóa mất. Hạn chế **cấu trúc của cách tính**.
+  2. **Phản hồi trộn hai loại ảo giác dưới một nhãn**: bóp méo con số *và* bịa thêm lời khen
+     trong cùng một câu trả lời. Sơ đồ ba lớp ép một nhãn lên một phản hồi có hai lỗi.
+  3. **Phủ định lật ngược bằng chính từ ngữ ngữ cảnh**: chú ý cho biết mô hình *nhìn vào đâu*,
+     không cho biết nó *nói gì về chỗ đó*. Giới hạn bản chất của tín hiệu.
+  4. **Câu hỏi có tiền đề sai**: 13/700 câu hỏi test mang nguyên tiền tố **"Adversarial
+     Question:"** — prompt sinh dữ liệu lọt vào. Tỷ lệ sai 38,5 % so với 23,9 %, n = 13 nên chỉ
+     là quan sát. `meta.prompt_type` không bắt được loại này.
+  5. **Nhãn có thể tranh cãi**: "5 triệu năm" so với "6,5 triệu năm" mà nhãn là `no`. 2–3 trên 8
+     mẫu đọc; không suy ra tỷ lệ, nhưng lượt đọc 100 mẫu cần một cột "nhãn đúng hay mô hình đúng".
+
+  Ba hình dạng đầu chỉ cùng một hướng phát triển: **chấm theo đoạn của phản hồi**, và tách "nhìn
+  vào đâu" khỏi "nói gì".
+
+  ### Một phụ thuộc mới, khai vào nhóm `dev`
+
+  Biểu đồ là tiêu chí bắt buộc. `matplotlib` chưa có trong `pyproject.toml` nhưng dự án đã dùng
+  nó ở `UniversityRequirements/Reports/tao_hinh_giua_ky.py` — tức không phải thư viện mới, chỉ
+  chưa khai. Khai vào `[project.optional-dependencies] dev`, không vào lõi, vì thư viện và dịch
+  vụ không vẽ gì. Cài bằng `uv pip install matplotlib` — venv do `uv` quản, không có pip.
+
+  ### Việc còn lại là của người
+
+  Cột `ghi_chu_tay` trong CSV trống. Hai tác giả đọc 100 dòng, ghi vào đó hình dạng nào trong
+  năm hình dạng trên — hay hình dạng mới — và đánh dấu mẫu nào nhãn đáng ngờ. Đó là phần "LM"
+  của task, và nó không tự động hóa được.
+
 
 - [ ] **T35B** · M · Hai việc E12 để lại — **0 giây GPU**
   - **Kiểm tra:** hai dòng mới trong `results/runs.jsonl`, Bảng 4 `docs/EXPERIMENTS.md` có thêm
