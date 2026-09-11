@@ -2,19 +2,22 @@
 
 Trang `index.html` chạy được khi **chưa có ảnh nào**: cú vẽ bằng SVG thay chỗ — chỉ là chỗ
 giữ, trông "giả" là đúng. Cái nhìn thật đến từ ảnh GPT image sinh theo **ảnh cú đại bàng tham
-chiếu** (cú xám lông đốm, mắt cam rực, nền đen) — kèm ảnh đó vào phiên chat rồi dùng prompt
+chiếu** (`img/original.jpg`: cú xám lông vằn trắng-xám, mặt đối xứng, **mắt lam ngọc** rực, nền đen) — kèm ảnh đó vào phiên chat rồi dùng prompt
 dưới. Cách ghép ảnh tĩnh với hoạt ảnh: trang **vẽ đè cả mống mắt lẫn đồng tử** lên vùng mắt của
-ảnh, nên mắt trong ảnh tốt nhất là **đĩa cam trơn**; có điểm sáng nhỏ hay đồng tử vẫn được
-(script đo theo khung bao). `scripts/calibrate_owl.py` tìm hai đĩa cam, ghi tọa độ vào
+ảnh, nên mắt trong ảnh tốt nhất là **đĩa màu trơn** (lam ngọc theo ảnh gốc; cam cũng nhận với `--eye amber`); có điểm sáng nhỏ hay đồng tử vẫn được
+(script đo theo khung bao). `scripts/calibrate_owl.py` tìm hai đĩa màu, ghi tọa độ vào
 `static/owl.json`, nén PNG sang WebP.
 
 Giữ **cùng một nhân vật** qua các ảnh: sinh trong cùng phiên chat, tham chiếu ảnh trước.
 Nền **trong suốt** (PNG). Sau khi có ảnh:
 
 ```
-python scripts/calibrate_owl.py face owl-face.png
+python scripts/calibrate_owl.py face owl-face.png                      # mắt lam ngọc (mặc định)
 python scripts/calibrate_owl.py prof owl-prof.png --variant point owl-prof-point.png
 ```
+
+Bộ ảnh đầu tiên (11/09) sinh với mắt cam nên hiệu chuẩn bằng `--eye amber`; trang vẫn vẽ mắt
+lam ngọc đè lên. PNG gốc để trong thư mục này nhưng **gitignore** — chỉ WebP được commit.
 
 Hai lệnh trên ghi `img/owl-face.webp`, `img/owl-prof.webp`, `img/owl-prof-point.webp` và
 `owl.json`. Ảnh nào script báo "chỉ tìm thấy 0/1 đĩa hổ phách" là mắt chưa đủ đồng nhất — sinh
@@ -32,29 +35,27 @@ lại với prompt nhấn mạnh *solid flat orange discs, no pupil, no reflecti
 `branch` và `chunk-aware` không có mắt nên không qua script: tự nén sang WebP (bất kỳ công cụ
 nào, chất lượng ~85) và đặt đúng tên.
 
-## Prompt — kèm ảnh cú tham chiếu vào cùng phiên chat
+## Prompt — đính `original.jpg` vào cùng phiên chat làm ảnh tham chiếu
 
-Chọn một trong hai phong cách rồi giữ nguyên cho cả bộ: **(A) 3D siêu thực** giống ảnh tham
-chiếu, hoặc **(B) cú bông 3D** (plush, lông mềm, dễ thương nhưng vẫn ngầu). Thay `[STYLE]`
-bằng câu tương ứng:
-
-- A: *hyper-realistic 3D render, real feather detail, cinematic studio lighting, like the reference photo*
-- B: *high-end 3D plush toy render, soft dense felt fur, subtle stitching, cinematic lighting, still fierce*
+Giữ nguyên nhân vật qua cả bộ. Phong cách: **3D siêu thực như ảnh tham chiếu**.
 
 **owl-face.png** (2048 × 2048, nền trong suốt)
 
-> Use the attached owl photo as the character reference. Extreme close-up portrait of this
-> Eurasian eagle-owl, face filling the frame, grey-brown mottled feathers, dark and moody,
-> [STYLE]. The owl wears thin round wire-rim scientist glasses. Both eyes are large, perfectly
-> flat, solid glowing amber-orange discs with no pupil, no reflection and no iris texture. The
-> edges of the head fade out into transparency. Transparent background PNG, square.
+> Use the attached owl photo as the exact character reference: a grey owl with fine white-and-
+> grey streaked feathers, a perfectly symmetrical face, dark feathering around the eyes, and
+> intense glowing turquoise-cyan eyes. Extreme close-up portrait, face filling the frame,
+> hyper-realistic 3D render, real feather detail, dark moody studio lighting. The owl wears thin
+> round wire-rim scientist glasses. Both eyes are large, perfectly flat, solid glowing
+> turquoise discs (#2ce8d6) with no pupil, no reflection and no iris texture. The edges of the
+> head fade into transparency. Transparent background PNG, square.
 
 **owl-prof.png** (2048 × 2560, 4:5)
 
-> Same owl character as before, full body, perched upright on a bare oak branch, wearing thin
-> round wire-rim glasses and a small open white lab coat, wings folded, calm confident posture
-> like a professor about to lecture. Eyes are flat solid amber discs, no pupils. [STYLE].
-> Isolated subject on a transparent background, portrait 4:5.
+> Same grey owl character as the reference, full body, perched upright on a bare oak branch,
+> wearing thin round wire-rim glasses and a small open white lab coat with a pen in the pocket,
+> wings folded, calm confident posture like a professor about to lecture. Eyes are flat solid
+> glowing turquoise discs, no pupils. Hyper-realistic 3D render, dark moody lighting, isolated
+> subject on a transparent background, portrait 4:5.
 
 **owl-prof-point.png** (2048 × 2560)
 
@@ -64,19 +65,19 @@ bằng câu tương ứng:
 
 **branch.png** (2400 × 800)
 
-> A single bare oak branch with a few leaves, seen from the side, entering from the left and
-> ending in the middle, dark textured bark, [STYLE], isolated on a transparent background, no
-> owl, wide 3:1.
+> A single bare oak branch with a few dry leaves and lichen, seen from the side, entering from
+> the left and ending in the middle, dark textured bark, photorealistic, isolated on a
+> transparent background, no owl, wide 3:1.
 
 **chunk-aware.png** (1600 × 1000)
 
-> Flat editorial illustration on a near-black background with warm amber accents. A short
-> paragraph represented as four horizontal text-like bars stacked vertically; below them a
-> rounded speech bubble representing an answer. Dotted beams of amber light rise from the
-> bubble to the bars — most of the light lands on the second bar, which glows warm orange; the
-> others stay dim. Clean geometric style, no readable text, no people, 16:10.
+> Flat editorial illustration on a near-black background with turquoise and amber accents. A
+> short paragraph represented as four horizontal text-like bars stacked vertically; below them
+> a rounded speech bubble representing an answer. Dotted beams of light rise from the bubble to
+> the bars — most of the light lands on the second bar, which glows; the others stay dim. Clean
+> geometric style, no readable text, no people, 16:10.
 
 Ảnh cú tĩnh cho slide bảo vệ (không dùng trên trang, mắt bình thường có đồng tử):
 
-> Same owl professor with round glasses and a white lab coat, warm amber eyes with pupils,
-> looking straight at the camera, dark background, [STYLE].
+> Same grey owl professor with round glasses and a white lab coat, glowing turquoise eyes with
+> dark pupils, looking straight at the camera, dark background, hyper-realistic 3D render.
