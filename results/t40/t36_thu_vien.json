@@ -40,7 +40,7 @@
         "share": 0.2528475893718037
       }
     ],
-    "elapsed_ms": 1308.918597999991,
+    "elapsed_ms": 1175.0795639999865,
     "n_chunks": 4,
     "truncated": false,
     "nonfinite_layers": []
@@ -86,7 +86,7 @@
         "share": 0.2460686058768101
       }
     ],
-    "elapsed_ms": 252.65327900001466,
+    "elapsed_ms": 260.5575570000269,
     "n_chunks": 4,
     "truncated": false,
     "nonfinite_layers": []
@@ -132,7 +132,7 @@
         "share": 0.278578198213437
       }
     ],
-    "elapsed_ms": 259.392661999982,
+    "elapsed_ms": 257.9729660000112,
     "n_chunks": 4,
     "truncated": false,
     "nonfinite_layers": []
