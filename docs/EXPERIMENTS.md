@@ -1124,12 +1124,88 @@ cột mốc giảm đều trong khi cột chunk-aware nhảy lung tung.
 
 ### Bảng 6 — Đối chứng ngoài trên ViWikiFC (E15)
 
-| Phương pháp | Nguồn | Strict Acc | VC Acc | ER Acc | macro-F1 |
-|---|---|---|---|---|---|
-| InfoXLM large | Bài gốc ViWikiFC | — | — | — | 86,51 |
-| BM25 + InfoXLM large | Bài gốc ViWikiFC | 67,00 | — | — | — |
-| SemViQA | Bài SemViQA | 80,82 | 83,88 | 95,31 | — |
-| **Phương pháp của nhóm** | | | | | |
+Chạy 10/09/2026. Trích 20.919 mẫu trên Kaggle trong 138 phút, **0 lỗi, 0 tràn số**, 395 ms/mẫu.
+Chấm trên máy cá nhân, tập test **gốc** 2.091 mẫu.
+
+| Phương pháp | Nguồn | Đầu vào | Strict Acc | VC Acc | ER Acc | macro-F1 |
+|---|---|---|---|---|---|---|
+| InfoXLM large | Bài gốc ViWikiFC | **bằng chứng vàng** | — | — | — | 86,51 |
+| BM25 + InfoXLM large | Bài gốc ViWikiFC | câu BM25 xếp hạng 1 | 67,00 | — | — | — |
+| SemViQA | Bài SemViQA | câu do hệ tự truy xuất | 80,82 | 83,88 | 95,31 | — |
+| **Lookback gộp, Qwen2.5-7B** | nhóm | **toàn bộ `context`** | — | 70,73 | — | **70,66** [68,72–72,55] |
+| **Chunk-aware, Qwen2.5-7B** | nhóm | **toàn bộ `context`** | — | 70,59 | — | **70,54** [68,57–72,48] |
+
+Cột "VC Acc" của hai dòng nhóm là accuracy phân loại nhãn — thứ gần nhất với cách SemViQA định
+nghĩa VC Acc. Hai dòng nhóm không có Strict Acc và ER Acc vì phương pháp **không truy xuất
+bằng chứng**: mô hình đọc cả ngữ cảnh rồi phân loại, không chỉ ra câu nào.
+
+### Cột "đầu vào" mới là cột quyết định cách đọc bảng này
+
+Bốn dòng trên nhận **bốn thứ khác nhau**, và đó là lý do không đặt con số nào cạnh con số nào
+mà không nói rõ.
+
+InfoXLM ở dòng đầu được đưa **đúng câu bằng chứng vàng** rồi mới phân loại. Đó là bài toán dễ
+hơn hẳn bài toán mà hai dòng nhóm giải — đọc cả ngữ cảnh ba tới năm câu, tự tìm chỗ cần nhìn, rồi
+phân loại — nên 86,51 **không phải mốc để vượt**, nó là trần của một bài toán khác.
+
+Mốc so được nhất là **SemViQA VC Acc 83,88**: verdict accuracy của một hệ đầu cuối tự truy xuất
+rồi phân loại. Hai dòng nhóm đạt **70,73** và **70,59**. Khoảng cách **13 điểm**, và phải viết
+đúng như vậy.
+
+### Ba điều bảng này nói, kể cả phần bất lợi
+
+**1. Trên benchmark đã công bố, hướng nội tại thua bộ mã hóa tinh chỉnh 13 điểm.** Không có cách
+đọc nào làm khoảng cách đó biến mất. Nhưng có ba thứ làm nó **nhỏ hơn con số trần trụi**, và cả
+ba đều đo được chứ không phải chống chế:
+
+- **Tập test dùng lại 100 % ngữ cảnh của train**, đo ở T14. Một bộ mã hóa 560 triệu tham số tinh
+  chỉnh trọn vẹn **nhớ được** 1.481 ngữ cảnh; một hồi quy logistic 2.271 tham số trên đặc trưng
+  chú ý thì không. Rò rỉ vì thế nâng số của bên kia lên nhiều hơn nâng số của nhóm. Đây là lập
+  luận về **hướng** của sai lệch, không đo được độ lớn.
+- **Chỉ 67 % nhãn NEI thật sự là ngoại lai**, kappa 0,505, đo ở T13. Lớp `extrinsic` của nhóm
+  đạt 0,6962 dù một phần ba nhãn của nó lẫn sang loại khác.
+- **2.271 tham số so với 560 triệu**, không tinh chỉnh gì, chạy trên CPU. Đúng trục mà Bảng 8 đã
+  chỉ ra là trục duy nhất hướng nội tại thắng.
+
+**2. Chunk-aware bằng lookback gộp, lần thứ tư, và lần này đo chặt nhất.** Chênh **−0,0012** trên
+**2.091** mẫu test — gấp ba lần cỡ test của ViHallu — nên khoảng tin cậy hẹp lại còn 0,038 và hai
+khoảng chồng gần khít. Bộ này còn thiên vị chunk-aware nhẹ vì chỉ 5,9 % mẫu có một đoạn. Bốn phép
+đo độc lập, bốn bộ hoặc mô hình khác nhau, cùng một câu trả lời:
+
+| Phép đo | Khác biệt so với E03 | Chunk-aware − lookback |
+|---|---|---|
+| E03, ViHallu, 7B | — | +0,0116 |
+| E12, ViHallu, có bề mặt | thêm đặc trưng bề mặt | −0,0071 |
+| E13, ViHallu, Sailor2 | đổi họ mô hình | −0,0257 |
+| E14, ViHallu, 3B / 1.5B | đổi cỡ | −0,0128 / +0,0114 |
+| **E15, ViWikiFC, 7B** | **đổi bộ dữ liệu, split gốc** | **−0,0012** |
+
+**3. Hiệu chỉnh xác suất vẫn tốt ở bộ mới.** ECE 0,0503 và 0,0617 — cùng cỡ với 0,044 của E03
+và tốt hơn hẳn 0,097 của XLM-R ở Bảng 1. Đây là tính chất đi theo phương pháp qua các bộ, không
+phải may ở một bộ.
+
+### Cùng một đầu chú ý dẫn đầu trên cả ba bộ dữ liệu
+
+Với **cùng** mô hình Qwen2.5-7B, đầu mạnh nhất theo trọng số của bộ phân loại lookback:
+
+| Bộ dữ liệu | #1 | #2 | #3 |
+|---|---|---|---|
+| ViHallu (E02) | `l5_h7` | **`l17_h4`** | `l24_h3` |
+| ISE-DSC01 (E07) | **`l17_h4`** | `l18_h0` | `l5_h7` |
+| ViWikiFC (E15) | **`l17_h4`** | `l15_h5` | `l16_h2` |
+
+`l17_h4` nằm trong top-2 ở **cả ba** bộ; `l5_h7` ở top-3 của hai bộ. Ba bộ này khác nhau về
+miền, độ dài, cách gán nhãn và cả bài toán gốc — vậy mà cùng những đầu ấy mang tín hiệu.
+
+Ghép với E13 và E14, nơi **đổi mô hình** thì đầu dời chỗ hẳn (độ sâu trung bình 0,572 → 0,517 →
+0,458), mệnh đề trở nên sạch:
+
+> **Vị trí các đầu mang tín hiệu lookback là thuộc tính của mô hình đọc, không phải của bộ dữ
+> liệu.** Đổi bộ thì chúng đứng yên; đổi mô hình thì chúng dời chỗ.
+
+Đây là kết quả dùng được ngay cho T34 / E16: nếu đầu không đổi giữa các bộ thì bộ phân loại huấn
+luyện trên bộ này có cơ sở để chuyển sang bộ kia — và E16 đo chính điều đó.
+
 
 ### Bảng 7 — Khái quát hóa chéo bộ (E16)
 
