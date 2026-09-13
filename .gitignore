@@ -5,7 +5,9 @@ data/raw/*
 !data/raw/MANIFEST.md
 
 # --- Tài liệu hành chính và bài báo tham khảo: chỉ giữ trên máy ---
-UniversityRequirements/
+# Riêng bộ slide trình bày thì commit (git không cho gỡ bỏ loại trừ cho thư mục con nếu cha bị loại cả thư mục, nên dùng /*)
+UniversityRequirements/*
+!UniversityRequirements/Slides/
 reference_papers/
 
 # --- Kết quả nặng ---
