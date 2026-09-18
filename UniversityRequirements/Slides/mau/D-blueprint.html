@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mẫu D-blueprint — Blueprint — bản vẽ kỹ thuật</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+
+  :root { --bg:#0d2240;--bg2:#12294b;--card:#143058;--ink:#e3eeff;--muted:#8fb0d6;--line:#2a4f80;--accent:#6cc4ff;--accent2:#ffd166;--ok:#7be3a4;--warn:#ffd166;--bad:#ff8a80;--display:'Sora',system-ui,sans-serif;--body:'Sora',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace; --ease: cubic-bezier(.16,1,.3,1); --stage-bg: #000; --slide-bg: var(--bg); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: var(--body); color: var(--ink); }
+  .slide { background: var(--bg); color: var(--ink); padding: 120px 120px 100px; transition: opacity .55s var(--ease), transform .55s var(--ease); transform: translateX(60px); }
+  .slide.active { transform: none; }
+  .slide.left { transform: translateX(-60px); }
+  h1 { font-size: 88px; line-height: 1.04; } h2 { font-size: 64px; line-height: 1.08; margin-bottom: 28px; }
+  h3 { font-size: 30px; font-weight: 700; }
+  p { font-size: 28px; line-height: 1.5; }
+  .muted { color: var(--muted); }
+  .eyebrow { font-size: 18px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; margin-bottom: 22px; }
+  .src { position:absolute; left:120px; bottom:42px; font-size: 17px; color: var(--muted); }
+  .page { position:absolute; right:120px; bottom:42px; font-size: 18px; color: var(--muted); }
+  .num-big { font-size: 190px; line-height: 1; }
+  .frame { position: relative; }
+  /* reveal on slide enter (play once) and stepped fragments */
+  .in-up { opacity:0; transform: translateY(28px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .slide.active .in-up { opacity:1; transform:none; }
+  .d1 { transition-delay:.15s } .d2 { transition-delay:.3s } .d3 { transition-delay:.45s } .d4 { transition-delay:.6s } .d5 { transition-delay:.75s } .d6 { transition-delay:.9s }
+  .f { opacity:0; transform: translateY(18px); transition: opacity .5s var(--ease), transform .5s var(--ease); }
+  .f.on { opacity:1; transform:none; }
+  .bars { display:flex; flex-direction:column; gap: 18px; }
+  .bar { display:grid; grid-template-columns: 300px 1fr 120px; gap: 20px; align-items:center; font-size: 24px; }
+  .bar .track { height: 22px; background: var(--bg2); border-radius: 11px; overflow: hidden; }
+  .bar .fill { height:100%; width:0; background: var(--accent); border-radius: 11px; transition: width 1.1s var(--ease); }
+  .slide.active .bar .fill { width: var(--w); }
+  .bar.us .fill { background: var(--accent2); }
+  .bar .v { text-align:right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .deck-controls { font-family: var(--body); font-size: 13px; color: #aaa; background: rgba(0,0,0,.5); padding: 6px 14px; border-radius: 999px; }
+  /* svg */
+  svg.fig text { font-family: var(--body); fill: var(--ink); }
+  svg.fig .mu { fill: var(--muted); }
+  .beam { stroke: var(--accent); stroke-width: 3; fill: none; stroke-dasharray: 8 12; animation: dash 1.3s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -40; } }
+  .pulse { animation: pulse 2.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse { 50% { transform: scale(1.12); opacity: .7; } }
+  .steps { display:grid; grid-template-columns: repeat(5,1fr); gap: 22px; margin-top: 30px; }
+  .step { padding: 28px 28px 30px; min-height: 250px; }
+  .step .n { width: 48px; height: 48px; border-radius: 50%; display:grid; place-items:center; font-weight: 800; background: var(--accent); color: var(--bg); margin-bottom: 16px; font-size: 22px; }
+  .step h3 { font-size: 26px; margin-bottom: 8px; } .step p { font-size: 20px; color: var(--muted); }
+  .owl { position:absolute; right: 140px; bottom: 0; height: 900px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.45)); }
+  .eyes-glow { position:absolute; right:140px; bottom:0; height:900px; pointer-events:none; }
+  .quote { font-family: var(--display); font-size: 120px; line-height: 1.05; font-weight: 800; }
+
+
+  .slide::before { content:""; position:absolute; inset:0; background-image: linear-gradient(rgba(108,196,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(108,196,255,.08) 1px, transparent 1px), linear-gradient(rgba(108,196,255,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(108,196,255,.18) 1px, transparent 1px); background-size: 40px 40px, 40px 40px, 200px 200px, 200px 200px; pointer-events:none; }
+  .corner { position:absolute; width:40px; height:40px; border: 2px solid var(--accent); opacity:.7; }
+  .corner.tl { left:60px; top:60px; border-right:0; border-bottom:0; } .corner.tr { right:60px; top:60px; border-left:0; border-bottom:0; }
+  .corner.bl { left:60px; bottom:60px; border-right:0; border-top:0; } .corner.br { right:60px; bottom:60px; border-left:0; border-top:0; }
+  h1, h2 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; }
+  h1 em, h2 em { font-style: normal; color: var(--accent); }
+  .eyebrow, .src, .page, .label { font-family: var(--mono); }
+  .eyebrow { color: var(--accent2); }
+  .num-big { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+  .frame { background: rgba(20,48,88,.75); border: 1px solid var(--line); border-radius: 6px; padding: 34px 40px; }
+  .dim { stroke: var(--accent2); stroke-width: 1.5; fill:none; }
+ 
+</style></head><body>
+<div class="deck-viewport"><div class="deck-stage">
+<section class="slide" data-notes="Bìa. Mắt cú sáng dần, tên đề tài hiện từng dòng.">
+  
+  <i class='corner tl'></i><i class='corner tr'></i><i class='corner bl'></i><i class='corner br'></i>
+  <div class="eyebrow in-up">Khóa luận tốt nghiệp · Khoa học dữ liệu · ĐH Công nghiệp TP.HCM</div>
+  <h1 class="in-up d1" style="max-width:1000px;font-size:74px">Phát hiện ảo giác cho LLM tăng cường truy xuất tiếng Việt <em>dựa trên tín hiệu chú ý nội tại</em></h1>
+  <p class="in-up d2 muted" style="margin-top:36px;font-size:26px">Nguyễn Ngọc Lân · Nguyễn Tấn Minh &nbsp;·&nbsp; GVHD ThS. Trương Vĩnh Linh</p>
+  <img class="owl in-up d3" src="../img/owl-prof.webp" alt="">
+  <div class="page">01</div>
+</section>
+
+<section class="slide" data-notes="Ẩn dụ: chú ý là ánh nhìn. Tia chảy lặp vô hạn — hoạt ảnh nền/ẩn dụ.">
+  
+  <i class='corner tl'></i><i class='corner tr'></i><i class='corner bl'></i><i class='corner br'></i>
+  <div class="eyebrow in-up">Nền tảng · hoạt ảnh lặp</div>
+  <h2 class="in-up d1">Một token trả lời <em>nhìn về đâu</em> trong ngữ cảnh?</h2>
+  <svg class="fig in-up d2" viewBox="0 0 1680 520" style="width:1680px;height:520px;overflow:visible">
+    <g class="beam"><path d="M1500 420 C 1400 120, 700 60, 195 300"/></g>
+    <g class="beam" style="opacity:.55"><path d="M1500 420 C 1420 180, 900 120, 695 300"/></g>
+    <g class="beam" style="opacity:.35"><path d="M1500 420 C 1460 260, 1250 200, 1195 300"/></g>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="195" y="345" text-anchor="middle" font-size="24">đoạn 1</text><rect x="330" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="445" y="345" text-anchor="middle" font-size="24">đoạn 2</text><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="695" y="345" text-anchor="middle" font-size="24">đoạn 3</text><rect x="830" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="945" y="345" text-anchor="middle" font-size="24">đoạn 4</text><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="1195" y="345" text-anchor="middle" font-size="24">đoạn 5</text>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".18"/><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".55"/>
+    <circle class="pulse" cx="1500" cy="430" r="22" fill="var(--accent)"/><text x="1500" y="492" text-anchor="middle" font-size="22" class="mu">token đang chấm</text>
+    <text x="80" y="270" font-size="22" class="mu">ngữ cảnh đã truy xuất — chia theo câu</text>
+    <text x="1500" y="270" text-anchor="middle" font-size="22" class="mu">câu trả lời</text>
+  </svg>
+  <p class="in-up d3" style="max-width:1200px;margin-top:10px">Tỷ trọng chú ý rơi vào <b>từng đoạn</b> — đây là tín hiệu đề tài khai thác, không cần LLM giám khảo.</p>
+  <div class="src">Cơ chế đo ở E06: đoạn được nhìn nhiều nhất trùng đoạn bằng chứng 87,8 %</div><div class="page">02</div>
+</section>
+
+<section class="slide" data-notes="Cơ chế 5 bước. Dựng lên một lần rồi dừng — hoạt ảnh cơ chế.">
+  
+  <i class='corner tl'></i><i class='corner tr'></i><i class='corner bl'></i><i class='corner br'></i>
+  <div class="eyebrow in-up">Phương pháp · dựng một lần rồi dừng</div>
+  <h2 class="in-up d1">Một lượt đọc, <em>không sinh token mới</em></h2>
+  <div class="steps">
+    <div class="frame step in-up d1"><div class="n">1</div><h3>Ghép prompt</h3><p>Chat template Qwen, chốt một lần ở T07.</p></div>
+    <div class="frame step in-up d2"><div class="n">2</div><h3>Đọc lại</h3><p>Qwen2.5-7B NF4 · float16 · bỏ lớp 27.</p></div>
+    <div class="frame step in-up d3"><div class="n">3</div><h3>Hook trong lớp</h3><p>Cộng chú ý theo đoạn, xóa ma trận ngay.</p></div>
+    <div class="frame step in-up d4"><div class="n">4</div><h3>Đặc trưng</h3><p>Tỷ lệ gộp + 5 đại lượng hình dạng.</p></div>
+    <div class="frame step in-up d5"><div class="n">5</div><h3>Hồi quy</h3><p><b>579 tham số</b>, khớp vài giây trên CPU.</p></div>
+  </div>
+  <div class="bars in-up d6" style="margin-top:44px;max-width:1300px">
+    <div class="bar"><span>Giữ cả 28 lớp (ngây thơ)</span><div class="track"><div class="fill" style="--w:100%;background:var(--bad)"></div></div><span class="v" style="color:var(--bad)">26 GB</span></div>
+    <div class="bar us"><span>Hook, giữ 1 lớp</span><div class="track"><div class="fill" style="--w:32%"></div></div><span class="v">8,3 GB</span></div>
+  </div>
+  <div class="src">Nguồn: CLAUDE.md §5; T07–T08 — ma trận chú ý 0,94 GB một lớp ở 4.096 token</div><div class="page">03</div>
+</section>
+
+<section class="slide" data-notes="Số neo + cột mọc một lần. Bấm phím để hiện hai dòng cuối.">
+  
+  <i class='corner tl'></i><i class='corner tr'></i><i class='corner bl'></i><i class='corner br'></i>
+  <div class="eyebrow in-up">Kết quả · CH1</div>
+  <div style="display:grid;grid-template-columns:1fr 1.25fr;gap:60px;align-items:center;margin-top:10px">
+    <div>
+      <div class="num-big in-up d1"><span data-count="0.757" data-dec="3">0</span></div>
+      <p class="in-up d2 muted" style="font-size:24px">macro-F1 chunk-aware trên ViHallu, khoảng tin cậy [0,724 – 0,789]</p>
+      <p class="f" style="margin-top:20px">ECE <b style="color:var(--accent)">0,044</b> — hiệu chỉnh xác suất tốt nhất bảng</p>
+      <p class="f" style="margin-top:8px">579 tham số so với 560 triệu của XLM-R</p>
+    </div>
+    <div class="bars in-up d2">
+      <div class="bar"><span>Baseline bề mặt</span><div class="track"><div class="fill" style="--w:65.6%;background:var(--muted)"></div></div><span class="v">0,656</span></div>
+      <div class="bar"><span>Gemini giám khảo</span><div class="track"><div class="fill" style="--w:66.4%;background:var(--muted)"></div></div><span class="v">0,664</span></div>
+      <div class="bar"><span>PhoBERT-large</span><div class="track"><div class="fill" style="--w:74.9%;background:var(--muted)"></div></div><span class="v">0,749</span></div>
+      <div class="bar"><span>XLM-R-large</span><div class="track"><div class="fill" style="--w:77.6%;background:var(--muted)"></div></div><span class="v">0,776</span></div>
+      <div class="bar"><span>Lookback gộp 7B</span><div class="track"><div class="fill" style="--w:74.5%"></div></div><span class="v">0,745</span></div>
+      <div class="bar us"><span><b>Chunk-aware 7B</b></span><div class="track"><div class="fill" style="--w:75.7%"></div></div><span class="v">0,757</span></div>
+    </div>
+  </div>
+  <div class="src">Nguồn: Bảng 1, docs/EXPERIMENTS.md — test 700 mẫu, khoảng tin cậy rộng ≈ 0,065</div><div class="page">04</div>
+</section>
+
+<section class="slide" data-notes="Slide chuyển phần / kết. Một câu, cú.">
+  
+  <i class='corner tl'></i><i class='corner tr'></i><i class='corner bl'></i><i class='corner br'></i>
+  <div style="display:grid;grid-template-columns:1fr 700px;align-items:center;height:100%">
+    <div><div class="eyebrow in-up">Phần 6 · Kết quả</div><div class="quote in-up d1">Mắt <em>không</em><br>nói dối.</div><p class="in-up d2 muted" style="margin-top:30px">Năm phép đo độc lập, một câu trả lời — và một điều chỉ tỷ lệ gộp không cho được.</p></div>
+    <img class="in-up d2" src="../img/owl-prof-wave.webp" alt="" style="height:760px;justify-self:end;filter:drop-shadow(0 30px 50px rgba(0,0,0,.45))">
+  </div>
+  <div class="page">05</div>
+</section>
+</div></div>
+
+<div class="deck-controls">← → hoặc Space · phím hiện từng bước · F toàn màn hình</div>
+<script>
+(function(){
+  const stage=document.querySelector('.deck-stage'), slides=[...document.querySelectorAll('.slide')]; let i=0;
+  function fit(){ const k=Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform=`translate(${(innerWidth-1920*k)/2}px, ${(innerHeight-1080*k)/2}px) scale(${k})`; }
+  addEventListener('resize',fit); fit();
+  function fmt(v,d){ return v.toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  const ALL=new URLSearchParams(location.search).has('all');
+  function count(el){ const to=parseFloat(el.dataset.count), d=+(el.dataset.dec||0), t0=performance.now(); if(ALL){ el.textContent=fmt(to,d); return; } (function s(t){ const k=Math.min(1,(t-t0)/1400), e=1-Math.pow(1-k,3); el.textContent=fmt(to*e,d); if(k<1) requestAnimationFrame(s); })(t0); }
+  function show(n){ slides.forEach((s,j)=>{ s.classList.toggle('active',j===n); s.classList.toggle('left',j<n); if(j===n){ s.querySelectorAll('.f').forEach(f=>f.classList.remove('on')); s.querySelectorAll('[data-count]').forEach(c=>{c.textContent='0'; setTimeout(()=>count(c),350);}); } }); i=n; location.hash=n+1; }
+  function next(){ const f=slides[i].querySelector('.f:not(.on)'); if(f){ f.classList.add('on'); return; } if(i<slides.length-1) show(i+1); }
+  function prev(){ if(i>0) show(i-1); }
+  addEventListener('keydown',e=>{ if(['ArrowRight',' ','Enter','PageDown'].includes(e.key)){e.preventDefault();next();} else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev();} else if(e.key==='f'||e.key==='F'){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); } });
+  addEventListener('click',e=>{ if(e.clientX>innerWidth*.2) next(); else prev(); });
+  const h=parseInt(location.hash.slice(1)||'1',10); show(Math.max(0,Math.min(slides.length-1,h-1)));
+  if(new URLSearchParams(location.search).has('all')) document.querySelectorAll('.f').forEach(f=>f.classList.add('on'));
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vihallulens — trình bày với GVHD (v2, Đêm cú)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+
+  :root { --bg:#0b0a0d; --bg2:#14121a; --card:#1b1822; --ink:#efe7d8; --muted:#a79d8c; --line:#2d2936; --accent:#2ce8d6; --accent2:#f0a23a; --violet:#b48cff;
+          --ok:#7bcf95; --warn:#e9be4c; --bad:#ff7a70; --display:'Be Vietnam Pro',system-ui,sans-serif; --body:'Be Vietnam Pro',system-ui,sans-serif;
+          --ease: cubic-bezier(.16,1,.3,1); --stage-bg:#000; --slide-bg:var(--bg); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: var(--body); color: var(--ink); }
+  .slide.active { display:flex; flex-direction:column; justify-content:center; }
+  .slide { background: var(--bg); color: var(--ink); padding: 110px 120px 96px; transition: opacity .55s var(--ease), transform .55s var(--ease); transform: translateX(60px); }
+  .slide.active { transform:none; } .slide.left { transform: translateX(-60px); }
+  .slide::before { content:""; position:absolute; inset:0; background: radial-gradient(ellipse at 50% 20%, rgba(44,232,214,.09), transparent 55%), radial-gradient(ellipse at 88% 90%, rgba(240,162,58,.07), transparent 50%); pointer-events:none; }
+  .slide.deep::before { background: radial-gradient(ellipse at 50% 40%, rgba(44,232,214,.14), transparent 60%); }
+  h1 { font-size: 84px; line-height:1.05; font-weight:800; letter-spacing:-.03em; } h2 { font-size: 62px; line-height:1.08; font-weight:800; letter-spacing:-.03em; margin-bottom: 26px; }
+  h3 { font-size: 30px; font-weight:700; } p { font-size: 28px; line-height:1.5; }
+  em { font-style:normal; color: var(--accent); } .amber { color: var(--accent2); } .muted { color: var(--muted); }
+  .eyebrow { font-size:18px; letter-spacing:.16em; text-transform:uppercase; font-weight:700; color: var(--accent2); margin-bottom: 20px; }
+  .src { position:absolute; left:120px; bottom:40px; font-size:17px; color: var(--muted); max-width:1300px; z-index:3; } .page { position:absolute; right:120px; bottom:40px; font-size:18px; color: var(--muted); font-variant-numeric: tabular-nums; z-index:3; }
+  .owl-corner { position:absolute; right:110px; bottom:84px; height:210px; z-index:2; }
+  .num-big { font-size: 190px; line-height:1; font-weight:800; letter-spacing:-.04em; color: var(--accent); text-shadow: 0 0 50px rgba(44,232,214,.3); font-variant-numeric: tabular-nums; }
+  .frame { background: var(--card); border:1px solid var(--line); border-radius: 22px; padding: 32px 38px; box-shadow: 0 20px 60px -30px rgba(0,0,0,.9); position:relative; }
+  .tag { display:inline-block; font-size:15px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:6px 14px; border-radius:999px; }
+  .tag.no { background: rgba(123,207,149,.15); color: var(--ok); } .tag.intr { background: rgba(233,190,76,.15); color: var(--warn); } .tag.extr { background: rgba(255,122,112,.15); color: var(--bad); }
+  .cols { display:grid; gap: 48px; align-items:center; } .c2 { grid-template-columns: 1fr 1fr; } .c12 { grid-template-columns: 1fr 1.3fr; } .c21 { grid-template-columns: 1.3fr 1fr; } .c3 { grid-template-columns: repeat(3,1fr); }
+  ul { padding-left: 1.1em; } li { margin-bottom: .4em; font-size: 26px; line-height:1.45; }
+  table { border-collapse: collapse; width:100%; font-size: 24px; } th, td { text-align:left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size:15px; text-transform:uppercase; letter-spacing:.1em; color: var(--muted); white-space:nowrap; } td.r, th.r { text-align:right; font-variant-numeric: tabular-nums; }
+  tr.us td { background: rgba(44,232,214,.08); font-weight:600; } td.nw { white-space:nowrap; }
+  /* motion */
+  .in-up { opacity:0; transform: translateY(28px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .slide.active .in-up { opacity:1; transform:none; }
+  .d1{transition-delay:.15s}.d2{transition-delay:.3s}.d3{transition-delay:.45s}.d4{transition-delay:.6s}.d5{transition-delay:.75s}.d6{transition-delay:.9s}.d7{transition-delay:1.05s}.d8{transition-delay:1.2s}
+  .f { opacity:0; transform: translateY(18px); transition: opacity .5s var(--ease), transform .5s var(--ease); } .f.on { opacity:1; transform:none; }
+  .bars { display:flex; flex-direction:column; gap:16px; } .bar { display:grid; grid-template-columns: 330px 1fr 120px; gap:18px; align-items:center; font-size:24px; }
+  .bar .track { height:22px; background: var(--bg2); border-radius:11px; overflow:hidden; } .bar .fill { height:100%; width:0; background: var(--muted); border-radius:11px; transition: width 1.1s var(--ease); }
+  .slide.active .bar .fill { width: var(--w); } .bar.us .fill { background: var(--accent); } .bar.hot .fill { background: var(--accent2); } .bar.bad .fill { background: var(--bad); }
+  .bar .v { text-align:right; font-variant-numeric: tabular-nums; font-weight:700; }
+  svg.fig { display:block; overflow:visible; } svg.fig text { font-family: var(--body); fill: var(--ink); } svg.fig .mu { fill: var(--muted); }
+  svg.fig .box { fill: var(--card); stroke: var(--line); stroke-width:2; } svg.fig .arrow { stroke: var(--muted); stroke-width:3; fill:none; marker-end:url(#ah); }
+  .beam { stroke: var(--accent); stroke-width:3; fill:none; stroke-dasharray: 8 12; animation: dash 1.3s linear infinite; } @keyframes dash { to { stroke-dashoffset:-40; } }
+  .pulse { animation: pulse 2s ease-in-out infinite; transform-origin:center; transform-box: fill-box; } @keyframes pulse { 50% { transform:scale(1.15); opacity:.7; } }
+  .blink { animation: blink 5s infinite; } @keyframes blink { 0%,92%,100% { transform:scaleY(1);} 95% { transform:scaleY(.05);} }
+  .glow { animation: glow 3.4s ease-in-out infinite; } @keyframes glow { 50% { opacity:.55; } }
+  .grow { transform: scaleY(0); transform-origin: bottom; transition: transform 1s var(--ease); } .slide.active .grow { transform: scaleY(1); }
+  .growx { transform: scaleX(0); transform-origin: left; transition: transform 1.1s var(--ease); } .slide.active .growx { transform: scaleX(1); }
+  .draw { stroke-dasharray: 2000; stroke-dashoffset: 2000; transition: stroke-dashoffset 1.6s var(--ease); } .slide.active .draw { stroke-dashoffset: 0; }
+  .fade-once { opacity:0; transition: opacity 1s var(--ease); } .slide.active .fade-once { opacity:1; }
+  .float { animation: float 6s ease-in-out infinite; } @keyframes float { 50% { transform: translateY(-14px); } }
+  .steps { display:grid; grid-template-columns: repeat(5,1fr); gap:20px; } .step { padding: 26px 26px 28px; min-height: 236px; }
+  .step .n { width:46px; height:46px; border-radius:50%; display:grid; place-items:center; font-weight:800; background: var(--accent); color: var(--bg); margin-bottom:14px; font-size:22px; }
+  .step h3 { font-size:25px; margin-bottom:8px; } .step p { font-size:20px; color: var(--muted); }
+  .kpi { display:grid; grid-template-columns: repeat(4,1fr); gap:22px; } .kpi .k { background: var(--card); border:1px solid var(--line); border-radius:20px; padding: 24px 28px; }
+  .kpi .v { font-size:58px; font-weight:800; color: var(--accent); letter-spacing:-.03em; font-variant-numeric: tabular-nums; line-height:1.1; } .kpi .l { font-size:19px; color: var(--muted); margin-top:6px; }
+  .chunk { border-radius: 8px; padding: 2px 8px; }
+  .road { display:flex; gap:12px; } .road div { flex:1; padding: 18px 16px; border-radius: 14px; background: var(--card); border:1px solid var(--line); font-size:20px; font-weight:600; text-align:center; }
+  .road div b { display:block; font-size: 30px; color: var(--accent); margin-bottom:4px; } .road div.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(44,232,214,.25); }
+  .quote { font-size: 118px; line-height:1.04; font-weight:800; letter-spacing:-.03em; }
+  #motes, #motes2 { position:absolute; inset:0; pointer-events:none; }
+  .deck-controls { font-family: var(--body); font-size:13px; color:#bbb; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius:999px; transition: opacity .5s; } .deck-controls.hide { opacity:0; }
+  #notes { position:fixed; right:0; top:0; bottom:0; width:440px; background:#1d1a17; color:#efe7d8; padding:26px; font-size:17px; line-height:1.55; overflow:auto; display:none; z-index:2000; border-left:2px solid var(--accent2); }
+  #notes.on { display:block; } #notes h4 { color: var(--accent2); margin-bottom: 10px; }
+  html.all * { transition-duration:0s !important; transition-delay:0s !important; } html.all #help { display:none; }
+  #progress { position:fixed; left:0; top:0; height:4px; background: linear-gradient(90deg, var(--accent2), var(--accent)); width:0; z-index:1500; transition: width .3s; }
+
+</style></head><body>
+<div class="deck-viewport"><div class="deck-stage">
+<section class="slide " data-notes="Chào thầy và các bạn. Bộ slide này đi theo tám chương của quyển báo cáo. Khoảng 25 phút.">
+<canvas id="motes"></canvas>
+<div style="display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;height:100%">
+  <div>
+    <div class="eyebrow in-up">Khóa luận tốt nghiệp · Khoa học dữ liệu · Trường ĐH Công nghiệp TP.HCM</div>
+    <h1 class="in-up d1" style="font-size:66px">Nghiên cứu và xây dựng hệ thống phát hiện ảo giác cho mô hình ngôn ngữ lớn tăng cường truy xuất tiếng Việt <em>dựa trên tín hiệu chú ý nội tại</em></h1>
+    <p class="in-up d3 muted" style="margin-top:34px;font-size:26px">Nguyễn Ngọc Lân · 22635801 &nbsp;&nbsp; Nguyễn Tấn Minh · 22643511<br>GVHD: ThS. Trương Vĩnh Linh &nbsp;·&nbsp; 2026</p>
+  </div>
+  <div style="position:relative;height:900px"><img class="in-up d2 float" src="img/owl-prof.webp" alt="" style="height:900px;position:absolute;right:0;bottom:-60px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.7))"></div>
+</div><div class="page">01 / 36</div></section>
+<section class="slide deep" data-notes="Ý tưởng một câu. Bấm hai lần.">
+<div style="display:grid;place-items:center;height:100%;text-align:center">
+  <div><h1 class="in-up" style="font-size:104px;max-width:1500px">Mô hình có thể bịa chữ.<br><span class="f" style="color:var(--accent)">Ánh mắt của nó thì không.</span></h1>
+  <p class="f muted" style="font-size:30px;max-width:1300px;margin:34px auto 0">Khi LLM đọc lại câu trả lời cùng ngữ cảnh, chỗ nó <b style="color:var(--ink)">nhìn vào</b> tiết lộ câu trả lời có bám ngữ cảnh hay không — không cần LLM giám khảo.</p></div>
+</div><div class="page">02 / 36</div></section>
+<section class="slide " data-notes="Lộ trình. Phần kết quả (chương 7) là phần dài nhất.">
+<div class="eyebrow in-up">Lộ trình</div>
+<h2 class="in-up">Bảy phần — bám tám chương của quyển báo cáo</h2>
+<div style="margin-top:50px"><div class="road"><div class="in-up d1 "><b>1</b>Bài toán</div><div class="in-up d2 "><b>2</b>Nền tảng</div><div class="in-up d3 "><b>3</b>Yêu cầu & dữ liệu</div><div class="in-up d4 "><b>4</b>Phương pháp</div><div class="in-up d5 "><b>5</b>Hiện thực</div><div class="in-up d6 "><b>6</b>Kết quả</div><div class="in-up d7 "><b>7</b>Kết luận</div></div></div>
+<div class="cols c3" style="margin-top:60px">
+  <div class="frame in-up d6"><h3 style="color:var(--accent2)">Chương 1–2</h3><p class="muted" style="font-size:22px">Giới thiệu · Cơ sở lý thuyết</p></div>
+  <div class="frame in-up d7"><h3 style="color:var(--accent)">Chương 3–6</h3><p class="muted" style="font-size:22px">Yêu cầu · Thiết kế · Giải pháp · Hiện thực</p></div>
+  <div class="frame in-up d8"><h3 style="color:var(--violet)">Chương 7–8</h3><p class="muted" style="font-size:22px">Đánh giá, thảo luận · Kết luận</p></div>
+</div><div class="page">03 / 36</div></section>
+<section class="slide " data-notes="Sơ đồ 4 khối dựng lên. Dòng dữ liệu chảy.">
+<div class="eyebrow in-up">Phần 1 · Bài toán — Chương 1</div>
+<h2 class="in-up">Hệ RAG làm gì</h2>
+<svg class="fig in-up d2" viewBox="0 0 1680 330" style="width:1680px;height:330px"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <g class="in-up d1"><rect class="box" x="10" y="70" width="260" height="120" rx="22"/><text x="140" y="122" text-anchor="middle" font-size="28" font-weight="700">Câu hỏi</text><text x="140" y="160" text-anchor="middle" font-size="20" class="mu">người dùng</text></g>
+  <path class="arrow draw" d="M275 130 H 350"/>
+  <g class="in-up d2"><rect class="box" x="360" y="70" width="320" height="120" rx="22"/><text x="520" y="122" text-anchor="middle" font-size="28" font-weight="700">Truy xuất</text><text x="520" y="160" text-anchor="middle" font-size="20" class="mu">BM25 / vector → ngữ cảnh</text></g>
+  <path class="arrow draw" d="M685 130 H 760"/>
+  <g class="in-up d3"><rect class="box" x="770" y="70" width="320" height="120" rx="22" /><text x="930" y="122" text-anchor="middle" font-size="28" font-weight="700">LLM sinh</text><text x="930" y="160" text-anchor="middle" font-size="20" class="mu">đọc ngữ cảnh, viết trả lời</text></g>
+  <path class="arrow draw" d="M1095 130 H 1170"/>
+  <g class="in-up d4"><rect class="box" x="1180" y="70" width="320" height="120" rx="22"/><text x="1340" y="122" text-anchor="middle" font-size="28" font-weight="700">Câu trả lời</text><text x="1340" y="160" text-anchor="middle" font-size="20" class="mu">trôi chảy… đúng không?</text></g>
+  <g class="beam" style="opacity:.5"><path d="M300 100 H 340"/><path d="M710 100 H 750"/><path d="M1120 100 H 1160"/></g>
+  
+</svg>
+<p class="in-up d6 muted" style="margin-top:30px;max-width:1400px">Truy xuất tài liệu liên quan, rồi để mô hình ngôn ngữ đọc và viết câu trả lời. Đây là cách phổ biến nhất để LLM trả lời bằng tri thức riêng của tổ chức.</p>
+<div class="src">RAG = Retrieval-Augmented Generation</div><div class="page">04 / 36</div></section>
+<section class="slide " data-notes="Điểm đỏ nhấp. Bấm hai lần cho hai loại.">
+<div class="eyebrow in-up">Phần 1 · Bài toán</div>
+<h2 class="in-up">Ảo giác chui vào ở bước sinh — và trông <em>rất</em> trôi chảy</h2>
+<svg class="fig in-up d2" viewBox="0 0 1680 330" style="width:1680px;height:330px"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <g class="in-up d1"><rect class="box" x="10" y="70" width="260" height="120" rx="22"/><text x="140" y="122" text-anchor="middle" font-size="28" font-weight="700">Câu hỏi</text><text x="140" y="160" text-anchor="middle" font-size="20" class="mu">người dùng</text></g>
+  <path class="arrow draw" d="M275 130 H 350"/>
+  <g class="in-up d2"><rect class="box" x="360" y="70" width="320" height="120" rx="22"/><text x="520" y="122" text-anchor="middle" font-size="28" font-weight="700">Truy xuất</text><text x="520" y="160" text-anchor="middle" font-size="20" class="mu">BM25 / vector → ngữ cảnh</text></g>
+  <path class="arrow draw" d="M685 130 H 760"/>
+  <g class="in-up d3"><rect class="box" x="770" y="70" width="320" height="120" rx="22" style="stroke:var(--bad);stroke-width:3"/><text x="930" y="122" text-anchor="middle" font-size="28" font-weight="700">LLM sinh</text><text x="930" y="160" text-anchor="middle" font-size="20" class="mu">đọc ngữ cảnh, viết trả lời</text></g>
+  <path class="arrow draw" d="M1095 130 H 1170"/>
+  <g class="in-up d4"><rect class="box" x="1180" y="70" width="320" height="120" rx="22"/><text x="1340" y="122" text-anchor="middle" font-size="28" font-weight="700">Câu trả lời</text><text x="1340" y="160" text-anchor="middle" font-size="20" class="mu">trôi chảy… đúng không?</text></g>
+  <g class="beam" style="opacity:.5"><path d="M300 100 H 340"/><path d="M710 100 H 750"/><path d="M1120 100 H 1160"/></g>
+  <g class="in-up d5"><circle class="pulse" cx="930" cy="70" r="16" fill="var(--bad)"/><path d="M930 195 v 50" stroke="var(--bad)" stroke-width="3" stroke-dasharray="6 6"/><rect x="740" y="250" width="380" height="60" rx="14" fill="rgba(255,122,112,.14)" stroke="var(--bad)" stroke-width="2"/><text x="930" y="289" text-anchor="middle" font-size="22" font-weight="700" fill="var(--bad)">ảo giác chui vào ở đây</text></g>
+</svg>
+<div class="cols c2" style="margin-top:30px;align-items:start">
+  <div class="frame f"><h3 style="color:var(--warn)">Nội tại</h3><p class="muted" style="font-size:22px">có đọc ngữ cảnh, nhưng nói lệch đi</p></div>
+  <div class="frame f"><h3 style="color:var(--bad)">Ngoại lai</h3><p class="muted" style="font-size:22px">bịa thứ ngữ cảnh không hề có</p></div>
+</div>
+<div class="src">Định nghĩa hai loại ảo giác theo ViHallu (DSC 2025)</div><div class="page">05 / 36</div></section>
+<section class="slide " data-notes="Ba thẻ lật theo phím, số đếm lên. Điểm rủi ro = 1 − P(trung thực).">
+<div class="eyebrow in-up">Phần 1 · Bài toán</div>
+<h2 class="in-up">Ba loại phản hồi — chấm thật trên T4</h2>
+<p class="in-up d1 muted" style="font-size:22px;max-width:1500px"><b style="color:var(--ink)">Ngữ cảnh:</b> Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng… từng mang tên Thăng Long dưới triều Lý. Dân số nội thành khoảng tám triệu người…</p>
+<div class="cols c3" style="margin-top:28px;align-items:stretch">
+  <div class="frame f" style="padding:34px 36px"><span class="tag no">Trung thực</span><h3 style="margin-top:16px;font-size:30px;line-height:1.3">"…mang tên Thăng Long dưới triều Lý."</h3><div style="font-size:52px;font-weight:800;color:var(--ok);margin-top:18px">rủi ro <span data-count="0.001" data-dec="3">0</span></div></div>
+  <div class="frame f" style="padding:34px 36px"><span class="tag intr">Nội tại</span><h3 style="margin-top:16px;font-size:30px;line-height:1.3">"…dưới triều <u>Trần</u>, khi dân số đã lên <u>hai mươi triệu</u>."</h3><div style="font-size:52px;font-weight:800;color:var(--warn);margin-top:18px">rủi ro <span data-count="0.998" data-dec="3">0</span></div></div>
+  <div class="frame f" style="padding:34px 36px"><span class="tag extr">Ngoại lai</span><h3 style="margin-top:16px;font-size:30px;line-height:1.3">"…nổi tiếng với <u>tháp Eiffel thu nhỏ</u> và <u>tàu điện ngầm</u> dài nhất Đông Nam Á."</h3><div style="font-size:52px;font-weight:800;color:var(--bad);margin-top:18px">rủi ro <span data-count="1.000" data-dec="3">0</span></div></div>
+</div>
+<div class="src">Nguồn: results/t40/t36_thu_vien.json — Kaggle T4, 11/09/2026; ba ví dụ không nằm trong dữ liệu huấn luyện</div><div class="page">06 / 36</div></section>
+<section class="slide " data-notes="Ba cột giá. Kết luận hiện theo phím.">
+<div class="eyebrow in-up">Phần 1 · Bài toán</div>
+<h2 class="in-up">Ba con đường hiện có — và giá của chúng</h2>
+<div class="cols c3" style="margin-top:20px;align-items:stretch">
+  <div class="frame in-up d1"><h3>LLM giám khảo</h3><div style="font-size:64px;font-weight:800;color:var(--bad);margin:10px 0">8.194 ms</div><p class="muted" style="font-size:22px">mỗi mẫu · phụ thuộc API · <b>dữ liệu rời máy</b> · macro-F1 0,664</p></div>
+  <div class="frame in-up d2"><h3>Bộ mã hóa tinh chỉnh</h3><div style="font-size:64px;font-weight:800;color:var(--bad);margin:10px 0">560 triệu</div><p class="muted" style="font-size:22px">tham số phải huấn luyện · cần GPU · InfoXLM <b>không hội tụ</b> · XLM-R 0,776</p></div>
+  <div class="frame in-up d3"><h3>Đặc trưng bề mặt</h3><div style="font-size:64px;font-weight:800;color:var(--warn);margin:10px 0">0,656</div><p class="muted" style="font-size:22px">độ dài, trùng lặp từ · 9 tham số · rẻ nhưng yếu</p></div>
+</div>
+<p class="f" style="font-size:34px;font-weight:700;margin-top:50px;max-width:1500px">→ Cần một tín hiệu <em>có sẵn trong chính lượt đọc</em> của mô hình: không giám khảo, không tinh chỉnh, không rời máy.</p>
+<div class="src">Nguồn: Bảng 1 và Bảng 8, docs/EXPERIMENTS.md (E01, E09, E10)</div><div class="page">07 / 36</div></section>
+<section class="slide " data-notes="Tia chảy lặp vô hạn — ẩn dụ chú ý là ánh nhìn.">
+<div class="eyebrow in-up">Phần 2 · Nền tảng — Chương 2</div>
+<h2 class="in-up">Chú ý là thứ <em>nhìn thấy được</em></h2>
+<svg class="fig in-up d1" viewBox="0 0 1680 520" style="width:1680px;height:520px">
+    <g class="beam"><path d="M1500 420 C 1400 120, 700 60, 195 300"/></g>
+    <g class="beam" style="opacity:.55"><path d="M1500 420 C 1420 180, 900 120, 695 300"/></g>
+    <g class="beam" style="opacity:.35"><path d="M1500 420 C 1460 260, 1250 200, 1195 300"/></g>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="195" y="345" text-anchor="middle" font-size="24">đoạn 1</text><rect x="330" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="445" y="345" text-anchor="middle" font-size="24">đoạn 2</text><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="695" y="345" text-anchor="middle" font-size="24">đoạn 3</text><rect x="830" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="945" y="345" text-anchor="middle" font-size="24">đoạn 4</text><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="1195" y="345" text-anchor="middle" font-size="24">đoạn 5</text>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".18"/><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".55"/><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".1"/>
+    <circle class="pulse" cx="1500" cy="430" r="22" fill="var(--accent)"/><text x="1500" y="492" text-anchor="middle" font-size="22" class="mu">token đang chấm</text>
+    <text x="80" y="270" font-size="22" class="mu">ngữ cảnh đã truy xuất — chia theo câu</text><text x="1500" y="270" text-anchor="middle" font-size="22" class="mu">câu trả lời</text>
+    
+  </svg>
+<p class="in-up d3 muted" style="margin-top:8px;max-width:1400px">Mỗi token trả lời phân bổ một lượng chú ý lên mọi token đứng trước. Phần rơi vào ngữ cảnh — và rơi vào <b style="color:var(--ink)">đoạn nào</b> — đo được từ bên trong mô hình.</p>
+<div class="src">Ma trận chú ý của Qwen2.5-7B: 28 lớp × 28 đầu</div><div class="page">08 / 36</div></section>
+<section class="slide " data-notes="Thanh gộp mọc ra một lần. Một con số cho mỗi cặp lớp-đầu.">
+<div class="eyebrow in-up">Phần 2 · Nền tảng</div>
+<h2 class="in-up">Lookback Lens (EMNLP 2024): gộp cả ngữ cảnh thành <em>một</em> tỷ lệ</h2>
+<svg class="fig in-up d1" viewBox="0 0 1680 520" style="width:1680px;height:520px">
+    <g class="beam"><path d="M1500 420 C 1400 120, 700 60, 195 300"/></g>
+    <g class="beam" style="opacity:.55"><path d="M1500 420 C 1420 180, 900 120, 695 300"/></g>
+    <g class="beam" style="opacity:.35"><path d="M1500 420 C 1460 260, 1250 200, 1195 300"/></g>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="195" y="345" text-anchor="middle" font-size="24">đoạn 1</text><rect x="330" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="445" y="345" text-anchor="middle" font-size="24">đoạn 2</text><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="695" y="345" text-anchor="middle" font-size="24">đoạn 3</text><rect x="830" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="945" y="345" text-anchor="middle" font-size="24">đoạn 4</text><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="1195" y="345" text-anchor="middle" font-size="24">đoạn 5</text>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".18"/><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".55"/><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".1"/>
+    <circle class="pulse" cx="1500" cy="430" r="22" fill="var(--accent)"/><text x="1500" y="492" text-anchor="middle" font-size="22" class="mu">token đang chấm</text>
+    <text x="80" y="270" font-size="22" class="mu">ngữ cảnh đã truy xuất — chia theo câu</text><text x="1500" y="270" text-anchor="middle" font-size="22" class="mu">câu trả lời</text>
+    <g class="in-up d4"><rect class="growx" x="80" y="400" width="1230" height="40" rx="10" fill="var(--accent)" opacity=".6"/><text x="695" y="428" text-anchor="middle" font-size="22" font-weight="700" fill="var(--bg)">LR = chú ý vào ngữ cảnh ÷ (ngữ cảnh + đã sinh) = 62 %</text></g>
+  </svg>
+<p class="in-up d5 muted" style="margin-top:8px;max-width:1400px">Hồi quy logistic trên tỷ lệ này ngang hoặc hơn bộ phân loại dùng toàn bộ hidden state — bài gốc, tiếng Anh, nhị phân.</p>
+<div class="src">Chuang và cộng sự, arXiv:2407.07071 — công thức tái lập ở E02</div><div class="page">09 / 36</div></section>
+<section class="slide " data-notes="Dấu hỏi hiện trên từng đoạn theo phím.">
+<div class="eyebrow in-up">Phần 2 · Nền tảng</div>
+<h2 class="in-up">Khoảng trống: một con số không nói <em>đoạn nào</em></h2>
+<svg class="fig in-up d1" viewBox="0 0 1680 520" style="width:1680px;height:520px">
+    <g class="beam"><path d="M1500 420 C 1400 120, 700 60, 195 300"/></g>
+    <g class="beam" style="opacity:.55"><path d="M1500 420 C 1420 180, 900 120, 695 300"/></g>
+    <g class="beam" style="opacity:.35"><path d="M1500 420 C 1460 260, 1250 200, 1195 300"/></g>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="195" y="345" text-anchor="middle" font-size="24">đoạn 1</text><rect x="330" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="445" y="345" text-anchor="middle" font-size="24">đoạn 2</text><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="695" y="345" text-anchor="middle" font-size="24">đoạn 3</text><rect x="830" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="945" y="345" text-anchor="middle" font-size="24">đoạn 4</text><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><text x="1195" y="345" text-anchor="middle" font-size="24">đoạn 5</text>
+    <rect x="80" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".18"/><rect x="580" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".55"/><rect x="1080" y="300" width="230" height="72" rx="14" fill="var(--accent)" opacity=".1"/>
+    <circle class="pulse" cx="1500" cy="430" r="22" fill="var(--accent)"/><text x="1500" y="492" text-anchor="middle" font-size="22" class="mu">token đang chấm</text>
+    <text x="80" y="270" font-size="22" class="mu">ngữ cảnh đã truy xuất — chia theo câu</text><text x="1500" y="270" text-anchor="middle" font-size="22" class="mu">câu trả lời</text>
+    <g class="f"><rect x="80" y="400" width="1230" height="40" rx="10" fill="var(--muted)" opacity=".25"/><text x="695" y="428" text-anchor="middle" font-size="22" class="mu">62 % — nhưng nhìn đoạn nào? nhọn hay tản?</text></g><text class="f" x="195" y="250" text-anchor="middle" font-size="40" font-weight="800" fill="var(--accent2)">?</text><text class="f" x="445" y="250" text-anchor="middle" font-size="40" font-weight="800" fill="var(--accent2)">?</text><text class="f" x="695" y="250" text-anchor="middle" font-size="40" font-weight="800" fill="var(--accent2)">?</text><text class="f" x="945" y="250" text-anchor="middle" font-size="40" font-weight="800" fill="var(--accent2)">?</text><text class="f" x="1195" y="250" text-anchor="middle" font-size="40" font-weight="800" fill="var(--accent2)">?</text>
+  </svg>
+<div class="cols c3" style="margin-top:6px">
+  <div class="f muted" style="font-size:22px">◦ Nhị phân, không tách nội tại / ngoại lai</div>
+  <div class="f muted" style="font-size:22px">◦ Tiếng Anh, AUROC</div>
+  <div class="f muted" style="font-size:22px">◦ Chưa có cho tiếng Việt</div>
+</div>
+<div class="src">docs/REFERENCES.md</div><div class="page">10 / 36</div></section>
+<section class="slide " data-notes="Ba màu: cam CH1, lam ngọc CH2, tím CH3.">
+<div class="eyebrow in-up">Phần 3 · Yêu cầu và dữ liệu — Chương 3</div>
+<h2 class="in-up">Ba câu hỏi nghiên cứu</h2>
+<div class="cols c3" style="margin-top:30px;align-items:stretch">
+  <div class="frame f" style="border-top:8px solid var(--accent2)"><div class="eyebrow" style="color:var(--accent2)">CH1 · Tín hiệu & cơ chế</div><p>Chú ý theo đoạn có đủ để phân <b>ba lớp</b> trên tiếng Việt — và cơ chế có xác nhận trực tiếp được không?</p></div>
+  <div class="frame f" style="border-top:8px solid var(--accent)"><div class="eyebrow" style="color:var(--accent)">CH2 · Chi phí</div><p>So với giám khảo LLM và bộ mã hóa tinh chỉnh: <b>chính xác, thời gian, bộ nhớ, tham số</b>?</p></div>
+  <div class="frame f" style="border-top:8px solid #b48cff"><div class="eyebrow" style="color:#b48cff">CH3 · Chuyển giao</div><p>Có chuyển được giữa các <b>mô hình đọc</b> và giữa các <b>bộ dữ liệu</b> không?</p></div>
+</div>
+<p class="f muted" style="margin-top:40px;font-size:24px">Ba màu này đi theo ba câu hỏi suốt phần kết quả.</p><div class="page">11 / 36</div></section>
+<section class="slide " data-notes="Bốn ràng buộc → phương pháp.">
+<div class="eyebrow in-up">Phần 3 · Yêu cầu</div>
+<h2 class="in-up">Ràng buộc cứng</h2>
+<div class="kpi" style="margin-top:30px">
+  <div class="k in-up d1"><div class="v">16 GB</div><div class="l">một card Tesla T4 trên Kaggle — mọi thứ phải vừa</div></div>
+  <div class="k in-up d2"><div class="v">30 h</div><div class="l">GPU mỗi tuần — việc nặng chạy đầu tuần</div></div>
+  <div class="k in-up d3"><div class="v">0 ₫</div><div class="l">không API trả phí; Gemini free chỉ để dựng baseline</div></div>
+  <div class="k in-up d4"><div class="v">42</div><div class="l">seed cố định, config ra file, tái lập trên máy khác</div></div>
+</div>
+<p class="in-up d5 muted" style="margin-top:50px;font-size:26px;max-width:1500px">Ràng buộc quyết định phương pháp: <b style="color:var(--ink)">một lượt đọc, hook trong lớp, bộ phân loại tuyến tính</b>.</p>
+<div class="src">Nguồn: CLAUDE.md §2–3</div><div class="page">12 / 36</div></section>
+<section class="slide " data-notes="Số đếm lên. Hai thẻ theo phím.">
+<div class="eyebrow in-up">Phần 3 · Dữ liệu</div>
+<h2 class="in-up">Ba bộ tiếng Việt công khai, chia theo ngữ cảnh</h2>
+<div class="kpi" style="grid-template-columns:repeat(3,1fr);margin-top:20px">
+  <div class="k in-up d1"><div class="v"><span data-count="7000">0</span></div><div class="l"><b>ViHallu</b> — bộ chính · phản hồi GPT-4o thật · 3 nhãn</div></div>
+  <div class="k in-up d2"><div class="v">36 k</div><div class="l"><b>ISE-DSC01</b> — ngữ cảnh 21–73 câu · kiểm chứng chunk-aware</div></div>
+  <div class="k in-up d3"><div class="v"><span data-count="20919">0</span></div><div class="l"><b>ViWikiFC</b> — đối chứng ngoài · NEI có bằng chứng</div></div>
+</div>
+<div class="cols c2" style="margin-top:34px;align-items:start">
+  <div class="frame f"><h3>Chia theo ngữ cảnh 80/10/10</h3>
+    <svg class="fig" viewBox="0 0 760 120" style="width:100%;height:120px"><rect x="0" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="43" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 1</text><rect x="95" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="138" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 2</text><rect x="190" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="233" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 3</text><rect x="285" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="328" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 4</text><rect x="380" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="423" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 5</text><rect x="475" y="20" width="86" height="62" rx="12" fill="var(--accent2)" opacity=".9"/><text x="518" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 6</text><rect x="570" y="20" width="86" height="62" rx="12" fill="var(--accent)" opacity=".9"/><text x="613" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 7</text><rect x="665" y="20" width="86" height="62" rx="12" fill="var(--muted)" opacity=".9"/><text x="708" y="58" text-anchor="middle" font-size="16" fill="#0b0a0d" font-weight="700">NC 8</text><text x="285" y="112" text-anchor="middle" font-size="17" class="mu">train</text><text x="613" y="112" text-anchor="middle" font-size="17" class="mu">dev</text><text x="708" y="112" text-anchor="middle" font-size="17" class="mu">test</text></svg>
+    <p class="muted" style="font-size:20px;margin-top:6px">Mỗi ngữ cảnh chỉ ở một tập → rò rỉ <b style="color:var(--ink)">0 %</b>.</p></div>
+  <div class="frame f" style="border-left:8px solid var(--warn)"><h3>Hai bẫy đã đo trước khi dùng</h3><p class="muted" style="font-size:22px">Test gốc ViWikiFC dùng lại <b style="color:var(--ink)">100 %</b> ngữ cảnh train. Chỉ <b style="color:var(--ink)">67 %</b> nhãn NEI thật sự là ngoại lai (κ 0,505).</p></div>
+</div>
+<div class="src">Nguồn: docs/DATA.md; T10–T15</div><div class="page">13 / 36</div></section>
+<section class="slide " data-notes="Trái: một thanh. Phải: năm cột mọc lên — đây là đóng góp.">
+<div class="eyebrow in-up">Phần 4 · Phương pháp — Chương 4–5</div>
+<h2 class="in-up">Chunk-aware: không hỏi "nhìn bao nhiêu", hỏi <em>"nhìn đoạn nào"</em></h2>
+<div class="cols c2" style="margin-top:20px;align-items:stretch">
+  <div class="frame in-up d1"><h3 class="muted">Lookback Lens gốc — một khối</h3>
+    <svg class="fig" viewBox="0 0 700 260" style="width:100%;height:360px"><rect class="growx" x="20" y="90" width="660" height="80" rx="14" fill="var(--muted)" opacity=".5"/><text x="350" y="140" text-anchor="middle" font-size="30" font-weight="800">62 %</text><text x="350" y="220" text-anchor="middle" font-size="20" class="mu">nhọn hay tản đều cho cùng một số</text></svg></div>
+  <div class="frame in-up d3" style="border-color:var(--accent)"><h3 style="color:var(--accent)">Chunk-aware — theo từng đoạn</h3>
+    <svg class="fig" viewBox="0 0 700 260" style="width:100%;height:360px"><rect class="grow" style="transition-delay:0.60s" x="30" y="150" width="110" height="40" rx="10" fill="var(--accent)" opacity="0.5"/><text x="85" y="225" text-anchor="middle" font-size="18" class="mu">đoạn 1</text><rect class="grow" style="transition-delay:0.72s" x="162" y="40" width="110" height="150" rx="10" fill="var(--accent)" opacity="1"/><text x="217" y="225" text-anchor="middle" font-size="18" class="mu">đoạn 2</text><rect class="grow" style="transition-delay:0.84s" x="294" y="162" width="110" height="28" rx="10" fill="var(--accent)" opacity="0.5"/><text x="349" y="225" text-anchor="middle" font-size="18" class="mu">đoạn 3</text><rect class="grow" style="transition-delay:0.96s" x="426" y="170" width="110" height="20" rx="10" fill="var(--accent)" opacity="0.4"/><text x="481" y="225" text-anchor="middle" font-size="18" class="mu">đoạn 4</text><rect class="grow" style="transition-delay:1.08s" x="558" y="160" width="110" height="30" rx="10" fill="var(--accent)" opacity="0.45"/><text x="613" y="225" text-anchor="middle" font-size="18" class="mu">đoạn 5</text><text x="350" y="255" text-anchor="middle" font-size="20" class="mu">phân bố có hình dạng — và chỉ được đoạn nào</text></svg></div>
+</div>
+<div class="src">Đóng góp cốt lõi — CLAUDE.md §1</div><div class="page">14 / 36</div></section>
+<section class="slide " data-notes="Hai biểu đồ mọc lên. Giả thuyết: hình dạng phân biệt hai loại ảo giác.">
+<div class="eyebrow in-up">Phần 4 · Phương pháp</div>
+<h2 class="in-up">Hai hình dạng, hai loại ảo giác</h2>
+<div class="cols c2" style="margin-top:20px;align-items:stretch">
+  <div class="frame in-up d1"><span class="tag intr">Nội tại</span><h3 style="margin-top:14px">Có đọc — nói lệch. Phân bố <em>nhọn</em>.</h3>
+    <svg class="fig" viewBox="0 0 700 220" style="width:100%;height:320px"><rect class="grow" style="transition-delay:0.30s" x="30" y="152" width="110" height="28" rx="10" fill="var(--warn)" opacity=".85"/><rect class="grow" style="transition-delay:0.40s" x="162" y="30" width="110" height="150" rx="10" fill="var(--warn)" opacity=".85"/><rect class="grow" style="transition-delay:0.50s" x="294" y="158" width="110" height="22" rx="10" fill="var(--warn)" opacity=".85"/><rect class="grow" style="transition-delay:0.60s" x="426" y="164" width="110" height="16" rx="10" fill="var(--warn)" opacity=".85"/><rect class="grow" style="transition-delay:0.70s" x="558" y="156" width="110" height="24" rx="10" fill="var(--warn)" opacity=".85"/></svg>
+    <p class="muted" style="font-size:22px">entropy thấp · tỷ trọng lớn nhất cao · top-1 vượt xa top-2</p></div>
+  <div class="frame in-up d2"><span class="tag extr">Ngoại lai</span><h3 style="margin-top:14px">Không đọc — tự bịa. Phân bố <em>tản</em>.</h3>
+    <svg class="fig" viewBox="0 0 700 220" style="width:100%;height:320px"><rect class="grow" style="transition-delay:0.30s" x="30" y="124" width="110" height="56" rx="10" fill="var(--bad)" opacity=".7"/><rect class="grow" style="transition-delay:0.40s" x="162" y="112" width="110" height="68" rx="10" fill="var(--bad)" opacity=".7"/><rect class="grow" style="transition-delay:0.50s" x="294" y="130" width="110" height="50" rx="10" fill="var(--bad)" opacity=".7"/><rect class="grow" style="transition-delay:0.60s" x="426" y="118" width="110" height="62" rx="10" fill="var(--bad)" opacity=".7"/><rect class="grow" style="transition-delay:0.70s" x="558" y="126" width="110" height="54" rx="10" fill="var(--bad)" opacity=".7"/></svg>
+    <p class="muted" style="font-size:22px">entropy cao · không đoạn nào nổi · Gini thấp</p></div>
+</div>
+<div class="src">Giả thuyết đặt ra trước khi đo — T21</div><div class="page">15 / 36</div></section>
+<section class="slide " data-notes="Sáu thẻ theo phím.">
+<div class="eyebrow in-up">Phần 4 · Phương pháp</div>
+<h2 class="in-up">Năm đại lượng hình dạng — cộng với tỷ lệ gộp</h2>
+<div class="cols c3" style="margin-top:20px;align-items:stretch;gap:24px">
+  <div class="frame f"><h3 style="color:var(--accent)">Entropy</h3><p class="muted" style="font-size:22px">tản hay tập trung</p></div>
+  <div class="frame f"><h3 style="color:var(--accent)">Tỷ trọng lớn nhất</h3><p class="muted" style="font-size:22px">đoạn được nhìn nhiều nhất chiếm bao nhiêu</p></div>
+  <div class="frame f"><h3 style="color:var(--accent)">Gini</h3><p class="muted" style="font-size:22px">bất bình đẳng giữa các đoạn</p></div>
+  <div class="frame f"><h3 style="color:var(--accent)">Khoảng cách top-1 / top-2</h3><p class="muted" style="font-size:22px">có một đoạn nổi bật không</p></div>
+  <div class="frame f"><h3 style="color:var(--accent)">Độ trôi</h3><p class="muted" style="font-size:22px">phân bố đổi thế nào giữa các bước sinh</p></div>
+  <div class="frame f" style="border-color:var(--accent2)"><h3 style="color:var(--accent2)">+ Tỷ lệ gộp</h3><p class="muted" style="font-size:22px">Lookback Lens gốc, giữ để so sánh công bằng</p></div>
+</div>
+<p class="f muted" style="margin-top:30px;font-size:24px">Tính cho từng cặp (lớp, đầu); chọn 32 đầu tốt nhất trên tập dev → véc-tơ 192 cột.</p>
+<div class="src">Nguồn: docs/SPEC.md §2.3; T21</div><div class="page">16 / 36</div></section>
+<section class="slide " data-notes="Năm ô sáng nối tiếp.">
+<div class="eyebrow in-up">Phần 4 · Thiết kế</div>
+<h2 class="in-up">Cơ chế 5 bước — một lượt đọc, <em>không sinh token mới</em></h2>
+<div class="steps" style="margin-top:20px">
+  <div class="frame step in-up d1"><div class="n">1</div><h3>Ghép prompt</h3><p>Chat template Qwen; chốt một lần ở T07, không đổi.</p></div>
+  <div class="frame step in-up d2"><div class="n">2</div><h3>Đọc lại</h3><p>Qwen2.5-7B NF4 · float16 · bỏ lớp 27 tràn số · 437 ms/mẫu.</p></div>
+  <div class="frame step in-up d3"><div class="n">3</div><h3>Hook trong lớp</h3><p>Cộng chú ý của token trả lời theo <b>từng đoạn</b>, rồi xóa ma trận ngay.</p></div>
+  <div class="frame step in-up d4"><div class="n">4</div><h3>Đặc trưng</h3><p>Tỷ lệ gộp + 5 đại lượng hình dạng, 32 đầu chọn trên dev.</p></div>
+  <div class="frame step in-up d5"><div class="n">5</div><h3>Hồi quy logistic</h3><p><b>579 tham số</b>, khớp vài giây trên CPU. Nhãn + điểm rủi ro.</p></div>
+</div>
+<p class="in-up d6 muted" style="margin-top:44px;font-size:24px;max-width:1500px">Teacher forcing: câu trả lời được <b style="color:var(--ink)">đọc</b>, không được <b style="color:var(--ink)">sinh</b> — nên chấm được bất kỳ câu trả lời nào, kể cả của mô hình khác.</p>
+<div class="src">Nguồn: CLAUDE.md §8; src/vihallulens/extract</div><div class="page">17 / 36</div></section>
+<section class="slide " data-notes="Dãy đỏ dâng lên rồi 'tràn'; dãy xanh chỉ một thanh sáng.">
+<div class="eyebrow in-up">Phần 4 · Thiết kế</div>
+<h2 class="in-up">Rủi ro số một: bộ nhớ — và cách hook vượt qua</h2>
+<svg class="fig" viewBox="0 0 1680 380" style="width:1680px;height:380px;margin-top:20px">
+  <text x="0" y="30" font-size="24" font-weight="700" fill="var(--bad)">Cách ngây thơ: output_attentions=True giữ cả 28 lớp</text>
+  <rect class="grow" style="transition-delay:0.00s" x="0" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.30"/><rect class="grow" style="transition-delay:0.04s" x="27" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.32"/><rect class="grow" style="transition-delay:0.08s" x="54" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.34"/><rect class="grow" style="transition-delay:0.12s" x="81" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.37"/><rect class="grow" style="transition-delay:0.16s" x="108" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.39"/><rect class="grow" style="transition-delay:0.20s" x="135" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.41"/><rect class="grow" style="transition-delay:0.24s" x="162" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.43"/><rect class="grow" style="transition-delay:0.28s" x="189" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.46"/><rect class="grow" style="transition-delay:0.32s" x="216" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.48"/><rect class="grow" style="transition-delay:0.36s" x="243" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.50"/><rect class="grow" style="transition-delay:0.40s" x="270" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.52"/><rect class="grow" style="transition-delay:0.44s" x="297" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.54"/><rect class="grow" style="transition-delay:0.48s" x="324" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.57"/><rect class="grow" style="transition-delay:0.52s" x="351" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.59"/><rect class="grow" style="transition-delay:0.56s" x="378" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.61"/><rect class="grow" style="transition-delay:0.60s" x="405" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.63"/><rect class="grow" style="transition-delay:0.64s" x="432" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.66"/><rect class="grow" style="transition-delay:0.68s" x="459" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.68"/><rect class="grow" style="transition-delay:0.72s" x="486" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.70"/><rect class="grow" style="transition-delay:0.76s" x="513" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.72"/><rect class="grow" style="transition-delay:0.80s" x="540" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.74"/><rect class="grow" style="transition-delay:0.84s" x="567" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.77"/><rect class="grow" style="transition-delay:0.88s" x="594" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.79"/><rect class="grow" style="transition-delay:0.92s" x="621" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.81"/><rect class="grow" style="transition-delay:0.96s" x="648" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.83"/><rect class="grow" style="transition-delay:1.00s" x="675" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.86"/><rect class="grow" style="transition-delay:1.04s" x="702" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.88"/><rect class="grow" style="transition-delay:1.08s" x="729" y="50" width="22" height="230" rx="4" fill="var(--bad)" opacity="0.90"/>
+  <text x="0" y="325" font-size="24">28 lớp × 0,94 GB = <tspan font-weight="800" fill="var(--bad)">26 GB — tràn T4 16 GB</tspan></text>
+  <text x="900" y="30" font-size="24" font-weight="700" fill="var(--ok)">Hook trong lớp: tính xong là xóa, chỉ giữ một lớp</text>
+  <rect x="900" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="927" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="954" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="981" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1008" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1035" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1062" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1089" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1116" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1143" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1170" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1197" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1224" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1251" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1278" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1305" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1332" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1359" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1386" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1413" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1440" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1467" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1494" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1521" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1548" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1575" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1602" y="50" width="22" height="230" rx="4" fill="var(--line)"/><rect x="1629" y="50" width="22" height="230" rx="4" fill="var(--line)"/>
+  <rect class="grow" style="transition-delay:1.2s" x="1251" y="50" width="22" height="230" rx="4" fill="var(--ok)"/>
+  <text x="900" y="325" font-size="24">1 lớp × 0,94 GB + trọng số NF4 ≈ <tspan font-weight="800" fill="var(--ok)">8,3 GB đo được — vừa</tspan></text>
+</svg>
+<p class="f muted" style="margin-top:30px;font-size:24px;max-width:1500px">Ba điều dễ hiểu sai đã ghi trong tài liệu: hook không giảm đỉnh của chính lớp đó; hook có thể thay output để chặn tích lũy; hành vi phụ thuộc phiên bản transformers — ghim và có test khẳng định.</p>
+<div class="src">Nguồn: CLAUDE.md §5 — ma trận chú ý 0,94 GB một lớp ở 4.096 token; đỉnh đo 8.328 MB</div><div class="page">18 / 36</div></section>
+<section class="slide " data-notes="Tầng dựng từ dưới lên. Ba thẻ theo phím.">
+<div class="eyebrow in-up">Phần 4 · Thiết kế</div>
+<h2 class="in-up">Kiến trúc bốn tầng</h2>
+<div class="cols c12" style="margin-top:10px;align-items:start">
+  <svg class="fig" viewBox="0 0 760 360" style="width:100%;height:360px">
+    <g class="in-up d4"><rect x="0" y="0" width="760" height="70" rx="16" fill="rgba(44,232,214,.14)" stroke="var(--accent)" stroke-width="2"/><text x="24" y="44" font-size="24" font-weight="800">serve/</text><text x="170" y="44" font-size="21">REST · trang chủ · hệ RAG minh họa · Docker</text></g>
+    <g class="in-up d3"><rect x="0" y="86" width="760" height="70" rx="16" fill="rgba(240,162,58,.12)" stroke="var(--accent2)" stroke-width="2"/><text x="24" y="130" font-size="24" font-weight="800">detect/</text><text x="170" y="130" font-size="21">hồi quy logistic + bundle mang công thức dựng cột</text></g>
+    <g class="in-up d2"><rect x="0" y="172" width="760" height="70" rx="16" fill="rgba(240,162,58,.12)" stroke="var(--accent2)" stroke-width="2"/><text x="24" y="216" font-size="24" font-weight="800">features/</text><text x="170" y="216" font-size="21">tỷ lệ gộp + năm đại lượng hình dạng</text></g>
+    <g class="in-up d1"><rect x="0" y="258" width="760" height="70" rx="16" fill="rgba(240,162,58,.12)" stroke="var(--accent2)" stroke-width="2"/><text x="24" y="302" font-size="24" font-weight="800">extract/</text><text x="170" y="302" font-size="21">Qwen2.5 NF4 + hook trong lớp, một lượt đọc</text></g>
+    <text x="0" y="356" font-size="18" class="mu">data/ và evaluation/ phục vụ cả bốn tầng — tầng trên chỉ gọi tầng dưới</text>
+  </svg>
+  <div>
+    <div class="frame f" style="margin-bottom:16px"><h3>Cấu hình = YAML + pydantic</h3><p class="muted" style="font-size:22px">21 file thí nghiệm; mọi thứ ảnh hưởng kết quả nằm trong file, có hash.</p></div>
+    <div class="frame f" style="margin-bottom:16px"><h3>Kết quả = results/runs.jsonl</h3><p class="muted" style="font-size:22px">35 dòng, mỗi dòng kèm commit và hash cấu hình; bảng sinh bằng script.</p></div>
+    <div class="frame f"><h3>Bundle = bộ phân loại + công thức cột</h3><p class="muted" style="font-size:22px">Từ chối bản ghi trích trên lưới lớp khác — vì cùng chỉ số cột ở hai mô hình khác nghĩa.</p></div>
+  </div>
+</div>
+<div class="src">Nguồn: docs/SPEC.md §1–2</div><div class="page">19 / 36</div></section>
+<section class="slide " data-notes="Lưới hiện theo phím, mỗi lần một ô hoặc bấm A để hiện cả.">
+<div class="eyebrow in-up">Phần 5 · Hiện thực — Chương 6</div>
+<h2 class="in-up">16 thí nghiệm, một card T4</h2>
+<svg class="fig" viewBox="0 0 1680 230" style="width:1680px;height:230px;margin-top:20px"><g class="f"><rect x="0" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="18" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E01</text><text x="18" y="64" font-size="18">bề mặt</text></g><g class="f"><rect x="208" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="226" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E02</text><text x="226" y="64" font-size="18">Lookback Lens</text></g><g class="f"><rect x="416" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="434" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E03</text><text x="434" y="64" font-size="18">chunk-aware</text></g><g class="f"><rect x="624" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="642" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E04</text><text x="642" y="64" font-size="18">cửa sổ token</text></g><g class="f"><rect x="832" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="850" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E05</text><text x="850" y="64" font-size="18">chọn chia đoạn</text></g><g class="f"><rect x="1040" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="1058" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E06</text><text x="1058" y="64" font-size="18">định vị</text></g><g class="f"><rect x="1248" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="1266" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E07</text><text x="1266" y="64" font-size="18">ngữ cảnh dài</text></g><g class="f"><rect x="1456" y="0" width="196" height="84" rx="14" fill="var(--accent2)" opacity=".14" stroke="var(--accent2)" stroke-width="2"/><text x="1474" y="36" font-size="22" font-weight="800" fill="var(--accent2)">E08</text><text x="1474" y="64" font-size="18">bỏ bằng chứng</text></g><g class="f"><rect x="0" y="100" width="196" height="84" rx="14" fill="var(--accent)" opacity=".14" stroke="var(--accent)" stroke-width="2"/><text x="18" y="136" font-size="22" font-weight="800" fill="var(--accent)">E09</text><text x="18" y="164" font-size="18">bộ mã hóa</text></g><g class="f"><rect x="208" y="100" width="196" height="84" rx="14" fill="var(--accent)" opacity=".14" stroke="var(--accent)" stroke-width="2"/><text x="226" y="136" font-size="22" font-weight="800" fill="var(--accent)">E10</text><text x="226" y="164" font-size="18">LLM giám khảo</text></g><g class="f"><rect x="416" y="100" width="196" height="84" rx="14" fill="var(--accent)" opacity=".14" stroke="var(--accent)" stroke-width="2"/><text x="434" y="136" font-size="22" font-weight="800" fill="var(--accent)">E11</text><text x="434" y="164" font-size="18">đánh đổi</text></g><g class="f"><rect x="624" y="100" width="196" height="84" rx="14" fill="#b48cff" opacity=".14" stroke="#b48cff" stroke-width="2"/><text x="642" y="136" font-size="22" font-weight="800" fill="#b48cff">E12</text><text x="642" y="164" font-size="18">ablation</text></g><g class="f"><rect x="832" y="100" width="196" height="84" rx="14" fill="#b48cff" opacity=".14" stroke="#b48cff" stroke-width="2"/><text x="850" y="136" font-size="22" font-weight="800" fill="#b48cff">E13</text><text x="850" y="164" font-size="18">Sailor2</text></g><g class="f"><rect x="1040" y="100" width="196" height="84" rx="14" fill="var(--accent)" opacity=".14" stroke="var(--accent)" stroke-width="2"/><text x="1058" y="136" font-size="22" font-weight="800" fill="var(--accent)">E14</text><text x="1058" y="164" font-size="18">7B/3B/1.5B</text></g><g class="f"><rect x="1248" y="100" width="196" height="84" rx="14" fill="#b48cff" opacity=".14" stroke="#b48cff" stroke-width="2"/><text x="1266" y="136" font-size="22" font-weight="800" fill="#b48cff">E15</text><text x="1266" y="164" font-size="18">ViWikiFC gốc</text></g><g class="f"><rect x="1456" y="100" width="196" height="84" rx="14" fill="#b48cff" opacity=".14" stroke="#b48cff" stroke-width="2"/><text x="1474" y="136" font-size="22" font-weight="800" fill="#b48cff">E16</text><text x="1474" y="164" font-size="18">chéo bộ</text></g><g><rect x="0" y="206" width="18" height="18" rx="4" fill="var(--accent2)"/><text x="28" y="221" font-size="18">CH1 tín hiệu & cơ chế</text><rect x="320" y="206" width="18" height="18" rx="4" fill="var(--accent)"/><text x="348" y="221" font-size="18">CH2 chi phí</text><rect x="540" y="206" width="18" height="18" rx="4" fill="#b48cff"/><text x="568" y="221" font-size="18">CH3 chuyển giao</text></g></svg>
+<div class="kpi" style="margin-top:34px">
+  <div class="k in-up d2"><div class="v">≈<span data-count="120">0</span>k</div><div class="l">lượt đọc đã trích trên Kaggle</div></div>
+  <div class="k in-up d3"><div class="v"><span data-count="4">0</span></div><div class="l">mô hình đọc: Qwen2.5-7B / 3B / 1.5B, Sailor2-8B</div></div>
+  <div class="k in-up d4"><div class="v"><span data-count="3">0</span></div><div class="l">bộ dữ liệu, chia theo ngữ cảnh</div></div>
+  <div class="k in-up d5"><div class="v"><span data-count="783">0</span></div><div class="l">ca kiểm thử tự động, không cần GPU</div></div>
+</div>
+<div class="src">Nguồn: docs/EXPERIMENTS.md §2</div><div class="page">20 / 36</div></section>
+<section class="slide " data-notes="Ba nguyên tắc. Câu cuối là ví dụ tự sửa.">
+<div class="eyebrow in-up">Phần 5 · Hiện thực</div>
+<h2 class="in-up">Kỷ luật đo — để số tin được</h2>
+<div class="cols c3" style="margin-top:30px;align-items:stretch">
+  <div class="frame in-up d1"><h3 style="color:var(--accent)">Chọn trên dev, chấm test một lần</h3><p class="muted" style="font-size:22px">Cách gộp đầu, số đầu k — chọn trên dev; tập test chỉ chấm sau khi khóa.</p></div>
+  <div class="frame in-up d2"><h3 style="color:var(--accent)">Khoảng tin cậy 95 % bootstrap</h3><p class="muted" style="font-size:22px">Với 700 mẫu test, khoảng này rộng ≈ 0,065 — gấp đôi biến thiên seed. Mọi kết luận đọc qua khoảng này.</p></div>
+  <div class="frame in-up d3"><h3 style="color:var(--accent)">Chi phí đo xen kẽ</h3><p class="muted" style="font-size:22px">T4 hạ xung 10–15 % khi chạy liên tục. Đo 7B → 3B → 1.5B → lặp lại, mỗi lượt một tiến trình: hai lượt lệch 0,04–2,09 %.</p></div>
+</div>
+<p class="f" style="margin-top:44px;font-size:26px;max-width:1500px">Một lần đã bắt được chính mình sai: Bảng 1 ghi hai giá ms/mẫu khác nhau cho <b>cùng một lượt trích</b>. Bảng đánh đổi giờ sinh bằng script lấy chi phí từ mô hình đọc, có test khóa.</p>
+<div class="src">Nguồn: CLAUDE.md §5; docs/EXPERIMENTS.md §3, Bảng 8</div><div class="page">21 / 36</div></section>
+<section class="slide " data-notes="Ba khối theo phím.">
+<div class="eyebrow in-up">Phần 5 · Hiện thực</div>
+<h2 class="in-up">Ba cách dùng, một bộ phát hiện 11,5 KB</h2>
+<div class="cols c3" style="margin-top:20px;align-items:stretch">
+  <div class="frame f"><h3>📦 Thư viện</h3><pre style="font-size:19px;background:var(--bg2);border-radius:12px;padding:14px 16px;margin:14px 0;line-height:1.5;overflow:hidden">det = HallucinationDetector\
+  .from_pretrained("models/e03.pkl")
+r = det.score(context, question,
+              response)
+r.label, r.risk_score,
+r.chunk_attention</pre><p class="muted" style="font-size:21px">Bundle chấm lại 700 mẫu test: <b style="color:var(--ink)">700/700</b> trùng.</p></div>
+  <div class="frame f"><h3>🔌 REST</h3><pre style="font-size:19px;background:var(--bg2);border-radius:12px;padding:14px 16px;margin:14px 0;line-height:1.5">POST /score
+POST /score/batch   ≤ 64
+POST /demo/ask
+GET  /health
+     loading | ok | error</pre><p class="muted" style="font-size:21px">Nạp mô hình trong luồng nền; cách chia đoạn lạ → 400.</p></div>
+  <div class="frame f"><h3>🐳 Docker</h3><pre style="font-size:19px;background:var(--bg2);border-radius:12px;padding:14px 16px;margin:14px 0;line-height:1.5">docker compose up --build
+# ảnh 10,5 GB
+# trọng số 15 GB ở volume
+# /health → ok khi đã nạp</pre><p class="muted" style="font-size:21px">Không GPU → báo lỗi sau 6 giây, không tải 15 GB.</p></div>
+</div>
+<div class="src">Nguồn: T36–T38; README.md</div><div class="page">22 / 36</div></section>
+<section class="slide " data-notes="Ảnh chụp trang chủ trượt vào.">
+<div class="eyebrow in-up">Phần 5 · Hiện thực</div>
+<h2 class="in-up">Trang chủ: giới thiệu + công cụ + cú Lens</h2>
+<div class="cols c12" style="margin-top:10px;align-items:start">
+  <div>
+    <div class="frame in-up d1" style="margin-bottom:16px"><h3>Mắt dõi con trỏ, đổi màu theo phán quyết</h3><p class="muted" style="font-size:22px">Ẩn dụ đề tài hiện ra trước khi khách đọc chữ nào.</p></div>
+    <div class="frame in-up d2" style="margin-bottom:16px"><h3>Chế độ phát lại</h3><p class="muted" style="font-size:22px">Không có GPU → trang hiện đúng kết quả Kaggle từ <code>replay.json</code>; chép lên GitHub Pages là chạy.</p></div>
+    <div class="frame in-up d3"><h3>Tô màu ngữ cảnh theo tỷ trọng chú ý</h3><p class="muted" style="font-size:22px">Cắt chuỗi gốc theo vị trí ký tự — hiện đúng từng ký tự đã chấm.</p></div>
+  </div>
+  <img class="in-up d2" src="img/web-hero.webp" alt="" style="width:100%;border-radius:18px;border:1px solid var(--line);box-shadow:0 30px 60px -30px rgba(0,0,0,.9)">
+</div>
+<div class="src">Nguồn: T39, T39B — src/vihallulens/serve/static/index.html</div><div class="page">23 / 36</div></section>
+<section class="slide " data-notes="Số neo đếm lên, cột mọc. Bấm hai lần cho ECE và nhị phân.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Kết quả — Chương 7 · CH1</div>
+<h2 class="in-up">Trên ViHallu: ngang bộ mã hóa tinh chỉnh, hiệu chỉnh xác suất tốt nhất bảng</h2>
+<div class="cols c12" style="margin-top:6px;align-items:center">
+  <div>
+    <div class="num-big in-up d1"><span data-count="0.757" data-dec="3">0</span></div>
+    <p class="in-up d2 muted" style="font-size:22px">macro-F1 chunk-aware, khoảng tin cậy [0,724 – 0,789]</p>
+    <p class="f" style="margin-top:18px;font-size:26px">ECE <b style="color:var(--accent)">0,044</b> — tốt nhất bảng (XLM-R 0,097)</p>
+    <p class="f" style="font-size:26px">Nhị phân <b>0,864</b> · 579 tham số · CPU</p>
+  </div>
+  <div class="bars in-up d2">
+    <div class="bar"><span>Baseline bề mặt</span><div class="track"><div class="fill" style="--w:65.6%"></div></div><span class="v">0,656</span></div>
+    <div class="bar"><span>Gemini giám khảo</span><div class="track"><div class="fill" style="--w:66.4%"></div></div><span class="v">0,664</span></div>
+    <div class="bar"><span>PhoBERT-large</span><div class="track"><div class="fill" style="--w:74.9%"></div></div><span class="v">0,749</span></div>
+    <div class="bar"><span>XLM-R-large</span><div class="track"><div class="fill" style="--w:77.6%"></div></div><span class="v">0,776</span></div>
+    <div class="bar hot"><span>Lookback gộp 7B</span><div class="track"><div class="fill" style="--w:74.5%"></div></div><span class="v">0,745</span></div>
+    <div class="bar us"><span><b>Chunk-aware 7B</b></span><div class="track"><div class="fill" style="--w:75.7%"></div></div><span class="v">0,757</span></div>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 1, docs/EXPERIMENTS.md — test 700 mẫu; XLM-R và chunk-aware chồng khoảng tin cậy</div><div class="page">24 / 36</div></section>
+<section class="slide " data-notes="Tô màu chảy lần lượt. Đây là kết quả cơ chế mạnh nhất.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Kết quả · CH1 — cơ chế</div>
+<h2 class="in-up">Mô hình thật sự nhìn vào đoạn bằng chứng</h2>
+<div class="cols c12" style="margin-top:6px;align-items:center">
+  <div>
+    <div class="num-big in-up d1" style="color:var(--accent2);text-shadow:0 0 50px rgba(240,162,58,.3)"><span data-count="87.8" data-dec="1">0</span> %</div>
+    <p class="in-up d2 muted" style="font-size:22px">đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng, giữa trung bình <b style="color:var(--ink)">22,6 đoạn</b> — gấp <b style="color:var(--accent2)">14,29×</b> chọn hú họa</p>
+    <p class="f" style="font-size:24px">Lặp lại trên bộ thứ hai với sai lệch <b>0,003</b> — thuộc tính của mô hình đọc.</p>
+    <p class="f" style="font-size:24px">Bỏ câu bằng chứng đi → phân bố đổi đúng hướng dự đoán ở <b>4/4</b> đại lượng.</p>
+  </div>
+  <div class="frame in-up d2" style="font-size:28px;line-height:2;padding:36px 40px">
+    <div class="muted" style="font-size:16px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Ngữ cảnh tô theo tỷ trọng chú ý — mỗi đoạn một câu</div>
+    <span class="chunk fade-once" style="background:rgba(44,232,214,.10);transition-delay:.4s">Sa Pa là thị xã vùng cao thuộc tỉnh Lào Cai, ở độ cao khoảng 1.500 mét.</span>
+    <span class="chunk fade-once" style="background:rgba(44,232,214,.75);color:#0b0a0d;outline:3px solid var(--accent2);transition-delay:.8s">Gần thị xã có đỉnh Fansipan cao 3.143 mét, cao nhất Đông Dương.</span>
+    <span class="chunk fade-once" style="background:rgba(44,232,214,.18);transition-delay:1.2s">Thị xã nổi tiếng với ruộng bậc thang và sương mù.</span>
+    <span class="chunk fade-once" style="background:rgba(44,232,214,.08);transition-delay:1.5s">Mùa đông đôi khi có tuyết.</span>
+    <div class="muted" style="font-size:18px;margin-top:14px">Câu hỏi: đỉnh núi cao nhất Đông Dương? — viền cam là đoạn bằng chứng</div>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 2 (E06, ISE-DSC01), Bảng 2c (E08, ViWikiFC)</div><div class="page">25 / 36</div></section>
+<section class="slide " data-notes="Bảng theo phím.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Kết quả · thiết kế</div>
+<h2 class="in-up">Chia đoạn theo câu thắng cả bốn cấu hình cửa sổ</h2>
+<div class="cols c2" style="margin-top:6px;align-items:start">
+  <table>
+    <tr><th>Chiến lược</th><th class="r">TB đoạn</th><th class="r">macro-F1 dev</th></tr>
+    <tr class="f us"><td><b>Theo câu</b>, min_words = 5</td><td class="r">5,29</td><td class="r"><b>0,7768</b></td></tr>
+    <tr class="f"><td>Cửa sổ 128, bước 64</td><td class="r">3,29</td><td class="r">0,7683</td></tr>
+    <tr class="f"><td>Cửa sổ 64, bước 32</td><td class="r">7,08</td><td class="r">0,7662</td></tr>
+    <tr class="f"><td>Đối chứng 48/48 — <b>không chồng lấn</b></td><td class="r">5,56</td><td class="r">0,7649</td></tr>
+    <tr class="f"><td>Cửa sổ 256, bước 128</td><td class="r">1,43</td><td class="r">0,7589</td></tr>
+  </table>
+  <div>
+    <svg class="fig in-up d2" viewBox="0 0 760 250" style="width:100%;height:250px">
+      <text x="0" y="22" font-size="19" font-weight="700">Theo câu</text><rect x="0" y="34" width="150" height="34" rx="8" fill="rgba(44,232,214,.3)"/><rect x="156" y="34" width="240" height="34" rx="8" fill="rgba(44,232,214,.65)"/><rect x="402" y="34" width="110" height="34" rx="8" fill="rgba(44,232,214,.3)"/><rect x="518" y="34" width="242" height="34" rx="8" fill="rgba(44,232,214,.3)"/>
+      <text x="0" y="112" font-size="19" font-weight="700">Cửa sổ token chồng lấn</text><rect x="0" y="124" width="240" height="30" rx="8" fill="rgba(240,162,58,.35)"/><rect x="120" y="130" width="240" height="30" rx="8" fill="rgba(240,162,58,.35)"/><rect x="240" y="124" width="240" height="30" rx="8" fill="rgba(240,162,58,.35)"/><rect x="360" y="130" width="240" height="30" rx="8" fill="rgba(240,162,58,.35)"/><rect x="480" y="124" width="240" height="30" rx="8" fill="rgba(240,162,58,.35)"/>
+      <text x="0" y="200" font-size="19" font-weight="700">Đối chứng phủ kín</text><rect x="0" y="212" width="146" height="22" rx="6" fill="rgba(240,162,58,.35)"/><rect x="152" y="212" width="146" height="22" rx="6" fill="rgba(240,162,58,.35)"/><rect x="304" y="212" width="146" height="22" rx="6" fill="rgba(240,162,58,.35)"/><rect x="456" y="212" width="146" height="22" rx="6" fill="rgba(240,162,58,.35)"/><rect x="608" y="212" width="146" height="22" rx="6" fill="rgba(240,162,58,.35)"/></svg>
+    <div class="frame f" style="margin-top:10px"><h3>Chồng lấn không phải lý do</h3><p class="muted" style="font-size:21px">Đối chứng phủ kín, cùng số đoạn, vẫn thấp hơn. Cách giải thích còn lại: <b style="color:var(--ink)">ranh giới ngữ nghĩa</b>. Biên độ nhỏ (0,0085) nhưng hướng nhất quán 8/8.</p></div>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 3 (E04, E05) — 7 lượt trích, 25.200 mẫu, 0 lỗi</div><div class="page">26 / 36</div></section>
+<section class="slide deep" data-notes="Năm dòng hiện theo phím. Slide hội đồng sẽ hỏi — nói trước.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Nói thẳng ①</div>
+<h2 class="in-up">Chunk-aware <u>không</u> cộng thêm điểm phân loại — năm phép đo độc lập</h2>
+<div class="cols c12" style="margin-top:6px;align-items:start">
+  <div>
+    <table style="font-size:25px">
+      <tr><th>Phép đo</th><th>Đổi gì</th><th class="r">chunk-aware − lookback</th></tr>
+      <tr class="f"><td>E03 · ViHallu</td><td class="muted">—</td><td class="r">+0,012</td></tr>
+      <tr class="f"><td>E12</td><td class="muted">thêm đặc trưng bề mặt</td><td class="r">−0,007</td></tr>
+      <tr class="f"><td>E13</td><td class="muted">đổi họ mô hình (Sailor2)</td><td class="r">−0,026</td></tr>
+      <tr class="f"><td>E14</td><td class="muted">đổi cỡ (3B / 1.5B)</td><td class="r">−0,013 / +0,011</td></tr>
+      <tr class="f"><td>E15</td><td class="muted">đổi bộ, split gốc (2.091 test)</td><td class="r">−0,001</td></tr>
+    </table>
+  </div>
+  <div class="frame f" style="border-left:8px solid var(--accent2)"><h3 style="color:var(--accent2)">Đọc thế nào</h3><p style="font-size:24px">Tất cả nằm trong khoảng tin cậy rộng 0,065. Đổi họ mô hình thì <b>đổi dấu</b>; qua ba cỡ cùng họ thì <b>đảo dấu hai lần</b>. Một đóng góp thật không thể cư xử như vậy.</p><p class="muted" style="font-size:22px;margin-top:10px">Nhóm em ghi nguyên trạng, không chọn lại cấu hình.</p></div>
+</div>
+<div class="src">Nguồn: Bảng 4, 4b, 5, 5b, 6 — docs/EXPERIMENTS.md</div><div class="page">27 / 36</div></section>
+<section class="slide deep" data-notes="Hai vòng trượt vào gần trùng nhau. Ba thẻ theo phím.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Nói thẳng ②</div>
+<h2 class="in-up">Vì sao: cùng một tín hiệu — chồng lấn <em>99,9 %</em> với tỷ lệ gộp</h2>
+<div class="cols c2" style="margin-top:10px;align-items:center">
+  <svg class="fig" viewBox="0 0 760 420" style="width:100%;height:420px">
+    <circle class="in-up d1" cx="280" cy="200" r="170" fill="none" stroke="var(--accent2)" stroke-width="4"/><text class="in-up d1" x="280" y="16" text-anchor="middle" font-size="22" font-weight="700" fill="var(--accent2)">tỷ lệ gộp (Lookback Lens)</text>
+    <circle class="in-up d3" cx="310" cy="200" r="150" fill="var(--accent)" opacity=".28" style="transition-delay:.9s"/><text class="in-up d3" x="310" y="208" text-anchor="middle" font-size="24" font-weight="800" style="transition-delay:.9s">chunk-aware</text>
+    <path class="in-up d5" d="M462 200 H 540" stroke="var(--accent)" stroke-width="3"/><text class="in-up d5" x="555" y="190" font-size="40" font-weight="800" fill="var(--accent)">99,9 %</text><text class="in-up d5" x="555" y="224" font-size="19" class="mu">phần chunk-aware cộng thêm</text><text class="in-up d5" x="555" y="250" font-size="19" class="mu">đã nằm sẵn trong tỷ lệ gộp</text>
+    <text x="0" y="392" font-size="18" class="mu">ISE-DSC01, 22,6 đoạn — so với bề mặt: chunk-aware một mình +0,227,</text><text x="0" y="418" font-size="18" class="mu">lookback một mình +0,307, cả hai cộng lại vẫn +0,307</text>
+  </svg>
+  <div>
+    <h3 style="color:var(--accent)">Nhưng nó cho thứ tỷ lệ gộp không cho được</h3>
+    <div class="frame f" style="margin:14px 0"><b style="color:var(--accent)">Chỉ được đoạn nào</b> — 87,8 % trùng đoạn bằng chứng. Tỷ lệ gộp chỉ trả một con số.</div>
+    <div class="frame f" style="margin-bottom:14px"><b style="color:var(--accent)">Hiệu chỉnh xác suất</b> — ECE 0,109 → 0,044, giữ được trên bộ mới (0,050).</div>
+    <div class="frame f"><b style="color:var(--accent)">Bằng chứng cơ chế</b> — lặp lại trên bộ thứ hai; can thiệp đúng 4/4.</div>
+    <p class="f muted" style="margin-top:16px;font-size:22px">Định vị đóng góp: <b style="color:var(--ink)">định vị đúng và phân loại đúng là hai việc khác nhau</b> — đề tài đo được cả hai.</p>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 4c (T35B)</div><div class="page">28 / 36</div></section>
+<section class="slide " data-notes="Điểm rơi vào lần lượt. 3B là điểm cân bằng.">
+<div class="eyebrow in-up" style="color:var(--accent)">Phần 6 · Kết quả · CH2 — chi phí</div>
+<h2 class="in-up">Thu mô hình đọc 4,7 lần chỉ mất 0,022 macro-F1</h2>
+<div class="cols c12" style="margin-top:6px;align-items:start;gap:40px">
+  <div>
+    <div class="num-big in-up d1" style="font-size:130px"><span data-count="67">0</span> %</div>
+    <p class="muted in-up d2" style="font-size:22px;margin-top:-6px">VRAM tiết kiệm khi 7B → 1.5B; 7B → 3B tiết kiệm 56 % và <b style="color:var(--ink)">nhanh gấp đôi</b></p>
+    <table style="font-size:21px;margin-top:10px">
+      <tr><th>Mô hình đọc</th><th class="r">F1</th><th class="r">ms</th><th class="r">VRAM</th><th class="r">Tham số</th></tr>
+      <tr class="f"><td class="nw">7B · lookback gộp</td><td class="r">0,745</td><td class="r">437,6</td><td class="r">8.328</td><td class="r">2.271</td></tr>
+      <tr class="f us"><td class="nw"><b>3B · lookback gộp</b></td><td class="r">0,735</td><td class="r"><b>222,7</b></td><td class="r"><b>3.710</b></td><td class="r"><b>195</b></td></tr>
+      <tr class="f"><td class="nw">1.5B · lookback gộp</td><td class="r">0,723</td><td class="r">608,1</td><td class="r">2.718</td><td class="r">1.011</td></tr>
+      <tr class="f"><td class="nw">XLM-R-large</td><td class="r"><b>0,776</b></td><td class="r"><b>25,2</b></td><td class="r">11.231</td><td class="r">560 tr.</td></tr>
+    </table>
+  </div>
+  <div><svg class="fig" viewBox="0 0 960 440" style="width:100%;height:440px"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs><path class="arrow" d="M80 390 H 940"/><path class="arrow" d="M80 390 V 30"/><text x="930" y="372" text-anchor="end" font-size="17" class="mu">ms / mẫu (thang log) →</text><text x="20" y="24" font-size="17" class="mu">macro-F1 ↑</text><g class="in-up d1"><circle cx="90" cy="337" r="9" fill="var(--muted)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="90" y="317" text-anchor="middle" font-size="17" font-weight="400">Bề mặt</text></g><g class="in-up d2"><line x1="557" y1="145" x2="525" y2="101" stroke="var(--muted)" stroke-width="1.5" opacity=".7"/><circle cx="557" cy="145" r="26" fill="var(--muted)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="517" y="105" text-anchor="middle" font-size="17" font-weight="400">PhoBERT</text></g><g class="in-up d3"><circle cx="593" cy="90" r="26" fill="var(--muted)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="593" y="50" text-anchor="middle" font-size="17" font-weight="400">XLM-R</text></g><g class="in-up d4"><line x1="735" y1="129" x2="797" y2="65" stroke="var(--accent2)" stroke-width="1.5" opacity=".7"/><circle cx="735" cy="129" r="14" fill="var(--accent2)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="805" y="69" text-anchor="start" font-size="17" font-weight="700">7B chunk-aware 0,757</text></g><g class="in-up d5"><line x1="735" y1="153" x2="797" y2="131" stroke="var(--accent2)" stroke-width="1.5" opacity=".7"/><circle cx="735" cy="153" r="15" fill="var(--accent2)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="805" y="135" text-anchor="start" font-size="17" font-weight="700">7B lookback 0,745</text></g><g class="in-up d6"><line x1="701" y1="174" x2="649" y2="240" stroke="var(--accent)" stroke-width="1.5" opacity=".7"/><circle cx="701" cy="174" r="13" fill="var(--accent)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="641" y="244" text-anchor="end" font-size="17" font-weight="700">3B 0,735 · 195 tham số</text></g><g class="in-up d7"><line x1="751" y1="199" x2="813" y2="239" stroke="var(--accent2)" stroke-width="1.5" opacity=".7"/><circle cx="751" cy="199" r="14" fill="var(--accent2)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="821" y="243" text-anchor="start" font-size="17" font-weight="700">1.5B 0,723</text></g><g class="in-up d8"><circle cx="880" cy="321" r="8" fill="var(--muted)" opacity=".8" stroke="var(--bg)" stroke-width="2"/><text x="880" y="301" text-anchor="middle" font-size="17" font-weight="400">Gemini</text></g><text x="70" y="335" text-anchor="end" font-size="15" class="mu">0,66</text><text x="70" y="252" text-anchor="end" font-size="15" class="mu">0,70</text><text x="70" y="170" text-anchor="end" font-size="15" class="mu">0,74</text><text x="70" y="87" text-anchor="end" font-size="15" class="mu">0,78</text><text x="90" y="414" text-anchor="middle" font-size="15" class="mu">0,001</text><text x="433" y="414" text-anchor="middle" font-size="15" class="mu">1</text><text x="661" y="414" text-anchor="middle" font-size="15" class="mu">100</text><text x="890" y="414" text-anchor="middle" font-size="15" class="mu">10.000</text><text x="510" y="438" text-anchor="middle" font-size="16" class="mu">cỡ điểm = số tham số phải huấn luyện (thang log)</text></svg>
+    <div class="frame f" style="margin-top:10px;padding:16px 24px;border-left:8px solid var(--warn);font-size:20px"><b>Nghịch lý đo được:</b> 1.5B <b>chậm hơn 7B</b> vì buộc chạy <code>bfloat16</code> — T4 không có bf16 gốc. Nấc lùi nhỏ nhất mua được bộ nhớ, không mua được thời gian.</div>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 5b (E14), Bảng 8 (E11) — XLM-R thắng hai trục tuyệt đối; hướng nội tại thắng ở tham số: 195 so với 560 triệu</div><div class="page">29 / 36</div></section>
+<section class="slide " data-notes="Mũi tên đỏ gãy, mũi tên xanh qua — theo phím.">
+<div class="eyebrow in-up" style="color:var(--violet)">Phần 6 · Kết quả · CH3 — chuyển giao</div>
+<h2 class="in-up">"Trung thực hay không" chuyển được; "sai kiểu nào" thì không</h2>
+<div class="cols c2" style="margin-top:6px;align-items:start">
+  <div class="frame in-up d1"><h3>E15 · Split gốc ViWikiFC, so số công bố</h3>
+    <div style="font-size:48px;font-weight:800;margin:6px 0">70,7 <span class="muted" style="font-size:24px;font-weight:500">so với SemViQA 83,9 — thua 13 điểm</span></div>
+    <ul class="muted" style="font-size:21px"><li class="f">Test dùng lại <b style="color:var(--ink)">100 %</b> ngữ cảnh train — bộ mã hóa 560 M tham số <b style="color:var(--ink)">nhớ được</b>, hồi quy 2.271 tham số thì không.</li><li class="f">Chỉ <b style="color:var(--ink)">67 %</b> nhãn NEI thật sự là ngoại lai.</li><li class="f">Cùng một đầu chú ý <code>l17_h4</code> dẫn đầu trên <b style="color:var(--ink)">cả ba bộ</b>.</li></ul></div>
+  <div class="frame in-up d2"><h3>E16 · Huấn luyện bộ này, chấm bộ kia</h3>
+    <svg class="fig" viewBox="0 0 760 150" style="width:100%;height:150px"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+      <rect class="box" x="0" y="30" width="200" height="90" rx="16"/><text x="100" y="68" text-anchor="middle" font-size="20" font-weight="700">ViHallu</text><text x="100" y="98" text-anchor="middle" font-size="15" class="mu">ngoại lai = GPT-4o bịa</text>
+      <rect class="box" x="560" y="30" width="200" height="90" rx="16"/><text x="660" y="68" text-anchor="middle" font-size="20" font-weight="700">ISE-DSC01</text><text x="660" y="98" text-anchor="middle" font-size="15" class="mu">ngoại lai = NEI người viết</text>
+      <g class="f"><path d="M210 55 H 550" stroke="var(--bad)" stroke-width="4" stroke-dasharray="10 8"/><text x="380" y="46" text-anchor="middle" font-size="16" fill="var(--bad)" font-weight="700">3 lớp: 0,36–0,55 — gãy</text></g>
+      <g class="f"><path class="arrow" d="M210 100 H 545" style="stroke:var(--ok);stroke-width:4"/><text x="380" y="130" text-anchor="middle" font-size="16" fill="var(--ok)" font-weight="700">nhị phân: 0,63–0,78 — qua</text></g>
+    </svg>
+    <p class="muted" style="font-size:20px;margin-top:10px">Mỗi chiều mất đúng một lớp ảo giác — lớp hai bộ <b style="color:var(--ink)">định nghĩa khác nhau</b>. Tín hiệu "có bám ngữ cảnh không" là của mô hình đọc; "sai kiểu nào" là của từng bộ.</p></div>
+</div>
+<div class="src">Nguồn: Bảng 6 (E15), Bảng 7 (E16)</div><div class="page">30 / 36</div></section>
+<section class="slide " data-notes="Bảng theo phím; phần bịa tô đỏ. Cú giật mình ở góc.">
+<div class="eyebrow in-up" style="color:var(--accent2)">Phần 6 · Demo thật · Kaggle T4, 11/09/2026</div>
+<h2 class="in-up">Bộ phát hiện tự bắt được một ảo giác không ai dàn dựng</h2>
+<div class="cols c12" style="margin-top:6px;align-items:start">
+  <div>
+    <p class="muted in-up d1" style="font-size:21px">Hệ RAG 21 tài liệu: BM25 → Qwen2.5-3B sinh → chấm.</p>
+    <table style="font-size:21px">
+      <tr><th>Câu hỏi</th><th>Nhãn</th><th class="r">Rủi ro</th></tr>
+      <tr class="f"><td>Đỉnh núi cao nhất Đông Dương?</td><td><span class="tag no">no</span></td><td class="r">0,008</td></tr>
+      <tr class="f"><td>Ai chỉ huy chiến dịch Điện Biên Phủ?</td><td><span class="tag no">no</span></td><td class="r">0,135</td></tr>
+      <tr class="f"><td>Phở xuất hiện ở đâu và khi nào? <span class="muted">(tranh cãi)</span></td><td><span class="tag extr">extrinsic</span></td><td class="r">0,883</td></tr>
+      <tr class="f us"><td><b>Hồ Hoàn Kiếm gắn với truyền thuyết nào?</b></td><td><span class="tag extr">extrinsic</span></td><td class="r"><b>0,997</b></td></tr>
+      <tr class="f"><td>Vịnh Hạ Long thuộc tỉnh nào? (qua API)</td><td><span class="tag no">no</span></td><td class="r">0,018</td></tr>
+    </table>
+  </div>
+  <div>
+    <div class="frame f" style="border-left:8px solid var(--bad)"><div class="muted" style="font-size:15px;text-transform:uppercase;letter-spacing:.1em">Ngữ cảnh nói</div><p style="font-size:24px">"…hồ Hoàn Kiếm gắn với truyền thuyết vua Lê Lợi trả gươm."</p><div class="muted" style="font-size:15px;text-transform:uppercase;letter-spacing:.1em;margin-top:8px">Mô hình trả lời</div><p style="font-size:24px">"…trả gươm <b style="color:var(--bad)">sau khi đánh đuổi giặc Minh</b>… sau đó <b style="color:var(--bad)">trở về dinh thự</b>."</p><p class="muted" style="font-size:20px;margin:0">Ý đầu đúng ngoài đời nhưng <b style="color:var(--ink)">không có trong ngữ cảnh</b>; ý sau bịa hẳn.</p></div>
+    <div class="frame f" style="margin-top:14px;border-left:8px solid var(--warn);font-size:21px"><b>Phát hiện kèm:</b> mô hình đọc <code>float16</code> <b>không sinh được</b> — lớp 27 tràn số → logit NaN → toàn "!". Bộ sinh phải là mô hình thứ hai (<code>bfloat16</code>) → "chi phí biên ≈ 0" chỉ đúng trên phần cứng có bf16 gốc.</div>
+  </div>
+</div>
+<img class="owl-corner" src="img/owl-prof-shock.webp" alt="">
+<div class="src">Nguồn: results/t40/t40_rag.json, kaggle_log_2026-09-11_lan3.txt</div><div class="page">31 / 36</div></section>
+<section class="slide " data-notes="Năm hình dạng theo phím. Ba cái đầu chỉ cùng một hướng phát triển.">
+<div class="eyebrow in-up">Phần 7 · Kết luận — Chương 8</div>
+<h2 class="in-up">Sai sót: bộ phát hiện <em>thấy</em> ảo giác tốt hơn hẳn <em>gọi tên</em> nó</h2>
+<div class="cols c12" style="margin-top:6px;align-items:start">
+  <div>
+    <div class="num-big in-up d1" style="font-size:150px"><span data-count="48.5" data-dec="1">0</span> %</div>
+    <p class="muted in-up d2" style="font-size:22px">trong 169 lỗi là nhầm giữa <b style="color:var(--ink)">hai loại ảo giác</b> với nhau; chỉ 16 % là bỏ sót thành trung thực</p>
+    <img class="in-up d3" src="img/error_analysis.png" alt="" style="width:100%;border-radius:14px;margin-top:10px;filter:invert(.92) hue-rotate(180deg)">
+  </div>
+  <div>
+    <h3 style="margin-bottom:12px">Năm hình dạng lỗi</h3>
+    <div class="frame f" style="padding:16px 24px;margin-bottom:10px;font-size:22px"><b>1.</b> Một mệnh đề bịa giữa ba câu chép lại — bị <b>trung bình hóa</b> mất</div>
+    <div class="frame f" style="padding:16px 24px;margin-bottom:10px;font-size:22px"><b>2.</b> Trộn hai loại ảo giác dưới một nhãn</div>
+    <div class="frame f" style="padding:16px 24px;margin-bottom:10px;font-size:22px"><b>3.</b> Phủ định lật ngược bằng chính từ ngữ ngữ cảnh — chú ý biết <em>nhìn đâu</em>, không biết <em>nói gì</em></div>
+    <div class="frame f" style="padding:16px 24px;margin-bottom:10px;font-size:22px"><b>4.</b> Câu hỏi tiền đề sai — 13 câu lọt "Adversarial Question:"</div>
+    <div class="frame f" style="padding:16px 24px;font-size:22px"><b>5.</b> Nhãn tranh cãi</div>
+  </div>
+</div>
+<div class="src">Nguồn: Bảng 9 (T35) — ba trong năm là giới hạn của chấm cả phản hồi bằng một véc-tơ trung bình</div><div class="page">32 / 36</div></section>
+<section class="slide " data-notes="Hai cột theo phím.">
+<div class="eyebrow in-up">Phần 7 · Kết luận</div>
+<h2 class="in-up">Đã làm được — và chưa</h2>
+<div class="cols c2" style="margin-top:14px;align-items:start">
+  <div class="frame" style="border-top:8px solid var(--ok)"><h3 style="color:var(--ok)">Đã làm được</h3><ul style="font-size:24px">
+    <li class="f">Hệ phát hiện ba lớp cho tiếng Việt từ tín hiệu chú ý — 0,757, ngang bộ mã hóa tinh chỉnh, ECE tốt nhất.</li>
+    <li class="f">Cơ chế xác nhận trực tiếp: chỉ đúng đoạn bằng chứng 87,8 %, lặp lại trên bộ thứ hai, can thiệp 4/4.</li>
+    <li class="f">Bậc thang chi phí đo xen kẽ: 3B là điểm cân bằng, 195 tham số.</li>
+    <li class="f">Hệ thống hoàn chỉnh: thư viện, REST, Docker, trang chủ; demo thật bắt được ảo giác.</li></ul></div>
+  <div class="frame" style="border-top:8px solid var(--bad)"><h3 style="color:var(--bad)">Chưa — nói rõ</h3><ul style="font-size:24px">
+    <li class="f">Năm đại lượng hình dạng không cộng thêm điểm phân loại (5 phép đo).</li>
+    <li class="f">Ba lớp không chuyển chéo bộ — vì định nghĩa nhãn khác nhau.</li>
+    <li class="f">Chấm cả phản hồi bằng một véc-tơ → mệnh đề bịa bị nhòa.</li>
+    <li class="f">Chi phí gắn với T4; Docker chưa kiểm trên máy GPU; lượt đọc tay 100 mẫu chưa xong.</li></ul></div>
+</div><div class="page">33 / 36</div></section>
+<section class="slide " data-notes="Ba mũi tên tiến.">
+<div class="eyebrow in-up">Phần 7 · Kết luận</div>
+<h2 class="in-up">Hướng phát triển</h2>
+<div class="cols c3" style="margin-top:30px;align-items:stretch">
+  <div class="frame in-up d1"><div style="font-size:60px;color:var(--accent)">→</div><h3>Chấm theo đoạn phản hồi</h3><p class="muted" style="font-size:22px">Tách "nhìn vào đâu" khỏi "nói gì về chỗ đó" — trả lời thẳng ba hình dạng lỗi hàng đầu.</p></div>
+  <div class="frame in-up d2"><div style="font-size:60px;color:var(--accent)">→</div><h3>Gộp bộ, hoặc chấp nhận nhị phân</h3><p class="muted" style="font-size:22px">Bộ phát hiện dùng chung cần nhãn cùng nghĩa — hoặc chỉ hỏi "có bám ngữ cảnh không".</p></div>
+  <div class="frame in-up d3"><div style="font-size:60px;color:var(--accent)">→</div><h3>Đo chi phí biên trên hệ RAG thật</h3><p class="muted" style="font-size:22px">Phần cứng có bfloat16 gốc: một bản 7B vừa đọc vừa viết — lúc đó lập luận "gần 0" mới kiểm được.</p></div>
+</div>
+<p class="in-up d4 muted" style="margin-top:44px;font-size:24px">Tùy chọn: E17 chuyển miền sang ViFactCheck — nếu còn thời gian sau khi viết.</p><div class="page">34 / 36</div></section>
+<section class="slide " data-notes="Bốn câu xin ý kiến. Câu 1 quyết định cách viết chương 7.">
+<div class="eyebrow in-up">Tiến độ và xin ý kiến</div>
+<h2 class="in-up">41 / 52 đầu việc — còn viết và bảo vệ</h2>
+<div class="in-up d1" style="height:26px;background:var(--bg2);border-radius:13px;overflow:hidden;margin-top:10px;position:relative"><div class="growx" style="width:78.8%;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:13px"></div><span style="position:absolute;left:79.5%;top:0;line-height:26px;font-size:15px;font-weight:700;color:var(--accent)">41 / 52</span></div>
+<p class="muted in-up d2" style="font-size:20px;margin-top:8px">Giai đoạn 1–7 xong 11/09/2026 · báo cáo cuối kỳ trước 22/11 · phản biện 23–29/11 · bảo vệ 30/11 – 06/12</p>
+<div class="cols c2" style="margin-top:30px;align-items:stretch;gap:24px">
+  <div class="frame f"><div class="eyebrow" style="color:var(--accent)">Câu 1 · quan trọng nhất</div><h3>Định vị đóng góp</h3><p class="muted" style="font-size:21px">Đóng góp chính là bằng chứng cơ chế và khả năng chỉ được đoạn nào; điểm phân loại báo cáo trung thực là không phân biệt được với 0. Hợp với một khóa luận không?</p></div>
+  <div class="frame f"><div class="eyebrow" style="color:var(--accent)">Câu 2</div><h3>Bố cục chương đánh giá</h3><p class="muted" style="font-size:21px">Theo ba câu hỏi nghiên cứu, thay vì theo thứ tự 16 thí nghiệm?</p></div>
+  <div class="frame f"><div class="eyebrow" style="color:var(--accent)">Câu 3</div><h3>E17 — ViFactCheck</h3><p class="muted" style="font-size:21px">Làm, hay dồn sức viết và nêu làm hướng phát triển?</p></div>
+  <div class="frame f"><div class="eyebrow" style="color:var(--accent)">Câu 4</div><h3>Bộ phát hiện mặc định</h3><p class="muted" style="font-size:21px">Giữ 7B (nhất quán mọi bảng) hay đổi 3B (điểm cân bằng chi phí)?</p></div>
+</div>
+<img class="owl-corner" src="img/owl-prof-think.webp" alt=""><div class="page">35 / 36</div></section>
+<section class="slide deep" data-notes="Cảm ơn thầy.">
+<canvas id="motes2"></canvas>
+<div style="display:grid;place-items:center;height:100%;text-align:center">
+  <div>
+    <img class="in-up" src="img/owl-prof-wave.webp" alt="" style="height:560px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.7))">
+    <div class="quote in-up d2" style="margin-top:10px">Mắt <em>không</em> nói dối.</div>
+    <p class="in-up d3 muted" style="font-size:28px;margin-top:14px">Em cảm ơn thầy. &nbsp;·&nbsp; github.com/wsunicorn/vihallulens</p>
+  </div>
+</div><div class="page">36 / 36</div></section>
+</div></div>
+
+<div id="progress"></div>
+<div class="deck-controls" id="help">← → Space: tiếp · A: hiện cả slide · N: ghi chú · F: toàn màn hình · 1–9: nhảy · Ctrl+P: in PDF (mở với ?all)</div>
+<aside id="notes"><h4>Ghi chú diễn giả</h4><div id="notes-body"></div></aside>
+<script>
+(function(){
+  const stage=document.querySelector('.deck-stage'), slides=[...document.querySelectorAll('.slide')]; let i=0;
+  const ALL=new URLSearchParams(location.search).has('all'); if(ALL) document.documentElement.classList.add('all');
+  function fit(){ const k=Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform=`translate(${(innerWidth-1920*k)/2}px, ${(innerHeight-1080*k)/2}px) scale(${k})`; }
+  addEventListener('resize',fit); fit();
+  function fmt(v,d){ return v.toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function count(el){ const to=parseFloat(el.dataset.count), d=+(el.dataset.dec||0), t0=performance.now(); if(ALL){ el.textContent=fmt(to,d); return; } (function s(t){ const k=Math.min(1,(t-t0)/1400), e=1-Math.pow(1-k,3); el.textContent=fmt(to*e,d); if(k<1) requestAnimationFrame(s); })(t0); }
+  function show(n){ slides.forEach((s,j)=>{ s.classList.toggle('active',j===n); s.classList.toggle('left',j<n); if(j===n){ s.querySelectorAll('.f').forEach(f=>f.classList.toggle('on',ALL)); s.querySelectorAll('[data-count]').forEach(c=>{c.textContent='0'; setTimeout(()=>count(c),350);}); } });
+    i=n; location.hash=n+1; document.getElementById('progress').style.width=(100*(n+1)/slides.length)+'%';
+    document.getElementById('notes-body').innerHTML=`<b>Slide ${n+1}/${slides.length}</b><br><br>`+(slides[n].dataset.notes||''); }
+  function next(){ const f=slides[i].querySelector('.f:not(.on)'); if(f){ f.classList.add('on'); return; } if(i<slides.length-1) show(i+1); }
+  function prev(){ if(i>0) show(i-1); }
+  addEventListener('keydown',e=>{ if(['ArrowRight',' ','Enter','PageDown'].includes(e.key)){e.preventDefault();next();} else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='a'||e.key==='A'){ slides[i].querySelectorAll('.f').forEach(f=>f.classList.add('on')); } else if(e.key==='n'||e.key==='N'){ document.getElementById('notes').classList.toggle('on'); }
+    else if(e.key==='f'||e.key==='F'){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); } else if(e.key==='Home'){show(0);} else if(e.key==='End'){show(slides.length-1);}
+    else if(/^[1-9]$/.test(e.key)){ show(Math.min(slides.length-1,+e.key-1)); } else if(e.key==='?'){ document.getElementById('help').classList.toggle('hide'); } });
+  addEventListener('click',e=>{ if(e.target.closest('#notes')) return; if(e.clientX>innerWidth*.2) next(); else prev(); });
+  setTimeout(()=>document.getElementById('help').classList.add('hide'), 8000);
+  const h=parseInt(location.hash.slice(1)||'1',10); show(Math.max(0,Math.min(slides.length-1,h-1)));
+  // motes: attention as light drifting toward the owl's eyes (cover + closing), loop
+  function motes(id, tx, ty){ const c=document.getElementById(id); if(!c) return; const ctx=c.getContext('2d'); c.width=1920; c.height=1080; const P=[]; for(let k=0;k<70;k++) P.push({x:Math.random()*1920,y:Math.random()*1080,vx:0,vy:0,s:1+Math.random()*2});
+    (function tick(){ ctx.clearRect(0,0,1920,1080); for(const m of P){ const dx=tx-m.x, dy=ty-m.y, d=Math.hypot(dx,dy)||1; m.vx+=dx/d*.05+(Math.random()-.5)*.3; m.vy+=dy/d*.05+(Math.random()-.5)*.3; m.vx*=.96; m.vy*=.96; m.x+=m.vx; m.y+=m.vy; if(d<24){ m.x=Math.random()*1920; m.y=Math.random()*1080; m.vx=m.vy=0; } ctx.beginPath(); ctx.arc(m.x,m.y,m.s,0,7); ctx.fillStyle=`rgba(44,232,214,${(0.2+0.5*Math.min(1,140/d)).toFixed(2)})`; ctx.fill(); } requestAnimationFrame(tick); })(); }
+  motes('motes', 1440, 300); motes('motes2', 960, 240);
+})();
+</script>
+</body></html>
