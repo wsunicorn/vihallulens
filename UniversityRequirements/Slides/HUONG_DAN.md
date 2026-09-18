@@ -10,9 +10,17 @@ Mọi thứ nằm trong thư mục này. Có **hai bộ**, dùng bộ nào cũng
 Cả hai là một file HTML tự chứa, `img/` là ảnh dùng chung. Không cần cài gì, không cần mạng —
 font Google chỉ là thêm, không có thì dùng font hệ thống.
 
-Ba kiểu hoạt ảnh trong `slide_v2.html`, cố ý dùng đúng chỗ: **lặp** (tia chú ý chảy, hạt trôi về
-mắt cú, điểm đỏ nhấp — không khí và ẩn dụ), **một lần rồi dừng** (sơ đồ dựng lên, cột mọc, số đếm
-— để khán giả còn đọc trạng thái cuối), **theo bước** (phím `→` cho lập luận nhiều nhịp).
+Trong `slide_v2.html` **mọi slide tự chạy khi vào** — không có kiểu "bấm mới hiện". 14 sơ đồ động chạy
+bằng GSAP + D3 (nhúng sẵn trong file, không cần mạng) trên **số liệu thật** từ `results/` và
+`docs/EXPERIMENTS.md`: RAG sinh ảo giác (4), ba loại phản hồi (6), chú ý là gì (8), gộp → theo đoạn (9),
+chia tập theo ngữ cảnh (13), hai hình dạng (14), cơ chế 5 bước (16), hook và bộ nhớ (17), chia đoạn (18),
+kết quả + lưới đầu (24), định vị 87,8 % (25), chi phí (29), chuyển giao (30), demo + cú Lens (31).
+
+Ba kiểu chuyển động, cố ý dùng đúng chỗ: **lặp** (tia chú ý, gói dữ liệu, hạt trôi — không khí và ẩn dụ),
+**một lần rồi dừng** (sơ đồ dựng lên, cột mọc, số đếm — để khán giả đọc trạng thái cuối), và phần
+còn lại là **tương tác**: rê chuột lên cột / điểm / câu ngữ cảnh để xem số; click vào hình để dừng /
+chạy tiếp; nút **⟳ chạy lại** ở góc mỗi hình (hoặc phím `R`); thanh trượt (số đoạn, cỡ cửa sổ) và nút
+chọn ví dụ / chiều chuyển giao / câu hỏi demo.
 
 ## Trình chiếu
 
@@ -22,9 +30,9 @@ mắt cú, điểm đỏ nhấp — không khí và ẩn dụ), **một lần r�
 
 | Phím | Việc |
 |---|---|
-| `→` `Space` `Enter` `PageDown` | bước tiếp: hiện phần tử kế, hết phần tử thì sang slide sau |
+| `→` `Space` `Enter` `PageDown` | slide sau (v2: mọi thứ tự chạy; v1: hiện phần tử kế) |
 | `←` `PageUp` `Backspace` | về slide trước |
-| `A` | hiện **tất cả** phần tử của slide hiện tại (khi cần nhảy nhanh) |
+| `A` | v1: hiện tất cả phần tử · v2: `R` chạy lại hoạt ảnh của slide |
 | `N` | bật/tắt **ghi chú diễn giả** ở cạnh phải (chỉ bạn thấy nếu chiếu bằng "mở rộng màn hình") |
 | `1`–`9`, `0` | nhảy tới slide 1–10; `Home`/`End` slide đầu/cuối |
 | `?` | hiện/ẩn thanh trợ giúp |
