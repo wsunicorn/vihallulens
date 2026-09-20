@@ -1,6 +1,6 @@
 # Kế hoạch slide v2 — dựng lại từ đầu theo bộ skill, bám 8 chương mẫu báo cáo Khoa
 
-> Bản duyệt. Theme sẽ chốt sau khi bạn chọn một trong năm mẫu ở `mau/`. Mọi số liệu chép từ
+> Đã duyệt; theme chốt E "Đêm cú" (18/09/2026). Bản dựng: `slide_v2.html`. Mọi số liệu chép từ
 > `docs/EXPERIMENTS.md` và `results/`; nguồn ghi ở chân từng slide.
 
 ## Nguyên tắc dựng (từ BI_KIP_HTML_SLIDE.md)
