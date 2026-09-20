@@ -109,8 +109,8 @@
 
 ---
 
-## Việc cần chốt trước khi dựng
+## Đã chốt
 
-1. **Chọn theme** trong `mau/` (mở `mau/index.html` để xem cả năm cạnh nhau, hoặc từng file).
-2. 36 slide có ổn không, hay muốn gọn về ~28 (gộp 8–10, 15–16, 20–21, 32–33)?
-3. Có cần mục "Poster" không (mẫu báo cáo nhắc poster A0 — có thể dựng cùng theme sau).
+1. Theme E "Đêm cú" (18/09/2026).
+2. Giữ 36 slide.
+3. Poster A0: chưa quyết.
