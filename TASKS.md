@@ -3968,8 +3968,8 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
   ### Kết quả — chi tiết ở Bảng 9 `docs/EXPERIMENTS.md`
 
-  **82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** Chỉ 16 % là bỏ sót ảo giác
-  thành `no`. Cùng ranh giới mà Bảng 1, 4 và 7 đều chỉ vào.
+  **82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** 49 lỗi (29 %) là bỏ sót ảo giác
+  thành `no`, 38 (22 %) báo nhầm `no` thành ảo giác (sửa 20/09, bản trước ghi nhầm 16 %). Cùng ranh giới mà Bảng 1, 4 và 7 đều chỉ vào.
 
 | Nhãn cấu trúc | Có mặt / 169 |
 |---|---|

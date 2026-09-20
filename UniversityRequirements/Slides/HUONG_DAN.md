@@ -5,6 +5,7 @@ Mọi thứ nằm trong thư mục này:
 | File | Là gì |
 |---|---|
 | **`slide_v2.html`** | Bộ slide — 36 slide theme "Đêm cú" (nền tối, lam ngọc + hổ phách), bám 8 chương mẫu báo cáo Khoa, sân khấu 1920 × 1080 cố định nên không bao giờ tràn chữ theo màn hình. Một file HTML tự chứa, ảnh ở `img/`. |
+| **`GIAI_THICH_SLIDE.md`** | Giải thích từng slide cho người chưa biết gì về đề tài — thuật ngữ mở ngoặc tại chỗ, có dòng nguồn số liệu. Gửi kèm slide. |
 | `ke_hoach_slide_v2.md` | Kế hoạch từng slide đã duyệt. |
 | `BI_KIP_HTML_SLIDE.md` | Bộ skill đã cài và luật dựng slide, dùng lại cho bộ bảo vệ sau này. | Không cần cài gì, không cần mạng —
 font Google chỉ là thêm, không có thì dùng font hệ thống.
