@@ -1494,8 +1494,9 @@ nhầm, seed 42, ghi `results/error_analysis.csv` kèm cột `ghi_chu_tay` cho l
 | `extrinsic` → `no` | 16 | 7,1 % |
 | `no` → `extrinsic` | 11 | 4,6 % |
 
-**82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** Chỉ 27 lỗi (16 %) là bỏ sót
-ảo giác thành `no`. Đây là cùng một ranh giới mà Bảng 1 (cột nhị phân), Bảng 4 và Bảng 7 đều chỉ
+**82 trên 169 lỗi (48,5 %) là nhầm giữa hai loại ảo giác với nhau.** 49 lỗi (29 %) là bỏ sót ảo giác
+thành `no` (33 + 16), 38 lỗi (22 %) là báo nhầm `no` thành ảo giác (27 + 11) — sửa 20/09/2026, bản
+trước ghi nhầm "27 lỗi (16 %)", vốn là số của riêng cặp `no` → `intrinsic`. Đây là cùng một ranh giới mà Bảng 1 (cột nhị phân), Bảng 4 và Bảng 7 đều chỉ
 vào: bộ phát hiện *thấy* ảo giác tốt hơn hẳn *gọi tên* nó.
 
 #### Nhãn cấu trúc — tự động, mỗi mẫu có thể mang nhiều nhãn
