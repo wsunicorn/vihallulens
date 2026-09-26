@@ -4494,7 +4494,7 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
   sẵn trong repo.
 
   **Giai đoạn 7 khép lại: 41/52 task.** Từ đây là viết — T41 (E17, tùy chọn) rồi T42–T47 chương
-  báo cáo. Mọi số liệu trong báo cáo lấy từ `results/` và các bảng ở `docs/EXPERIMENTS.md`, không
+  báo cáo. *(Cập nhật 26/09/2026: T42–T46 xong, 46/52.)* Mọi số liệu trong báo cáo lấy từ `results/` và các bảng ở `docs/EXPERIMENTS.md`, không
   gõ tay.
 
 ### Rà soát toàn repo trước khi viết — 11/09/2026
@@ -4609,20 +4609,177 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
 ## Giai đoạn 8 — Viết báo cáo (tuần 14–15)
 
 - [ ] **T41** · M · E17 chuyển miền sang ViFactCheck — **chỉ làm nếu còn thời gian**
-- [ ] **T42** · LM · Chương 1–2: giới thiệu và cơ sở lý thuyết
-- [ ] **T43** · LM · Chương 3–4: phân tích yêu cầu và thiết kế hệ thống
-- [ ] **T44** · LM · Chương 5–6: giải pháp công nghệ, hiện thực và triển khai
-- [ ] **T45** · LM · Chương 7: đánh giá và thảo luận, gồm mọi bảng kết quả
-- [ ] **T46** · LM · Chương 8: kết luận và hướng phát triển
+  - **Trạng thái 26/09/2026:** chưa làm, đang chờ ý kiến thầy. Nhóm nghiêng về **không làm**: E16
+    đã cho thấy bộ ba lớp không chuyển được giữa hai bộ vì nhãn khác nghĩa, mà ViFactCheck còn
+    khác miền hơn; bằng chứng đã có (`results/runs.jsonl`, T12) là bằng chứng của ViFactCheck
+    **59 % mẫu có bằng chứng chỉ một mảnh**, nên một cặp offset không biểu diễn được. Nếu làm,
+    kết quả nhiều khả năng lặp lại kết luận của E16 chứ không thêm thông tin mới.
+
+- [x] **T42** · LM · Chương 1–2: giới thiệu và cơ sở lý thuyết — hoàn thành 26/09/2026
+- [x] **T43** · LM · Chương 3–4: dữ liệu, phương pháp đánh giá và phương pháp đề xuất — hoàn thành
+  26/09/2026
+- [x] **T44** · LM · Chương 5–6: thiết kế, hiện thực hệ thống và thực nghiệm — hoàn thành 26/09/2026
+- [x] **T45** · LM · Chương 6–7: kết quả (mọi bảng) và thảo luận — hoàn thành 26/09/2026
+- [x] **T46** · LM · Chương 8: kết luận và hướng phát triển — hoàn thành 26/09/2026
+  - **Kiểm tra:** `KLTN_22635801_22643511_PhatHienAoGiac.docx` mở bằng Word, xuất PDF **151
+    trang**; 8 chương, **39.748 từ**, 36 hình, 42 bảng, 45 tài liệu tham khảo ✅. Đối chiếu máy
+    **658 con số** trong toàn quyển với `results/runs.jsonl`, `docs/EXPERIMENTS.md`,
+    `results/error_analysis.json` và `data/interim/*.parquet`: khớp hết, không có số nào gõ tay
+    sai ✅. Ba danh mục khớp 100 % caption và **số trang đều đúng**; 45/45 tài liệu tham khảo đều
+    được trích, không mục nào thừa ✅.
+
+  ### Bố cục thật của quyển, và vì sao khác tên task
+
+  | Chương | Tên trong quyển | Trang |
+  |---|---|---|
+  | 1 | Giới thiệu | 1 |
+  | 2 | Cơ sở lý thuyết và công trình liên quan | 14 |
+  | 3 | Dữ liệu và phương pháp đánh giá | 27 |
+  | 4 | Phương pháp đề xuất: chunk-aware lookback ratio | 44 |
+  | 5 | Thiết kế và hiện thực hệ thống | 60 |
+  | 6 | Thực nghiệm và kết quả | 71 |
+  | 7 | Thảo luận | 104 |
+  | 8 | Kết luận và hướng phát triển | 114 |
+
+  Tên task T43–T45 viết theo mẫu gợi ý của Khoa (*Phân tích yêu cầu / Thiết kế hệ thống / Giải
+  pháp công nghệ / Hiện thực và triển khai / Đánh giá và thảo luận*). Mẫu ghi rõ "Nội dung của
+  báo cáo tùy theo mỗi đề tài, **có thể** gồm các phần như sau", và đây là khóa luận nghiên cứu
+  chứ không phải đề tài xây dựng phần mềm, nên quyển đi theo trục *dữ liệu → phương pháp → hệ
+  thống → thực nghiệm → thảo luận*. Việc này **phải xác nhận với thầy** trước khi in bản cuối —
+  ghi ở mục xin ý kiến của báo cáo tuần 7.
+
+  ### Hai thứ đáng ghi lại
+
+  **Một, bảng số không gõ tay.** Mọi bảng kết quả lấy từ `results/`, nên lần rà 26/09 không tìm
+  thấy con số nào sai. Ba số duy nhất không đối chiếu được là số của người khác: AUROC 85,3/83,6
+  của Lookback Lens và Fleiss kappa 95,87 % của ViWikiFC — phải mở bài báo gốc kiểm, đã ghi vào
+  danh sách gửi Minh.
+
+  **Hai, viết phần bất lợi trước.** Chương 6 và 7 trình bày thẳng năm phép đo cho thấy nhóm đặc
+  trưng hình dạng **không** cộng thêm điểm phân loại, kèm lý do đo được (chồng lấn 99,9 % tín
+  hiệu với tỷ lệ gộp), thay vì để nó khuất sau con số tổng. Đây là quyết định chốt từ T35B và
+  giữ nguyên khi viết.
+
 - [ ] **T47** · LM · Rà soát định dạng theo mẫu trường, kiểm tra mục lục và caption
+  - **Rà soát xong 26/09/2026; còn 6 nhóm lỗi chờ Minh sửa nên chưa tick.**
+  - **Đã kiểm và đạt:** style Content / Bullet / Caption / Heading 1–3 khớp **từng thông số** với
+    mục ĐỊNH DẠNG của mẫu; lề 3/3/3,5/2 cm; số trang chân trang canh phải; 36 hình + 42 bảng đều
+    dùng trường `SEQ` của Insert Caption, số liên tục; 24/24 chú thích hình nằm ngay dưới hình
+    cùng trang, chú thích bảng nằm trên bảng; ba danh mục khớp caption và đúng số trang; danh mục
+    viết tắt 21 mục đã xếp A–Z; không còn lỗi khoảng trắng hay chữ tạm.
+  - **Còn phải sửa** (chi tiết và cách bấm trong Word: `UniversityRequirements/Reports/
+    DANH_SACH_CAN_SUA_BAO_CAO.txt`):
+    1. Thiếu **header** trên toàn bộ quyển — mẫu bắt buộc.
+    2. Phần đầu quyển (trang Abstract → Danh mục ký hiệu) **không in ra số La Mã** vì section
+       thiếu footer, trong khi mục lục đang trỏ tới *xiv*, *xvi*.
+    3. **Bốn bảng ngắn bị ngắt qua hai trang**: Bảng 2.1 (tr. 20→21), 3.3 (30→31), 3.8 (36→37),
+       5.1 (60→61). Ba bảng A.1, E.1 và nhật ký dài hơn một trang nên được phép.
+    4. **Chữ trong hình quá nhỏ**: Hình 5.1 ≈ 5 pt khi in, vài biểu đồ ≈ 6–7 pt; mẫu yêu cầu tối
+       thiểu 10 pt. Phải xuất lại hình từ file nguồn.
+    5. **Logo trường ở 3 trang bìa chỉ 96 dpi** (241 × 69 px) trong khi các hình khác 210–330 dpi.
+    6. Hình 6.1 ghi 4 chữ số thập phân còn Bảng 6.1 ngay cạnh ghi 3 chữ số.
+  - **Cách rà:** mở file bằng chính Word (bản sao), xuất PDF 151 trang rồi soi bố cục từng trang
+    bằng chương trình — không tin vào mắt lướt. Cách này bắt được đúng ba thứ mà đọc trên Word
+    khó thấy: section thiếu footer, bảng ngắt trang, và cỡ chữ thật bên trong ảnh.
+
+
+### Việc bổ sung sau đánh giá tổng kết 26/09/2026 — không tính vào 52 task
+
+Rút ra từ mục 8 của `docs/EXPERIMENTS.md`: đối chiếu kết quả với ba câu hỏi nghiên cứu (CH1 ~100 %,
+CH2 ~85 %, CH3 ~90 %) và với các công trình 2025–2026 ở mục 4 của `docs/REFERENCES.md`. Năm việc
+dưới đây là **phần còn lại để đưa quyển đến đích**; xếp theo tỷ lệ giá trị trên chi phí.
+
+**Thứ tự nên làm:** T45B và T42B trước (0 GPU, chỉ viết, sửa trực tiếp quyển) → T45C (E18, đáng
+giá nhất trong ba thí nghiệm) → T45D (E19) → T45E (E20) chỉ khi đã có quyết định về phần cứng.
+Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 của `CLAUDE.md`.
+
+- [ ] **T45B** · LM · Đoạn định vị so với bảng xếp hạng ViHallu trong chương 7 và trên slide — **0
+  GPU, ưu tiên cao nhất**
+  - **Vì sao:** Bảng 2.2 của quyển đã ghi đội cao nhất cuộc thi đạt **84,80 %** macro-F1, nhưng
+    chương 7 chưa giải thích vì sao không đặt con số đó cạnh 0,757. Hội đồng tra ra rất nhanh và
+    có thể hiểu sai theo cả hai chiều — "thua 9 điểm" (sai: khác tập đánh giá, tập kiểm tra riêng
+    không phát hành nhãn) hoặc "gần ngang top" (sai: đội dẫn đầu dùng LLM tinh chỉnh + ensemble,
+    đề tài cố tình không tinh chỉnh). Lập luận đầy đủ ở mục 8.3 của `docs/EXPERIMENTS.md`.
+  - **Làm gì:** thêm một đoạn vào mục 7.1 của quyển và một câu vào slide kết quả 24; cả hai dùng
+    đúng câu chốt ở mục 8.3.
+  - **Kiểm tra:** quyển có đoạn nêu rõ ba điều — khác tập đánh giá, khác chế độ (tinh chỉnh hay
+    không), và đề tài đo cái gì; không đặt 84,80 và 0,757 cạnh nhau trong cùng một cột bảng.
+
+- [ ] **T42B** · LM · Cập nhật chương 2 với bốn công trình 2025–2026 — **0 GPU**
+  - **Vì sao:** chương 2 hiện dừng ở các công trình 2024 cùng ReDeEP và LettuceDetect. Bốn công
+    trình mới ở mục 4 của `docs/REFERENCES.md` vừa xác nhận độc lập kết luận trung tâm của đề
+    tài (Lookback Lens sập ở mức đoạn phản hồi: F1 13,2 / 0,0 / 0,0), vừa đặt ra câu hỏi hội đồng
+    dễ hỏi nhất ("chú ý có phải lời giải thích không?" — ContextCite).
+  - **Làm gì:** thêm Multi-View Attention (arXiv:2504.04335), ContextCite (NeurIPS 2024),
+    ARC-JSD (ICLR 2026), LUMINA (ICLR 2026) vào mục 2.4 và Bảng 2.1; chèn bốn mục vào Tài liệu
+    tham khảo **theo thứ tự tên tác giả** như danh mục hiện có, rồi đánh lại số toàn bộ danh
+    mục **và mọi trích dẫn [n] trong thân bài**; trích MVA và ContextCite ở mục 7.2 của quyển.
+  - **Kiểm tra:** 49 tài liệu tham khảo, đánh số liên tục, mục nào cũng được trích; số liệu của
+    bốn bài chỉ nằm ở chương 2 và 7, không nằm trong bảng kết quả của nhóm.
+
+- [ ] **T45C** · M · **E18** — chấm theo từng câu phản hồi, gộp max thay vì trung bình — **khoảng 1
+  giờ GPU**
+  - **Vì sao:** chương 7 của quyển giải thích khoảng cách "định vị đúng nhưng không phân loại tốt
+    hơn" bằng ba lý do; lý do thứ hai — *gộp trung bình cả phản hồi làm loãng một mệnh đề bịa* —
+    là lý do duy nhất **kiểm được bằng thí nghiệm** và cũng là hướng cả ngành đang đi. Hiện nó
+    mới là lời giải thích, chưa phải kết quả.
+  - **Làm gì:** trong lúc trích, ngoài véc-tơ gộp cả phản hồi như cũ, lưu thêm véc-tơ theo từng
+    câu của phản hồi (tách câu bằng đúng hàm tách câu đang dùng cho ngữ cảnh). Gộp **max** và
+    **mean** qua các câu rồi khớp hồi quy logistic như E03, cùng quy trình chọn đầu trên dev.
+    Bản ghi cũ **đã gộp sẵn trục token** nên phải trích lại ViHallu (7.000 mẫu × 437,6 ms ≈ 51
+    phút). Chỉ **thêm trường** vào bản ghi; không đổi prompt, không đổi đặc trưng cũ, E02/E03
+    phải tái lập đúng từng chữ số.
+  - **Dự đoán ghi trước khi chạy** (khóa bằng ca kiểm thử như `EXPECTED_DIRECTION` của E08):
+    gộp max tăng F1 lớp extrinsic và giảm số ảo giác bị đoán thành `no` so với E03; macro-F1 có
+    thể vẫn nằm trong khoảng tin cậy.
+  - **Kiểm tra:** một dòng mới trong `results/runs.jsonl`; Bảng mới trong `docs/EXPERIMENTS.md`
+    đặt E03 (mean cả phản hồi), E18-mean và E18-max cạnh nhau, có khoảng tin cậy; ma trận nhầm
+    lẫn so với Bảng 9; kết luận ghi đúng như dữ liệu nói, kể cả khi dự đoán sai.
+
+- [ ] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — **khoảng 25
+  phút GPU**
+  - **Vì sao:** ContextCite kết luận trọng số chú ý thường không đáng tin để quy trách nhiệm;
+    kết quả 87,8 % của E06 cần được đặt cạnh một phương pháp dựa trên cắt bỏ để biết nó đứng ở
+    đâu. Nhóm đã có sẵn 1.836 cặp của E08 nên chi phí rất nhỏ.
+  - **Làm gì:** lấy 300 mẫu có bằng chứng từ E08, với mỗi mẫu cắt bỏ lần lượt từng đoạn (khoảng
+    10 lượt đọc/mẫu), tính độ lệch Jensen–Shannon của phân phối trên token phản hồi giữa đủ ngữ
+    cảnh và cắt bỏ (theo ARC-JSD); đoạn làm lệch nhiều nhất là đoạn được quy trách nhiệm. So
+    hit@1 của cách này với đầu chú ý mạnh nhất và trung bình 756 đầu **trên cùng 300 mẫu**.
+  - **Dự đoán ghi trước khi chạy:** cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất, nhưng khoảng
+    cách nhỏ hơn mức chênh chi phí (khoảng 10 lượt đọc so với 1).
+  - **Kiểm tra:** bảng ba dòng (cắt bỏ / đầu mạnh nhất / trung bình 756 đầu) kèm số lượt đọc mỗi
+    mẫu và khoảng tin cậy; một đoạn trong mục 7.2 của quyển nói rõ ranh giới giữa *định vị trên
+    bằng chứng vàng* và *quy trách nhiệm*.
+
+- [ ] **T45E** · L · **E20** — đo chi phí biên trên GPU có `bfloat16` gốc — **một buổi, CẦN HỎI
+  NGƯỜI DÙNG TRƯỚC**
+  - **Vì sao:** là 15 % còn thiếu của CH2. Cột "chi phí biên" của Bảng 8 hiện là lập luận chứ
+    chưa phải phép đo: trên T4, bộ đọc `float16` không sinh được văn bản (T40) nên bộ sinh và bộ
+    đọc phải là hai mô hình.
+  - **Vướng ràng buộc cứng** ở mục 2 của `CLAUDE.md`: cần GPU Ampere trở lên (L4, A100) — Kaggle
+    và Colab miễn phí không có, Colab Pro tốn phí. **Không tự làm**; hỏi người dùng có máy phòng
+    lab hoặc có chấp nhận chi phí không.
+  - **Làm gì nếu được duyệt:** một bản Qwen2.5-7B `bfloat16` sinh câu trả lời cho 100 câu hỏi của
+    hệ RAG minh họa, đo thời gian sinh trần và thời gian sinh có gắn hook; hiệu hai số là chi phí
+    biên.
+  - **Kiểm tra:** con số chi phí biên (ms/mẫu và %) thay cho lập luận ở Bảng 8, ghi rõ tên phần
+    cứng. Nếu không có máy: giữ nguyên hạn chế đã nêu trong quyển, không tick task này.
 
 ---
 
 ## Giai đoạn 9 — Bảo vệ (tuần 16–18)
 
 - [ ] **T48** · LM · Báo cáo cuối kỳ cho GVHD (trước 22/11)
+  - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
+    sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
+    và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Trạng thái 26/09/2026:** đã có **bộ slide 36 trang** (`UniversityRequirements/Slides/
+    slide_v2.html`, theme "Đêm cú", 14 sơ đồ động chạy bằng số liệu thật) và **tài liệu giải
+    thích từng slide** cho người chưa biết đề tài (`GIAI_THICH_SLIDE.md`, ~10.600 từ). Bộ này
+    dựng cho buổi trình bày với thầy, bám tám chương của mẫu báo cáo nên dùng lại được cho buổi
+    bảo vệ. **Chưa làm:** diễn tập bấm giờ, và chưa chốt kịch bản 25 phút.
 
 ---
 

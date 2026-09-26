@@ -53,6 +53,12 @@ kèm bảng kết quả:
 | E15 | Đối chứng ngoài trên split gốc | CH2 | ViWikiFC | E05 |
 | E16 | Chuyển giao ViHallu sang ISE-DSC01 và ngược lại | CH3 | cả hai | E05, E07 |
 | E17 | Chuyển miền sang tin tức (chỉ nếu còn thời gian) | CH3 | ViFactCheck | E15 |
+| E18 | *Đề xuất 26/09:* chấm theo từng câu của phản hồi, gộp max thay vì trung bình | CH1 | ViHallu | E03 |
+| E19 | *Đề xuất 26/09:* so định vị bằng chú ý với định vị bằng cắt bỏ ngữ cảnh | CH1 | ViWikiFC | E08 |
+| E20 | *Đề xuất 26/09:* đo chi phí biên trên GPU có `bfloat16` gốc | CH2 | ViHallu | E11 |
+
+E18–E20 thêm sau lượt đánh giá tổng kết 26/09/2026 (mục 8). Chưa chạy; lý do, dự đoán và chi
+phí ghi ở mục 8.4, đầu việc ở `TASKS.md` (T45C–T45E).
 
 ## 3. Chỉ số
 
@@ -1576,3 +1582,111 @@ Ghi lại để không phải tra lại:
 - Không so số của nhóm với con số leaderboard của bộ mà nhóm tự chia tập. Đặt ở hai bảng khác nhau, giải thích rõ.
 - Mọi bảng phải ghi rõ tập nào, chia thế nào, seed bao nhiêu.
 - Kết quả âm tính vẫn báo cáo. Nếu chunk-aware không hơn lookback gộp, đó là một kết quả có giá trị và phải phân tích tại sao.
+
+## 8. Đánh giá tổng kết so với ba câu hỏi nghiên cứu — 26/09/2026
+
+Viết sau khi quyển báo cáo 151 trang đã xong và đã đối chiếu 658 con số với `results/`. Mục này
+trả lời ba câu: đã trả lời được bao nhiêu phần của CH1–CH3, chỗ nào đã chạm trần và chỗ nào
+chưa, và phải đọc kết quả thế nào để không tự tin thái quá cũng không tự phủ nhận. Nguồn ngoài
+dùng ở đây ghi ở mục 4 của `docs/REFERENCES.md`.
+
+### 8.1. Mức hoàn thành theo câu hỏi nghiên cứu
+
+Phần trăm dưới đây là **ước lượng theo phần câu hỏi đã có câu trả lời dứt khoát**, không phải
+phép đo. Một câu trả lời âm vẫn tính là đã trả lời.
+
+| | Câu hỏi | Mức | Đã có | Còn thiếu |
+|---|---|---|---|---|
+| CH1 | Chunk-aware có hơn lookback gộp không; chú ý có tập trung đúng đoạn bằng chứng không? | ~100 % | Vế cơ chế: **có**, ba nguồn độc lập (E06 hit@1 0,8779 gấp 14,29 lần ngẫu nhiên; E08 lặp lại lệch 0,003; can thiệp đúng 4/4 hướng ghi trước). Vế điểm số: **không**, năm phép đo (Bảng 4, 4b, 5, 5b, 6) | Không còn thí nghiệm nào cần để trả lời câu hỏi như đã đặt |
+| CH2 | Hướng nội tại đứng ở đâu trên mặt phẳng chính xác – chi phí? | ~85 % | Độ chính xác, ms/mẫu, VRAM, tham số huấn luyện; bậc thang 7B/3B/1.5B đo xen kẽ (Bảng 5b, 8) | **Chi phí biên trong hệ RAG thật** — chính là lập luận trung tâm "lượt đọc dù sao cũng phải chạy". T4 không có bf16 gốc nên bộ sinh và bộ đọc phải là hai mô hình (T40), không đo được |
+| CH3 | Tín hiệu chú ý cộng thêm bao nhiêu; có khái quát hóa không? | ~90 % | Đóng góp thêm +0,109 (ViHallu) và +0,307 (ISE-DSC01) ở E12; khái quát hóa qua 2 bộ (E16), 1 đối chứng ngoài (E15), 4 mô hình đọc (E13, E14) | E17 — bộ thứ ba khác miền, tùy chọn |
+
+Tổng quát: **khoảng 92 % phần trả lời câu hỏi nghiên cứu**, 46/52 đầu việc.
+
+### 8.2. Chỗ đã chạm trần — không nên đầu tư thêm
+
+**Tăng macro-F1 ba lớp bằng cách tinh chỉnh đặc trưng hình dạng ở mức toàn phản hồi.** Ba bằng
+chứng nội tại đã đủ: 99,9 % tín hiệu của nhóm hình dạng nằm sẵn trong tỷ lệ gộp (Bảng 4c); năm
+phép đo đổi dấu theo mô hình đọc và theo bộ dữ liệu; nhãn nội tại – ngoại lai tự nó nhiễu
+(κ 0,505, mục 3 của `docs/DATA.md`).
+
+Có một xác nhận độc lập từ bên ngoài. Bài *Hallucinated Span Detection with Multi-View
+Attention Features* (arXiv:2504.04335) đo Lookback Lens **ở mức đoạn phản hồi** trên RAGTruth
+với Llama-3-8B-Instruct và được F1 **13,2 / 0,0 / 0,0** ở ba tác vụ QA / Data2Text / tóm tắt,
+trong khi bộ đặc trưng entropy chú ý tính theo từng token của họ đạt 56,3 / 55,3 / 42,7 (LLM
+tinh chỉnh: 59,7 / 50,4 / 41,6). Cách đọc: **nút thắt không nằm ở đặc trưng mà nằm ở phép gộp
+trung bình cả phản hồi** — đúng lời giải thích thứ hai mà chương 7 của quyển đã tự đưa ra, và
+đúng ba trong năm hình dạng lỗi ở Bảng 9. Đẩy thêm entropy, Gini ở mức toàn phản hồi sẽ không
+đi tới đâu.
+
+**Vượt XLM-R về độ chính xác tuyệt đối.** Muốn vượt thì phải tinh chỉnh, mà không tinh chỉnh
+là ràng buộc định nghĩa đề tài.
+
+### 8.3. Định vị so với bảng xếp hạng ViHallu — tránh hiểu sai theo cả hai chiều
+
+Bài tổng kết cuộc thi (arXiv:2601.04711) công bố: 111 đội, **đội cao nhất macro-F1 84,80 %**,
+baseline bộ mã hóa 32,83 %. Quyển báo cáo đã liệt kê con số này ở Bảng 2.2 nhưng **chương 7
+chưa có đoạn giải thích vì sao không đặt nó cạnh 0,757**. Hội đồng tra ra con số này rất nhanh,
+và có hai cách hiểu sai:
+
+- **Tự ti:** "0,757 thua 84,80 gần 9 điểm." Sai vì **khác tập đánh giá**. Bản công khai chỉ có
+  7.000 mẫu train có nhãn; nhóm tự chia 80/10/10 theo ngữ cảnh. Tập kiểm tra riêng có nhãn
+  không được phát hành. Hai con số nằm trên hai thang khác nhau — baseline 32,83 % của ban tổ
+  chức so với XLM-R 0,776 trên tập của nhóm cho thấy điều đó.
+- **Tự tin thái quá:** "phương pháp của nhóm gần ngang top." Cũng sai. Các đội dẫn đầu dùng
+  **LLM đã tinh chỉnh theo chỉ dẫn, prompt có cấu trúc và ensemble** — nhiều lượt gọi mô hình
+  lớn, có tinh chỉnh. Đề tài cố tình đứng ở phía ngược lại: một lượt đọc, 579 tham số, không
+  tinh chỉnh, không gọi API. So điểm trần trụi là so hai bài toán khác nhau.
+
+Câu nên dùng trong quyển và trên slide: *đề tài không thi đấu trên bảng xếp hạng ViHallu; nó đo
+tín hiệu chú ý nội tại — thứ đã có sẵn khi hệ RAG chạy — mang được bao nhiêu thông tin về ảo giác
+tiếng Việt, và mua được gì với chi phí gần bằng không.* Đầu việc: T45B.
+
+### 8.4. Chỗ chưa chạm trần — ba thí nghiệm đề xuất
+
+Xếp theo tỷ lệ giá trị trên chi phí. Cả ba đều **chưa chạy**; dự đoán ghi ở đây trước khi chạy,
+theo cùng kỷ luật với `EXPECTED_DIRECTION` trong `scripts/run_extrinsic.py` của E08.
+
+**E18 — chấm theo từng câu phản hồi, gộp max (CH1, khoảng 1 giờ GPU).** Chia phản hồi theo câu,
+tính năm đặc trưng hình dạng và tỷ lệ gộp riêng cho mỗi câu, rồi gộp **max** (giữ thêm mean để
+so) thành véc-tơ của phản hồi. Vẫn chấm bằng nhãn mức phản hồi hiện có nên không cần gán nhãn
+mới. Kiểm trực tiếp lời giải thích "một mệnh đề bịa giữa ba câu chép đúng bị trung bình hóa
+mất". Lưu ý kỹ thuật: bản ghi trong `data/processed/*.jsonl` **đã gộp sẵn trục token** (756 giá
+trị mỗi đặc trưng), nên phải trích lại, không tái dùng shard cũ được — 7.000 mẫu × 437,6 ms ≈ 51
+phút. *Dự đoán ghi trước:* gộp max tăng F1 lớp extrinsic và giảm số mẫu ảo giác bị đoán thành
+`no`; macro-F1 có thể vẫn nằm trong khoảng tin cậy. Nếu không tăng, lời giải thích "trung bình
+hóa làm loãng" bị bác — và đó cũng là kết quả đáng viết vì nó đóng lời giải thích cuối cùng.
+
+**E19 — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh (CH1, khoảng 25 phút GPU).**
+ContextCite (NeurIPS 2024) kết luận trọng số chú ý thường **không đáng tin để quy trách nhiệm**
+câu trả lời cho nguồn; ARC-JSD (ICLR 2026) quy trách nhiệm bằng độ lệch Jensen–Shannon giữa
+phân phối đầu ra khi đủ ngữ cảnh và khi cắt bỏ từng đoạn. Nhóm đã có sẵn 1.836 cặp của E08;
+chạy cắt bỏ từng đoạn trên 300 mẫu (khoảng 10 đoạn × 300 lượt đọc) là có bảng *"chú ý rẻ hơn
+N lần, đạt X % hit@1 của phương pháp cắt bỏ"*. Đây là chỗ tăng giá trị học thuật lớn nhất với
+chi phí nhỏ nhất, và trả lời trước một câu hội đồng dễ hỏi: "chú ý có phải lời giải thích
+không?". *Dự đoán ghi trước:* cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất, nhưng khoảng cách
+nhỏ hơn mức chênh chi phí.
+
+**E20 — chi phí biên trên GPU có bf16 gốc (CH2, một buổi).** Một bản 7B vừa sinh vừa đọc trong
+cùng một lượt, đo thời gian thêm của hook so với sinh trần. Biến lập luận ở cột "chi phí biên"
+của Bảng 8 thành một con số. **Vướng ràng buộc cứng** ở mục 2 của `CLAUDE.md`: cần GPU Ampere
+trở lên (L4, A100) mà Kaggle/Colab miễn phí không có — phải hỏi người dùng trước khi làm. Nếu
+không có máy, giữ nguyên như hạn chế đã nêu.
+
+### 8.5. Cách nhìn đúng về kết quả
+
+Đề tài **mạnh ở phần khoa học, khiêm tốn ở phần điểm số, và trung thực ở chỗ nói ra điều đó.**
+
+Thứ đứng vững trước hội đồng là **ba bằng chứng cơ chế**: định vị 87,8 % giữa 22,6 đoạn, lặp
+lại độc lập trên bộ thứ hai, và một phép can thiệp có hướng ghi cố định trước khi chạy. Rất ít
+khóa luận có can thiệp thật thay vì chỉ tương quan.
+
+Thứ **không nên** trình bày quá lời là `chunk-aware lookback ratio` như một cải tiến phân loại.
+Nhóm đã tự đo, tự nói ra và tự giải thích tại sao; giữ nguyên thái độ đó trong quyển và khi
+bảo vệ.
+
+Phát hiện trung tâm là **một khoảng cách**: mô hình nhìn đúng chỗ, nhưng điều đó không giúp gọi
+đúng tên lỗi. Cộng đồng đi tới cùng kết luận theo con đường khác (Lookback Lens sập ở mức đoạn
+phản hồi, mục 8.2) và đang chuyển sang chấm theo đoạn phản hồi. Đó không phải thất bại của đề
+tài; đó là dấu hiệu đề tài đứng đúng chỗ ngành đang đứng — và E18 là bước tự nhiên tiếp theo.
+

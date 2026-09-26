@@ -59,3 +59,21 @@ Số liệu công bố dùng làm mốc so sánh: xem mục 6 của `docs/EXPERI
 | RAGTruth (ACL 2024, arXiv:2401.00396) | Bộ ngữ liệu ảo giác tiếng Anh, tham chiếu về cách gán nhãn |
 | RAGOps (arXiv:2506.03401) | Bối cảnh vận hành, dùng cho phần mở đầu |
 | PhoBERT (Findings of EMNLP 2020) | Mô hình nền cho baseline tiếng Việt |
+
+## 4. Cập nhật 2025–2026 — đọc để định vị kết quả (thêm 26/09/2026)
+
+Bốn công trình dưới đây **chưa có trong quyển báo cáo** (ReDeEP, LettuceDetect, RAGTruth ở mục 3
+thì đã trích). Cách dùng từng công trình trong quyển ghi ở mục 8 của `docs/EXPERIMENTS.md`; đầu
+việc đưa vào chương 2 là T42B.
+
+| Công trình | Nói gì | Vì sao quan trọng với đề tài |
+|---|---|---|
+| **Hallucinated Span Detection with Multi-View Attention Features** (arXiv:2504.04335) | Đặc trưng chú ý theo từng token phản hồi — chú ý trung bình nhận vào, entropy chú ý vào và ra, cho mỗi (lớp, đầu) — đưa vào Transformer + CRF gán nhãn chuỗi. RAGTruth, Llama-3-8B-Instruct: F1 56,3 / 55,3 / 42,7 (QA / Data2Text / tóm tắt); LLM tinh chỉnh 59,7 / 50,4 / 41,6; **Lookback Lens 13,2 / 0,0 / 0,0** | Xác nhận độc lập rằng **gộp trung bình cả phản hồi là nút thắt**, không phải đặc trưng — cùng kết luận chương 7 của quyển tự đo ra. Cũng là bằng chứng hướng "hình dạng phân bố chú ý" (entropy) là một hướng nghiên cứu có thật, chỉ khác trục: họ đo trên trục token phản hồi, đề tài đo trên trục đoạn ngữ cảnh. Nền cho E18 |
+| **ContextCite** (Cohen-Wang và cộng sự, NeurIPS 2024) | Quy trách nhiệm câu trả lời cho nguồn ngữ cảnh bằng cắt bỏ nguồn và mô hình thay thế tuyến tính; vượt các baseline dùng trọng số chú ý, gradient, độ tương đồng. Kết luận **trọng số chú ý thô thường không đáng tin để quy trách nhiệm** | Câu hội đồng dễ hỏi nhất về E06: "chú ý có phải lời giải thích không?". Đề tài đo *định vị trên bằng chứng vàng* chứ không đo *quy trách nhiệm*, nên hai kết luận không mâu thuẫn — nhưng phải nói rõ ranh giới đó. Nền cho E19 |
+| **ARC-JSD** (arXiv:2505.16415, ICLR 2026) | Quy trách nhiệm bằng độ lệch Jensen–Shannon giữa phân phối đầu ra khi đủ ngữ cảnh và khi cắt bỏ từng đoạn; không tinh chỉnh, không gradient, không mô hình thay thế | Cùng thiết kế "cắt bỏ một đoạn rồi đo lại" với E08, dùng cho mục đích khác. Là phương pháp đối chứng trực tiếp cho E19 |
+| **LUMINA** (arXiv:2509.21875, ICLR 2026) | Tách mức dùng ngữ cảnh ngoài (khoảng cách phân phối) và mức dùng tri thức nội tại (biến đổi token qua các lớp); hơn các phương pháp đo mức dùng ngữ cảnh trước đó tới +13 % AUROC trên HalluRAG | Đại diện mới nhất của hướng nội tại "ngữ cảnh đối lại tri thức tham số", cùng họ với ReDeEP. Đặt cạnh Lookback Lens ở bảng 2.1 của quyển để chương 2 không dừng ở 2024 |
+
+Ghi chú khi trích: số của ba bài tiếng Anh đo **nhị phân hoặc mức đoạn trên RAGTruth, bằng F1 hoặc
+AUROC**; đề tài đo **ba lớp mức phản hồi bằng macro-F1**. Theo quy tắc ở mục 7 của
+`docs/EXPERIMENTS.md`, không đặt các số này cạnh số của nhóm trong cùng một cột.
+
