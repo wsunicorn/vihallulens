@@ -26,9 +26,12 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 # Phụ thuộc trước, mã nguồn sau: đổi một dòng trong scripts/ thì không cài lại thư viện.
-COPY pyproject.toml README.md ./
+# Thư viện ghim đúng phiên bản trong uv.lock qua requirements-docker.txt (bỏ nhóm torch: torch
+# lấy từ ảnh nền); gói của repo cài sau với --no-deps nên không kéo thêm hay nâng thư viện nào.
+COPY pyproject.toml README.md requirements-docker.txt ./
+RUN uv pip install --system --no-cache -r requirements-docker.txt
 COPY src ./src
-RUN uv pip install --system --no-cache -e .
+RUN uv pip install --system --no-cache --no-deps -e .
 
 COPY scripts ./scripts
 COPY configs ./configs

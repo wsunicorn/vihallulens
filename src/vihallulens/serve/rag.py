@@ -39,6 +39,7 @@ import pandas as pd
 
 from vihallulens.data.retrieval import EvidenceIndex, Hit
 from vihallulens.extract.prompt import SYSTEM_PROMPT, build_user_turn
+from vihallulens.revisions import revision_for
 
 DEMO_CORPUS = Path(__file__).parent / "demo_corpus.jsonl"
 DEFAULT_TOP_K = 3
@@ -93,9 +94,11 @@ class AnswerGenerator:
         if str(device).startswith("cuda") and not torch.cuda.is_available():
             raise RuntimeError("bộ sinh cần CUDA — NF4 qua bitsandbytes không chạy trên CPU")
         torch_dtype = getattr(torch, compute_dtype)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        revision = revision_for(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
         kwargs = {
             "attn_implementation": "sdpa",
+            "revision": revision,
             "quantization_config": BitsAndBytesConfig(
                 load_in_4bit=True, bnb_4bit_quant_type="nf4",
                 bnb_4bit_compute_dtype=torch_dtype, bnb_4bit_use_double_quant=True,
