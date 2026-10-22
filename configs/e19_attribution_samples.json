@@ -1,0 +1,1815 @@
+{
+ "experiment": "E19",
+ "created": "2026-10-22",
+ "source": "viwikifc_e08/dev, nửa present, shard 16957fb67493",
+ "seed": 42,
+ "n_candidates": 1821,
+ "excluded": {
+  "ngữ cảnh dựng lại khác": 15,
+  "không có trong shard": 0,
+  "không định vị được vàng": 0,
+  "bị cắt hoặc tràn số": 0
+ },
+ "samples": [
+  {
+   "sample_id": "viwikifc_dev_1010__present",
+   "context_sha256": "75fc53bde1fb3f64aaeac3daf96c71f4a9da97c8dcd74b5fe7cd681ea09e8476",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1035__present",
+   "context_sha256": "c72eb40dd1a3fa68547e5c02aa42235f1e61e0ff468076b96404f553d40f54d5",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1039__present",
+   "context_sha256": "4ddb7d68af98e3f15d44421a8427dafc2f639681f81d56958be365b37a2033b3",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1040__present",
+   "context_sha256": "bbb0b9b796988ffd6ce8e8d5f8d126f4229bd9cda9cb13c9686e0bae46bf53eb",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1041__present",
+   "context_sha256": "cfedf0cfcc37c566a3c646df9baf9c12f1d5de87c642eebb47a418800b97eec2",
+   "n_chunks": 8,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1055__present",
+   "context_sha256": "165565dabfeed608ae76b680746a94c382ed44d1af217af360554743ceec37bc",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1061__present",
+   "context_sha256": "375a9aacdd601adecc9d1212e86743f852f50c4cc0f783638f6ce99789f6cf27",
+   "n_chunks": 13,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1065__present",
+   "context_sha256": "e12f951adcbec6e5a9fa676f720da03263f3a55d8244d2868ec0ca741f85025b",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1074__present",
+   "context_sha256": "b18f934e4bb91b219e1b9a9313c5a978ad42d0f1f82f899fa72fa0164fb3e4e5",
+   "n_chunks": 11,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_1079__present",
+   "context_sha256": "b12019c9e90723ec345c4b5b0bb0e7226427bcc3c61a9b256714a4c2c7a3166c",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1105__present",
+   "context_sha256": "934742e5f497996e267ab1225a83e9043fae00ecee6ae4fbeb66eee741562c00",
+   "n_chunks": 11,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1107__present",
+   "context_sha256": "31b5a7a6043f1c30d4569ea3b62be29901988ff7c37ea13a1126684f695a3b88",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1114__present",
+   "context_sha256": "c95d1d4cac3cbcec5b9278c441bd68576aa040d7b3bfe6ebbdcde5ba111361aa",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1124__present",
+   "context_sha256": "ce05113c737cbbbe79e2ab44b783e7c29f1746bf0719c3f35f573a399ca0e5b5",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1129__present",
+   "context_sha256": "d5bd40b2b2b876794a50edad1ef1a08e333e20fa24c85f61c4df2f9128e890ef",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_113__present",
+   "context_sha256": "6d0504a00c0dd178fd526d326d15f630545c2e24dd9f5a0a4316f3cccfdc4986",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1140__present",
+   "context_sha256": "451bce664b2ea363bdb821dde4a6b18c8fb823649c92dec8e95e2aaba6b00d65",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1144__present",
+   "context_sha256": "7fe2afc4791c05bea588cd25c9b754f9b04563f428c02339888a434dc75de940",
+   "n_chunks": 8,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1146__present",
+   "context_sha256": "0ada549c1ba83a2564ec70d6368a50e2f1a14c9b7c8366ecc19775b04b271772",
+   "n_chunks": 9,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1153__present",
+   "context_sha256": "8b07b14d47cfdb428d746343f8a09a876002f15794cafcf1573cb50a56bbb2d8",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1154__present",
+   "context_sha256": "838e171b77a2108ca128fa71551286a620c5925228313baa5ebace6721103c89",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_115__present",
+   "context_sha256": "3ec356bfab5e87a48d21e78a1617d903b8261d36db8413bc9bc4a5ceacf5ad98",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1160__present",
+   "context_sha256": "5f1b83d0a04de86334ffb5f50a2a1921e1e72eaed297844d58f2b6cbf37c4655",
+   "n_chunks": 9,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1161__present",
+   "context_sha256": "349acfca4e068ec83bcc1c1b15cdfd920b673c409798ff3ff2f6a325fb0ebc60",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1164__present",
+   "context_sha256": "09fb41bf3328c7ab836a5621d9a7ba2c929822ab6c39b439f87ae7225c9743c1",
+   "n_chunks": 12,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_1168__present",
+   "context_sha256": "e4a239af58ddda4ce5dc8307ae0951117e36e562f1733000d78d6b981fa664a8",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1179__present",
+   "context_sha256": "330b5c1835d14ae702eec21fea271424aea3088217df83a5dc6fb7178ecc3a33",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1190__present",
+   "context_sha256": "3aa4d2336208496b8c4315425108bbfeffd4bffe4369567b488d1ab845ef617d",
+   "n_chunks": 9,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1195__present",
+   "context_sha256": "e9bab00f2923128a9af3413fa873f613c4d96b02ba73864f50aed4a92eaa55ae",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1199__present",
+   "context_sha256": "4e8747608d37fcf27604a447b2e973560eecd60015ab0178c31457513b33c022",
+   "n_chunks": 11,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_1208__present",
+   "context_sha256": "4e6f5d0c174a1fea2a0145e64c4682f00940310e902520103710531ab7c74bd5",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1212__present",
+   "context_sha256": "cd78e386f0d782f16f1dea9c97e7a26a0a1d4a121f4f52c9e1cc1d9462f72d14",
+   "n_chunks": 9,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1218__present",
+   "context_sha256": "91c983e86515ea41f4bf050fdbe11b73063ec756456cb815a372e2219bc3a6e9",
+   "n_chunks": 9,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1221__present",
+   "context_sha256": "7dd9645d9268b16a6ecea3109d3f348044219ad356aa9747e4e5083ed00cfbd0",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1237__present",
+   "context_sha256": "b968fed2d26a2dec0e7619956955eaeb535e3e15a4752d998f6a92d44ef5f503",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1241__present",
+   "context_sha256": "eb0c273d1101c4d06fea05231fe879d27680d066352fb5f04741e41726ddd0fe",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1244__present",
+   "context_sha256": "eea0a0fb023043bda7cd739a070439df3ef1a66955f10efe4042d005454870b4",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1257__present",
+   "context_sha256": "663084faa3d32c2daa999f91c6fbbf6bcc7b858f9982bf2ee4f8f45a54c2074b",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1260__present",
+   "context_sha256": "75281ce3362b25cc91622d73b08eac8ae1f615015cdf920489bc0f2cf12a2a75",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1269__present",
+   "context_sha256": "b6acd2633c3e7cb6ab46e6949ef1d429433f6ec9337a2ca3698142838ffb9bdd",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_126__present",
+   "context_sha256": "e697b1b59d156713ef2c76c46eb934b6b3c5ec187473e0ec6049f1113760507e",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1270__present",
+   "context_sha256": "82c80eb0b758af5a0ce9d48f6f585b265fbba8e7b8d60a6699672439a2245255",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1271__present",
+   "context_sha256": "d7b5c5ab7ef86de70b8ebe241422af032e89ccc02a0b9d7add09d6f11bccfbe0",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1284__present",
+   "context_sha256": "9084dd213afec253af74346a22dd21c6aa12868b9317b0b26c90267be34f1df8",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1287__present",
+   "context_sha256": "ccfc8393f58cccc6070f51bcbb9570b16268c7d068499309a368651bdd59753a",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1294__present",
+   "context_sha256": "141684b5ecdf4e0baf03223e41dd3236e5d44d21bf6f2c70a1eac4ba2cc96eb2",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1296__present",
+   "context_sha256": "e285405e9c1dc727a9de4b1528e4e253f0fae62d337b72d0ef9a3b68cf7c6055",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1297__present",
+   "context_sha256": "0f011bedc74c0ff181c2114a8039ad15b4f5ef7f104cd0d6874dc6f8d86b0ee7",
+   "n_chunks": 11,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1304__present",
+   "context_sha256": "bffd2f59ae84424522e904cd1e6c4a205905bc512bc654a26ee3257bb56bccdf",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1314__present",
+   "context_sha256": "58bf18398450f8e085fe81be2f34790c5d3ee91896a9e1c4636f0a74f8638de3",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1317__present",
+   "context_sha256": "3fcf4e3904e075ea9b315b09a5d15285864f2a84aab0771e582678deba21b346",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1319__present",
+   "context_sha256": "fa035779dd3504296c553e032c74a6beb4321509fb34b34c434e78345eecdff3",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1320__present",
+   "context_sha256": "db534455b5f0d295adab4331d92a7a7b704a0bb998a4fe736205887a920025fd",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1321__present",
+   "context_sha256": "8a15977c8927c4507111dd93a1baf6296cc20ee0cb2db3dbba45ecc40cd9c6a9",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1324__present",
+   "context_sha256": "7b272d835be374091862d4c58fb8275bc6b576e546166d7603ddb9ce94229512",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1334__present",
+   "context_sha256": "8715f90b4e9d555bd0f7cd79894613516aba34e7e13160bf4d46b9c5ae350689",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1341__present",
+   "context_sha256": "def163d49d44e0c629aa7a808b08f88604762727bb04af3e3e3d933442f3b5c3",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_134__present",
+   "context_sha256": "fa51dc5544d9bd0e8cf688bef32d7bb07768425fc60a22ae5f52d9aa69a5a711",
+   "n_chunks": 12,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1368__present",
+   "context_sha256": "9506a7eceb4ebf2ce2afc60b73b3a485ec11472571c06f78b9b675b4cc6ec451",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1369__present",
+   "context_sha256": "a7f0179fea4b7c31727bb980094075b70f9c0cec1930a6826dd8fee80bc09062",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1371__present",
+   "context_sha256": "bcf0439500d8ad1fb03c6b538951cf7dc36b4fc4dfb12f8544489c52121da239",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1379__present",
+   "context_sha256": "9f2f4ca786a05fab835075b063c83c2818b49278e1bbfb9b04663471ea1e6ef7",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1402__present",
+   "context_sha256": "66e79e9fc563c40d0dca3767851939160f251db70aca211c22a9d09b384ef885",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1405__present",
+   "context_sha256": "e16e776237eed812400cb9de3195ee926d6215abcce9081cce94c64c0bc073dc",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1416__present",
+   "context_sha256": "066ae911724f628b3c10abd34583324a4529f0abe897dfafb6f3bf0f9faab54f",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1422__present",
+   "context_sha256": "c3523ecb81af482c6918288969ca4e7ae16e569afacdb905bacce44c89ad14b1",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1447__present",
+   "context_sha256": "d5628748c1bd9695a2bd1b04d52f655cbd8b381e6e871e92ba469f39e7976b57",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1468__present",
+   "context_sha256": "2e3c5c9acdd7790eacf1721f7af9e0a259557ae298bcd7bdf67823b7cbfb0185",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1470__present",
+   "context_sha256": "8b309db3b9d3770d7ab8376249a6745eb489921022e5f2bb86161c9e217ccb6b",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1474__present",
+   "context_sha256": "1943dea9a2068817e39f9ade99316695caf8ec1b867b6e7d836137951d28604b",
+   "n_chunks": 9,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1475__present",
+   "context_sha256": "93fec8f928c89d3ada0facf2767e6fb71019c6804198cdc23288020eafa11a46",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1480__present",
+   "context_sha256": "fa82b4b5b3e9ecc5fe955f53d2899fbc0a19c6bb2302db2039ebc4ca441286a5",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1486__present",
+   "context_sha256": "e6ac9cdf862142313026b70895baa0753f755cfe7d8390ae28149de9b959c732",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1488__present",
+   "context_sha256": "1af05c8cd6aaf82e4b4a952dcb2870ef25f93306467f74f940206765d5a1252f",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1501__present",
+   "context_sha256": "259f0fbd2ee1965a49d22b38aa1177a69e46758d8174dcb835fe0083c26f9793",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1509__present",
+   "context_sha256": "f2a464812a9efdd1c73fe69d3f435b3e68a8c6e05b27b3eb53a16b3eef2a1feb",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1514__present",
+   "context_sha256": "9bec979d21e20003f2f35cce5fe1880065ffafc3bb5dac6ab99082c90b2ff33e",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_151__present",
+   "context_sha256": "5a4bdbbf848b66f0c25d7c795d131fece929f4451fb338fd3302b2510c4ae4a2",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1520__present",
+   "context_sha256": "fe7f129bc68622f3b26aef8f421e39f49aa0bbdb6342314b25bf6e27cf54e34a",
+   "n_chunks": 12,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1532__present",
+   "context_sha256": "21aeef7f8f57051fd921b193a73edba32c64c24a7c47194988b9909037dc4c9a",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1534__present",
+   "context_sha256": "597016cdee673ac32d6aa0dfbf8b105151a36a98276747f16591f02709095cac",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1545__present",
+   "context_sha256": "07302fc3c87fe20ab4bb96645e280de09eb29287cb38491d2311baf06155ff79",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1546__present",
+   "context_sha256": "7ffb02ab1d9bd2e3acf3ab52025b9360f9ea88c18e8ce8222a2a8c91e6d98f0b",
+   "n_chunks": 9,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1551__present",
+   "context_sha256": "93cba859b5275642dac7c99588a769d775252685419a76f7268157476ed3851f",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1552__present",
+   "context_sha256": "0fb64d7157f2aa99abe628194e24121194f85615165050c55592e88682f5dcd5",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1559__present",
+   "context_sha256": "2194e124ccfb458553856627cdac0e1a445f311ac6b81d979412afdc6cb7ed0d",
+   "n_chunks": 11,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_155__present",
+   "context_sha256": "9d1ad8e494941747fe5ae3ed4ff0f4ab9d6622d1689216653e74517e90a5651b",
+   "n_chunks": 11,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_1571__present",
+   "context_sha256": "006958ac4aaf13e8d79b2268e2a7e8f7999782619a56786feb94f20c11647e5b",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1581__present",
+   "context_sha256": "4574814bbc49a5f65e08351dffdf389943718e33e67d9a998c3672d3c7f12677",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1590__present",
+   "context_sha256": "c34086eb16845ab05b9edbeefca819c3ce0182aca539605faf12a0516558ed6b",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1594__present",
+   "context_sha256": "bcf072f045682a8b092d2fe37594b1b5b0ac922bb89be56c0fb79b8a5aa4180a",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1599__present",
+   "context_sha256": "aa441374c8394e86713f80e243dda68eaf8c2192d778703735d63509bf6930cd",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_15__present",
+   "context_sha256": "ad2bf676c8832bd038cffba7c49665078cebbd7c5b9c909b13797dd2c75cd388",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1602__present",
+   "context_sha256": "b694fa4cc4ee72c7a67c37166811fc7491c3c3844abed4bcdd5bbc2e4e7c04b5",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1605__present",
+   "context_sha256": "39fbe6f7b9e71a6aad2e5c5b7065238b042cb48b65a7be3e2c46ee959c07a4db",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_161__present",
+   "context_sha256": "70a3eeabe46368249bc1991e45bc62b3b4ce0b8bb0c6143ee25845e2bac275d0",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1637__present",
+   "context_sha256": "07fd91e484baea0512c95507df06059ade0a5ac73bb85305e5bfb882e5c881d5",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1639__present",
+   "context_sha256": "bc3113ac0b7e8fc9b87628662bb4dbb7eb883fd3d15446c4dcc7f2ee29af3c09",
+   "n_chunks": 9,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1641__present",
+   "context_sha256": "5a5a3c5cb72755238db01f2bb53435ef1f17210db4447fc26303148d57b9eb82",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1647__present",
+   "context_sha256": "8d6bd0b5f0b46530362e78172fa80428e7bd8cf43981450dd1708ec322f8e95f",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1669__present",
+   "context_sha256": "445f5bef629c288f618244ef923e873a7acf66e556b0e90ea61511b2cab5cd70",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1677__present",
+   "context_sha256": "b739bb18f25e84cd1b8ad3c44ed87dc78c2f3898913e36da8868f6ba88828552",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1686__present",
+   "context_sha256": "64506ae8938c3f3f641aeaf00287332e797112af2ca1d4ef82fb81c4f41d6b7c",
+   "n_chunks": 9,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1699__present",
+   "context_sha256": "145cc249ff33a24534f5eb238b4dd6d439fe5fd4d28b929b235074007ceb8a25",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1701__present",
+   "context_sha256": "5ce3a06a1f7fd03dc3969dceed1f3831061d78d16a076a5cf21f976ebe2e5a7d",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1704__present",
+   "context_sha256": "d27144fc3a808761ddeed2a43d117c0a8c2f92abecffb67860444611134a8874",
+   "n_chunks": 11,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1706__present",
+   "context_sha256": "1d1dd0ed9d29e17db314b181ca6f4d85d08cbdb52d454fd9f0a7d29960825782",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1711__present",
+   "context_sha256": "402921e2a6f2c9e622d717505270fb9afea424d2310922ea251b32cfb8ada341",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1715__present",
+   "context_sha256": "45fc59e2c8cafa09ed1d004725b8e85783f5b99b32cc24847c2dd2594d07b06e",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1716__present",
+   "context_sha256": "3d2943a6345f5dc79b16199c257ab7674feb8c4e96d2dd64ce93ae0260aca6b8",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1718__present",
+   "context_sha256": "b3ed70b5ca10f3c75a02bba1199dcc8edbbc6a07efb7c0d63b5af119440fda2e",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1719__present",
+   "context_sha256": "7c4c037df3966313a550e5b96199b41008fb212aa3b8322585028c40336a3720",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1721__present",
+   "context_sha256": "787e3c67be98d57c5d3d673171df74bf77392d6d83549aa46c35dc9cf7d406ea",
+   "n_chunks": 11,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1742__present",
+   "context_sha256": "3a8002c12ed451ca8249bccc99919259b73150ba945e79683b03a8a2af6f97d0",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1746__present",
+   "context_sha256": "fc1297e09abd2cb27f091cfe7be075e462e0c3e920b2d335a87610b24dd8138b",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1748__present",
+   "context_sha256": "b50f4c6f649aed66cde3787811d8f4a3c46241d4c8c137c1612ba0f68346f23d",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1755__present",
+   "context_sha256": "c594cc65056f00f3eae5a6ba74d04f5b7bd5d488137ebd47dadf4ddd753fc9d3",
+   "n_chunks": 11,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_1757__present",
+   "context_sha256": "e741ff0f7a9cd8ce47379c0f8d4bb4f9c292cbf6a7f403d250a4e90d66eee74d",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1767__present",
+   "context_sha256": "b5a0389e6de0bf48e9e8aaccb102dfe0b4b8ea922dc663b04eeb1debeea8e0a6",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1770__present",
+   "context_sha256": "de9e46ab3a8235da9a17f3edee2164e50ef2a32ec957cdf6aa2c1b00b5242dcc",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1771__present",
+   "context_sha256": "f1f7abf5662614a57271dc7152560ec3f377715e2a8277941030efd3dae1b5e3",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1782__present",
+   "context_sha256": "a535d7979ae35ac867d9674b8583a3ce733dfc0e6e30839b4bf226fd61226acd",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1783__present",
+   "context_sha256": "96283304c48dffcbeba4c33a8c39c8dc5002c15767f305654c30675209e5ea53",
+   "n_chunks": 5,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1784__present",
+   "context_sha256": "736caa0186db745ebf106c5cb0a1f5ee9b152d45de304ed234982ad535800969",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1790__present",
+   "context_sha256": "92ae171bd4c9a368b6e142e16e26ae5a8e383ea9f55856f8eb152a3100003fd4",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1793__present",
+   "context_sha256": "c9b396a134f3acf598eff6939408909aa29fcbc6b0102c49758d02b6d744f765",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1796__present",
+   "context_sha256": "76504bb199fa4dcdd1b707cebf428306982b17ba76318b15e0e47afd91a51b48",
+   "n_chunks": 8,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1799__present",
+   "context_sha256": "378feb7595cecbf0e85a63944e6b888ca0544efd974067e256af185b0bbac075",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_17__present",
+   "context_sha256": "b8974a9c90d03e9e36f3abdd19a61175ac3d933d9b72334dc1b777e877f2ce84",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1803__present",
+   "context_sha256": "4e213314f1683af32aed6f8bb8bc00e32abf6c0e1fd19a61ab099cb5e4b84d3f",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1804__present",
+   "context_sha256": "b0f751e2a8f9e75255c352b3a6ba492470dcf7b299e79156f1ee1fa88b8d2bb0",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_180__present",
+   "context_sha256": "7a7f6b9385d67e2214c11f5381bf28f0239c1d800048efa74734fdd237d39585",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1814__present",
+   "context_sha256": "013d2949f768dd68d333506f825a9bc567fea16d034bfe204b9dfbc13a5cfe86",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1816__present",
+   "context_sha256": "f48e3a9372ea8093230cdd0ff8a40b6ad34c5e3a937e6cb0310acb350905c533",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1818__present",
+   "context_sha256": "33bed727c930b8572c12458d5a63772af20f99bce40bff10a0c66dff8e558e2a",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1819__present",
+   "context_sha256": "a08fa027451baa1fb11615995aab4eb4bb290aba77347185c6c6d4d3859f472a",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1825__present",
+   "context_sha256": "8e33125897f87dfe984222262d73301db0a2eed5eaa48d136a80c81d53c8ef8a",
+   "n_chunks": 11,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1830__present",
+   "context_sha256": "39f4bd10c0b665f58a898950b02ffc2290f7d0e4c25573ca406bdd2fa69b0226",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1846__present",
+   "context_sha256": "53acb9e96b0c46c2fadc167e04da23c0aae6c737ed63576c67897cbb4f76fcc1",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_185__present",
+   "context_sha256": "6ec069cec717567897eaf195ef661cda39e6018d46feff39db3574067cf36a88",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1869__present",
+   "context_sha256": "06e84d5b76f82f5bc752d36cf58f35e84751103090f62feccd0ad8268590fb9a",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_1870__present",
+   "context_sha256": "96c8833dc8cba4caea8b203fe9fccdcd8e195a27a56b17ebd4bf435888785b0b",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1872__present",
+   "context_sha256": "b0c4be455910778fbfe224311d109e109bd50f3094d997f34c145a3982b7e46b",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1876__present",
+   "context_sha256": "5b4adee50af0edc617bd1475e7b021e96a94901bd2d3edb7244092fd0940bce1",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_1878__present",
+   "context_sha256": "60c2c34d9a3fa160258f0a355f7c8ce41f8ef7cee8b6d83b3f7bdd26eb9e002c",
+   "n_chunks": 11,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1884__present",
+   "context_sha256": "364dcf07c59890ca0789390201c7f477b5a3f88a9139db0666490eeb8fd3cf22",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1892__present",
+   "context_sha256": "3063f232cb47489b1a6bf2d76daafc66b70d873032d101a616fae1c2ac370e37",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1896__present",
+   "context_sha256": "7a5a9694362bab8cb4bad05fff2f39707f5a3ffaa118d14c323296503bb8b06a",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1897__present",
+   "context_sha256": "ba39f667ab661b9346050ccd2072bf53aa27522b3032799ae68685a6b612de44",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1904__present",
+   "context_sha256": "cf5d4753807240e81e9e35b5b47af88c892682864c803c9c4dc9a957bb806852",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_1908__present",
+   "context_sha256": "96b457010b44e6ab607f1f789cb38610ba363662eaf97eefc3ae0802f2215663",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1917__present",
+   "context_sha256": "b89dc601125435e786e0fa6c8f844b5f3f9cacbd8f75f07250073924f78cb19f",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_1933__present",
+   "context_sha256": "463b7d4d8de8a1f2f8a20d2833e7ba6462c05d8d4951d414b74a0bed3a4969a7",
+   "n_chunks": 9,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1938__present",
+   "context_sha256": "5188a612319fa9d890bb5da192d3a0d4e56e60d8e99b3753fb5dd4596087257d",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_1945__present",
+   "context_sha256": "386885ad063ffabaef1d8e9b4b1c9da51d12400e79bc374b45452370e5298e5c",
+   "n_chunks": 6,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1958__present",
+   "context_sha256": "9a56054075fafce2a83ea49c4343b7d5b6e10222e9171952645bf9dd90db79e6",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1962__present",
+   "context_sha256": "9803a4fda8eb1c0c883d55c055bfa39ae05799c52165dbe2647912a43f23d153",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_1963__present",
+   "context_sha256": "46791f5cf6260a5a3a2871ff5a97421b3f41d76bac6a32b8e7f79c8469969462",
+   "n_chunks": 11,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_1966__present",
+   "context_sha256": "0bbef921918a8b912c589506230e05458998ab9c6af68617a6bf770ef5d017a3",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1968__present",
+   "context_sha256": "6914d94f414ccbca90f5910200a1ae33a01ec24e3f29e7186c0ba4296b69838e",
+   "n_chunks": 12,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_1981__present",
+   "context_sha256": "61ab6943957380206866621f6c6d5e2e5050152fcd09c040a5cf2f16068fb817",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_1983__present",
+   "context_sha256": "483f9edaf5c2375ee8d289d5b605919ded1f85dca45f5c0a298f8187b05f7afe",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_1992__present",
+   "context_sha256": "ba09636cf534a9adc0081eac1eaee133c49589932897e8f9bd85f5066b00f604",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_2015__present",
+   "context_sha256": "8f4a2c3a053b88855ab9b02ea8cfb346ec145dee269a42ea23d30731490b7c54",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_2020__present",
+   "context_sha256": "f98d2c98a7225d7d4137fd4fb716cd28cae1fa69e70c2780e2eb18c3515da22c",
+   "n_chunks": 12,
+   "gold_chunk": 11
+  },
+  {
+   "sample_id": "viwikifc_dev_2024__present",
+   "context_sha256": "196593b45c62313bc2b8a7eaa573de1fd3749c96e835ca58db41130817979f73",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_2030__present",
+   "context_sha256": "b4a5f148980d14a79a7dee7733f8b1efeafc1d2746d48b27ea1a669937916ad7",
+   "n_chunks": 11,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_2031__present",
+   "context_sha256": "e5f293d69287c43d7d5be587223afd8a1ddf563c4e775936abbdf1fb80e3315c",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_2033__present",
+   "context_sha256": "0a4f1b26a55b468255c1659d9e2ceb3fea500f1f37164ec0333abb423469e271",
+   "n_chunks": 11,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_2045__present",
+   "context_sha256": "35cade99d608e3e3f85d419ba43e4e102c3036f2e567211ab198a9d599b3d931",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_2048__present",
+   "context_sha256": "99a56698c9489dd849f79c94a4251a1c382b0e602180235e13a80e5b6ba7b754",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_2063__present",
+   "context_sha256": "ab6e4e2b5a5e310cd9a485637ac4f4a55db6ace66c0057d0ff6da4cbf6d51a2c",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_2065__present",
+   "context_sha256": "0f827dacc5737be6264f14d84dd6cf96c45d5bb39cce65362140e56244946c33",
+   "n_chunks": 11,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_2068__present",
+   "context_sha256": "ccb4b9c9daf9749b9424301f1bde100e9f242dd0eee3dd6b67d1a494451f3c69",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_2071__present",
+   "context_sha256": "76ec2bb380a802e0d749f9c17c5b257765d0690388fb8983ac971e7717d76e9f",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_2074__present",
+   "context_sha256": "706673697e6e1869622af0537a1f61d83976c81f8b632e098ca5cb15205e6a70",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_2080__present",
+   "context_sha256": "00f3588d2dcc608401e4674ee4b98864525d9a2aafa81c788596c6d2753854a8",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_2081__present",
+   "context_sha256": "71ae832e88c14b929946abb6deadb68bc3035f9373238b9501f1516ca0103ff5",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_212__present",
+   "context_sha256": "22f9cadeb63d70176a358dce20c41c22184181a4f6c057cc6a41210661cdaaba",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_21__present",
+   "context_sha256": "bfaebee8fb6cf0ed50e51bbe26d4917e105ca3d168c814a695467235bd0a9ccc",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_221__present",
+   "context_sha256": "93130172c3363cba6afe34cc4681a0ce3dc5e85868f3f3e2ad07b2d84f990046",
+   "n_chunks": 9,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_22__present",
+   "context_sha256": "c4df64ae7df7acb149357c5573ab67815286b24eb29df4ff0958f8e4a93ff133",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_232__present",
+   "context_sha256": "4c8b99508824aa0bd3b3f29ba5df3856e9672e39eba592baea86eafbf5ad7fa0",
+   "n_chunks": 7,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_236__present",
+   "context_sha256": "85ec083da6938a93034aa2c12eb08a1dd54171ccb1cec1207835edfda128173a",
+   "n_chunks": 11,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_240__present",
+   "context_sha256": "0566a3bfcd0070942f2201e2f8bb6e1e42ea12e840ddf8a846fd269dd8655477",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_253__present",
+   "context_sha256": "a38b70efbccbed490d7835c7e4a0d43b2a9a5a7429da1e82e353199cb4bfa797",
+   "n_chunks": 12,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_254__present",
+   "context_sha256": "ee6d898d77b8d93d82e3210e607e8b0ade103ec39541bd5f33d039345f29d01d",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_256__present",
+   "context_sha256": "39ea4d95af1b435ee6cb740f995b56c5d5e5c818274f6b53dd89cd98d2c70466",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_25__present",
+   "context_sha256": "f91999088f9a30040de46e12dfd5299d11f2889553038b2674f7ac9ede30a8ba",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_261__present",
+   "context_sha256": "b5bec300c5d61ee398880f904d91ff4cbf8da57b750308c39d016b0998f2de26",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_268__present",
+   "context_sha256": "a5223342ee763deeb53d9df94a23daf43bd7613979e51bf049614d9cc51845be",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_275__present",
+   "context_sha256": "cc4ab9db3e791a34b0668224fd817eee8c76c4f151b5a788def5299c2571f183",
+   "n_chunks": 9,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_283__present",
+   "context_sha256": "cd8e006014a0617b0aaed4e31217814d4f86d5fda9e476c8ad7f910a491f42f3",
+   "n_chunks": 9,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_286__present",
+   "context_sha256": "1b6c81d29e04bb1ab87f609e21298785dec5314ef6eb25e20b8e202731a361cf",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_306__present",
+   "context_sha256": "8a66f432b082f160ee22eb9af2a6a979a8027aef071c4288e5c9f70bd9ad855f",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_30__present",
+   "context_sha256": "b18120848182dc72b465c89bc59607a8f20f23f8fb4b6192b7127a18aa5315ab",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_325__present",
+   "context_sha256": "873b275bcfa32114b804b25a88e5f4978a7af1accdb1b5369fd6d740bb67404f",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_329__present",
+   "context_sha256": "7a1c4e8acd783e4f6c6772c76d53522bda2538e2fcdb440d8a1e1de326242a06",
+   "n_chunks": 12,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_331__present",
+   "context_sha256": "ecae9fc85849fa69c1ffb8b38ec158c0f731d2ee7c144d5c4981a088c204d44e",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_334__present",
+   "context_sha256": "1a4d38492508764fdb77ba3ca964fe863f1108c97f0e7781b9e7c9f92fc6fc9f",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_335__present",
+   "context_sha256": "5fd44e58ea2e322a70ea53076f413f903aca816245d8463db82f9e29483719ff",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_342__present",
+   "context_sha256": "d6e7c406fb3774f4c9fb1532c7d41173902d602112e1ecfad047a8188a5e186d",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_346__present",
+   "context_sha256": "ba063e4d271a6173a82355be99cec06417bd362ec90ff49eb1446ee400c0c51c",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_349__present",
+   "context_sha256": "a2f686c8e49f13a19204d78f207abaabb1449675ab709821ae48879add9ef89f",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_351__present",
+   "context_sha256": "be3ff098510b328bf9262fea3b4e776dd9bc051722612c3601601343a58cd751",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_358__present",
+   "context_sha256": "6f52c350673de6148ab24ddfe1364368d8684ac5ffaaf85559fa205a020f9781",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_368__present",
+   "context_sha256": "d3c71435d730e19dba354dd6ba1004db47dae64b087472a1421fdfc5e36967bc",
+   "n_chunks": 12,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_36__present",
+   "context_sha256": "ef7e8e83bff4b1d57f09437aea6456179013d0c54feee37f48922e89008fa4af",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_373__present",
+   "context_sha256": "9793b4b70fe999b8d7aaf3ec76ed31b6d94e4872dd9dd7b02c9098625448e494",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_376__present",
+   "context_sha256": "d957de5bcb0dfa859c2e85f26251806491fae47e17abae431b7d39733d01db6f",
+   "n_chunks": 11,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_383__present",
+   "context_sha256": "dfedc66c99ee1adcd6986d7195c0d2ea146f5801a19df2e210b3e410f0c83ace",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_388__present",
+   "context_sha256": "368388fa683b370c2da24a35e3bcc0d37a690756f817664a03dc5e41e474cbde",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_38__present",
+   "context_sha256": "d6893a966efe657bfebd2d93dc2806eb4d75d99feee646b922fde7822b2ce6cf",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_394__present",
+   "context_sha256": "ad587110d2a99ad86622c54906326836f88ffe9eff6b42d2574891b51ee81353",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_402__present",
+   "context_sha256": "e711f2a6d989c502f1161bf818f18293f07e6d6ba23370e5713d1f7703c117a2",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_409__present",
+   "context_sha256": "55e6437aed7da5306f527f39de005af5f8f2cf42ada2ce8929ef23ca0034ccfa",
+   "n_chunks": 9,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_427__present",
+   "context_sha256": "6757133616a339b2aaf1d2a9c7e40355c822c437a683c8d1628d93d6b32e99ff",
+   "n_chunks": 11,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_429__present",
+   "context_sha256": "29039535ca42734f423a0ba0302e9263bd32e964b9bfc65bc58f965201a283d1",
+   "n_chunks": 12,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_431__present",
+   "context_sha256": "2a832394110bbe8e2bf5c53050cbd3e6ead56e406ab0ed773ee870cb68fbb1d3",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_433__present",
+   "context_sha256": "5591634317a0d8213a7e656c7a2341a4c595afce2bad0278a20abc5a0e589b65",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_437__present",
+   "context_sha256": "4fb0d721e7956288be9edcd9cc66f1c7e5b4655d400e7d85b9b972682c6b7f6b",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_440__present",
+   "context_sha256": "f42c4174b8860f3be7e6fa3eadbb5b255734e0d541da7682bcb8286e395afebc",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_445__present",
+   "context_sha256": "ac1eb6363cfde1038fcb5cdf7157d335c400d161c37de205a32555e0b9b65005",
+   "n_chunks": 8,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_449__present",
+   "context_sha256": "500666dbbd6970c147f090e9459fdede095cb1e85cdd83a615540972e81548fa",
+   "n_chunks": 9,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_461__present",
+   "context_sha256": "5f7eec9d7db97e5b8e8c0d770256ee410d736aeec30826f44ac1a40596a1ff9d",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_464__present",
+   "context_sha256": "b5a15e80a5c015dd9cedef25a9f9f9d67889f1fdbc4f44d94b354f404c7d1f62",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_466__present",
+   "context_sha256": "963ec1655ec17d4c76ae2f3cc377efe78158eb4d76e504481e7a1158cc866e7f",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_469__present",
+   "context_sha256": "98886d5bd95c3ef3251dbc34870049f0d40a36da05975e948c235db564355ba3",
+   "n_chunks": 9,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_479__present",
+   "context_sha256": "844a61c4e139faa533824f1b14243bd0a25d34daafc175d89dd6f22957d5c73c",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_482__present",
+   "context_sha256": "d98ffdb5902d6db657d4a2d265792726b683bb1c8199ecec47ae2596a5c3a62d",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_487__present",
+   "context_sha256": "51b070755ced2881e2fa4ecb01b7c4c7fdd841f27a2c1c66760e29e2c357e6ec",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_489__present",
+   "context_sha256": "07b6a00075d8b84f54ca6fcad5f4c5acd2f644ec5ce1e7b6065b55bd50f5acb6",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_491__present",
+   "context_sha256": "9df9650ca6c0742c234595a562b833b7e522245c9064a81257187bac2b9e8562",
+   "n_chunks": 11,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_502__present",
+   "context_sha256": "de5058243d154a909b8b4b92a2f276b3270c9d1b64b191ed87145ff3221f0dba",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_507__present",
+   "context_sha256": "cd231f9f5e2d74592006103ab385deb2d72c41c5d728f0411d31e651d4a79445",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_508__present",
+   "context_sha256": "33bde0d889288cff9eefbd3472cd3f83ef855790d8c34fde978d35b03f0583b5",
+   "n_chunks": 9,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_50__present",
+   "context_sha256": "08f69c703721661b4c7e2951ff73be488b2a02b0621a256eb416426251bcb7f0",
+   "n_chunks": 11,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_510__present",
+   "context_sha256": "ccb321d4a31b24475775b3dd2aaa095232c456d0e4b5a1425b41509673a95c2b",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_518__present",
+   "context_sha256": "27a8e51b01189babab4d641ea00119b651b720de926ac3bcd0cebaf0e37e228b",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_521__present",
+   "context_sha256": "097a56b9091387cc2d15e75650e0829a76ce42eed82a8d6300e8f3c7f96df2e2",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_529__present",
+   "context_sha256": "2fd72bbae766b98b530872a7ba2442b2cff52720033cf5c86b5ea27497f42b52",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_538__present",
+   "context_sha256": "fbb96f7e0d7b907c73f8c118bf4ef231d86a97a0ce99ef62afa4bbe6bf462edf",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_541__present",
+   "context_sha256": "32aa60795680064503d56e8f9057ab25bff35f2547fbc7f3769d06ee1007dec8",
+   "n_chunks": 10,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_542__present",
+   "context_sha256": "1eeeaf1b19a5efdd7726571b09fbd5461e9a50a7a643450b53c729a00b78e0d8",
+   "n_chunks": 9,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_551__present",
+   "context_sha256": "3668ce3c35a8ab0c4c68b5f68bdbe9c1dec7e60d79530b45f062cbb59193960e",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_563__present",
+   "context_sha256": "5b51e776f0f69a4532a784b4d7714c3d48e37777a8e6e7965bedf00022550427",
+   "n_chunks": 9,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_574__present",
+   "context_sha256": "f0f95966e7ec7a45cf15735baae19b1111c29a521cd719048252df81d9618ec8",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_580__present",
+   "context_sha256": "59897cd972adc3b604d820cdee28db942d076df50a0546443c62a11449a50956",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_581__present",
+   "context_sha256": "1e16924526a74ce10de35817ce9b0801c47eced2b2975d876f355035e410c530",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_586__present",
+   "context_sha256": "c95ec3c7f00e7dab772fa4fe60c66dc8c0ffc1ecaa125be6e073f2ea3ea61a3b",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_595__present",
+   "context_sha256": "1d04a3325060033a12bde4982aafb73870724f3193c71d94e48ef6369e68c8af",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_602__present",
+   "context_sha256": "48865b4fd03b83a4c5163817b8e4e9a604bd0d28fe693bdf5a18d56c96982de5",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_603__present",
+   "context_sha256": "c0ed0a51d5b35bf916f60f2125707ac6707e7c6d287a9ac3b00a49b9211917fe",
+   "n_chunks": 11,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_611__present",
+   "context_sha256": "805efa1cc02fbb86e3d1671656206efe385bf41b3d409951fe5890e2458cba42",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_624__present",
+   "context_sha256": "33156a3437e1d77be330af5490ae0a9757d92f657c59d03b88fedd3078e2fb13",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_632__present",
+   "context_sha256": "b3e6e336033ace9d349c2611f1997f336e3eeeea2b80bf42ee92f3b5c666641b",
+   "n_chunks": 8,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_636__present",
+   "context_sha256": "a9b7c274c1225a770b4a718ff746bea4a6ccd3433f74f63560f97fea333fb8ba",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_671__present",
+   "context_sha256": "beb8a9be90c9e74537579bb9ece0bd7868239720fd98530478d35eabdcf83fe3",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_679__present",
+   "context_sha256": "41bdb282d87d7c190e366889e3b0aa7b0b856d21ef2db91f1ec729eb098d0ad6",
+   "n_chunks": 9,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_686__present",
+   "context_sha256": "3491b9af314eb7506701e42e6ca91d0c60a6f3eace69e111c395347cec10f0fc",
+   "n_chunks": 8,
+   "gold_chunk": 5
+  },
+  {
+   "sample_id": "viwikifc_dev_6__present",
+   "context_sha256": "c96b88eca4b995f5592df53f05a3841bb35a6e8f295a14ca218f4bf3ae7f8694",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_70__present",
+   "context_sha256": "b975d4d385ee803299490aedcb72f1276320ef8c23515983768088969c515eea",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_712__present",
+   "context_sha256": "22edbbc9aa705fc5e31a186cd7440beefcf16f5eb9e68292fe818430e70d612b",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_715__present",
+   "context_sha256": "2ca5b0ec2e254fc8b13a950ad5de1ec302fcad5e8c5e7e6926d9b8ccc7d74476",
+   "n_chunks": 9,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_723__present",
+   "context_sha256": "b39864572de2e6ae3ba2896fee65fc9d082d17360323c3dab4963b5ac67dee8b",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_724__present",
+   "context_sha256": "101c88669a6f20b48d3de83a45f2603ed8b98c1f0be40d4290535d3d16089cb0",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_743__present",
+   "context_sha256": "5f00e27206ed592a0d4df9d7211dd8f1853bcea84fccb96b8a819057e47cc2fa",
+   "n_chunks": 9,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_750__present",
+   "context_sha256": "725a0c0e320ffeb913cd375ff59a7db92dfc9b1662926871cfc453f55883f2c7",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_752__present",
+   "context_sha256": "f691043b121c925f0c8ee363c94ca735ddb8ec04be8b68cb5cb81e6f2e1d949b",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_757__present",
+   "context_sha256": "4fecf2b1ccdf5e7da31e7be580e8868e840c43b7b136dfde4d937e90cd738c9d",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_761__present",
+   "context_sha256": "a90403b097027c933c60312640eaf9021772ad025f1d304b0e2721d1bd13571e",
+   "n_chunks": 9,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_773__present",
+   "context_sha256": "45f5e4626799a23e0e603785a1354b35ae41db42945f4052d8c4d567278787ce",
+   "n_chunks": 10,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_774__present",
+   "context_sha256": "18a065b152abf6c524335ef99ff9e9ff76c8842b761ea92b6bda968d820a9a05",
+   "n_chunks": 11,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_80__present",
+   "context_sha256": "8642e6b0025d14989fdc94a0a97db415c0d4a54db41bb4123e845a7534604196",
+   "n_chunks": 11,
+   "gold_chunk": 10
+  },
+  {
+   "sample_id": "viwikifc_dev_810__present",
+   "context_sha256": "f29c5391483ecfa4421dfec58a88e03ad63d54b1c0f42d345381026d0744ac39",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_823__present",
+   "context_sha256": "92a42811525fcd2e85670ad963ed6c9c74eaf5fe635c522b4a456dc4ed8f5b62",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_828__present",
+   "context_sha256": "eba9fdd29e0be892fd11d70578cf6ad3576e7e63fe5327fce877aba25bba21de",
+   "n_chunks": 7,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_830__present",
+   "context_sha256": "bcfed6cb83effc2af258532a7ed7faf4214fb0742a13a289a37aede316aa41af",
+   "n_chunks": 11,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_832__present",
+   "context_sha256": "c40fbb470a1bd06426c4d21c0cd223203a26eca04852ec06ccb1b8833ad82e83",
+   "n_chunks": 11,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_852__present",
+   "context_sha256": "8517e921b907c411b152051f938317d2ef1a398e7d2a08335f9c12def7101d53",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_86__present",
+   "context_sha256": "a43ad5cfeef1e7a9558bb86ad5356cdb4e1fd827c9d60b77b2f551c7d53f04e6",
+   "n_chunks": 10,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_870__present",
+   "context_sha256": "6c6b544f76b689bc69149f60bbf74cd64e5346de84f5b0ce5c676971002df844",
+   "n_chunks": 10,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_880__present",
+   "context_sha256": "554d049ca759e045abe335049737f425697f57932bcbe8f7bcfeb0982ff87501",
+   "n_chunks": 9,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_884__present",
+   "context_sha256": "de04ed384cea83a8768bb304bf536fbf892cdca80552322f0fbd9f80605da329",
+   "n_chunks": 10,
+   "gold_chunk": 9
+  },
+  {
+   "sample_id": "viwikifc_dev_888__present",
+   "context_sha256": "2bf96623673c2f66e16dcbc5ce02dccba59991e7ff1fa2d9ef7fe85be7c133ec",
+   "n_chunks": 8,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_892__present",
+   "context_sha256": "8696798b9592e063ad926b0c56e03a49b09aacb445b6aea27702b2fb562da62e",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_895__present",
+   "context_sha256": "22fb1acd40a822c5bc06e60a9bfb9452fb23c20d565f7d3c8204290806dce471",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_89__present",
+   "context_sha256": "f2278f11a6147a3f9dff1b841dfef5da6c34b3d271b1bac3d4b23471438db4a4",
+   "n_chunks": 10,
+   "gold_chunk": 0
+  },
+  {
+   "sample_id": "viwikifc_dev_901__present",
+   "context_sha256": "3d88b8dcf9c8737ecbfd1bc930e72141b36826a8b1241240fa2a0564bf280bdf",
+   "n_chunks": 14,
+   "gold_chunk": 7
+  },
+  {
+   "sample_id": "viwikifc_dev_905__present",
+   "context_sha256": "4e8f1ab1418b9ea3fe37066c35533ed9b7beb13e49aa99c9aab16110b75795ee",
+   "n_chunks": 12,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_906__present",
+   "context_sha256": "98cfc95cf633e5bf336ec82263f3ae47b8925d01c685db36d79229fc6e2a02e8",
+   "n_chunks": 10,
+   "gold_chunk": 4
+  },
+  {
+   "sample_id": "viwikifc_dev_933__present",
+   "context_sha256": "7cf700944f08960324867f2e0a7bf27a3151cd23b366a6812fae71420ddd9abb",
+   "n_chunks": 9,
+   "gold_chunk": 6
+  },
+  {
+   "sample_id": "viwikifc_dev_936__present",
+   "context_sha256": "8d5f14eccf8baa90e6c32b06f95d36800aeb45c37dcf1c8b56c4448555354244",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_939__present",
+   "context_sha256": "593036d8a29c95224c332ee36854a5152dc7b8f13b4a24a17853630f2cb2a909",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_93__present",
+   "context_sha256": "b462fc0c667e2253b36e03a6afba920907bf8ef8269961fe94b688ec29ed5ced",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_940__present",
+   "context_sha256": "0676365ae20267e78c9d2449f8efdbdbd3844df0e2250fc0bf9c464950f2426e",
+   "n_chunks": 8,
+   "gold_chunk": 3
+  },
+  {
+   "sample_id": "viwikifc_dev_941__present",
+   "context_sha256": "4e9b5814221bd6b6698fd942a33c3d1a4c1cc131ed341f2f525d4f99adbd9095",
+   "n_chunks": 11,
+   "gold_chunk": 1
+  },
+  {
+   "sample_id": "viwikifc_dev_959__present",
+   "context_sha256": "e1b922224bb625b10ce03ec094d2fb5f7cc0956c64a5d333904cd7f60fd2e992",
+   "n_chunks": 10,
+   "gold_chunk": 8
+  },
+  {
+   "sample_id": "viwikifc_dev_968__present",
+   "context_sha256": "954aa14575f22212eac8b52ab9a61e5d93e7f6791e9a70cb8723cbc56faa5cc6",
+   "n_chunks": 10,
+   "gold_chunk": 2
+  },
+  {
+   "sample_id": "viwikifc_dev_99__present",
+   "context_sha256": "09b4a15b540dd18ad097f3af1558ca8aa022fe93c6d7b2666a0977fae9222a34",
+   "n_chunks": 10,
+   "gold_chunk": 7
+  }
+ ]
+}

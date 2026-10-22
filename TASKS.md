@@ -4761,8 +4761,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     đặt E03 (mean cả phản hồi), E18-mean và E18-max cạnh nhau, có khoảng tin cậy; ma trận nhầm
     lẫn so với Bảng 9; kết luận ghi đúng như dữ liệu nói, kể cả khi dự đoán sai.
 
-- [ ] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — **khoảng 25
-  phút GPU**
+- [ ] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — **khoảng
+  1,5–2,5 giờ GPU** (ước tính cũ 25 phút đã sai, sửa 22/10)
   - **Vì sao:** ContextCite kết luận trọng số chú ý thường không đáng tin để quy trách nhiệm;
     kết quả 87,8 % của E06 cần được đặt cạnh một phương pháp dựa trên cắt bỏ để biết nó đứng ở
     đâu. Nhóm đã có sẵn 1.836 cặp của E08 nên chi phí rất nhỏ.
@@ -4775,6 +4775,15 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Kiểm tra:** bảng ba dòng (cắt bỏ / đầu mạnh nhất / trung bình 756 đầu) kèm số lượt đọc mỗi
     mẫu và khoảng tin cậy; một đoạn trong mục 7.2 của quyển nói rõ ranh giới giữa *định vị trên
     bằng chứng vàng* và *quy trách nhiệm*.
+  - **Trạng thái 22/10:** code, kiểm thử (8 ca) và notebook `notebooks/t45d_e19_cat_bo_t4.ipynb`
+    đã xong, **chờ chạy trên Kaggle**. Chi phí phải tính lại vì hai lẽ. Thứ nhất, 300 mẫu có trung
+    bình 9,9 đoạn, tức 3.274 lượt đọc. Thứ hai, cắt bỏ cần phân phối đầu ra, mà Qwen2.5-7B ở
+    `float16` cho NaN ở tầng dự đoán token (lớp 27 tràn số), nên phải chạy `bfloat16`. T4 không có
+    bf16 gốc nên chậm khoảng bốn lần. Ô 6 của notebook chạy thử 3 mẫu để in tốc độ thật trước khi
+    chạy hết. 15 trong 1.836 mẫu có ngữ cảnh dựng lại khác bản E08 đã trích, nên bị loại khỏi tập
+    chọn; lệnh `run` so mã băm từng ngữ cảnh và dừng nếu có ngữ cảnh lệch. Phía chú ý tính được
+    ngay từ shard E08 có sẵn: đầu tốt nhất (lớp 19, đầu 20) đạt hit@1 0,850, đầu E06 đạt 0,797,
+    trung bình 756 đầu đạt 0,349, chọn bừa đạt 0,102.
 
 - [ ] **T45E** · L · **E20** — đo chi phí biên trên GPU có `bfloat16` gốc — **một buổi, CẦN HỎI
   NGƯỜI DÙNG TRƯỚC**
