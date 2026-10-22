@@ -76,3 +76,28 @@ for f in sorted(Path("data/raw").iterdir()):
         print(f.name, len(d), list(next(iter(d.values())).keys()))
 PY
 ```
+
+## 5. Mã băm SHA-256
+
+> Bổ sung ngày 22/10/2026. Tính trên đúng các tệp đã dùng cho mọi thí nghiệm. Ai tải lại dữ liệu
+> từ nguồn (hoặc từ Kaggle Dataset `unicorn1209/vihallulens`) thì so mã băm để chắc mình có cùng
+> dữ liệu; lệch một byte là lệch số liệu. `tests/test_manifest_hashes.py` tự kiểm bảng này với các
+> tệp đang có trong `data/raw/` (tệp nào chưa tải thì bỏ qua).
+
+| Tệp | Kích thước (byte) | SHA-256 |
+|---|---:|---|
+| `isedsc01_test_private.json` | 21.082.906 | `31c95112b72cef4b744ebdad3d3a55e791b663ba2099708dd4fef4d453cd85c7` |
+| `isedsc01_test_public.json` | 19.287.569 | `0d46e2dcf7b082df61efebd00edcda1376065208494955ddca93daede28300ef` |
+| `isedsc01_train.json` | 154.804.483 | `76605fc30a4192a1e1d5d961ec32572de727230f3dc5b5d633a499b009b82dd3` |
+| `vifactcheck_dataset_card.md` | 3.453 | `1ae40d96a9cac33617ca3695d37299e28edf5fd1a9990d3be7977357b965f0c7` |
+| `vifactcheck_dev.parquet` | 1.225.466 | `16b6d8b244ec07be1a6d80fcb389486c2f26e5c10cdc66f6cab72bd159920454` |
+| `vifactcheck_gitattributes.txt` | 2.307 | `f4e703ea6e44bbebe53aceed2a89c11e40b88b7ae130c480c89860ab805ffc8f` |
+| `vifactcheck_test.parquet` | 2.484.723 | `d797eb5a3797f12c052d4c8dbdda0b9cf7174f3dfce91050f95354b044816214` |
+| `vifactcheck_train.parquet` | 8.071.153 | `ff054bc61afb59e3c9aa1dd402f0eb44700a30866c75ee6c66e117517bd510e8` |
+| `vihallu_test_public.csv` | 1.529.146 | `e63def805fbc5ef004aedd73c8d00c0083f46ddeecc7079f6605fcdd7f3fdca6` |
+| `vihallu_train.csv` | 10.728.910 | `52a9d8605688f77d5e2d4504c81765e8183f83e1d0ceab8957aeab67381c9bce` |
+| `viwikifc_dev.csv` | 2.924.939 | `d0d45cfde4844c6b6f89dc61700416d0f3f1f9b6edba871c23f9f2cb88cf83fc` |
+| `viwikifc_test.csv` | 2.950.356 | `ff6016f9c04ac6aee6333583876bcf5f88ba455141767f548213f1868726c84c` |
+| `viwikifc_train.csv` | 23.370.947 | `477adcca59920d40f5cb6580a7cbdd6828e22839f0bb52abed7212c0edf4af5d` |
+
+Kiểm tay: `sha256sum data/raw/*` trên Linux, `Get-FileHash data/raw/* -Algorithm SHA256` trên Windows.

@@ -20,6 +20,7 @@ import torch
 
 from vihallulens.data.chunking import Chunk
 from vihallulens.extract.prompt import render_prompt
+from vihallulens.revisions import revision_for
 
 MB = 1024**2
 EPSILON = 1e-9
@@ -293,13 +294,14 @@ class AttentionExtractor:
     ) -> None:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        revision = revision_for(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
         # Qwen2.5 was trained in bfloat16, and float16 has a much smaller range, so some
         # layers can overflow to inf and turn the attention matrix into nan. Being able to
         # change this without touching code is what lets that be tested rather than argued.
         torch_dtype = getattr(torch, compute_dtype)
 
-        kwargs: dict = {"attn_implementation": "eager"}
+        kwargs: dict = {"attn_implementation": "eager", "revision": revision}
         if quantization == "nf4":
             from transformers import BitsAndBytesConfig
 
