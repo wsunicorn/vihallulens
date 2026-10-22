@@ -234,6 +234,7 @@ os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 | `data/raw/MANIFEST.md` | Ánh xạ tên file gốc sang tên chuẩn, kèm số dòng đã đối chiếu |
 | `docs/EXPERIMENTS.md` | Kế hoạch thực nghiệm và bảng kết quả |
 | `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các mốc so sánh |
+| `docs/LICH_SU_PR.md` | 135 pull request của repo gốc (19/08–22/10/2026), ngày thật và link tới commit gộp; số PR trong `TASKS.md` là số ở file này |
 
 ## Dữ liệu
 
