@@ -10,7 +10,8 @@ Cập nhật 22/10/2026. Bộ dùng để báo cáo trước Hội đồng là *
 | `slide_rut_gon_19.html` / `.pdf` | Bộ 19 slide Minh dựng ngày 14/10, là nền của bộ chính. Minh giữ script dựng (`build_slide19.py`, trên máy Minh). |
 | `nguon_bo_sung_15-10/` | Sơ đồ và script chèn bốn slide còn thiếu so với yêu cầu của thầy (bài toán, các hướng đã có, kiểm định giả thuyết, tài liệu tham khảo) vào bộ 19 slide. Cách chạy ghi ở `GHI_CHU_CHO_MINH.txt`. |
 | `slide_v2.html` | **Bộ cũ**, 36 slide theme "Đêm cú", dùng cho buổi báo cáo GVHD ngày 26/09. Không dùng nữa. |
-| `GIAI_THICH_SLIDE.md` | **Viết cho bộ cũ `slide_v2.html`**, chưa cập nhật cho bộ chính. |
+| `GIAI_THICH_SLIDE.md` | Giải thích từng slide của bộ chính và **kịch bản thời gian** hai phương án (đủ khoảng 22 phút, rút khoảng 15 phút). Bản cho bộ cũ giữ ở `GIAI_THICH_SLIDE_v2_cu.md`. |
+| `HOI_DAP_HOI_DONG.md` | Câu hỏi hội đồng dễ hỏi kèm hướng trả lời, có số liệu và trỏ về slide. |
 | `ke_hoach_slide_v2.md`, `ke_hoach_slide_v3.md` | Kế hoạch của hai đợt làm slide trước, giữ để tra lại lý do thiết kế. |
 | `BI_KIP_HTML_SLIDE.md` | Bộ skill đã cài và luật dựng slide HTML. |
 | `img/` | Logo trường và ảnh dùng trong slide. |

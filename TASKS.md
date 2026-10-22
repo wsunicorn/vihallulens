@@ -4839,8 +4839,11 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Trạng thái 22/10/2026:** bộ chính là **`slide_hoi_dong_23.html`** (PR #128): 19 slide Minh dựng
     ngày 14/10 cộng bốn slide bổ sung cho đủ bố cục GVHD yêu cầu ngày 05/10 (bài toán, các hướng đã
     có kèm công trình ở chân slide, kiểm định năm giả thuyết, tài liệu tham khảo). Ghi chú diễn giả
-    khoảng 23–24 phút; GVHD chưa cho biết thời lượng. **Còn:** viết lại `GIAI_THICH_SLIDE.md` cho
-    bộ 23 slide, kịch bản thời gian, danh sách câu hỏi hội đồng dự kiến kèm câu trả lời, diễn tập.
+    khoảng 23–24 phút; GVHD chưa cho biết thời lượng. Đã viết lại `GIAI_THICH_SLIDE.md` cho bộ 23
+    slide, kèm kịch bản thời gian hai phương án (đủ khoảng 22 phút, rút khoảng 15 phút); và
+    `HOI_DAP_HOI_DONG.md`, 26 câu hỏi dự kiến kèm hướng trả lời. Các câu đánh dấu ⏳ chờ số của
+    E17–E19. **Còn:** cập nhật slide 12 (số ca kiểm thử) và slide 21 (ViFactCheck) sau khi chạy,
+    chọn người nói, diễn tập bấm giờ.
     Nếu phản biện xếp vào hội đồng poster thì dựng poster theo mục "BÁO CÁO POSTER" của mẫu Khoa.
   - **Trạng thái 26/09/2026:** đã có **bộ slide 36 trang** (`UniversityRequirements/Slides/
     slide_v2.html`, theme "Đêm cú", 14 sơ đồ động chạy bằng số liệu thật) và **tài liệu giải
