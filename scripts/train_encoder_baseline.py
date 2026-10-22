@@ -48,6 +48,7 @@ from vihallulens.evaluation.telemetry import (  # noqa: E402
     gpu_telemetry,
     throttling_verdict,
 )
+from vihallulens.revisions import revision_for  # noqa: E402
 
 MB = 1024**2
 
@@ -108,14 +109,15 @@ def build_from_hub(spec):
     """
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+    revision = revision_for(spec["name"])
     model, info = AutoModelForSequenceClassification.from_pretrained(
-        spec["name"], num_labels=len(LABELS), output_loading_info=True
+        spec["name"], num_labels=len(LABELS), output_loading_info=True, revision=revision
     )
     ok, message = describe(info)
     print(f"      nạp trọng số: {message}")
     if not ok:
         raise RuntimeError(f"checkpoint {spec['name']} nạp không đúng — {message}")
-    return AutoTokenizer.from_pretrained(spec["name"]), model
+    return AutoTokenizer.from_pretrained(spec["name"], revision=revision), model
 
 
 def train_once(spec, data, seed, epochs, lr, device, build=build_from_hub) -> dict:
@@ -305,7 +307,7 @@ def main() -> int:
         data[split] = (left, right, list(frame["label"]))
     print(f"  train / test          : {len(data['train'][0]):,} / {len(data['test'][0]):,} mẫu")
 
-    tokenizer = AutoTokenizer.from_pretrained(spec["name"])
+    tokenizer = AutoTokenizer.from_pretrained(spec["name"], revision=revision_for(spec["name"]))
     cut = truncation_rate(tokenizer, *data["train"][:2], spec["max_length"])
     print(f"  mẫu bị cắt vì quá dài : {cut * 100:.1f} %")
     if spec["segment"]:
