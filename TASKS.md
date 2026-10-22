@@ -2621,9 +2621,13 @@ Thiếu đặc trưng của tập dev: data/processed/isedsc01_dev_15ef31521fd6.
 
 ## Giai đoạn 5 — Báo cáo giữa kỳ (tuần 8–9)
 
-- [ ] **T28** · LM · Gom kết quả và viết báo cáo giữa kỳ — **bản báo cáo soạn xong 02/09/2026,
-  chờ gửi GVHD trước 04/10**
+- [x] **T28** · LM · Gom kết quả và viết báo cáo giữa kỳ — hoàn thành 02/10/2026
   - **Kiểm tra:** file báo cáo giữa kỳ, Bảng 1–3 đã có số, gửi GVHD trước 04/10.
+  - **Kết quả 22/10/2026:** không gửi file báo cáo giữa kỳ riêng. Mốc 04/10 được đáp ứng bằng thư
+    báo cáo tuần 9 gửi GVHD ngày **02/10/2026**, kèm **bản thảo đầy đủ của quyển** (127 trang, tám
+    chương, mọi bảng kết quả đã có số) và bộ slide — nhiều hơn những gì một báo cáo giữa kỳ cần.
+    GVHD trả lời ngày 05/10 bằng các quyết định ghi ở T48. File `Bao_cao_giua_ky_KLTN.docx` soạn
+    02/09 vẫn giữ trong `UniversityRequirements/Reports/` như bản nháp, không dùng nữa.
 
   ### Task này để làm gì
 
@@ -4609,6 +4613,8 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
 ## Giai đoạn 8 — Viết báo cáo (tuần 14–15)
 
 - [ ] **T41** · M · E17 chuyển miền sang ViFactCheck — **chỉ làm nếu còn thời gian**
+  - **Trạng thái 22/10/2026:** quyết định **chạy trước rồi mới quyết định** có đưa vào quyển hay
+    không. Nếu kết quả chỉ lặp lại kết luận của E16, ghi một đoạn ngắn ở mục 8.2 thay vì thêm bảng.
   - **Trạng thái 26/09/2026:** chưa làm, đang chờ ý kiến thầy. Nhóm nghiêng về **không làm**: E16
     đã cho thấy bộ ba lớp không chuyển được giữa hai bộ vì nhãn khác nghĩa, mà ViFactCheck còn
     khác miền hơn; bằng chứng đã có (`results/runs.jsonl`, T12) là bằng chứng của ViFactCheck
@@ -4660,7 +4666,20 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
   hiệu với tỷ lệ gộp), thay vì để nó khuất sau con số tổng. Đây là quyết định chốt từ T35B và
   giữ nguyên khi viết.
 
-- [ ] **T47** · LM · Rà soát định dạng theo mẫu trường, kiểm tra mục lục và caption
+- [x] **T47** · LM · Rà soát định dạng theo mẫu trường, kiểm tra mục lục và caption — hoàn thành
+  15/10/2026
+  - **Kết quả 15/10/2026 (bản v4, Minh sửa 09/10 và 13/10, Lân kiểm lại 15/10):** sáu nhóm lỗi dưới
+    đây đã sửa hết; thêm ba việc GVHD chốt ngày 05/10: chuyển về **in một mặt** (bỏ lề đối xứng và
+    header chẵn/lẻ, năm ngắt section "Odd page" thành "Next page", hết bốn trang trắng), rút tài
+    liệu tham khảo **45 → 32** (bỏ 14, thêm trang cuộc thi ISE-DSC01, đánh số lại 51 chỗ trích), và
+    chụp lại bảy ảnh màn hình cho chữ in ra khoảng 9 pt. Đợt rà toàn văn 13/10 dò **363 ô** bảng
+    kết quả Chương 6–7 với `results/`, sửa năm ô bị làm tròn hai lần và thống nhất cách tính các ô
+    chênh lệch. Kiểm lại bằng chương trình trên PDF 130 trang: 0 trang trắng, lề 3,5/2,0 cm ở mọi
+    section dọc, **154/154** dòng mục lục và ba danh mục đúng số trang, 32 tài liệu mục nào cũng
+    được trích, không trích dẫn nào vượt danh mục. Danh sách sửa và ghi chú từng đợt:
+    `UniversityRequirements/Reports/DANH_SACH_CAN_SUA_BAO_CAO.txt`, `GHI_CHU_GUI_LAN.txt`.
+  - **Học được:** dàn trang hai mặt lọt vào quyển trong lúc sửa mà không ai cố ý — chỉ phép kiểm
+    trang trắng và lề trang chẵn trên PDF bắt được. Phép kiểm đó giữ lại cho mọi lần xuất bản sau.
   - **Rà soát xong 26/09/2026; còn 6 nhóm lỗi chờ Minh sửa nên chưa tick.**
   - **Đã kiểm và đạt:** style Content / Bullet / Caption / Heading 1–3 khớp **từng thông số** với
     mục ĐỊNH DẠNG của mẫu; lề 3/3/3,5/2 cm; số trang chân trang canh phải; 36 hình + 42 bảng đều
@@ -4688,6 +4707,12 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
 Rút ra từ mục 8 của `docs/EXPERIMENTS.md`: đối chiếu kết quả với ba câu hỏi nghiên cứu (CH1 ~100 %,
 CH2 ~85 %, CH3 ~90 %) và với các công trình 2025–2026 ở mục 4 của `docs/REFERENCES.md`. Năm việc
 dưới đây là **phần còn lại để đưa quyển đến đích**; xếp theo tỷ lệ giá trị trên chi phí.
+
+**Trạng thái 22/10/2026:** duyệt làm cả năm việc. T42B thu hẹp lại: GVHD vừa yêu cầu rút gọn tài liệu
+tham khảo (45 → 32), nên chỉ thêm **ContextCite** — bài trả lời trước câu "chú ý có phải lời giải
+thích không" — vào mục 2.4 và Bảng 2.1; phần trích ở mục 7.2 chờ GVHD đọc xong mục đó. T45E vẫn
+vướng phần cứng. Mọi việc sửa quyển làm trên nguồn `docs/report/*.md` của Minh sau khi Minh đưa
+nguồn đó vào repo; quá 28/10 chưa có thì sửa thẳng bản docx rồi gửi Minh danh sách chỗ đổi.
 
 **Thứ tự nên làm:** T45B và T42B trước (0 GPU, chỉ viết, sửa trực tiếp quyển) → T45C (E18, đáng
 giá nhất trong ba thí nghiệm) → T45D (E19) → T45E (E20) chỉ khi đã có quyết định về phần cứng.
@@ -4770,11 +4795,25 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
 ## Giai đoạn 9 — Bảo vệ (tuần 16–18)
 
 - [ ] **T48** · LM · Báo cáo cuối kỳ cho GVHD (trước 22/11)
+  - **Trạng thái 22/10/2026:** quyển ở **bản v4** (130 trang, 8 chương, 22 hình, 43 bảng, 32 tài
+    liệu tham khảo, in một mặt), gửi GVHD kèm thư tuần 11 ngày 16/10; chưa có phản hồi. GVHD đã
+    chốt ngày 05/10: in một mặt theo quy định Khoa; bố cục tám chương phù hợp; giữ tỷ lệ hình –
+    bảng; giữ font Consolas cho khối mã và cách đánh số trang phụ lục; rà lại tài liệu tham khảo;
+    thêm phần sử dụng AI và tính tái lập (đã làm: Phụ lục G, bổ sung Phụ lục D). **Mục 7.2** (cách
+    trình bày kết quả âm) GVHD đang đọc lại — chưa sửa. Còn trước khi nộp: điền Nhật kí làm việc
+    theo thực tế, cập nhật số ca kiểm thử (688 ở lượt 18/09 → 783 ở lượt 22/10), T45B, T42B, kết
+    quả của T41/T45C/T45D nếu đáng đưa vào.
   - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
     sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Trạng thái 22/10/2026:** bộ chính là **`slide_hoi_dong_23.html`** (PR #128): 19 slide Minh dựng
+    ngày 14/10 cộng bốn slide bổ sung cho đủ bố cục GVHD yêu cầu ngày 05/10 (bài toán, các hướng đã
+    có kèm công trình ở chân slide, kiểm định năm giả thuyết, tài liệu tham khảo). Ghi chú diễn giả
+    khoảng 23–24 phút; GVHD chưa cho biết thời lượng. **Còn:** viết lại `GIAI_THICH_SLIDE.md` cho
+    bộ 23 slide, kịch bản thời gian, danh sách câu hỏi hội đồng dự kiến kèm câu trả lời, diễn tập.
+    Nếu phản biện xếp vào hội đồng poster thì dựng poster theo mục "BÁO CÁO POSTER" của mẫu Khoa.
   - **Trạng thái 26/09/2026:** đã có **bộ slide 36 trang** (`UniversityRequirements/Slides/
     slide_v2.html`, theme "Đêm cú", 14 sơ đồ động chạy bằng số liệu thật) và **tài liệu giải
     thích từng slide** cho người chưa biết đề tài (`GIAI_THICH_SLIDE.md`, ~10.600 từ). Bộ này
@@ -4789,7 +4828,7 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 
 | Việc | Tần suất | Ghi chú |
 |---|---|---|
-| Email báo cáo tuần gửi GVHD | mỗi tuần, kể cả tuần không tiến triển | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Đề xuất gửi chiều thứ Sáu. Mẫu: `UniversityRequirements/WeeklyLogs/Mau_email_bao_cao_tuan.md` |
+| Email báo cáo tuần gửi GVHD | **khi có việc mới** (GVHD đồng ý từ tháng 10/2026; trước đó mỗi tuần) | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Mẫu: `UniversityRequirements/WeeklyLogs/Mau_email_bao_cao_tuan.md`. Thư đã gửi các ngày 19/08, 28/08, 06/09, 11/09, 20/09, 02/10 (tuần 9) và 16/10 (tuần 11) |
 | Cập nhật sheet "Nhật ký" trong `UniversityRequirements/Plan/Ke_hoach_KLTN_da_dien.xlsx` | mỗi tuần | Xin GVHD phê duyệt nhật ký |
 | Cập nhật cột "thực tế" trong sheet kế hoạch | mỗi tuần | Đơn vị trên Gantt là **tuần** |
 
