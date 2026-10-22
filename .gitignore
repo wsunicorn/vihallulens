@@ -40,3 +40,27 @@ results/leakage_report_*.md
 # Ảnh nguồn của trang chủ: chỉ commit WebP đã nén; PNG gốc từ GPT image và ảnh tham chiếu để ngoài
 src/vihallulens/serve/static/img/*.png
 src/vihallulens/serve/static/img/original.*
+
+# --- Báo cáo khóa luận: chỉ commit nguồn và hình quyển đang dùng (docs/report/README.md) ---
+# Tệp do docs/tools/resolve.py và build_docx.py dựng ra
+docs/BaoCao_KLTN.md
+docs/BaoCao_KLTN.docx
+docs/BaoCao_KLTN.pdf
+# Tệp trung gian của script vẽ hình (SVG/HTML rồi mới chụp thành PNG)
+docs/media/*.svg
+docs/media/*.html
+# Hình script vẫn vẽ nhưng đã bỏ khỏi quyển; đưa hình nào trở lại quyển thì xóa dòng của nó
+docs/media/bieudo_ablation.png
+docs/media/bieudo_bac_thang_mo_hinh.png
+docs/media/bieudo_bon_bo_du_lieu.png
+docs/media/bieudo_can_thiep.png
+docs/media/bieudo_dinh_vi_chu_y.png
+docs/media/bieudo_ece_tham_so.png
+docs/media/bieudo_f1_tung_lop.png
+docs/media/bieudo_hieu_chinh_ece.png
+docs/media/bieudo_khai_quat_cheo_bo.png
+docs/media/bieudo_lap_lai_dinh_vi.png
+docs/media/bieudo_ngan_sach_bo_nho.png
+docs/media/bieudo_phan_bo_nhan.png
+docs/media/hinh_khung_nghien_cuu.png
+docs/media/hinh_mau_prompt.png
