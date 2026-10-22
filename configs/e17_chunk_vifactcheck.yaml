@@ -1,0 +1,40 @@
+# E17 — chuyển miền sang tin tức: chunk-aware trên ViFactCheck, SPLIT GỐC. Task T41.
+#
+# Cùng công thức với E15, chỉ đổi bộ dữ liệu: ViHallu là hỏi đáp, ISE-DSC01 và ViWikiFC là bách
+# khoa / văn bản dài, ViFactCheck là tin tức. Câu hỏi CH3: tín hiệu chú ý có khái quát hóa sang
+# một miền thứ ba không.
+#
+# HAI ĐIỀU PHẢI GHI KÈM MỌI CON SỐ SINH TỪ FILE NÀY:
+#
+# 1. Nhãn là nhãn kiểm chứng thông tin (SUPPORTED / REFUTED / NEI) ánh xạ sang no / intrinsic /
+#    extrinsic, không phải nhãn ảo giác của một LLM — như ISE-DSC01 và ViWikiFC.
+# 2. Bằng chứng là nhiều câu rời nhau ghép lại (59 % chỉ một mảnh, đo ở T12), nên gold_rank chỉ
+#    ghi được cho mẫu có bằng chứng nằm gọn trong một đoạn. E17 không dùng gold_rank.
+#
+# Cỡ: 5.062 / 723 / 1.447 mẫu, trung bình ~960 token, ước tính ~2 giờ GPU trên T4.
+
+run_name: e17_chunk_vifactcheck
+
+dataset:
+  name: vifactcheck
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
