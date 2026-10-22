@@ -95,6 +95,10 @@ class ExtractorConfig(_Base):
     # other 27 layers match float32 to 0.07 % of the scale. Listing it here rather than
     # detecting it at runtime keeps the experiment declaration honest about what was used.
     exclude_layers: list[int] = Field(default_factory=list)
+    # Experiment E18: also write every block pooled over each sentence of the response, on top
+    # of the whole-response vectors. Changes what a shard contains, so it belongs to the
+    # extraction hash — but only when switched on; see ExperimentConfig.to_dict.
+    response_sentences: bool = False
 
 
 class FeatureConfig(_Base):
@@ -136,8 +140,17 @@ class ExperimentConfig(_Base):
     detector: DetectorConfig
 
     def to_dict(self) -> dict[str, Any]:
-        """Plain dictionary of the whole config, suitable for logging to results/runs.jsonl."""
-        return self.model_dump(mode="json")
+        """Plain dictionary of the whole config, suitable for logging to results/runs.jsonl.
+
+        ``extractor.response_sentences`` is left out while it is off. It was added at T45C,
+        after twenty experiments had been hashed, and a key appearing with its default value
+        would change every one of those hashes — the extraction hash names the shards on disk,
+        so every existing shard would silently stop being found.
+        """
+        payload = self.model_dump(mode="json")
+        if not payload["extractor"]["response_sentences"]:
+            del payload["extractor"]["response_sentences"]
+        return payload
 
 
 def load_config(path: str | Path) -> ExperimentConfig:

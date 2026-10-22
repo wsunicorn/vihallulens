@@ -1657,7 +1657,19 @@ phút. *Dự đoán ghi trước:* gộp max tăng F1 lớp extrinsic và giảm
 `no`; macro-F1 có thể vẫn nằm trong khoảng tin cậy. Nếu không tăng, lời giải thích "trung bình
 hóa làm loãng" bị bác — và đó cũng là kết quả đáng viết vì nó đóng lời giải thích cuối cùng.
 
-**E19 — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh (CH1, khoảng 25 phút GPU).**
+*Bổ sung 22/10, trước khi chạy.*
+- **Trần:** 71,6 % phản hồi ViHallu train chỉ có một câu (tối đa 3, trung bình 1,30, cùng hàm
+  tách câu với ngữ cảnh, `min_words=5`). Ở những mẫu đó mọi cách gộp cho cùng một véc-tơ, nên
+  E18 chỉ có thể đổi kết quả trên khoảng 28 % mẫu. Vì vậy điểm còn được chấm riêng trên phần
+  phản hồi từ hai câu trở lên.
+- **Nhánh thứ tư `min`, chỉ để khám phá, không kèm dự đoán:** câu bịa làm tỷ lệ lookback giảm,
+  nên max giữa các câu sẽ chọn câu bám ngữ cảnh nhất.
+- **Nhánh `whole`:** E03 được chấm lại trên chính shard mới, để mọi so sánh nằm trong một lượt
+  chạy GPU.
+- Hiệu giữa các nhánh lấy khoảng tin cậy bằng bootstrap ghép cặp trên tập test.
+- Script nằm ở `scripts/run_sentence_pooling.py`.
+
+**E19 — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh (CH1, khoảng 1,5–2,5 giờ GPU — ước tính cũ 25 phút sửa ngày 22/10: logits phải chạy bfloat16, và 300 mẫu cần 3.274 lượt đọc).**
 ContextCite (NeurIPS 2024) kết luận trọng số chú ý thường **không đáng tin để quy trách nhiệm**
 câu trả lời cho nguồn; ARC-JSD (ICLR 2026) quy trách nhiệm bằng độ lệch Jensen–Shannon giữa
 phân phối đầu ra khi đủ ngữ cảnh và khi cắt bỏ từng đoạn. Nhóm đã có sẵn 1.836 cặp của E08;
