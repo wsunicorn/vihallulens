@@ -1,0 +1,33 @@
+# E17 — mốc lookback gộp CHO CHÍNH ViFactCheck split gốc. Task T41.
+#
+# Mỗi bộ phải có mốc lookback của riêng nó (bài học T26, T30): `lookback_baseline()` lọc theo cả
+# dataset lẫn model_name.
+#
+# KHÔNG tốn thêm giây GPU nào: extraction_hash không tính features, nên file này dùng lại đúng
+# shard mà e17_chunk_vifactcheck.yaml đã trích. Chấm file này TRƯỚC file chunk-aware.
+
+run_name: e17_baseline_lookback_vifactcheck
+
+dataset:
+  name: vifactcheck
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+
+features:
+  groups: [basic]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced

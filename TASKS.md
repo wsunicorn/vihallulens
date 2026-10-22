@@ -4615,6 +4615,11 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
 - [ ] **T41** · M · E17 chuyển miền sang ViFactCheck — **chỉ làm nếu còn thời gian**
   - **Trạng thái 22/10/2026:** quyết định **chạy trước rồi mới quyết định** có đưa vào quyển hay
     không. Nếu kết quả chỉ lặp lại kết luận của E16, ghi một đoạn ngắn ở mục 8.2 thay vì thêm bảng.
+    Hai cấu hình `configs/e17_{chunk,baseline_lookback}_vifactcheck.yaml` (công thức E15, chung
+    lượt trích `cdffb5c66735`) và notebook `notebooks/t41_e17_vifactcheck_t4.ipynb` đã xong,
+    **chờ chạy trên Kaggle**. Cỡ đo trên máy: 5.062 / 723 / 1.447 mẫu, trung bình khoảng 960
+    token, chỉ 0,2 % mẫu vượt 4.000 token, nên ước tính khoảng 2 giờ GPU. Chấm trên máy bằng
+    `run_chunk_aware.py`, chạy mốc lookback trước rồi mới tới chunk-aware.
   - **Trạng thái 26/09/2026:** chưa làm, đang chờ ý kiến thầy. Nhóm nghiêng về **không làm**: E16
     đã cho thấy bộ ba lớp không chuyển được giữa hai bộ vì nhãn khác nghĩa, mà ViFactCheck còn
     khác miền hơn; bằng chứng đã có (`results/runs.jsonl`, T12) là bằng chứng của ViFactCheck
