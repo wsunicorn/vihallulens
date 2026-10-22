@@ -1,0 +1,33 @@
+# E18 — chấm theo từng câu phản hồi, gộp max/min/mean thay vì trung bình cả phản hồi. Task T45C.
+#
+# Giống hệt E03 ở mọi khóa, chỉ thêm extractor.response_sentences. Vì khóa đó nằm trong hash
+# trích đặc trưng nên lượt trích này ghi ra shard RIÊNG, không đè shard E03 cũ. Các trường cũ
+# trong shard mới phải trùng shard cũ — đó là phép kiểm "E02/E03 tái lập đúng từng chữ số".
+
+run_name: e18_sentence_pooling_vihallu
+
+dataset:
+  name: vihallu
+  split_seed: 42
+
+chunking:
+  strategy: sentence
+  min_words: 5            # cũng là ngưỡng tách câu của phản hồi
+
+extractor:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  quantization: nf4
+  max_context_tokens: 4096
+  device: cuda
+  compute_dtype: float16
+  exclude_layers: [27]
+  response_sentences: true
+
+features:
+  # Đúng ba nhóm của E03, để chỗ khác nhau duy nhất là cách gộp trục phản hồi.
+  groups: [basic, chunk_aware, stability]
+  head_aggregation: all
+
+detector:
+  type: logistic_regression
+  class_weight: balanced
