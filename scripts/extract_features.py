@@ -112,6 +112,8 @@ def main() -> int:
     print(f"  chia đoạn             : {cutting}")
     print(f"  bộ dữ liệu            : {cfg.dataset.name}/{args.split}, {len(frame):,} mẫu")
     print(f"  khối đặc trưng ghi ra : {', '.join(FEATURE_BLOCKS)}")
+    if cfg.extractor.response_sentences:
+        print("  thêm theo từng câu    : có — mỗi khối gộp riêng trên từng câu phản hồi (E18)")
     with_evidence = sum(1 for r in frame.to_dict("records") if (r.get("evidence") or "").strip())
     print(f"  mẫu có bằng chứng     : {with_evidence:,}/{len(frame):,}"
           f"{'  → ghi thêm gold_rank cho E06' if with_evidence else ''}")
@@ -148,10 +150,16 @@ def main() -> int:
     with path.open("a", encoding="utf-8") as handle:
         for position, row in enumerate(todo, start=1):
             chunks = chunk_context(row["context"], **chunking_kwargs)
+            # E18: the response is split with the same sentence splitter as the context,
+            # whatever strategy cut the context, so "a sentence" means one thing throughout.
+            sentences = (chunk_context(row["response"], strategy="sentence",
+                                       min_words=cfg.chunking.min_words)
+                         if cfg.extractor.response_sentences else None)
             began = time.perf_counter()
             try:
                 features = extractor.extract(
-                    row["context"], row.get("question", ""), row["response"], chunks
+                    row["context"], row.get("question", ""), row["response"], chunks,
+                    response_sentences=sentences,
                 )
             except Exception as error:  # noqa: BLE001 — one bad sample must not end the run
                 failed += 1

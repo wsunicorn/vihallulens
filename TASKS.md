@@ -4760,6 +4760,20 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Kiểm tra:** một dòng mới trong `results/runs.jsonl`; Bảng mới trong `docs/EXPERIMENTS.md`
     đặt E03 (mean cả phản hồi), E18-mean và E18-max cạnh nhau, có khoảng tin cậy; ma trận nhầm
     lẫn so với Bảng 9; kết luận ghi đúng như dữ liệu nói, kể cả khi dự đoán sai.
+  - **Trạng thái 22/10:** code, 13 ca kiểm thử và notebook `notebooks/t45c_e18_gop_theo_cau_t4.ipynb`
+    đã xong, **chờ chạy trên Kaggle** (khoảng 75 phút: 57 phút trích, 15 phút CPU).
+    - **Cách làm:** cờ mới `extractor.response_sentences` trong
+      `configs/e18_sentence_pooling_vihallu.yaml`. Cờ nằm trong hash trích, nên shard mới
+      (`8d0bb26a198b`) không đè shard E03 (`8c49fc0417f1`). Khi tắt, cờ không xuất hiện trong
+      `to_dict`, nên mọi hash cũ giữ nguyên; điều này có ca kiểm thử khóa lại.
+    - **Đo trước khi chạy:** 71,6 % phản hồi ViHallu train chỉ có một câu (tối đa 3 câu, trung
+      bình 1,30). Ở những mẫu đó bốn cách gộp cho cùng một véc-tơ, nên E18 chỉ có thể khác E03
+      trên khoảng 28 % mẫu. Đây là trần của thí nghiệm, ghi ra trước khi có số. Script vì thế
+      chấm thêm riêng phần phản hồi từ hai câu trở lên.
+    - **Thêm trước khi chạy:** nhánh `min`. Câu bịa làm tỷ lệ lookback *giảm*, nên max giữa các
+      câu sẽ chọn câu bám ngữ cảnh nhất. Nhánh này chỉ để khám phá, không kèm dự đoán.
+    - **Kiểm E03 tái lập:** chạy lại E03 trên shard cũ bằng code hiện tại cho đúng 0,7567
+      (topk k=32). Trên máy, script so từng giá trị các trường cũ giữa shard mới và shard cũ.
 
 - [ ] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — **khoảng
   1,5–2,5 giờ GPU** (ước tính cũ 25 phút đã sai, sửa 22/10)

@@ -16,6 +16,7 @@ from vihallulens.data.chunking import locate_evidence_chunk
 from vihallulens.features.chunk_aware import chunk_features
 from vihallulens.features.localization import gold_rank, mean_shares
 from vihallulens.features.lookback import DENOMINATORS, pool_over_tokens
+from vihallulens.features.sentence import sentence_record_fields
 
 
 def gold_chunk_rank(features, evidence: str) -> tuple[int | None, list[int] | None]:
@@ -73,4 +74,7 @@ def to_record(sample_id: str, label: str | None, features, elapsed_ms: float,
     if gold is not None:
         row["gold_chunk"] = gold
         row["gold_rank"] = ranks
+    # Experiment E18. Added after every existing field and only when the extractor was given
+    # the response's sentences, so the fields above stay byte-for-byte what E02/E03 read.
+    row.update(sentence_record_fields(features))
     return row
