@@ -1,0 +1,22 @@
+GHI CHÚ CHO MINH — bổ sung 4 slide vào bộ slide_rut_gon_19 (Lân, 15/10/2026)
+
+Vì sao: thầy yêu cầu slide Hội đồng có đủ "giới thiệu / bài toán, động lực / khoảng trống,
+cơ sở lý thuyết: các phương pháp đã có (ghi công trình ở footer), phương pháp đề xuất, dữ liệu,
+thực nghiệm, tự đánh giá, tham khảo". Bộ 19 slide còn thiếu bài toán, các phương pháp đã có,
+phần kiểm định giả thuyết và slide tham khảo. 19 slide gốc của Minh giữ nguyên, không sửa chữ nào.
+
+Kết quả: slide_hoi_dong_23.html / .pdf (23 slide). Bốn slide chèn thêm:
+  03  Bài toán (Chương 1)                         — sơ đồ FIGS.task, sau slide hai kiểu ảo giác
+  06  Các hướng phát hiện ảo giác đã có (Chương 2) — sơ đồ FIGS.map, theo Bảng 2.1 bản v4
+                                                    (chỉ trích tài liệu còn trong danh mục 32 mục)
+  20  Kiểm định năm giả thuyết (Tự đánh giá)       — sơ đồ FIGS.hyp, theo Bảng 7.1
+  22  Tài liệu tham khảo chính                     — 13 bài, số [n] theo danh mục 32 mục của v4
+
+Đã chỉnh theo: số trang ở chân slide, "Trả lời ở slide …" ở slide 5 (14–17, 4 và 18, 17 và 19).
+Ghi chú diễn giả của 4 slide mới viết theo cách của Minh (nhóm em, thao tác rê chuột ở cuối).
+Chú thích bước không còn câu "Rê chuột…".
+
+Để đưa vào build_slide19.py của Minh:
+  - figs_minh_bo_sung.js : ba sơ đồ task, map, hyp (cùng bộ hàm vẽ el/tx/html/hov/draw).
+  - bo_sung_slide_minh.py: HTML của 4 slide, ghi chú diễn giả, CSS .refs, thứ tự chèn.
+  Chạy lại: python bo_sung_slide_minh.py slide_rut_gon_19.html figs_minh_bo_sung.js slide_hoi_dong_23.html

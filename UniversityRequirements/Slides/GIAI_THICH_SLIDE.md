@@ -1,5 +1,9 @@
 # Giải thích từng slide — đọc kèm `slide_v2.html`
 
+> **Ghi chú 22/10/2026: file này viết cho bộ cũ `slide_v2.html` (36 slide, 26/09), không khớp bộ
+> chính hiện nay `slide_hoi_dong_23.html`.** Bản giải thích cho bộ 23 slide sẽ viết lại ở bước
+> chuẩn bị bảo vệ (T50). Số liệu trong file này có chỗ đã được sửa trong quyển v4.
+
 > File này dành cho người **chưa từng tiếp xúc** với đề tài, kể cả người ngoài ngành. Mỗi slide có một mục,
 > viết theo thứ tự xuất hiện. Thuật ngữ được giải thích ngay trong ngoặc ở lần đầu nó xuất hiện, nên đọc
 > từ đầu tới cuối sẽ không gặp từ nào chưa được giải thích. Cuối mỗi mục có dòng **Số liệu lấy từ** để
