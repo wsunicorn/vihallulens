@@ -102,6 +102,10 @@ class AttentionFeatures:
     nonfinite_layers: list[int] = field(default_factory=list)
     # Mean of the attention row sums; a healthy post-softmax matrix gives 1.0.
     row_sum_mean: float = 0.0
+    # Experiment E18: for each sentence of the response, the indices along the scored-token
+    # axis that belong to it. Empty unless the caller passed the response's sentences, which
+    # keeps every record written before T45C — and every served request — exactly as it was.
+    sentence_tokens: list[list[int]] = field(default_factory=list)
 
 
 def token_span(offsets: list[tuple[int, int]], char_start: int, char_end: int) -> list[int]:
@@ -169,6 +173,37 @@ def build_layout(
         n_chunks=len(chunks),
         seq_len=len(offsets),
     )
+
+
+def sentence_token_groups(
+    offsets: list[tuple[int, int]],
+    query_positions: list[int],
+    response_start: int,
+    sentences: list[Chunk],
+) -> list[list[int]]:
+    """Split the scored-token axis by sentence of the response. Experiment E18.
+
+    ``sentences`` are cut from the raw response, so their offsets are shifted by
+    ``response_start`` into prompt coordinates. Returns, per sentence, positions along the
+    *scored* axis (index 0 is the second response token), which is the axis every feature array
+    uses.
+
+    The groups partition the tokens: a token touching two sentences goes to the first, so a
+    mean over a group never counts a token twice. A sentence left with no scored token — the
+    first sentence when it is a single token, since that token is never scored — is dropped
+    rather than kept as an empty group that every pooling would have to special-case.
+    """
+    axis = {position: index for index, position in enumerate(query_positions)}
+    claimed: set[int] = set()
+    groups: list[list[int]] = []
+    for sentence in sentences:
+        start = response_start + sentence.char_start
+        end = response_start + sentence.char_end
+        group = [axis[p] for p in token_span(offsets, start, end) if p in axis and p not in claimed]
+        claimed.update(query_positions[i] for i in group)
+        if group:
+            groups.append(group)
+    return groups
 
 
 def drop_middle_chunks(
@@ -447,9 +482,18 @@ class AttentionExtractor:
     # -- public API ----------------------------------------------------------------------
 
     def extract(
-        self, context: str, question: str, response: str, chunks: list[Chunk]
+        self,
+        context: str,
+        question: str,
+        response: str,
+        chunks: list[Chunk],
+        response_sentences: list[Chunk] | None = None,
     ) -> AttentionFeatures:
-        """Run one teacher-forcing pass and return the lookback signal for this sample."""
+        """Run one teacher-forcing pass and return the lookback signal for this sample.
+
+        ``response_sentences``, cut from ``response``, only adds the bookkeeping E18 needs to
+        pool each sentence separately; the forward pass and every array are unchanged by it.
+        """
         if not chunks:
             raise ValueError("at least one chunk is required")
 
@@ -463,6 +507,11 @@ class AttentionExtractor:
             (rendered.response_start, rendered.response_end),
             chunks,
             rendered.context_start,
+        )
+        sentence_tokens = (
+            sentence_token_groups(offsets, layout.query_positions.tolist(),
+                                  rendered.response_start, response_sentences)
+            if response_sentences else []
         )
 
         device = next(self.model.parameters()).device
@@ -516,6 +565,7 @@ class AttentionExtractor:
             layer_indices=list(self.layer_indices),
             nonfinite_layers=[i for i in self.layer_indices if not sink[i][4]],
             row_sum_mean=float(np.mean([sink[i][5] for i in self.layer_indices])),
+            sentence_tokens=sentence_tokens,
         )
 
     @staticmethod
