@@ -1,0 +1,14 @@
+# Thư viện cho các notebook Kaggle dựng từ 22/10/2026 trở đi, ghim cùng phiên bản với uv.lock.
+#
+# Dùng trong ô cài đặt:
+#     !pip install -q --no-deps -e .
+#     !pip install -q -r requirements-kaggle.txt
+# torch không ghim: dùng bản Kaggle có sẵn, đúng với CUDA của máy Kaggle. Ô đầu mỗi notebook vẫn
+# in phiên bản thực tế (scripts/probe_env.py) để ghi lại môi trường đã chạy.
+# Các notebook đã chạy trước ngày này giữ nguyên ô cài đặt cũ, vì chúng là minh chứng của lượt chạy.
+# tests/test_pinned_requirements.py kiểm file này không lệch khỏi uv.lock.
+transformers==5.17.0
+accelerate==1.15.0
+bitsandbytes==0.50.2
+rank-bm25==0.2.2
+scikit-learn==1.9.1
