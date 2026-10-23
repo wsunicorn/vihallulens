@@ -57,8 +57,9 @@ kèm bảng kết quả:
 | E19 | *Đề xuất 26/09:* so định vị bằng chú ý với định vị bằng cắt bỏ ngữ cảnh | CH1 | ViWikiFC | E08 |
 | E20 | *Đề xuất 26/09:* đo chi phí biên trên GPU có `bfloat16` gốc | CH2 | ViHallu | E11 |
 
-E18–E20 thêm sau lượt đánh giá tổng kết 26/09/2026 (mục 8). Chưa chạy; lý do, dự đoán và chi
-phí ghi ở mục 8.4, đầu việc ở `TASKS.md` (T45C–T45E).
+E18–E20 thêm sau lượt đánh giá tổng kết 26/09/2026 (mục 8); lý do, dự đoán và chi phí ghi ở mục
+8.4, đầu việc ở `TASKS.md` (T45C–T45E). **Ngày 23/10/2026 đã chạy E17, E18, E19**: kết quả ở Bảng
+10, 11, 12. E20 chưa chạy vì cần GPU Ampere.
 
 ## 3. Chỉ số
 
@@ -1567,6 +1568,192 @@ là **giới hạn của việc chấm cả phản hồi bằng một véc-tơ c
 luyện. Chúng chỉ cùng một hướng: chấm theo đoạn phản hồi, và tách "nhìn vào đâu" khỏi "nói gì".
 Hai hình dạng còn lại là chất lượng nhãn và chất lượng câu hỏi của bộ dữ liệu.
 
+### Bảng 10 — Chuyển miền sang tin tức (E17, ViFactCheck, split gốc)
+
+Trích 23/10/2026 trên Kaggle T4: 7.232 mẫu (5.062 / 723 / 1.447), khoảng 1,3 giây mỗi mẫu, 0 lỗi,
+0 tràn số, 4 mẫu test bị cắt ngữ cảnh. Ngữ cảnh trung bình 19,4 đoạn. Công thức E15, chỉ đổi bộ dữ
+liệu. Chấm trên máy bằng `run_chunk_aware.py`, mốc trước rồi chunk-aware; hai bản ghi
+`e17_baseline_lookback_vifactcheck` và `e17_chunk_vifactcheck` trong `results/runs.jsonl`.
+
+**Phải ghi kèm mọi con số ở đây:** split gốc của ViFactCheck **rò rỉ ngữ cảnh** giống ViWikiFC. Đo
+lúc chuẩn bị dữ liệu trên Kaggle: 99,8 % ngữ cảnh dev và 99,3 % ngữ cảnh test cũng có trong train.
+Điểm trên tập này vì vậy không đo khả năng khái quát sang tài liệu chưa thấy.
+
+| Phương pháp | Cách gộp đầu (chọn trên dev) | macro-F1 [KTC 95 %] | F1 no | F1 intr | F1 extr | Nhị phân | ECE |
+|---|---|---|---|---|---|---|---|
+| Lookback gộp | `topk_heads k=64`, 64 cột | 0,7032 [0,6800–0,7255] | 0,783 | 0,641 | 0,686 | 0,830 | **0,024** |
+| Chunk-aware | `mixed k=16`, 836 cột | **0,7258** [0,7021–0,7485] | **0,800** | **0,657** | **0,721** | **0,845** | 0,153 |
+
+Hiệu trên cùng 1.447 mẫu test, bootstrap ghép cặp:
+
+| So sánh | Δ macro-F1 | Δ F1 extrinsic |
+|---|---|---|
+| Chunk-aware − lookback (dòng mốc ở trên, 64 đầu) | +0,023 [−0,002; +0,048] | +0,035 [+0,002; +0,069] |
+| Chunk-aware − lookback **giữ đủ 756 đầu** ¹ | **+0,009 [−0,004; +0,023]** | +0,015 [−0,003; +0,033] |
+
+¹ Phép kiểm phụ, chạy trên máy ngày 23/10 bằng chính các hàm của `run_chunk_aware.py`, không ghi
+vào `results/runs.jsonl`. Lookback 756 đầu đạt 0,7163 trên test, nhưng chỉ 0,6809 trên dev, nên
+quy trình chọn trên dev đã bỏ qua nó để lấy 64 đầu (dev 0,7006).
+
+### E17 lặp lại kết luận cũ trên miền thứ ba
+
+**1. Tín hiệu chú ý chuyển được sang tin tức.** Lookback gộp đạt 0,703 ba lớp và 0,830 nhị phân, cùng
+cỡ với ViWikiFC (0,707 ở E15). Đầu `l17_h4` lại nặng ký nhất của bộ phân loại, giờ là trên **cả
+bốn** bộ dữ liệu.
+
+**2. Mức hơn +0,023 phần lớn không thuộc về đặc trưng hình dạng.** Nhánh chunk-aware chọn cách gộp
+`mixed`, giữ đủ 756 đầu cho tỷ lệ gộp, còn nhánh mốc chọn 64 đầu. Tách hai thứ ra thì phần của hình
+dạng chỉ còn +0,009, nằm trong vùng nhiễu. Trọng số của bộ phân loại nói cùng điều đó: khối
+`lookback_total` chiếm 90,5 %, năm khối hình dạng cộng lại 9,5 %. Sau ViHallu (+0,012), ISE-DSC01
+(+0,007) và ViWikiFC (−0,001), đây là lần thứ tư hình dạng nằm trong vùng nhiễu.
+
+**3. Một chi phí mới: hiệu chỉnh xác suất tệ đi.** ECE tăng từ 0,024 lên 0,153. Ở ViHallu thì ngược
+lại (E02 0,109, E03 0,044). Hai chiều ngược nhau trên hai bộ nên chưa rút ra quy luật, chỉ ghi nhận.
+
+**Quyết định cho quyển** (theo trạng thái T41 ngày 22/10): kết quả lặp lại E15 và E16, nên **ghi một
+đoạn ngắn ở mục 8.2, không thêm bảng**. Đoạn đó nói ba điều: tín hiệu chuyển được sang miền tin tức;
+hình dạng lại nằm trong vùng nhiễu khi so cùng số đầu; split gốc rò rỉ ngữ cảnh.
+
+### Bảng 11 — Chấm theo từng câu phản hồi (E18, ViHallu)
+
+Trích 23/10/2026 trên Kaggle T4: 7.000 mẫu trong khoảng 64 phút, 0 lỗi, 0 tràn số. Cấu hình
+`configs/e18_sentence_pooling_vihallu.yaml` giống hệt E03, chỉ bật thêm
+`extractor.response_sentences`. Chấm trên máy bằng `python scripts/run_sentence_pooling.py`; ba
+bản ghi `e18_sentence_{mean,max,min}_vihallu` trong `results/runs.jsonl`. Mỗi nhánh tự chọn cách
+gộp đầu chú ý trên dev, rồi chấm test 700 mẫu đúng một lần, như E03.
+
+**Tái lập trước khi đọc số.** Các trường cũ trong shard mới trùng shard E03 (trích ngày 30/08)
+**tuyệt đối ở cả 7.000 mẫu**, lệch lớn nhất 0. Nhánh `whole` chọn lại đúng `topk_heads k=32` và ra
+đúng 0,7567 của E03. Nghĩa là gần hai tháng sau, ở một phiên GPU khác, với phiên bản thư viện đã
+ghim, đường ống cho ra cùng từng chữ số.
+
+| Nhánh | Gộp trục phản hồi | macro-F1 [KTC 95 %] | F1 no | F1 intr | F1 extr | Ảo giác → `no` | macro-F1 phần ≥ 2 câu |
+|---|---|---|---|---|---|---|---|
+| `whole` (= E03) | trung bình cả phản hồi | **0,7567** [0,7242–0,7885] | **0,823** | 0,686 | **0,762** | 49 | 0,671 |
+| `mean` | trung bình từng câu, rồi trung bình giữa các câu | 0,7490 [0,7162–0,7817] | 0,816 | **0,697** | 0,735 | 46 | **0,671** |
+| `max` | … rồi lấy lớn nhất | 0,7337 [0,7005–0,7661] | 0,806 | 0,685 | 0,710 | 46 | 0,640 |
+| `min` | … rồi lấy nhỏ nhất | 0,7199 [0,6863–0,7519] | 0,775 | 0,679 | 0,705 | 49 | 0,587 |
+
+Cột cuối chấm riêng 201/700 phản hồi test có từ hai câu trở lên: ở 499 mẫu còn lại, cả bốn nhánh
+cho cùng một véc-tơ.
+
+Hiệu so với `whole`, bootstrap ghép cặp 2.000 lượt trên tập test:
+
+| Nhánh | Δ macro-F1 | Δ F1 extrinsic |
+|---|---|---|
+| `mean` | −0,0077 [−0,0309; +0,0163] | −0,0270 [−0,0578; +0,0034] |
+| `max` | −0,0230 [−0,0529; +0,0054] | **−0,0511 [−0,0956; −0,0095]** |
+| `min` | **−0,0368 [−0,0667; −0,0046]** | **−0,0566 [−0,0967; −0,0142]** |
+
+### Lời giải thích "trung bình hóa làm loãng" bị bác ở mức câu
+
+Hai dự đoán ghi trước khi chạy, so `max` với `whole`:
+
+1. *Gộp max tăng F1 lớp extrinsic*: **sai**. F1 extrinsic **giảm** 0,051, và khoảng tin cậy ghép
+   cặp nằm trọn dưới 0. Đây là một kết quả âm có ý nghĩa thống kê, không phải "không đổi".
+2. *Gộp max giảm số ảo giác bị đoán thành `no`*: đúng về chữ, 49 xuống 46. Nhưng ba mẫu trên 700 là
+   quá nhỏ để coi là xác nhận, và nó đi kèm F1 `no` giảm, tức nhánh `max` gọi nhầm nhiều mẫu trung
+   thực thành ảo giác hơn.
+
+Kết luận đọc từ bảng: **trên ViHallu, tách phản hồi theo câu rồi gộp không cải thiện cách nào**.
+Không nhánh nào hơn `whole`; `max` và `min` kém rõ ở lớp extrinsic. Chuyện này đúng **cả trên phần
+phản hồi nhiều câu**, nơi lời giải thích lẽ ra phải đúng nhất: `max` đạt 0,640 so với 0,671 của
+`whole`. Vậy không thể quy kết quả âm cho việc 71 % phản hồi chỉ có một câu.
+
+Lời giải thích thứ hai ở chương 7 (*một mệnh đề bịa bị trung bình hóa mất*) vì vậy **bị bác ở mức
+câu**, đúng như mục 8.4 đã báo trước có thể xảy ra. Ba giới hạn giữ kết luận ở đúng phạm vi:
+
+- **Câu chưa phải mệnh đề.** Một câu tiếng Việt có thể chứa cả phần chép đúng lẫn cụm bịa, như câu
+  Hồ Hoàn Kiếm của demo. Mức đoạn phản hồi (span) mà Multi-View Attention dùng mịn hơn, và cần nhãn
+  ở mức đoạn mà ViHallu không có.
+- **Nhãn vẫn ở mức cả phản hồi.** Bộ phân loại được dạy trên nhãn của cả câu trả lời, nên nó không
+  biết câu nào mang lỗi; gộp max chỉ thay cách nén, không thêm thông tin giám sát.
+- **Véc-tơ một câu nhiễu hơn.** Một câu có ít token hơn cả phản hồi, nên trung bình trên câu dao
+  động nhiều hơn, và lấy max hay min của các ước lượng nhiễu thì kéo theo nhiễu. Đây là **giả
+  thuyết**, chưa đo riêng; nó phù hợp với việc `mean` (trung bình các câu) giữ được gần bằng
+  `whole` còn `max`, `min` thì không.
+
+Hệ quả cho quyển: đoạn hướng phát triển "chấm theo từng mệnh đề" vẫn đứng, nhưng phải sửa lời: chấm
+theo câu với nhãn mức phản hồi đã thử và không giúp; hướng còn mở là chấm theo đoạn **có nhãn mức
+đoạn**.
+
+### Bảng 12 — Định vị bằng chú ý so với cắt bỏ ngữ cảnh (E19, ViWikiFC)
+
+Chạy 23/10/2026 trên Kaggle T4. Mô hình đọc Qwen2.5-7B, NF4, **bfloat16**, vì cắt bỏ cần phân phối
+đầu ra mà float16 cho NaN ở tầng dự đoán token. 300 mẫu có bằng chứng vàng của E08, chọn với
+hạt giống 42 (`configs/e19_attribution_samples.json`). Tổng 3.274 lượt đọc trong 167 phút, 0 lỗi,
+VRAM đỉnh 5.659 MB. Phía chú ý đọc lại từ shard E08 có sẵn, không chạy lại. Chấm bằng
+`python scripts/run_attribution.py report`; bản ghi `e19_attribution_viwikifc` trong
+`results/runs.jsonl`.
+
+| Cách định vị | hit@1 [KTC 95 %] | hit@3 | MRR | Lượt đọc/mẫu |
+|---|---|---|---|---|
+| Cắt bỏ ngữ cảnh (ARC-JSD) | 0,733 [0,683–0,783] | 0,917 | 0,830 | 10,9 |
+| **Đầu chú ý mạnh nhất** (lớp 19, đầu 20), chọn trên 1.536 mẫu E08 khác | **0,850** [0,807–0,890] | **0,940** | **0,902** | 1 |
+| Đầu E06 (lớp 14, đầu 6), chọn trên ISE-DSC01 | 0,797 [0,750–0,840] | 0,900 | 0,861 | 1 |
+| Trung bình 756 đầu | 0,349 [0,324–0,375] | 0,582 | 0,518 | 1 |
+| Chọn bừa một đoạn | 0,102 | | | |
+
+Hiệu hit@1 trên cùng 300 mẫu, khoảng tin cậy bằng bootstrap ghép cặp:
+
+| So sánh | Hiệu | KTC 95 % | Cả hai đúng | Chỉ đầu đúng | Chỉ cắt bỏ đúng | Cả hai sai |
+|---|---|---|---|---|---|---|
+| Đầu mạnh nhất − cắt bỏ | **+0,117** | [+0,077; +0,160] | 214 | 41 | 6 | 39 |
+| Đầu E06 − cắt bỏ | **+0,063** | [+0,017; +0,110] | 203 | 36 | 17 | 44 |
+
+Theo nhãn (hit@1):
+
+| Nhãn | n | Cắt bỏ | Đầu mạnh nhất | Đầu E06 |
+|---|---|---|---|---|
+| no (SUPPORTED) | 102 | 0,824 | 0,971 | 0,882 |
+| intrinsic (REFUTED) | 98 | 0,745 | 0,898 | 0,888 |
+| extrinsic (NEI) | 100 | 0,630 | 0,680 | 0,620 |
+
+### Dự đoán thứ nhất sai — theo hướng không ai ngờ
+
+Hai dự đoán ghi trước khi chạy (khóa trong `src/vihallulens/attribution.py`):
+
+1. *Cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất* — **sai**. Cắt bỏ thấp hơn 0,117, và khoảng
+   tin cậy ghép cặp nằm trọn dưới 0.
+2. *Mức hơn nhỏ hơn mức chênh chi phí* — đúng, nhưng thành vô nghĩa khi chiều hơn kém đảo lại.
+
+Dự đoán dựa trên lập luận của ContextCite: chú ý chỉ là tương quan, cắt bỏ là can thiệp nhân quả,
+nên cắt bỏ phải chính xác hơn và chú ý chỉ thắng về giá. Trên bài toán này điều đó không xảy ra.
+**Đầu chú ý tốt nhất vừa rẻ hơn 10,9 lần vừa định vị đúng hơn.**
+
+Hai phép kiểm loại trừ cách giải thích "đầu tốt nhất ăn may nhờ chọn":
+
+- Đầu mạnh nhất được chọn trên 1.536 mẫu E08 **khác**, không chạm 300 mẫu này.
+- Đầu E06 được chọn trên **một bộ dữ liệu khác hẳn** (ISE-DSC01), vẫn hơn cắt bỏ 0,063 với khoảng
+  tin cậy nằm trên 0. Nghĩa là không cần chọn đầu trên dữ liệu đích.
+
+Hai phép kiểm loại trừ lỗi kỹ thuật ở phía cắt bỏ: không mẫu nào có điểm hòa ở đỉnh, không mẫu nào
+có điểm bằng 0. Khi trượt, đoạn vàng thường đứng hạng 2 (35/80 lần trượt), tức cắt bỏ "gần đúng"
+chứ không ngẫu nhiên.
+
+### Vì sao cắt bỏ thua, và ranh giới của kết luận
+
+Cắt bỏ đo **mô hình phụ thuộc vào đoạn nào để ra đúng phân phối của phản hồi**. Định vị ở đây chấm
+theo **đoạn chứa bằng chứng vàng do người gán**. Hai thứ trùng nhau khi bằng chứng là thứ duy nhất
+đỡ cho phản hồi. Hai trường hợp có thể làm chúng lệch nhau; trường hợp đầu là giả thuyết, **chưa
+đo riêng**:
+
+- **Thông tin lặp ở nhiều đoạn.** Ngữ cảnh dựng bằng BM25 từ kho bằng chứng, các câu được chọn vì
+  gần nghĩa với phát biểu, nên có thể nói lại cùng thực thể. Khi đó cắt một câu thì câu khác bù
+  vào, độ lệch Jensen–Shannon bị chia ra nhiều đoạn.
+- **Phản hồi không bám bằng chứng.** Với nhãn NEI, câu "bằng chứng" không thật sự đỡ cho phát biểu,
+  nên không đoạn nào làm phân phối đổi rõ. Cả hai cách đều yếu nhất ở lớp này (0,63–0,68).
+
+Vì vậy kết luận phải giữ đúng phạm vi: *trên bài toán định vị bằng chứng vàng, một đầu chú ý cố
+định chính xác hơn cắt bỏ từng đoạn.* Kết quả này **không** chứng minh chú ý là lời giải thích
+trung thành theo nghĩa của ContextCite. Đó là câu hỏi về quy trách nhiệm nhân quả, cần nhãn khác.
+Nó trả lời câu hội đồng dễ hỏi theo hướng cụ thể: đề tài dùng chú ý để **định vị**, và trên phép đo
+định vị thì chú ý không thua phương pháp nhân quả đắt gấp 11 lần.
+
+Một điều phụ: trung bình 756 đầu chỉ đạt 0,349. Tín hiệu định vị nằm ở **một số đầu**, đúng như
+Lookback Lens gốc thấy, nên "chú ý" nói chung và "một đầu được chọn" là hai thứ khác nhau khi trích
+dẫn kết quả này.
+
 ## 6. Các mốc so sánh đã công bố
 
 Ghi lại để không phải tra lại:
@@ -1643,6 +1830,10 @@ tín hiệu chú ý nội tại — thứ đã có sẵn khi hệ RAG chạy —
 tiếng Việt, và mua được gì với chi phí gần bằng không.* Đầu việc: T45B.
 
 ### 8.4. Chỗ chưa chạm trần — ba thí nghiệm đề xuất
+
+*Cập nhật 23/10/2026:* E18 và E19 đã chạy, kết quả ở Bảng 11 và 12. Dự đoán chính của **cả hai đều
+sai**: E18 làm F1 extrinsic giảm thay vì tăng, E19 cho thấy đầu chú ý định vị đúng hơn cắt bỏ thay
+vì kém hơn. E20 vẫn chưa chạy. Phần dưới giữ nguyên như đã ghi ngày 26/09.
 
 Xếp theo tỷ lệ giá trị trên chi phí. Cả ba đều **chưa chạy**; dự đoán ghi ở đây trước khi chạy,
 theo cùng kỷ luật với `EXPECTED_DIRECTION` trong `scripts/run_extrinsic.py` của E08.

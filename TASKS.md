@@ -4612,7 +4612,7 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
 
 ## Giai đoạn 8 — Viết báo cáo (tuần 14–15)
 
-- [ ] **T41** · M · E17 chuyển miền sang ViFactCheck — **chỉ làm nếu còn thời gian**
+- [x] **T41** · M · E17 chuyển miền sang ViFactCheck — hoàn thành 23/10/2026 (khoảng 2 giờ GPU)
   - **Trạng thái 22/10/2026:** quyết định **chạy trước rồi mới quyết định** có đưa vào quyển hay
     không. Nếu kết quả chỉ lặp lại kết luận của E16, ghi một đoạn ngắn ở mục 8.2 thay vì thêm bảng.
     Hai cấu hình `configs/e17_{chunk,baseline_lookback}_vifactcheck.yaml` (công thức E15, chung
@@ -4620,6 +4620,32 @@ kết quả (JSON T36 không lưu `context`), **không phải** lỗi bộ phát
     **chờ chạy trên Kaggle**. Cỡ đo trên máy: 5.062 / 723 / 1.447 mẫu, trung bình khoảng 960
     token, chỉ 0,2 % mẫu vượt 4.000 token, nên ước tính khoảng 2 giờ GPU. Chấm trên máy bằng
     `run_chunk_aware.py`, chạy mốc lookback trước rồi mới tới chunk-aware.
+
+  ### Kết quả (23/10/2026) — tín hiệu chuyển được sang tin tức, hình dạng vẫn trong vùng nhiễu
+
+  **Task này để làm gì.** Kiểm câu hỏi CH3 trên miền thứ ba: tín hiệu chú ý có còn dùng được trên
+  tin tức (ViFactCheck), sau hỏi đáp (ViHallu), văn bản dài (ISE-DSC01) và bách khoa (ViWikiFC)?
+
+  **Đã làm.** Trích 7.232 mẫu trên Kaggle T4, 0 lỗi, 0 tràn số. Chấm trên máy bằng
+  `run_chunk_aware.py`; hai bản ghi `e17_baseline_lookback_vifactcheck` và `e17_chunk_vifactcheck`
+  trong `results/runs.jsonl`. Bảng đầy đủ: Bảng 10 trong `docs/EXPERIMENTS.md`.
+
+  | Phương pháp | macro-F1 [KTC 95 %] | Nhị phân | ECE |
+  |---|---|---|---|
+  | Lookback gộp (64 đầu, chọn trên dev) | 0,7032 [0,6800–0,7255] | 0,830 | 0,024 |
+  | Chunk-aware (`mixed k=16`) | 0,7258 [0,7021–0,7485] | 0,845 | 0,153 |
+
+  **Học được gì.**
+  - Tín hiệu chú ý chuyển được sang tin tức, cùng cỡ ViWikiFC (0,707). Đầu `l17_h4` nặng ký nhất ở
+    **cả bốn** bộ dữ liệu.
+  - Mức hơn +0,023 (ghép cặp [−0,002; +0,048]) **phần lớn đến từ cách gộp đầu**, không phải từ hình
+    dạng. Nhánh chunk-aware giữ đủ 756 đầu cho tỷ lệ gộp, còn nhánh mốc chỉ 64. So với lookback giữ
+    đủ 756 đầu thì chỉ còn +0,009 [−0,004; +0,023]: lần thứ tư hình dạng nằm trong vùng nhiễu.
+  - ECE tệ đi rõ (0,024 → 0,153), ngược với ViHallu. Chỉ ghi nhận, chưa có quy luật.
+  - Split gốc rò rỉ ngữ cảnh: 99,8 % ngữ cảnh dev và 99,3 % ngữ cảnh test cũng có trong train. Phải
+    ghi kèm mọi con số.
+  - **Quyết định cho quyển:** kết quả lặp lại E15 và E16, nên chỉ thêm một đoạn ngắn ở mục 8.2, không
+    thêm bảng. Đưa vào danh sách sửa của T48.
   - **Trạng thái 26/09/2026:** chưa làm, đang chờ ý kiến thầy. Nhóm nghiêng về **không làm**: E16
     đã cho thấy bộ ba lớp không chuyển được giữa hai bộ vì nhãn khác nghĩa, mà ViFactCheck còn
     khác miền hơn; bằng chứng đã có (`results/runs.jsonl`, T12) là bằng chứng của ViFactCheck
@@ -4747,8 +4773,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Kiểm tra:** 49 tài liệu tham khảo, đánh số liên tục, mục nào cũng được trích; số liệu của
     bốn bài chỉ nằm ở chương 2 và 7, không nằm trong bảng kết quả của nhóm.
 
-- [ ] **T45C** · M · **E18** — chấm theo từng câu phản hồi, gộp max thay vì trung bình — **khoảng 1
-  giờ GPU**
+- [x] **T45C** · M · **E18** — chấm theo từng câu phản hồi, gộp max thay vì trung bình — hoàn thành
+  23/10/2026 (64 phút GPU)
   - **Vì sao:** chương 7 của quyển giải thích khoảng cách "định vị đúng nhưng không phân loại tốt
     hơn" bằng ba lý do; lý do thứ hai — *gộp trung bình cả phản hồi làm loãng một mệnh đề bịa* —
     là lý do duy nhất **kiểm được bằng thí nghiệm** và cũng là hướng cả ngành đang đi. Hiện nó
@@ -4780,8 +4806,50 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     - **Kiểm E03 tái lập:** chạy lại E03 trên shard cũ bằng code hiện tại cho đúng 0,7567
       (topk k=32). Trên máy, script so từng giá trị các trường cũ giữa shard mới và shard cũ.
 
-- [ ] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — **khoảng
-  1,5–2,5 giờ GPU** (ước tính cũ 25 phút đã sai, sửa 22/10)
+  ### Kết quả (23/10/2026) — lời giải thích "trung bình hóa làm loãng" bị bác ở mức câu
+
+  **Task này để làm gì.** Chương 7 giải thích vì sao chú ý *nhìn đúng chỗ* mà *phân loại không tốt
+  hơn* bằng ba lý do. Lý do thứ hai — lấy trung bình trên cả câu trả lời làm loãng một mệnh đề bịa
+  — là lý do duy nhất kiểm được bằng thí nghiệm. E18 kiểm nó: tính đặc trưng riêng cho từng câu của
+  câu trả lời, rồi gộp giữa các câu bằng trung bình (`mean`), lớn nhất (`max`) hoặc nhỏ nhất
+  (`min`), và so với cách cũ của E03 (`whole`) trên **cùng một lượt trích**.
+
+  **Đã làm.** Trích lại ViHallu trên Kaggle T4, 7.000 mẫu, 64 phút, 0 lỗi. Chấm trên máy bằng
+  `python scripts/run_sentence_pooling.py`; ba bản ghi `e18_sentence_{mean,max,min}_vihallu` trong
+  `results/runs.jsonl`. Bảng đầy đủ: Bảng 11 trong `docs/EXPERIMENTS.md`.
+
+  **Tái lập.** Các trường cũ trong shard mới trùng shard E03 trích ngày 30/08 **tuyệt đối ở cả 7.000
+  mẫu**, và nhánh `whole` ra đúng 0,7567. Gần hai tháng sau, phiên GPU khác, đường ống vẫn cho ra
+  cùng từng chữ số — bằng chứng tái lập mạnh nhất đề tài có.
+
+  | Nhánh | macro-F1 [KTC 95 %] | F1 extrinsic | Δ F1 extrinsic so với `whole` (ghép cặp) |
+  |---|---|---|---|
+  | `whole` (= E03) | **0,7567** [0,7242–0,7885] | **0,762** | — |
+  | `mean` | 0,7490 [0,7162–0,7817] | 0,735 | −0,027 [−0,058; +0,003] |
+  | `max` | 0,7337 [0,7005–0,7661] | 0,710 | **−0,051 [−0,096; −0,010]** |
+  | `min` | 0,7199 [0,6863–0,7519] | 0,705 | **−0,057 [−0,097; −0,014]** |
+
+  **Đối chiếu với dự đoán ghi trước.** (1) "Gộp max tăng F1 extrinsic": **sai**, F1 extrinsic giảm
+  0,051 và khoảng tin cậy nằm trọn dưới 0. (2) "Gộp max giảm số ảo giác bị đoán thành `no`": đúng
+  về chữ (49 → 46), nhưng ba mẫu trên 700 là quá nhỏ để coi là xác nhận.
+
+  **Học được gì.**
+  - Không nhánh nào hơn `whole`. Điều này đúng cả trên 201 phản hồi có từ hai câu, nơi lời giải
+    thích lẽ ra phải đúng nhất (`max` 0,640 so với `whole` 0,671). Vậy kết quả âm không phải do
+    71 % phản hồi chỉ có một câu.
+  - Lời giải thích thứ hai ở chương 7 **bị bác ở mức câu**. Còn mở ở mức mịn hơn: một câu có thể
+    chứa cả phần đúng lẫn cụm bịa, và chấm theo đoạn cần nhãn mức đoạn mà ViHallu không có.
+  - Một giả thuyết chưa đo: véc-tơ của một câu trung bình trên ít token hơn nên nhiễu hơn, và lấy
+    max hay min của các ước lượng nhiễu thì kéo theo nhiễu. Phù hợp với việc `mean` giữ gần bằng
+    `whole` còn `max`, `min` thì không.
+  - Cho quyển: sửa lời hướng phát triển ở mục 8 — chấm theo câu với nhãn mức phản hồi đã thử và
+    không giúp; hướng còn mở là chấm theo đoạn có nhãn mức đoạn. Đưa vào danh sách sửa của T48.
+  - Chi phí phụ học được khi chấm: chạy hai lượt chọn cách gộp đầu **song song** trên cùng máy làm
+    mỗi lượt chậm khoảng 80 lần (4.973 giây so với 60 giây), vì các luồng tính ma trận giành nhau
+    CPU. Chấm tuần tự.
+
+- [x] **T45D** · M · **E19** — định vị bằng chú ý so với định vị bằng cắt bỏ ngữ cảnh — hoàn thành
+  23/10/2026 (167 phút GPU; ước tính cũ 25 phút đã sai, sửa 22/10)
   - **Vì sao:** ContextCite kết luận trọng số chú ý thường không đáng tin để quy trách nhiệm;
     kết quả 87,8 % của E06 cần được đặt cạnh một phương pháp dựa trên cắt bỏ để biết nó đứng ở
     đâu. Nhóm đã có sẵn 1.836 cặp của E08 nên chi phí rất nhỏ.
@@ -4803,6 +4871,48 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     chọn; lệnh `run` so mã băm từng ngữ cảnh và dừng nếu có ngữ cảnh lệch. Phía chú ý tính được
     ngay từ shard E08 có sẵn: đầu tốt nhất (lớp 19, đầu 20) đạt hit@1 0,850, đầu E06 đạt 0,797,
     trung bình 756 đầu đạt 0,349, chọn bừa đạt 0,102.
+
+  ### Kết quả (23/10/2026) — dự đoán thứ nhất sai, theo hướng có lợi cho đề tài
+
+  **Task này để làm gì.** Hội đồng dễ hỏi nhất câu "trọng số chú ý có phải lời giải thích không?".
+  ContextCite (NeurIPS 2024) cho rằng không đáng tin, và cách đáng tin là *cắt bỏ*: lần lượt bỏ
+  từng đoạn ngữ cảnh rồi đo câu trả lời của mô hình đổi bao nhiêu. E19 đặt hai cách cạnh nhau
+  trên cùng 300 mẫu có bằng chứng vàng của E08 (ViWikiFC, ngữ cảnh mười câu).
+
+  **Đã làm.** Mỗi mẫu đọc một lượt đủ ngữ cảnh rồi một lượt cho mỗi đoạn bị cắt (trung bình 10,9
+  lượt). Điểm của một đoạn là tổng độ lệch Jensen–Shannon (một thước đo hai phân phối xác suất
+  khác nhau bao nhiêu, 0 là trùng hẳn) giữa phân phối trên các token câu trả lời khi đủ và khi
+  thiếu đoạn đó, theo ARC-JSD (ICLR 2026). Đoạn có điểm cao nhất là đoạn được quy trách nhiệm.
+  Chạy Kaggle T4 ở `bfloat16`: 3.274 lượt đọc, 167 phút, 0 lỗi, VRAM đỉnh 5.659 MB. Chấm trên máy
+  bằng `python scripts/run_attribution.py report`, ghi `e19_attribution_viwikifc` vào
+  `results/runs.jsonl`. Bảng đầy đủ: Bảng 12 trong `docs/EXPERIMENTS.md`.
+
+  | Cách định vị | hit@1 [KTC 95 %] | Lượt đọc/mẫu |
+  |---|---|---|
+  | Cắt bỏ ngữ cảnh (ARC-JSD) | 0,733 [0,683–0,783] | 10,9 |
+  | Đầu chú ý mạnh nhất (lớp 19, đầu 20), chọn trên 1.536 mẫu khác | **0,850** [0,807–0,890] | 1 |
+  | Đầu E06 (lớp 14, đầu 6), chọn trên ISE-DSC01 | 0,797 [0,750–0,840] | 1 |
+  | Trung bình 756 đầu | 0,349 | 1 |
+
+  *hit@1* là tỷ lệ mẫu mà đoạn được xếp đầu đúng là đoạn chứa bằng chứng; hòa điểm tính là trượt.
+  Hiệu ghép cặp trên cùng 300 mẫu: đầu mạnh nhất hơn cắt bỏ **+0,117 [+0,077; +0,160]**, đầu E06
+  hơn **+0,063 [+0,017; +0,110]**. Cả hai khoảng nằm trọn trên 0.
+
+  **Đối chiếu với dự đoán ghi trước.** (1) "Cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất": **sai**.
+  (2) "Mức hơn nhỏ hơn mức chênh chi phí": đúng về chữ, nhưng vô nghĩa khi chiều hơn kém đã đảo.
+
+  **Học được gì.**
+  - Trên phép đo *định vị bằng chứng vàng*, một đầu chú ý cố định vừa rẻ hơn 10,9 lần vừa đúng hơn
+    phương pháp nhân quả. Không cần chọn đầu trên dữ liệu đích: đầu chọn trên ISE-DSC01 vẫn hơn.
+  - Không có lỗi kỹ thuật ở phía cắt bỏ: không mẫu nào hòa ở đỉnh, không mẫu nào điểm bằng 0; khi
+    trượt, đoạn vàng thường đứng hạng 2.
+  - Cả hai cách đều yếu nhất ở nhãn NEI (cắt bỏ 0,630, đầu mạnh nhất 0,680): với phát biểu không có
+    căn cứ, câu "bằng chứng" không thật sự đỡ cho câu trả lời.
+  - **Ranh giới của kết luận:** kết quả nói về định vị, không chứng minh chú ý là lời giải thích
+    nhân quả trung thành theo nghĩa của ContextCite. Trung bình 756 đầu chỉ 0,349, nên phải nói
+    "một đầu được chọn", không nói "chú ý" chung chung.
+  - **Còn lại cho quyển:** đoạn trong mục 7.2 về ranh giới *định vị* và *quy trách nhiệm*. Mục 7.2
+    đang chờ GVHD đọc lại, nên đoạn này chuyển sang danh sách sửa quyển của T48.
 
 - [ ] **T45E** · L · **E20** — đo chi phí biên trên GPU có `bfloat16` gốc — **một buổi, CẦN HỎI
   NGƯỜI DÙNG TRƯỚC**
@@ -4829,8 +4939,14 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     bảng; giữ font Consolas cho khối mã và cách đánh số trang phụ lục; rà lại tài liệu tham khảo;
     thêm phần sử dụng AI và tính tái lập (đã làm: Phụ lục G, bổ sung Phụ lục D). **Mục 7.2** (cách
     trình bày kết quả âm) GVHD đang đọc lại — chưa sửa. Còn trước khi nộp: điền Nhật kí làm việc
-    theo thực tế, cập nhật số ca kiểm thử (688 ở lượt 18/09 → 783 ở lượt 22/10), T45B, T42B, kết
-    quả của T41/T45C/T45D nếu đáng đưa vào.
+    theo thực tế, cập nhật số ca kiểm thử (688 ở lượt 18/09 → **825** ở lượt 23/10), T45B, T42B, và
+    kết quả ba thí nghiệm chạy ngày 23/10 (trước 10/11):
+    - **E19 (T45D), nên vào:** bảng nhỏ ở chương 6 cạnh kết quả định vị, và một đoạn ở mục 7.2 về
+      ranh giới *định vị bằng chứng* và *quy trách nhiệm* (mục 7.2 đang chờ GVHD đọc lại).
+    - **E18 (T45C):** chương 7 sửa lý do thứ hai thành "đã kiểm ở mức câu và bị bác"; mục 8 sửa
+      hướng phát triển thành chấm theo đoạn có nhãn mức đoạn.
+    - **E17 (T41):** một đoạn ngắn ở mục 8.2, không thêm bảng; ghi kèm split gốc rò rỉ ngữ cảnh.
+    - Slide 21 (dòng ViFactCheck, hướng phát triển) và slide 12 (số ca kiểm thử) sửa theo.
   - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
     sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
@@ -4841,8 +4957,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     có kèm công trình ở chân slide, kiểm định năm giả thuyết, tài liệu tham khảo). Ghi chú diễn giả
     khoảng 23–24 phút; GVHD chưa cho biết thời lượng. Đã viết lại `GIAI_THICH_SLIDE.md` cho bộ 23
     slide, kèm kịch bản thời gian hai phương án (đủ khoảng 22 phút, rút khoảng 15 phút); và
-    `HOI_DAP_HOI_DONG.md`, 26 câu hỏi dự kiến kèm hướng trả lời. Các câu đánh dấu ⏳ chờ số của
-    E17–E19. **Còn:** cập nhật slide 12 (số ca kiểm thử) và slide 21 (ViFactCheck) sau khi chạy,
+    `HOI_DAP_HOI_DONG.md`, 27 câu hỏi dự kiến kèm hướng trả lời, đã điền số E17–E19 ngày
+    23/10. **Còn:** cập nhật slide 12 (số ca kiểm thử) và slide 21 (ViFactCheck) sau khi chạy,
     chọn người nói, diễn tập bấm giờ.
     Nếu phản biện xếp vào hội đồng poster thì dựng poster theo mục "BÁO CÁO POSTER" của mẫu Khoa.
   - **Trạng thái 26/09/2026:** đã có **bộ slide 36 trang** (`UniversityRequirements/Slides/

@@ -331,6 +331,9 @@ mẫu.
 - Chọn đầu trên chính tập báo cáo, nên 0,878 là cận trên. Con số không dính lựa chọn là trung
   bình 756 đầu: 0,332, gấp 5,4 lần chọn bừa (→ A5).
 - Lặp lại trên ViWikiFC: trung bình mọi đầu 32,9 % so với 33,2 %.
+- Nếu bị hỏi "chú ý có đáng tin bằng cắt bỏ ngữ cảnh không" (E19, không có trên slide): trên 300
+  mẫu ViWikiFC, đầu chú ý tốt nhất đạt 0,850, cắt bỏ đạt 0,733 dù tốn 10,9 lượt đọc mỗi mẫu
+  (→ A4).
 
 **Nguồn.** Quyển Bảng 6.3, 6.7; `docs/EXPERIMENTS.md` Bảng 2.
 
@@ -365,8 +368,10 @@ khi chạy.
 - Năm phép đo thêm (thêm bề mặt, Sailor2, 3B, 1.5B, ViWikiFC) đều nằm trong vùng nhiễu, và dấu còn
   đổi chiều.
 - Lý do đo được: trên ISE-DSC01, 99,9 % phần đóng góp của nhóm hình dạng đã có sẵn trong tỷ lệ gộp.
-- Đây không phải thất bại của đề tài mà là một phát hiện (→ A1). Nó cũng mở ra hướng chấm theo
-  từng mệnh đề ⏳ (E18).
+- Đây không phải thất bại của đề tài mà là một phát hiện (→ A1).
+- Hai kết quả mới (23/10) cùng chiều, không có trên slide: chấm theo từng câu (E18) không hơn,
+  0,734 so với 0,757 (→ A8); trên ViFactCheck (E17), so cùng số đầu thì hình dạng chỉ thêm +0,009,
+  lần thứ tư nằm trong vùng nhiễu (→ A9).
 
 **Nguồn.** Quyển Bảng 6.2, 6.8, 6.9, 6.10, 6.12; `docs/EXPERIMENTS.md` Bảng 4, 4c.
 
@@ -431,9 +436,14 @@ thì không.
 
 **Giải thích.**
 
-- Dòng "chưa chạy chuyển miền với ViFactCheck" ⏳ phải sửa sau khi chạy E17.
+- **Slide đang lỗi thời ở hai dòng, phải sửa trong HTML:**
+  - "Chưa chạy chuyển miền với ViFactCheck": E17 đã chạy ngày 23/10. Thay bằng ý "trên ViFactCheck
+    (tin tức), tín hiệu chuyển được, hình dạng vẫn trong vùng nhiễu" (→ A9).
+  - Hướng phát triển "chấm theo từng mệnh đề": E18 đã thử ở mức câu và không giúp. Sửa thành "chấm
+    theo đoạn có nhãn mức đoạn; chấm theo câu với nhãn mức phản hồi đã thử, không giúp" (→ A8).
 - Dòng "Docker chưa kiểm trên máy có GPU" vẫn đúng.
-- Nếu E18 cho kết quả, cập nhật dòng hướng phát triển "chấm theo từng mệnh đề" bằng con số thật.
+- Có thể thêm vào phần đã làm được: "so với cắt bỏ ngữ cảnh, đầu chú ý định vị đúng hơn và rẻ hơn
+  11 lần" (E19, → A4).
 
 ### Slide 22 — Tài liệu tham khảo
 
