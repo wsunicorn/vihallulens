@@ -266,8 +266,8 @@ thông tin, câu kia rải đều. Con số gộp không phân biệt được, 
 
 - Bộ phát hiện đã khớp là một tệp 11,5 KB. Tệp này kèm luôn công thức dựng cột, nên nạp lại chấm
   ra kết quả trùng 700/700 với lúc thí nghiệm.
-- **Số ca kiểm thử trên slide (688) đã cũ.** Hiện có 825 ca; phải cập nhật slide và quyển theo
-  con số lúc chốt bản cuối.
+- Slide ghi **825 ca kiểm thử**, theo lượt chạy `pytest` ngày 23/10. Quyển v4 còn ghi 688 (lượt
+  18/09); khi chốt bản cuối, quyển và slide phải theo cùng một lượt chạy.
 - Docker chưa build thử trên máy có GPU; chỉ nói "có Dockerfile", không nói "đã chạy Docker".
 
 **Nguồn.** Quyển chương 5.
@@ -436,11 +436,11 @@ thì không.
 
 **Giải thích.**
 
-- **Slide đang lỗi thời ở hai dòng, phải sửa trong HTML:**
-  - "Chưa chạy chuyển miền với ViFactCheck": E17 đã chạy ngày 23/10. Thay bằng ý "trên ViFactCheck
-    (tin tức), tín hiệu chuyển được, hình dạng vẫn trong vùng nhiễu" (→ A9).
-  - Hướng phát triển "chấm theo từng mệnh đề": E18 đã thử ở mức câu và không giúp. Sửa thành "chấm
-    theo đoạn có nhãn mức đoạn; chấm theo câu với nhãn mức phản hồi đã thử, không giúp" (→ A8).
+- **Đã sửa ngày 23/10** theo hai thí nghiệm chạy cùng ngày:
+  - E17: cột đã làm được thêm "lặp lại trên bộ tin tức ViFactCheck: 0,703"; cột chưa làm được ghi
+    hình dạng không tăng điểm "kể cả trên ViFactCheck" (→ A9).
+  - E18: hướng phát triển đầu tiên thành "chấm theo từng đoạn của câu trả lời, cần dữ liệu có nhãn
+    mức đoạn; chấm theo từng câu đã thử (E18), không hơn" (→ A8).
 - Dòng "Docker chưa kiểm trên máy có GPU" vẫn đúng.
 - Có thể thêm vào phần đã làm được: "so với cắt bỏ ngữ cảnh, đầu chú ý định vị đúng hơn và rẻ hơn
   11 lần" (E19, → A4).

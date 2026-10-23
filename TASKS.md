@@ -4952,6 +4952,14 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Trạng thái 23/10/2026:** đã sửa slide 12 (825 ca kiểm thử, lượt `pytest` ngày 23/10; quyển v4
+    còn ghi 688) và slide 21 (E17: lặp lại trên ViFactCheck đạt 0,703, đặc trưng hình dạng không
+    tăng điểm kể cả ở đó; E18: hướng phát triển thành chấm theo từng đoạn của câu trả lời, vì chấm
+    theo từng câu đã thử và không hơn). Sửa ở nguồn rồi dựng lại cả hai bộ: script dựng 19 slide nay
+    nằm trong repo, `UniversityRequirements/Slides/nguon_19_slide/`, kèm file đầu vào là bộ 32 slide
+    ngày 02/10. Kiểm: dựng lại khi chưa sửa thì trùng từng byte với hai file HTML đang có; sau khi
+    sửa, so ảnh chụp từng slide chỉ thấy slide 12 và 21 đổi (bộ 19 slide: 10 và 18); hai bộ tự kiểm
+    (`?qa`) đều in `QA-OK`. **Còn:** chọn người nói, diễn tập bấm giờ.
   - **Trạng thái 22/10/2026:** bộ chính là **`slide_hoi_dong_23.html`** (PR #128): 19 slide Minh dựng
     ngày 14/10 cộng bốn slide bổ sung cho đủ bố cục GVHD yêu cầu ngày 05/10 (bài toán, các hướng đã
     có kèm công trình ở chân slide, kiểm định năm giả thuyết, tài liệu tham khảo). Ghi chú diễn giả
