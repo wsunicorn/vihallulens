@@ -11,8 +11,7 @@ Nguyên tắc chung khi trả lời:
   cao việc tự thấy giới hạn hơn là một con số đẹp.
 - Không biết thì nói không biết, và nói sẽ kiểm tra bằng cách nào.
 
-Các câu đánh dấu **⏳** phụ thuộc thí nghiệm đang chờ chạy (E17, E18, E19). Phải cập nhật sau
-khi có số.
+Cập nhật 23/10/2026: E17, E18, E19 đã chạy, các câu liên quan đã điền số thật (A4, A8, A9, E1).
 
 ---
 
@@ -59,16 +58,25 @@ Câu chốt: *"Nói 'thua 9 điểm' là sai, mà nói 'gần ngang top' cũng s
   luận, chưa đo**. Trên T4 thì bộ sinh và bộ đọc là hai mô hình, nên chi phí biên chưa gần 0
   (xem D2).
 
-### A4. ⏳ Trọng số chú ý có phải là lời giải thích không? ContextCite nói là không đáng tin.
+### A4. Trọng số chú ý có phải là lời giải thích không? ContextCite nói là không đáng tin.
 
 - Đề tài **không dùng chú ý làm lời giải thích cho người dùng**. Nó dùng chú ý làm **đặc trưng**
   cho bộ phân loại, và đã kiểm riêng xem đặc trưng đó có trùng vị trí bằng chứng không: 87,8 %
   trên ISE-DSC01, lặp lại trên ViWikiFC [15].
 - Phép can thiệp E08 cho thấy quan hệ nhân quả theo hướng ngược lại: rút câu bằng chứng ra thì
   chú ý tản ra, ở 71–75 % số cặp, đúng hướng đã ghi trước [16].
-- **Sau E19, thêm số:** trên cùng 300 mẫu, định vị bằng cắt bỏ ngữ cảnh (ARC-JSD, khoảng 10,9 lượt
-  đọc mỗi mẫu) đạt hit@1 = __, đầu chú ý tốt nhất đạt 0,850 với một lượt đọc. Câu chốt dạng:
-  *"chú ý rẻ hơn khoảng 11 lần và đạt X % hit@1 của phương pháp cắt bỏ"*.
+- **Nhóm đã so thẳng với cách ContextCite đề xuất (E19).** Trên cùng 300 mẫu ViWikiFC, định vị
+  bằng cắt bỏ ngữ cảnh (ARC-JSD, 10,9 lượt đọc mỗi mẫu) đạt hit@1 **0,733**. Đầu chú ý tốt nhất,
+  một lượt đọc, đạt **0,850**. Hiệu ghép cặp là +0,117, khoảng tin cậy [+0,077; +0,160].
+- Đầu chọn trên một bộ dữ liệu khác hẳn (ISE-DSC01) vẫn đạt 0,797, hơn cắt bỏ +0,063
+  [+0,017; +0,110]. Tức không cần chọn đầu trên dữ liệu đích.
+- Nhóm đã ghi dự đoán trước khi chạy là cắt bỏ sẽ thắng. Dự đoán đó sai, và nhóm báo cáo đúng
+  như vậy.
+- Giữ đúng ranh giới: đây là kết quả về **định vị bằng chứng**, không chứng minh chú ý là lời giải
+  thích nhân quả trung thành.
+
+Câu chốt: *"Trên phép đo định vị, một đầu chú ý rẻ hơn 11 lần mà còn đúng hơn phương pháp cắt bỏ;
+nhưng nhóm chỉ kết luận về định vị, không kết luận chú ý là lời giải thích."*
 
 ### A5. Con số 87,8 % có phải do chọn đầu tốt nhất trên chính tập báo cáo không?
 
@@ -96,14 +104,30 @@ Câu chốt: *"Nói 'thua 9 điểm' là sai, mà nói 'gần ngang top' cũng s
   sẵn: ở ViWikiFC chỉ 67 % nhãn NEI thật sự là ngoại lai, κ 0,505.
 - Câu hỏi nhị phân "có ảo giác hay không" thì **vẫn chuyển được**: 0,664 và 0,776.
 
-### A8. ⏳ Hướng tiếp theo cụ thể là gì?
+### A8. Hướng tiếp theo cụ thể là gì? Có thử chấm theo từng câu chưa?
 
-- Chấm theo từng câu hoặc mệnh đề, thay vì lấy trung bình cả phản hồi. Ngành đang đi theo hướng
-  này, và Bảng 9 cho thấy ba trong năm hình dạng lỗi là do một mệnh đề bịa bị trung bình hóa mất.
-- **Sau E18, thêm số.** Lưu ý 71,6 % phản hồi ViHallu chỉ có một câu, nên trên bộ này hiệu ứng có
-  trần.
+- **Đã thử ở mức câu (E18), và không giúp.** Nhóm tính đặc trưng riêng cho từng câu của câu trả
+  lời rồi gộp bằng trung bình, lớn nhất hoặc nhỏ nhất. Không cách nào hơn cách cũ (0,757):
+  - gộp lớn nhất đạt 0,734, và F1 lớp ngoại lai **giảm** 0,051, khoảng tin cậy [−0,096; −0,010];
+  - kết quả này đúng cả trên phần câu trả lời có từ hai câu trở lên, nên không phải do 71,6 % câu
+    trả lời chỉ có một câu.
+- Nhóm đã ghi dự đoán trước là gộp lớn nhất sẽ tăng F1 ngoại lai. Dự đoán sai, và lời giải thích
+  "trung bình hóa làm loãng mệnh đề bịa" bị bác **ở mức câu**.
+- Hướng còn mở thật sự là **chấm theo đoạn có nhãn mức đoạn**: một câu tiếng Việt có thể chứa cả
+  phần đúng lẫn cụm bịa, như câu Hồ Hoàn Kiếm của demo. ViHallu chỉ có nhãn cho cả câu trả lời, nên
+  hướng này cần dữ liệu khác.
 - Đo chi phí biên trên GPU có bf16 gốc, nơi một mô hình vừa sinh vừa đọc (E20, cần phần cứng
   Ampere).
+
+### A9. Có thử trên miền khác không?
+
+- Có, **ViFactCheck, miền tin tức (E17)**, là bộ thứ tư sau hỏi đáp, văn bản dài và bách khoa.
+  Lookback gộp đạt 0,703 ba lớp, 0,830 nhị phân, cùng cỡ ViWikiFC. Đầu `l17_h4` nặng ký nhất ở cả
+  bốn bộ.
+- Chunk-aware đạt 0,726, nhưng phần lớn mức hơn đến từ cách gộp đầu. So với lookback giữ cùng số
+  đầu thì chỉ +0,009 [−0,004; +0,023], tức lần thứ tư hình dạng nằm trong vùng nhiễu.
+- Nhớ nói kèm: split gốc của ViFactCheck rò rỉ ngữ cảnh (99 % ngữ cảnh test có trong train), giống
+  ViWikiFC.
 
 ---
 
@@ -230,6 +254,9 @@ Câu chốt: *"Nói 'thua 9 điểm' là sai, mà nói 'gần ngang top' cũng s
 - Kết quả ghi vào `results/runs.jsonl` kèm commit và hash cấu hình. Mọi bảng trong quyển lấy từ đó,
   không gõ tay.
 - Có bộ kiểm thử tự động (hiện 825 ca), chạy được không cần GPU.
+- **Bằng chứng thực tế (E18, 23/10/2026):** trích lại ViHallu trên một phiên Kaggle khác, gần hai
+  tháng sau lượt trích ngày 30/08, cho đặc trưng **trùng tuyệt đối ở cả 7.000 mẫu**, lệch lớn nhất
+  bằng 0, và chấm lại ra đúng 0,7567.
 
 ### E2. Phân công giữa hai thành viên?
 
