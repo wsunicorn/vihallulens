@@ -275,6 +275,26 @@ def cmd_report(args) -> int:
         "ablation_hit1_above_best_head": ablation_hit > best_hit,
         "hit1_ratio_below_forward_ratio": ablation_hit / max(best_hit, 1e-9) < forwards,
     }
+    # The three rankers are scored on the same 300 samples, so their difference is judged on
+    # the pairs: two separate intervals overlap far more often than the difference is unsure.
+    abl_hit = (abl_ranks < 1).astype(float)
+    paired = {}
+    print()
+    print("  hiệu hit@1 (đầu − cắt bỏ), bootstrap ghép cặp, cùng 300 mẫu:")
+    for key, name, ranks in (("best_head", best_name, attention[:, best_layer, best_head]),
+                             ("e06_head", "đầu E06", attention[:, e06[0], e06[1]])):
+        head_hit = (ranks < 1).astype(float)
+        low, high = bootstrap(head_hit - abl_hit)
+        both = int(((head_hit == 1) & (abl_hit == 1)).sum())
+        head_only = int(((head_hit == 1) & (abl_hit == 0)).sum())
+        abl_only = int(((head_hit == 0) & (abl_hit == 1)).sum())
+        paired[key] = {"delta": float((head_hit - abl_hit).mean()), "low": low, "high": high,
+                       "both": both, "head_only": head_only, "ablation_only": abl_only,
+                       "neither": len(ids) - both - head_only - abl_only}
+        print(f"    {name[:40]:<40} {paired[key]['delta']:+.3f}  [{low:+.3f}, {high:+.3f}]   "
+              f"cả hai đúng {both}, chỉ đầu {head_only}, chỉ cắt bỏ {abl_only}, "
+              f"cả hai sai {paired[key]['neither']}")
+
     print()
     for key, predicted in PREDICTION.items():
         verdict = "ĐÚNG" if outcome[key] == predicted else "SAI"
@@ -288,7 +308,7 @@ def cmd_report(args) -> int:
     extra = {"ms_per_sample": seconds * 1000, "peak_vram_mb": float(peak),
              "n_samples": len(ids), "forwards_per_sample": forwards,
              "seconds_per_sample": seconds, "best_head": [int(layers[best_layer]), int(best_head)],
-             "best_head_selected_on": len(held_out), "rows": rows,
+             "best_head_selected_on": len(held_out), "rows": rows, "paired": paired,
              "prediction": PREDICTION, "outcome": outcome, "compute_dtype": COMPUTE_DTYPE}
     config = {**cfg.to_dict(), "run_name": "e19_attribution_viwikifc", "experiment": "E19",
               "n_samples": N_SAMPLES, "selection_seed": SELECTION_SEED}
