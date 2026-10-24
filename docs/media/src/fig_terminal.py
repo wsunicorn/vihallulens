@@ -1,7 +1,7 @@
 """Terminal figure: the shape of the code base and the test run behind it.
 
 The numbers are counted from the working tree by ``fig_terminal_counts`` and the
-pytest line is the run recorded on 18/09/2026 on the personal machine.
+pytest line is the run recorded on 24/10/2026 on the personal machine.
 
 Run:  python docs/media/src/fig_terminal.py
 """
@@ -30,23 +30,21 @@ WIN_W = 760             # terminal window width in CSS px
 LINES = [
     ("prompt", "vihallulens $ ", "tree -L 1 --dirsfirst"),
     ("out", ".", ""),
-    ("tree", "├── configs/", "21 tệp YAML — mỗi thí nghiệm một tệp"),
+    ("tree", "├── configs/", "24 tệp YAML — mỗi thí nghiệm một tệp"),
     ("tree", "├── data/", "raw · interim · processed (gitignore, trừ MANIFEST.md)"),
-    ("tree", "├── docs/", "SPEC · DATA · EXPERIMENTS · REFERENCES"),
+    ("tree", "├── docs/", "SPEC · DATA · EXPERIMENTS · REFERENCES · report/"),
     ("tree", "├── models/", "e03_chunk_aware.pkl — 11,5 KB"),
-    ("tree", "├── notebooks/", "15 notebook Kaggle, chỉ gọi hàm từ src/"),
+    ("tree", "├── notebooks/", "18 notebook Kaggle, chỉ gọi hàm từ src/"),
     ("tree", "├── results/", "runs.jsonl · tradeoff.csv · error_analysis.json"),
-    ("tree", "├── scripts/", "32 điểm vào CLI"),
-    ("tree", "├── src/vihallulens/", "43 tệp .py — 5.573 dòng"),
-    ("tree", "├── tests/", "40 tệp test — 7.373 dòng"),
+    ("tree", "├── scripts/", "34 điểm vào CLI"),
+    ("tree", "├── src/vihallulens/", "46 tệp .py — 5.938 dòng"),
+    ("tree", "├── tests/", "45 tệp test — 7.773 dòng"),
     ("tree", "├── CLAUDE.md  TASKS.md  README.md", ""),
     ("tree", "└── Dockerfile  docker-compose.yml  pyproject.toml", ""),
     ("blank", "", ""),
     ("prompt", "vihallulens $ ", "python -m pytest -q      # tập test thuần logic"),
     ("dots", "." * 52, "[ 100% ]"),
-    ("ok", "688 passed", " — 0 thất bại, 0 bỏ qua"),
-    ("dim", "  6 tệp cần torch/CUDA hoặc pyvi không chạy trên máy này;", ""),
-    ("dim", "  chúng được chạy cùng notebook trên Kaggle", ""),
+    ("ok", "825 passed in 15.91s", " — 0 thất bại, 0 bỏ qua"),
     ("blank", "", ""),
     ("prompt", "kaggle $ ", "curl -s localhost:8000/health | jq -c"),
     ("json", '{"status":"ok","model_loaded":true,"bundle":"models/e03_chunk_aware.pkl",', ""),
@@ -57,7 +55,7 @@ LINES = [
     ("dim", "  ảnh 10,5 GB · trọng số 15 GB tải vào volume", ""),
     ("dim", "  GET /health → ok khi mô hình đã nạp", ""),
     ("blank", "", ""),
-    ("dim", "  Khối tree đếm trên cây làm việc ngày 18/09/2026; khối /health", ""),
+    ("dim", "  Khối tree đếm trên cây làm việc ngày 24/10/2026; khối /health", ""),
     ("dim", "  lấy từ phiên Kaggle Tesla T4 ngày 11/09/2026.", ""),
 ]
 

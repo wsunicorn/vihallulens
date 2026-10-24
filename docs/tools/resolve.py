@@ -25,6 +25,9 @@ BIB = {
     "azaria2023": ('Azaria, A., Mitchell, T. (2023), "The Internal State of an LLM Knows When '
                    'It\'s Lying", *Findings of the Association for Computational Linguistics: '
                    'EMNLP 2023*, pp. 967–976.'),
+    "cohenwang2024": ('Cohen-Wang, B., Shah, H., Georgiev, K., Madry, A. (2024), "ContextCite: '
+                      'Attributing Model Generation to Context", *Advances in Neural Information '
+                      'Processing Systems* 37, arXiv:2409.00729.'),
     "chi2021": ('Chi, Z., Dong, L., Wei, F., Yang, N., Singhal, S., Wang, W., Song, X., Mao, '
                 'X.-L., Huang, H., Zhou, M. (2021), "InfoXLM: An Information-Theoretic Framework '
                 'for Cross-Lingual Language Model Pre-Training", *Proceedings of NAACL-HLT '
@@ -66,6 +69,10 @@ BIB = {
     "le2024": ('Le, H. T., To, L. T., Nguyen, M. T., Nguyen, K. V. (2024), "ViWikiFC: '
                'Fact-Checking for Vietnamese Wikipedia-Based Textual Knowledge Source", '
                'arXiv:2405.07615.'),
+    "li2026arcjsd": ('Li, R., Chen, C., Hu, Y., Gao, Y., Wang, X., Yilmaz, E. (2026), '
+                     '"Attributing Response to Context: A Jensen–Shannon Divergence Driven '
+                     'Mechanistic Study of Context Attribution in Retrieval-Augmented '
+                     'Generation", *Proceedings of ICLR 2026*, arXiv:2505.16415.'),
     "lewis2020": ('Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., '
                   'Küttler, H., Lewis, M., Yih, W., Rocktäschel, T., Riedel, S., Kiela, D. '
                   '(2020), "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", '
@@ -84,6 +91,8 @@ BIB = {
     "nguyen2026vihallu": ('Nguyen, A. T.-H., Tran, K. Q., Huynh, T. V., Nguyen, P. T.-H., '
                           'Nguyen, C. T., Nguyen, K. V. (2026), "DSC2025 – ViHallu Challenge: '
                           'Detecting Hallucination in Vietnamese LLMs", arXiv:2601.04711.'),
+    "ogasa2025": ('Ogasa, Y., Arase, Y. (2025), "Hallucinated Span Detection with Multi-View '
+                  'Attention Features", arXiv:2504.04335.'),
     "qwen2025": 'Qwen Team (2024), *Qwen2.5 Technical Report*, arXiv:2412.15115.',
     "robertson2009": ('Robertson, S., Zaragoza, H. (2009), "The Probabilistic Relevance '
                       'Framework: BM25 and Beyond", *Foundations and Trends in Information '
@@ -112,6 +121,9 @@ BIB = {
                     'Overgeneration Mistakes", *Proceedings of SemEval-2025*, pp. 2472–2497.'),
     "wiegreffe2019": ('Wiegreffe, S., Pinter, Y. (2019), "Attention is not not Explanation", '
                       '*Proceedings of EMNLP-IJCNLP 2019*, pp. 11–20.'),
+    "yeh2026lumina": ('Yeh, S., Li, S., Mallick, T. (2026), "LUMINA: Detecting Hallucinations in '
+                      'RAG System with Context-Knowledge Signals", *Proceedings of ICLR 2026*, '
+                      'arXiv:2509.21875.'),
     "zheng2023judge": ('Zheng, L., et al. (2023), "Judging LLM-as-a-Judge with MT-Bench and '
                        'Chatbot Arena", *Advances in Neural Information Processing Systems* 36.'),
 }

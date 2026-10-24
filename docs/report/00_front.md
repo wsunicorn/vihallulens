@@ -70,9 +70,9 @@ Retrieval-augmented generation (RAG) grounds a large language model (LLM) in ret
 
 We reproduce Lookback Lens, which measures per head how much of the response's attention goes to the context rather than to itself, and extend it into a chunk-aware lookback ratio: the same attention split over context chunks, its shape summarised by five statistics. Per-layer forward hooks keep a 4-bit Qwen2.5-7B-Instruct inside one 16 GB Tesla T4.
 
-Across sixteen experiments on ViHallu, ISE-DSC01 and ViWikiFC, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, matching a fine-tuned PhoBERT-large (0.749) and beating it on intrinsic hallucination. The strongest head points at the gold-evidence chunk in 87.8% of ISE-DSC01 samples, 14.3 times the random floor, and deleting that sentence moves all four pre-registered shape statistics as predicted. The chunk-aware gain itself is not significant (0.757 against 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78).
+Across nineteen experiments on four Vietnamese corpora, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, matching a fine-tuned PhoBERT-large (0.749) and beating it on intrinsic hallucination. The strongest head points at the gold-evidence chunk in 87.8% of ISE-DSC01 samples, 14.3 times the random floor, and deleting that sentence moves all four pre-registered shape statistics as predicted, and the head beats context ablation (0.850 vs 0.733) at one-eleventh of the cost. The chunk-aware gain itself is not significant (0.757 against 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78).
 
-The detector ships as a Python library, a REST service with an attention view and a Docker image; future work covers claim-level scoring.
+The detector ships as a Python library, a REST service with an attention view and a Docker image; future work covers span-level scoring.
 
 **Keywords: hallucination detection, retrieval-augmented generation, attention analysis, Vietnamese natural language processing, model calibration.**
 
@@ -86,9 +86,9 @@ Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ l�
 
 Khóa luận tái lập Lookback Lens — đo ở từng đầu chú ý phần chú ý mà phản hồi dành cho ngữ cảnh thay vì cho chính nó — rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit chạy vừa một card Tesla T4 16 GB.
 
-Qua mười sáu thí nghiệm trên ViHallu, ISE-DSC01 và ViWikiFC, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
+Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước, và đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) dù rẻ hơn khoảng 11 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
 
-Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là chấm điểm theo từng mệnh đề.
+Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là chấm điểm theo từng đoạn.
 
 **Từ khóa: phát hiện ảo giác, sinh văn bản tăng cường truy xuất, phân tích chú ý, xử lý ngôn ngữ tự nhiên tiếng Việt, hiệu chỉnh xác suất.**
 
