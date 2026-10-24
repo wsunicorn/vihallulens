@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Mô hình trích đặc trưng — huấn luyện — phục vụ</title>
+<link rel="stylesheet" href="fonts/patrick-hand.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  #stage { width: 1720px; height: 1140px; display: block; }
+  text { font-family: 'Patrick Hand', cursive; fill: #1e1e1e; }
+</style>
+</head>
+<body>
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1140"></svg>
+<script src="rough.js"></script>
+<script>
+const svg = document.getElementById('stage');
+const rc  = rough.svg(svg);
+const NS  = 'http://www.w3.org/2000/svg';
+
+const INK = '#1e1e1e';
+const SEED = 7;               // fixed so the "hand" draws the same lines every run
+let seed = SEED;
+const s = () => (seed += 11);
+
+/* ---------- primitives ---------------------------------------------- */
+
+function put(node) { svg.appendChild(node); return node; }
+
+function sketch(fn, opts = {}) {
+  return put(fn({ stroke: INK, strokeWidth: 1.5, roughness: 1.1, bowing: 1.1,
+                  seed: s(), ...opts }));
+}
+
+function rect(x, y, w, h, o = {}) {
+  return sketch(op => rc.rectangle(x, y, w, h, op), o);
+}
+
+function ellipse(cx, cy, w, h, o = {}) {
+  return sketch(op => rc.ellipse(cx, cy, w, h, op), o);
+}
+
+function line(x1, y1, x2, y2, o = {}) {
+  return sketch(op => rc.line(x1, y1, x2, y2, op), o);
+}
+
+function path(d, o = {}) {
+  return sketch(op => rc.path(d, op), o);
+}
+
+/* The page prints this 1720 px canvas 19,2 cm wide on a landscape page, where its height
+   and not its width is the limit, so each px of text becomes 0,32 pt: 22 px came out at
+   7,6 pt. Every text is drawn TEXT_SCALE larger than the size it is given:
+   at 1,3 the 21-23 px labels print at 8,6-9,5 pt. Any larger and labels run into
+   each other or out of their boxes: the drawing has no room left. */
+const TEXT_SCALE = 1.3;
+
+function text(x, y, str, o = {}) {
+  const { anchor = 'middle', fill = INK, weight = 'normal', opacity = 1 } = o;
+  const size = (o.size ?? 22.8) * TEXT_SCALE;
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('font-size', size);
+  t.setAttribute('text-anchor', anchor);
+  t.setAttribute('fill', fill);
+  t.setAttribute('font-weight', weight);
+  t.setAttribute('opacity', opacity);
+  const lines = String(str).split('\n');
+  lines.forEach((ln, i) => {
+    const ts = document.createElementNS(NS, 'tspan');
+    ts.setAttribute('x', x);
+    ts.setAttribute('dy', i === 0 ? 0 : size * 1.22);
+    ts.textContent = ln;
+    t.appendChild(ts);
+  });
+  // vertical centring of the whole block around y
+  t.setAttribute('transform', `translate(0, ${-(lines.length - 1) * size * 0.61})`);
+  return put(t);
+}
+
+/* arrow: polyline with a hand-drawn head */
+function arrow(pts, o = {}) {
+  const { head = 14, ...rest } = o;
+  for (let i = 0; i < pts.length - 1; i++) {
+    line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], rest);
+  }
+  const [x1, y1] = pts[pts.length - 2];
+  const [x2, y2] = pts[pts.length - 1];
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const w = 0.42;
+  line(x2, y2, x2 - head * Math.cos(a - w), y2 - head * Math.sin(a - w), rest);
+  line(x2, y2, x2 - head * Math.cos(a + w), y2 - head * Math.sin(a + w), rest);
+}
+
+/* gentle curved arrow through three points */
+function curveArrow(p0, p1, p2, o = {}) {
+  const { head = 14, ...rest } = o;
+  sketch(op => rc.curve([p0, p1, p2], op), rest);
+  const a = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]);
+  const w = 0.42;
+  line(p2[0], p2[1], p2[0] - head * Math.cos(a - w), p2[1] - head * Math.sin(a - w), rest);
+  line(p2[0], p2[1], p2[0] - head * Math.cos(a + w), p2[1] - head * Math.sin(a + w), rest);
+}
+
+/* ---------- composite shapes ---------------------------------------- */
+
+function panel(x, y, w, h, title, fill, hatch, o = {}) {
+  rect(x, y, w, h, { fill, fillStyle: 'solid', roughness: 0.7,
+                     strokeWidth: 1.3, stroke: '#3f3f46', ...o });
+  rect(x, y, w, h, { fill: hatch, fillStyle: 'hachure', fillWeight: 0.9,
+                     hachureGap: 8, hachureAngle: -41, roughness: 0.7,
+                     stroke: 'rgba(0,0,0,0)' });
+  if (title) text(x + w / 2, y + 36, title, { size: 28.5 });
+}
+
+function node(x, y, w, h, label, o = {}) {
+  const { size = 21.7, fill = '#ffffff' } = o;
+  rect(x, y, w, h, { fill, fillStyle: 'solid', roughness: 1.0 });
+  text(x + w / 2, y + h / 2 + 6, label, { size });
+  return { x, y, w, h, cx: x + w / 2, cy: y + h / 2,
+           top: [x + w / 2, y], bottom: [x + w / 2, y + h],
+           left: [x, y + h / 2], right: [x + w, y + h / 2] };
+}
+
+/* a browser window, like the dashboards in the reference drawing */
+function windowBox(x, y, w, h, label) {
+  rect(x, y, w, h, { fill: '#ffffff', fillStyle: 'solid', roughness: 0.9 });
+  rect(x + 10, y + 10, w - 20, 26, { roughness: 0.9, strokeWidth: 1.1 });
+  [0, 1, 2].forEach(i => ellipse(x + 22 + i * 12, y + 23, 7, 7, { strokeWidth: 1 }));
+  line(x + 66, y + 23, x + w - 22, y + 23, { strokeWidth: 1.1 });
+  text(x + w / 2, y + h / 2 + 22, label, { size: 23.9 });
+  return { cx: x + w / 2, top: [x + w / 2, y], bottom: [x + w / 2, y + h] };
+}
+
+/* stacked discs, the store glyph of the reference drawing */
+function discStack(cx, cy, w, discH, n, label) {
+  const gap = discH * 0.78;
+  const totalH = (n - 1) * gap;
+  const top = cy - totalH / 2;
+  for (let i = n - 1; i >= 0; i--) {
+    const y = top + i * gap;
+    rect(cx - w / 2, y, w, gap, { fill: '#ffffff', fillStyle: 'solid',
+                                  roughness: 0.8, strokeWidth: 1.1 });
+    ellipse(cx, y, w, discH, { fill: '#ffffff', fillStyle: 'solid',
+                               roughness: 0.8, strokeWidth: 1.2 });
+  }
+  ellipse(cx, top + totalH + gap, w, discH, { fill: '#ffffff', fillStyle: 'solid',
+                                              roughness: 0.8, strokeWidth: 1.2 });
+  if (label) text(cx, top + totalH + gap + discH + 30, label, { size: 21.7 });
+  return { cx, top: [cx, top - discH / 2],
+           bottom: [cx, top + totalH + gap + discH / 2],
+           left: [cx - w / 2, cy], right: [cx + w / 2, cy] };
+}
+
+function folder(cx, cy, w, h, label) {
+  const x = cx - w / 2, y = cy - h / 2;
+  path(`M ${x} ${y + 16} l 14 -14 h ${w * 0.34} l 12 14 h ${w * 0.5} v ${h - 16} h ${-w} z`,
+       { fill: '#7b7b85', fillStyle: 'solid', roughness: 0.9 });
+  path(`M ${x + 10} ${y + 34} h ${w - 20} l -14 ${h - 34} h ${-w + 42} z`,
+       { fill: '#a3a3ad', fillStyle: 'solid', roughness: 0.9 });
+  if (label) text(cx, cy + h / 2 + 32, label, { size: 22.8 });
+  return { cx, bottom: [cx, cy + h / 2 + 46], top: [cx, cy - h / 2] };
+}
+
+function people(cx, cy) {
+  const head = (dx, dy, r) => ellipse(cx + dx, cy + dy, r, r,
+    { fill: '#b9bcc4', fillStyle: 'solid', roughness: 0.8 });
+  const body = (dx, dy, w, h) => path(
+    `M ${cx + dx - w / 2} ${cy + dy + h} a ${w / 2} ${h} 0 0 1 ${w} 0 z`,
+    { fill: '#b9bcc4', fillStyle: 'solid', roughness: 0.8 });
+  head(-28, -6, 26); body(-28, 2, 40, 22);
+  head(28, -6, 26);  body(28, 2, 40, 22);
+  head(0, -18, 32);  body(0, -8, 52, 28);
+}
+
+/* logo glyph pulled from the downloaded Simple Icons set */
+const LOGOS = {};
+/* below: the label centred under the glyph instead of beside it, where a box or an
+   arrow would otherwise run into it */
+function logo(name, x, y, size, label, labelSize = 20, below = false) {
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('transform', `translate(${x},${y}) scale(${size / 24})`);
+  g.setAttribute('fill', LOGOS[name].fill);
+  LOGOS[name].paths.forEach(d => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', d);
+    g.appendChild(p);
+  });
+  put(g);
+  if (label && below) text(x + size / 2, y + size + labelSize * TEXT_SCALE + 2, label,
+                           { size: labelSize });
+  else if (label) text(x + size + 10, y + size / 2 + 7, label,
+                       { size: labelSize, anchor: 'start' });
+}
+
+/* ==================================================================== */
+/*  drawing                                                             */
+/* ==================================================================== */
+
+function draw() {
+  // ---- users, above the frame --------------------------------------
+  people(880, 58);
+  text(880, 126, 'Người dùng', { size: 25.1 });
+
+  // ---- outer frame --------------------------------------------------
+  rect(20, 146, 1682, 962, { roughness: 0.8, strokeWidth: 1.3,
+                             strokeLineDash: [10, 7], stroke: '#3f3f46' });
+
+  // ---- panels -------------------------------------------------------
+  panel(42, 168, 566, 356, '', '#f5f5f7', '#dcdce3');                        // idea
+  panel(42, 548, 566, 538, 'Huấn luyện và đánh giá', '#e2f2e7', '#a8d6b7');  // training
+  panel(636, 168, 490, 918, 'Phục vụ', '#d5e9f3', '#93c4dc');                // serving
+  panel(1154, 168, 526, 918, 'Trích đặc trưng', '#f5f5f7', '#d8d8df');       // extraction
+
+  /* ================= idea panel ==================================== */
+  text(300, 206, 'chunk-aware lookback ratio', { size: 29.6 });
+
+  // a context split into five chunks, one of them carrying the evidence
+  const cx0 = 78, cw = 92, cy0 = 246, ch = 54;
+  const share = [0.10, 0.08, 0.52, 0.18, 0.12];
+  for (let i = 0; i < 5; i++) {
+    const x = cx0 + i * (cw + 8);
+    const hot = i === 2;
+    rect(x, cy0, cw, ch, {
+      fill: hot ? '#ffd9a0' : '#ffffff', fillStyle: 'solid', roughness: 0.9
+    });
+    text(x + cw / 2, cy0 + 34, 'đoạn ' + (i + 1), { size: 21.1 });
+    // attention bar underneath
+    const bh = 96 * share[i];
+    rect(x + 16, cy0 + ch + 96 - bh, cw - 32, bh, {
+      fill: hot ? '#f0a33c' : '#9aa6b2', fillStyle: 'solid',
+      roughness: 0.8, strokeWidth: 1.1
+    });
+    text(x + cw / 2, cy0 + ch + 118, (share[i] * 100).toFixed(0) + '%', { size: 21.1 });
+  }
+  line(70, cy0 + ch + 96, 538, cy0 + ch + 96, { strokeWidth: 1.2 });
+  text(324, 482, 'Phản hồi nhìn lại từng đoạn, không nhìn lại cả khối.\nHình dạng của phân bố này là tín hiệu.', { size: 22.8 });
+  logo('qwen', 500, 186, 34);
+
+  /* ================= extraction panel ============================== */
+  folder(1414, 258, 150, 108, 'Bốn bộ dữ liệu đã chuẩn hóa');
+  const x1 = node(1198, 384, 438, 66, 'Mẫu prompt + chia chunk theo câu');
+  const x2 = node(1198, 500, 438, 66, 'Qwen2.5-7B-Instruct · NF4 4-bit');
+  const x3 = node(1198, 616, 438, 66, 'Forward hook — 27 lớp × 28 đầu');
+  const x4 = node(1198, 732, 438, 66, '4.536 đặc trưng mỗi mẫu (756 × 6)');
+  const x5 = node(1198, 848, 438, 66, 'Shard đặc trưng  .npz');
+
+  arrow([[1414, 358], [1414, 384]]);            // starts under the folder's label
+  arrow([x1.bottom, x2.top]);
+  arrow([x2.bottom, x3.top]);
+  arrow([x3.bottom, x4.top]);
+  arrow([x4.bottom, x5.top]);
+
+  logo('pytorch', 1210, 952, 34, 'PyTorch');
+  logo('nvidia',  1400, 952, 34, 'Tesla T4');
+  text(1417, 1030, '0 lỗi trên 25.200 mẫu · bỏ lớp 27 (tràn số)', { size: 21.7, opacity: 0.85 });
+
+  /* ================= training / evaluation panel =================== */
+  const t1 = node(196, 596, 394, 64, 'Chuẩn hóa + hồi quy logistic');
+  const t2 = node(196, 716, 394, 64, 'Chấm trên tập dev · macro-F1, ECE');
+  const t3 = node(196, 886, 394, 64, 'Chốt cấu hình, đóng gói bundle');
+
+  curveArrow([393, 660], [367, 690], [393, 716], { head: 12 });
+  curveArrow([393, 780], [371, 830], [393, 886], { head: 12 });
+  text(470, 847, 'nếu vượt mốc\nlookback gộp', { size: 21.1, opacity: 0.9 });
+
+  logo('scikitlearn', 105, 588, 40, 'scikit-learn', 21, true);
+  logo('numpy',       105, 750, 40, 'NumPy', 21, true);
+
+  text(300, 1000, 'bundle 11,5 KB', { size: 21.7, opacity: 0.9 });
+  arrow([[300, 1016], [300, 1052], [883, 1052], [883, 986]], { strokeWidth: 1.4 });
+
+  /* ================= serving panel ================================= */
+  const w1 = windowBox(660, 214, 220, 156, 'Giao diện\nquan sát');
+  const w2 = windowBox(898, 214, 208, 156, 'Demo RAG');
+
+  curveArrow([820, 92], [742, 160], [758, 208], { strokeWidth: 1.4 });
+  curveArrow([940, 92], [1018, 160], [1004, 208], { strokeWidth: 1.4 });
+
+  logo('fastapi', 687, 400, 36, 'FastAPI', 22, true);
+  logo('docker',  922, 400, 36, 'Docker', 22, true);
+
+  const sv = node(660, 508, 446, 84, 'Dịch vụ REST\n/score · /score/batch · /health', { size: 22.8 });
+  arrow([[770, 508], [770, 370]]);
+  arrow([[1002, 508], [1002, 370]]);
+
+  const store = discStack(1004, 716, 132, 34, 3, 'models/ bundle');
+  const logbox = node(660, 682, 218, 82, 'Ghi nhật ký\nsuy luận', { size: 22.8 });
+
+  // the fitted detector is loaded into the running service
+  arrow([[1004, 660], [1004, 624], [962, 624], [962, 592]], { strokeWidth: 1.3 });
+  text(1074, 633, 'nạp bộ\nphát hiện', { size: 21.1, opacity: 0.9 });
+  // every call is logged, and the log feeds the next round of evaluation
+  arrow([[812, 592], [812, 644], [769, 644], [769, 682]], { strokeWidth: 1.3 });
+  arrow([[660, 723], [614, 723], [614, 748], [596, 748]], { strokeWidth: 1.3 });
+
+  text(770, 838, 'Chi phí biên trong hệ RAG\ntự giám sát: chưa đo', { size: 21.1 });
+
+  node(652, 920, 462, 66, 'Cảnh báo ảo giác + tô màu đoạn ngữ cảnh', { size: 21.7 });
+  arrow([[1106, 550], [1136, 550], [1136, 953], [1114, 953]], { strokeWidth: 1.3 });
+}
+
+/* load the logo glyphs, then draw */
+const NEEDED = ['qwen', 'pytorch', 'nvidia', 'scikitlearn', 'numpy', 'fastapi', 'docker'];
+Promise.all(NEEDED.map(n =>
+  fetch(`../logos/${n}.svg`).then(r => r.text()).then(raw => {
+    const fill = (raw.match(/fill="(#[0-9A-Fa-f]{3,8})"/) || [, '#222'])[1];
+    const paths = [...raw.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map(m => m[1]);
+    LOGOS[n] = { fill, paths };
+  })
+)).then(() => {
+  draw();
+  document.title = 'ready';
+});
+</script>
+</body>
+</html>
