@@ -1,13 +1,14 @@
 # Bộ slide — cách dùng
 
-Cập nhật 22/10/2026. Bộ dùng để báo cáo trước Hội đồng là **`slide_hoi_dong_23.html`**.
+Cập nhật 23/10/2026. Bộ dùng để báo cáo trước Hội đồng là **`slide_hoi_dong_23.html`**.
 
 ## File trong thư mục
 
 | File | Là gì |
 |---|---|
-| **`slide_hoi_dong_23.html`** / `.pdf` | **Bộ chính, 23 slide**, sắp theo bố cục quyển khóa luận như GVHD yêu cầu ngày 05/10: giới thiệu và bài toán → động lực, khoảng trống → cơ sở lý thuyết → dữ liệu → phương pháp đề xuất → hệ thống → thực nghiệm → tự đánh giá → tài liệu tham khảo. Số liệu khớp quyển v4. Bản PDF là trạng thái cuối của từng slide. |
-| `slide_rut_gon_19.html` / `.pdf` | Bộ 19 slide Minh dựng ngày 14/10, là nền của bộ chính. Minh giữ script dựng (`build_slide19.py`, trên máy Minh). |
+| **`slide_hoi_dong_23.html`** / `.pdf` | **Bộ chính, 23 slide**, sắp theo bố cục quyển khóa luận như GVHD yêu cầu ngày 05/10: giới thiệu và bài toán → động lực, khoảng trống → cơ sở lý thuyết → dữ liệu → phương pháp đề xuất → hệ thống → thực nghiệm → tự đánh giá → tài liệu tham khảo. Số liệu khớp quyển v4, trừ hai chỗ theo lượt chạy ngày 23/10: số ca kiểm thử ở slide 12 và kết quả E17, E18 ở slide 21. Bản PDF là trạng thái cuối của từng slide. |
+| `slide_rut_gon_19.html` / `.pdf` | Bộ 19 slide Minh dựng ngày 14/10, là nền của bộ chính. Dựng bằng script trong `nguon_19_slide/`. |
+| `nguon_19_slide/` | Script `build_slide19.py` dựng bộ 19 slide từ bộ 32 slide ngày 02/10 (`slide_goc_32.html`, không sửa file này). Mỗi chỗ sửa là một phép thay chuỗi có kiểm số lần khớp, nguồn gốc không khớp thì script dừng. |
 | `nguon_bo_sung_15-10/` | Sơ đồ và script chèn bốn slide còn thiếu so với yêu cầu của thầy (bài toán, các hướng đã có, kiểm định giả thuyết, tài liệu tham khảo) vào bộ 19 slide. Cách chạy ghi ở `GHI_CHU_CHO_MINH.txt`. |
 | `slide_v2.html` | **Bộ cũ**, 36 slide theme "Đêm cú", dùng cho buổi báo cáo GVHD ngày 26/09. Không dùng nữa. |
 | `GIAI_THICH_SLIDE.md` | Giải thích từng slide của bộ chính và **kịch bản thời gian** hai phương án (đủ khoảng 22 phút, rút khoảng 15 phút). Bản cho bộ cũ giữ ở `GIAI_THICH_SLIDE_v2_cu.md`. |
@@ -42,9 +43,11 @@ mở file hai lần, một cửa sổ trên máy chiếu bấm `F`, cửa sổ t
 
 ## Sửa bộ chính
 
-Không sửa thẳng `slide_hoi_dong_23.html`. Sửa ở nguồn rồi dựng lại:
+Không sửa thẳng `slide_hoi_dong_23.html`. Sửa ở nguồn rồi dựng lại; các lệnh chạy trong thư mục này:
 
-1. Slide gốc của Minh: Minh sửa trong `build_slide19.py` và dựng lại `slide_rut_gon_19.html`.
+1. Mười chín slide gốc: sửa `nguon_19_slide/build_slide19.py`, chạy
+   `python nguon_19_slide/build_slide19.py nguon_19_slide/slide_goc_32.html slide_rut_gon_19.html`,
+   rồi chạy lệnh ở bước 2 để dựng lại bộ 23 slide.
 2. Bốn slide bổ sung: sửa `nguon_bo_sung_15-10/figs_minh_bo_sung.js` (sơ đồ) hoặc
    `bo_sung_slide_minh.py` (chữ, ghi chú, chân trang), rồi chạy
    `python nguon_bo_sung_15-10/bo_sung_slide_minh.py slide_rut_gon_19.html nguon_bo_sung_15-10/figs_minh_bo_sung.js slide_hoi_dong_23.html`.
