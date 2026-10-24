@@ -81,6 +81,9 @@ select = ["E", "W", "F", "I", "UP", "B", "SIM", "N"]
 # signature as fit(self, X, y). Renaming it would make the code read differently from every
 # sklearn example a reader will compare it against.
 "src/vihallulens/detect/*.py" = ["N803", "N806"]
+# A notebook that has run on Kaggle is the record of that run and is committed as it came back,
+# so its long command lines cannot be rewrapped without editing the evidence.
+"notebooks/*.ipynb" = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["vihallulens"]
