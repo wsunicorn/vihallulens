@@ -449,8 +449,9 @@ thì không.
 
 **Nói gì.** Các công trình chính, đánh số theo danh mục của quyển.
 
-**Giải thích.** Số trong ngoặc vuông phải khớp danh mục của quyển. Khi T42B thêm bốn tài liệu mới
-và đánh lại số, phải sửa cả slide này.
+**Giải thích.** Số trong ngoặc vuông khớp danh mục 36 tài liệu của quyển, đã đánh lại ngày
+24/10 sau khi T42B thêm bốn tài liệu mới. Thêm hay bớt tài liệu trong quyển thì phải sửa lại
+slide này (`REFS` trong `nguon_bo_sung_15-10/bo_sung_slide_minh.py`).
 
 ### Slide 23 — Cảm ơn
 
