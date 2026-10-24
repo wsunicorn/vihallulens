@@ -4760,6 +4760,9 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     đúng câu chốt ở mục 8.3.
   - **Kiểm tra:** quyển có đoạn nêu rõ ba điều — khác tập đánh giá, khác chế độ (tinh chỉnh hay
     không), và đề tài đo cái gì; không đặt 84,80 và 0,757 cạnh nhau trong cùng một cột bảng.
+  - **Trạng thái 24/10/2026:** phần quyển **xong**: mục 7.1 có đoạn "Vì sao không đặt 0,757 cạnh
+    84,80 %" nêu đủ ba lẽ (khác tập đánh giá, khác chế độ, khác câu hỏi), không bảng nào đặt hai số
+    cạnh nhau. **Còn:** câu trên slide kết quả (slide 14 của bộ 23), thuộc phần slide Minh dựng.
 
 - [ ] **T42B** · LM · Cập nhật chương 2 với bốn công trình 2025–2026 — **0 GPU**
   - **Vì sao:** chương 2 hiện dừng ở các công trình 2024 cùng ReDeEP và LettuceDetect. Bốn công
@@ -4772,6 +4775,13 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     mục **và mọi trích dẫn [n] trong thân bài**; trích MVA và ContextCite ở mục 7.2 của quyển.
   - **Kiểm tra:** 49 tài liệu tham khảo, đánh số liên tục, mục nào cũng được trích; số liệu của
     bốn bài chỉ nằm ở chương 2 và 7, không nằm trong bảng kết quả của nhóm.
+  - **Trạng thái 24/10/2026:** chương 2 **xong**. Mục 2.4 thêm LUMINA và Ogasa–Arase (Multi-View
+    Attention) vào đoạn hướng nội tại, thêm đoạn mới về hướng quy trách nhiệm bằng cắt bỏ
+    (ContextCite, ARC-JSD); Bảng 2.1 thêm dòng "Cắt bỏ ngữ cảnh". Bốn mục vào `BIB` của
+    `docs/tools/resolve.py`, tự xếp theo họ tác giả: danh mục từ 32 lên **36** tài liệu (con số 49
+    ở dòng Kiểm tra tính trên danh mục 45 cũ, trước khi Minh rà còn 32). Số liệu của bốn bài chỉ
+    nằm ở chương 2. Slide 22 đánh lại số theo danh mục mới. **Còn:** trích MVA và ContextCite ở mục
+    7.2, chờ GVHD đọc xong mục đó.
 
 - [x] **T45C** · M · **E18** — chấm theo từng câu phản hồi, gộp max thay vì trung bình — hoàn thành
   23/10/2026 (64 phút GPU)
@@ -4947,6 +4957,26 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       hướng phát triển thành chấm theo đoạn có nhãn mức đoạn.
     - **E17 (T41):** một đoạn ngắn ở mục 8.2, không thêm bảng; ghi kèm split gốc rò rỉ ngữ cảnh.
     - Slide 21 (dòng ViFactCheck, hướng phát triển) và slide 12 (số ca kiểm thử) sửa theo.
+  - **Trạng thái 24/10/2026, bản v5 dựng từ `docs/report/`** (141 trang, 22 hình, 45 bảng, 36 tài
+    liệu tham khảo):
+    - Dựng lại bản v4 từ nguồn trên máy này trước khi sửa: trùng chữ với file Word v4 ở cả 2.378
+      dòng (trừ một dấu cách thừa). Mọi khác biệt của v5 vì vậy đều do lượt sửa này.
+    - **Đã đưa vào:** E19 (mục 6.14.1, Bảng 6.17), E18 (mục 6.14.2, Bảng 6.18), E17 (mục 6.14.3, không
+      bảng); ba thí nghiệm dồn vào mục mới 6.14 ở cuối chương 6, nên **mọi số mục, số bảng, số hình
+      của v4 giữ nguyên**. Bảng 3.6 thành mười chín thí nghiệm; Bảng 7.1 cập nhật H2, H3; mục 7.1 có
+      đoạn T45B; chương 8 sửa kết luận, bỏ mục "ViFactCheck chưa làm", sửa hướng phát triển 1;
+      Abstract và Tóm tắt cập nhật (vẫn mỗi phần một trang); chương 1 cập nhật số thí nghiệm.
+    - **T42B:** chương 2 và tài liệu tham khảo xong (xem T42B).
+    - **Số liệu kiểm thử và mã nguồn:** 825 ca đạt, 0 bỏ qua (lượt 24/10, 15,9 giây); Phụ lục A, Hình
+      A.1, mục 5.1 cập nhật.
+    - **Phụ lục D:** dòng tái lập trích đặc trưng ghi bằng chứng E18 trùng tuyệt đối 7.000 mẫu.
+      **Phụ lục E:** thêm nguồn của hai bảng mới. **Phụ lục G:** 127 thành 135 pull request, kèm
+      repo lưu trữ và `docs/LICH_SU_PR.md`.
+    - **Nhật kí làm việc:** điền theo thực tế tuần 3–12, đối chiếu ngày hoàn thành task, ngày gộp
+      PR và ngày ghi kết quả; tuần 13–15 ghi là dự kiến.
+    - **Còn:** mục 7.2 (chờ GVHD) — "lý do thứ hai" ở đó hiện mâu thuẫn với E18, và đoạn E19 về
+      ranh giới định vị/quy trách nhiệm cùng trích dẫn MVA, ContextCite cũng thuộc mục này; câu T45B
+      trên slide 14.
   - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
     sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.

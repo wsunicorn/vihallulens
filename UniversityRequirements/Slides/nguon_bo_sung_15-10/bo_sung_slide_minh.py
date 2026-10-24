@@ -90,45 +90,45 @@ HYP = fig_slide(
     "chuyển được. Rê chuột để xem thí nghiệm tương ứng.",
 )
 
-# (number in the thesis reference list, entry) — numbers follow the 32-entry list of version 4
+# (number in the thesis reference list, entry) — numbers follow the 36-entry list of version 5
 REFS = [
     ("Phương pháp nền", [
         (3, "Chuang, Y.-S., Qiu, L., Hsieh, C.-Y., Krishna, R., Kim, Y., Glass, J. (2024). "
             "Lookback Lens: Detecting and Mitigating Contextual Hallucinations in Large Language "
             "Models Using Only Attention Maps. <i>EMNLP 2024</i>, 1419–1436."),
-        (29, "Vaswani, A. và cộng sự (2017). Attention Is All You Need. <i>NeurIPS 30</i>, "
+        (32, "Vaswani, A. và cộng sự (2017). Attention Is All You Need. <i>NeurIPS 30</i>, "
              "5998–6008."),
-        (24, "Sun, Z. và cộng sự (2025). ReDeEP: Detecting Hallucination in Retrieval-Augmented "
+        (27, "Sun, Z. và cộng sự (2025). ReDeEP: Detecting Hallucination in Retrieval-Augmented "
              "Generation via Mechanistic Interpretability. <i>ICLR 2025</i>."),
     ]),
     ("Dữ liệu", [
-        (20, "Nguyen, A. T.-H. và cộng sự (2026). DSC2025 – ViHallu Challenge: Detecting "
+        (22, "Nguyen, A. T.-H. và cộng sự (2026). DSC2025 – ViHallu Challenge: Detecting "
              "Hallucination in Vietnamese LLMs. <i>arXiv:2601.04711</i>."),
-        (28, "UIT Data Science Challenge 2023, Group B (bộ ISE-DSC01). "
+        (31, "UIT Data Science Challenge 2023, Group B (bộ ISE-DSC01). "
              "<i>codalab.lisn.upsaclay.fr/competitions/15497</i>."),
-        (15, "Le, H. T., To, L. T., Nguyen, M. T., Nguyen, K. V. (2024). ViWikiFC: Fact-Checking "
+        (16, "Le, H. T., To, L. T., Nguyen, M. T., Nguyen, K. V. (2024). ViWikiFC: Fact-Checking "
              "for Vietnamese Wikipedia-Based Textual Knowledge Source. <i>arXiv:2405.07615</i>."),
     ]),
     ("Mốc so sánh", [
-        (21, "Nguyen, D. Q., Nguyen, A. T. (2020). PhoBERT: Pre-trained Language Models for "
+        (23, "Nguyen, D. Q., Nguyen, A. T. (2020). PhoBERT: Pre-trained Language Models for "
              "Vietnamese. <i>Findings of EMNLP 2020</i>, 1037–1042."),
-        (4, "Conneau, A. và cộng sự (2020). Unsupervised Cross-lingual Representation Learning "
+        (5, "Conneau, A. và cộng sự (2020). Unsupervised Cross-lingual Representation Learning "
             "at Scale. <i>ACL 2020</i>, 8440–8451."),
-        (32, "Zheng, L. và cộng sự (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot "
+        (36, "Zheng, L. và cộng sự (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot "
              "Arena. <i>NeurIPS 36</i>."),
-        (26, "Tran, D. X. và cộng sự (2025). SemViQA: A Semantic Question Answering System for "
+        (29, "Tran, D. X. và cộng sự (2025). SemViQA: A Semantic Question Answering System for "
              "Vietnamese Information Fact-Checking. <i>arXiv:2503.00955</i>."),
     ]),
     ("Mô hình và nền tảng", [
-        (22, "Qwen Team (2024). Qwen2.5 Technical Report. <i>arXiv:2412.15115</i>."),
-        (16, "Lewis, P. và cộng sự (2020). Retrieval-Augmented Generation for Knowledge-Intensive "
+        (25, "Qwen Team (2024). Qwen2.5 Technical Report. <i>arXiv:2412.15115</i>."),
+        (17, "Lewis, P. và cộng sự (2020). Retrieval-Augmented Generation for Knowledge-Intensive "
              "NLP Tasks. <i>NeurIPS 33</i>, 9459–9474."),
-        (12, "Ji, Z. và cộng sự (2023). Survey of Hallucination in Natural Language Generation. "
+        (13, "Ji, Z. và cộng sự (2023). Survey of Hallucination in Natural Language Generation. "
              "<i>ACM Computing Surveys 55 (12)</i>, 1–38."),
     ]),
 ]
 REF_NOTES = (
-    "Đây là các công trình chính mà đề tài dựa vào, đánh số theo danh mục 32 tài liệu của quyển. "
+    "Đây là các công trình chính mà đề tài dựa vào, đánh số theo danh mục 36 tài liệu của quyển. "
     "Phương pháp nền là Lookback Lens, xây trên cơ chế chú ý của Transformer; ReDeEP là hướng gần "
     "nhất cùng khai thác tín hiệu nội tại cho RAG. Dữ liệu gồm ViHallu, ISE-DSC01 và ViWikiFC. Các "
     "mốc so sánh là PhoBERT, XLM-R, LLM giám khảo, và SemViQA trên ViWikiFC. Mô hình đọc là "
@@ -144,7 +144,7 @@ REF = f'''<section class="slide" data-notes="{html.escape(REF_NOTES)}">
   {run_header('Tài liệu tham khảo')}
   <div class="head"><h2>Tài liệu tham khảo chính</h2></div>
   <div class="refs">{groups}</div>
-  <div class="foot"><span>Số trong ngoặc theo danh mục 32 tài liệu của quyển khóa luận</span><span>00</span></div>
+  <div class="foot"><span>Số trong ngoặc theo danh mục 36 tài liệu của quyển khóa luận</span><span>00</span></div>
 </section>'''  # noqa: E501 — one line of slide markup, kept whole so it stays greppable
 
 # new order: indices 0..18 are Minh's 19 original slides
