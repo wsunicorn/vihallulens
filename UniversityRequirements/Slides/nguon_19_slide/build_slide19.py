@@ -243,7 +243,9 @@ NOTES = {
     "res": "Đây là kết quả chính trên 700 mẫu kiểm tra của ViHallu. Hai mốc đầu, đặc trưng bề mặt và Gemini, quanh 0,66; "
            "lưu ý Gemini chỉ chấm trên 300 mẫu. Hai bộ mã hóa tinh chỉnh đạt 0,749 và 0,776. Hướng chú ý đạt 0,745 với "
            "lookback gộp và 0,757 với chunk-aware; khoảng tin cậy chồng với XLM-R nên nhóm kết luận là ngang, không nói là "
-           "hơn. Khác biệt nằm ở số tham số phải huấn luyện: 579 so với 369 triệu của PhoBERT."
+           "hơn. Khác biệt nằm ở số tham số phải huấn luyện: 579 so với 369 triệu của PhoBERT. Con số này không đặt cạnh "
+           "84,80 % của đội dẫn đầu cuộc thi ViHallu: khác tập đánh giá, và các đội đầu tinh chỉnh LLM, còn nhóm em không "
+           "tinh chỉnh mô hình nào."
            + TT + "rê chuột lên từng dòng để xem khoảng tin cậy và số tham số.",
     "loc": "Đây là phép kiểm chứng cơ chế trực tiếp, không đi qua bộ phân loại. Trên 2.376 mẫu ISE-DSC01 có bằng chứng định "
            "vị được, nhóm xem đầu chú ý mạnh nhất nhìn đoạn nào nhiều nhất. Nó trúng đúng đoạn chứa bằng chứng ở 87,8 % số "
@@ -392,7 +394,7 @@ f = sub(f, "['Gemini giám khảo', .664, .607, .719, 0, '0 · gọi API', 'base
 f = sub(f, "'Đề tài · ECE 0,044 — hiệu chỉnh tốt nhất bảng'", "'Đề tài · 32 đầu × 6 đặc trưng'")
 f = sub(f, "  tx(ax, (X0 + X1) / 2, 26, 'macro-F1 trên 700 mẫu kiểm tra · chấm và vạch là khoảng tin cậy 95 %', { 'text-anchor': 'middle', 'font-size': 20, fill: C.muted });",
         "  tx(ax, (X0 + X1) / 2, 26, 'macro-F1 trên 700 mẫu kiểm tra · chấm và vạch là khoảng tin cậy 95 %', { 'text-anchor': 'middle', 'font-size': 20, fill: C.muted });\n"
-        "  tx(ax, 0, 556, '† Gemini chấm trên 300/700 mẫu test', { 'font-size': 18, fill: C.muted });")
+        "  tx(ax, 0, 556, '† Gemini chấm trên 300/700 mẫu test · các số trong hình không đặt cạnh 84,80 % của cuộc thi ViHallu: khác tập đánh giá, khác chế độ (mục 7.1)', { 'font-size': 18, fill: C.muted });")
 f = sub(f, "{ cap: 'Hai mốc rẻ: <b>đặc trưng bề mặt</b>", "{ cap: 'Hai mốc đầu: <b>đặc trưng bề mặt</b>")
 f = sub(f, "Khác biệt nằm ở cột phải: hướng chú ý chỉ huấn luyện <b>579 tham số</b>, ít hơn PhoBERT khoảng <b>637.000 lần</b>, và có xác suất hiệu chỉnh tốt nhất bảng (ECE 0,044). Rê chuột lên từng dòng.",
         "Khác biệt nằm ở cột phải: hướng chú ý chỉ huấn luyện <b>579 tham số</b>, ít hơn PhoBERT khoảng <b>638.000 lần</b>, và không phải tinh chỉnh mô hình nào.")

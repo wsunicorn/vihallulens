@@ -4749,8 +4749,8 @@ nguồn đó vào repo; quá 28/10 chưa có thì sửa thẳng bản docx rồi
 giá nhất trong ba thí nghiệm) → T45D (E19) → T45E (E20) chỉ khi đã có quyết định về phần cứng.
 Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 của `CLAUDE.md`.
 
-- [ ] **T45B** · LM · Đoạn định vị so với bảng xếp hạng ViHallu trong chương 7 và trên slide — **0
-  GPU, ưu tiên cao nhất**
+- [x] **T45B** · LM · Đoạn định vị so với bảng xếp hạng ViHallu trong chương 7 và trên slide — hoàn
+  thành 25/10/2026
   - **Vì sao:** Bảng 2.2 của quyển đã ghi đội cao nhất cuộc thi đạt **84,80 %** macro-F1, nhưng
     chương 7 chưa giải thích vì sao không đặt con số đó cạnh 0,757. Hội đồng tra ra rất nhanh và
     có thể hiểu sai theo cả hai chiều — "thua 9 điểm" (sai: khác tập đánh giá, tập kiểm tra riêng
@@ -4763,8 +4763,15 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Trạng thái 24/10/2026:** phần quyển **xong**: mục 7.1 có đoạn "Vì sao không đặt 0,757 cạnh
     84,80 %" nêu đủ ba lẽ (khác tập đánh giá, khác chế độ, khác câu hỏi), không bảng nào đặt hai số
     cạnh nhau. **Còn:** câu trên slide kết quả (slide 14 của bộ 23), thuộc phần slide Minh dựng.
+  - **Hoàn thành 25/10/2026.** Slide 14 (bộ 19 slide: slide 12) thêm câu vào dòng chú thích dưới
+    hình: "các số trong hình không đặt cạnh 84,80 % của cuộc thi ViHallu: khác tập đánh giá, khác chế
+    độ (mục 7.1)". Ghi chú diễn giả thêm hai câu cùng ý. Chân slide giữ nguyên ba trích dẫn công
+    trình như GVHD dặn. Sửa ở nguồn `nguon_19_slide/build_slide19.py`, dựng lại cả hai bộ, thay
+    đúng một trang trong mỗi PDF. **Học được gì:** con số của người khác chỉ so được khi cùng tập
+    đánh giá và cùng chế độ; nói rõ điều đó trước khi hội đồng hỏi thì tránh được cả hai cách hiểu
+    sai.
 
-- [ ] **T42B** · LM · Cập nhật chương 2 với bốn công trình 2025–2026 — **0 GPU**
+- [x] **T42B** · LM · Cập nhật chương 2 với bốn công trình 2025–2026 — hoàn thành 25/10/2026
   - **Vì sao:** chương 2 hiện dừng ở các công trình 2024 cùng ReDeEP và LettuceDetect. Bốn công
     trình mới ở mục 4 của `docs/REFERENCES.md` vừa xác nhận độc lập kết luận trung tâm của đề
     tài (Lookback Lens sập ở mức đoạn phản hồi: F1 13,2 / 0,0 / 0,0), vừa đặt ra câu hỏi hội đồng
@@ -4782,6 +4789,13 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     ở dòng Kiểm tra tính trên danh mục 45 cũ, trước khi Minh rà còn 32). Số liệu của bốn bài chỉ
     nằm ở chương 2. Slide 22 đánh lại số theo danh mục mới. **Còn:** trích MVA và ContextCite ở mục
     7.2, chờ GVHD đọc xong mục đó.
+  - **Hoàn thành 25/10/2026.** Mục 7.2 thêm hai trích dẫn, giữ mức sửa tối thiểu vì GVHD đang đọc
+    mục này: ContextCite vào danh sách trích dẫn có sẵn về giới hạn của chú ý như một lời giải
+    thích; Multi-View Attention ở câu nối mới của "lý do thứ hai" (xem T48). Kiểm: `resolve.py` báo
+    36 tài liệu, không cảnh báo khóa thiếu hay tài liệu không được trích; số liệu của bốn bài chỉ ở
+    chương 2. **Học được gì:** bốn bài 2025–2026 không đổi kết luận của đề tài mà đặt nó vào đúng
+    chỗ: ContextCite đặt câu hỏi mà E19 trả lời, Multi-View Attention xác nhận độc lập rằng gộp cả
+    phản hồi là nút thắt, đúng hướng E18 vừa kiểm ở mức câu.
 
 - [x] **T45C** · M · **E18** — chấm theo từng câu phản hồi, gộp max thay vì trung bình — hoàn thành
   23/10/2026 (64 phút GPU)
@@ -4974,9 +4988,11 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       repo lưu trữ và `docs/LICH_SU_PR.md`.
     - **Nhật kí làm việc:** điền theo thực tế tuần 3–12, đối chiếu ngày hoàn thành task, ngày gộp
       PR và ngày ghi kết quả; tuần 13–15 ghi là dự kiến.
-    - **Còn:** mục 7.2 (chờ GVHD) — "lý do thứ hai" ở đó hiện mâu thuẫn với E18, và đoạn E19 về
-      ranh giới định vị/quy trách nhiệm cùng trích dẫn MVA, ContextCite cũng thuộc mục này; câu T45B
-      trên slide 14.
+    - **Mục 7.2 (25/10):** sửa tối thiểu vì GVHD đang đọc lại: "lý do thứ hai" thêm một câu nối dẫn
+      tới mục 6.14.2 (đã kiểm ở mức câu và không đứng vững), cùng hai trích dẫn của T42B. Hết mâu
+      thuẫn với E18. Phần còn lại của mục 7.2 giữ nguyên, chờ ý kiến GVHD. Ranh giới định vị và quy
+      trách nhiệm của E19 đã nói ở mục 6.14.1.
+    - Câu T45B trên slide 14: xong (xem T45B).
   - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
     sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
