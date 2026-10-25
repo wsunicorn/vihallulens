@@ -5006,6 +5006,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     ngày 02/10. Kiểm: dựng lại khi chưa sửa thì trùng từng byte với hai file HTML đang có; sau khi
     sửa, so ảnh chụp từng slide chỉ thấy slide 12 và 21 đổi (bộ 19 slide: 10 và 18); hai bộ tự kiểm
     (`?qa`) đều in `QA-OK`. **Còn:** chọn người nói, diễn tập bấm giờ.
+  - **Trạng thái 25/10/2026:** slide 14 thêm câu về con số 84,80 % (T45B), slide 22 đánh lại số
+    theo danh mục 36 tài liệu (T42B). **Còn:** chọn người nói, diễn tập bấm giờ.
   - **Trạng thái 22/10/2026:** bộ chính là **`slide_hoi_dong_23.html`** (PR #128): 19 slide Minh dựng
     ngày 14/10 cộng bốn slide bổ sung cho đủ bố cục GVHD yêu cầu ngày 05/10 (bài toán, các hướng đã
     có kèm công trình ở chân slide, kiểm định năm giả thuyết, tài liệu tham khảo). Ghi chú diễn giả
@@ -5029,7 +5031,7 @@ Quy trình của bộ môn tính email và nhật ký làm việc là **minh ch�
 
 | Việc | Tần suất | Ghi chú |
 |---|---|---|
-| Email báo cáo tuần gửi GVHD | **khi có việc mới** (GVHD đồng ý từ tháng 10/2026; trước đó mỗi tuần) | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Mẫu: `UniversityRequirements/WeeklyLogs/Mau_email_bao_cao_tuan.md`. Thư đã gửi các ngày 19/08, 28/08, 06/09, 11/09, 20/09, 02/10 (tuần 9) và 16/10 (tuần 11) |
+| Email báo cáo tuần gửi GVHD | **khi có việc mới** (GVHD đồng ý từ tháng 10/2026; trước đó mỗi tuần) | CC bạn cùng nhóm, **Reply All vào chuỗi cũ**, cả kỳ chỉ một chuỗi. Mẫu: `UniversityRequirements/WeeklyLogs/Mau_email_bao_cao_tuan.md`. Thư đã gửi các ngày 19/08, 28/08, 06/09, 11/09, 20/09, 02/10 (tuần 9) và 16/10 (tuần 11); thư tuần 12 (E17–E19, quyển v5) soạn 25/10, gói `Tuan_12_19-10_den_25-10_GuiThay.zip`, chờ gửi |
 | Cập nhật sheet "Nhật ký" trong `UniversityRequirements/Plan/Ke_hoach_KLTN_da_dien.xlsx` | mỗi tuần | Xin GVHD phê duyệt nhật ký |
 | Cập nhật cột "thực tế" trong sheet kế hoạch | mỗi tuần | Đơn vị trên Gantt là **tuần** |
 
