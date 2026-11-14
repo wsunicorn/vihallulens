@@ -187,6 +187,7 @@ Vị trí hai vùng được tìm bằng cách **dò chuỗi trong prompt đã r
 │   ├── REFERENCES.md      # bài báo nền, công thức gốc Lookback Lens
 │   ├── report/            # bản thảo quyển khóa luận theo chương, cách dựng ở report/README.md
 │   ├── media/             # hình của quyển; media/src/ là mã vẽ hình
+│   ├── slides/            # bộ slide bảo vệ và tài liệu đi kèm; nguon/dung_lai.py dựng lại
 │   └── tools/             # resolve.py ghép và đánh số, build_docx.py dựng Word và PDF
 ├── models/                # bundle bộ phát hiện đã khớp (pkl + json sidecar), thư viện và API nạp lên
 ├── notebooks/             # notebook chạy trên Kaggle, chỉ gọi hàm từ src

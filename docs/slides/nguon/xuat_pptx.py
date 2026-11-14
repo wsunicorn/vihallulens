@@ -10,9 +10,8 @@ as in the HTML. Speaker notes are copied from ``data-notes``.
 What cannot be carried over: hover tooltips and the in-figure buttons (alternate views). The HTML
 stays the primary deck; the PPTX is the fallback for a machine that only has PowerPoint.
 
-    uv run --no-project --with playwright==1.48.0 --with python-pptx==1.0.2 \
-        --with imageio-ffmpeg==0.5.1 --with pillow \
-        python nguon_hoan_thien/xuat_pptx.py slide_hoi_dong_31.html slide_hoi_dong_31.pptx
+Run through ``dung_lai.py --pptx`` (the command is in its docstring), or alone with
+``python xuat_pptx.py ../slide_hoi_dong.html ../slide_hoi_dong.pptx`` under the same packages.
 
 Needs Google Chrome installed (Playwright drives it through ``channel="chrome"``).
 """

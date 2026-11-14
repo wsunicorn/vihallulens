@@ -12,7 +12,7 @@ Nguyên tắc chung khi trả lời:
 - Không biết thì nói không biết, và nói sẽ kiểm tra bằng cách nào.
 
 Cập nhật 23/10/2026: E17, E18, E19 đã chạy, các câu liên quan đã điền số thật (A4, A8, A9, E1).
-Cập nhật 14/11/2026: số slide trong ngoặc vuông theo bộ 31 slide `slide_hoi_dong_31.html`; kết quả
+Cập nhật 14/11/2026: số slide trong ngoặc vuông theo bộ 31 slide `slide_hoi_dong.html`; kết quả
 E19 đã đưa lên bước cuối của slide 22.
 
 ---
