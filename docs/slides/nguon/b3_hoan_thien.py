@@ -1,6 +1,6 @@
 """Final pass on the committee deck: academic titles, agenda, part dividers and the E19 result.
 
-Reads the 23-slide deck produced by ``bo_sung_slide_minh.py`` and writes the 31-slide deck that
+Reads the 23-slide deck produced by ``b2_bo_sung.py`` and writes the 31-slide deck that
 is presented to the committee. Nothing here changes a figure's data; it changes wording and
 structure only:
 
@@ -15,7 +15,9 @@ structure only:
 Every text replacement states how many times its source string must occur, so a change in an
 earlier stage fails loudly here instead of silently leaving old wording on a slide.
 
-    python hoan_thien_slide.py slide_hoi_dong_23.html slide_hoi_dong_31.html
+Step 3 of the deck build; ``dung_lai.py`` runs all steps. Alone:
+
+    python b3_hoan_thien.py ../_build/slide_hoi_dong_23.html ../slide_hoi_dong.html
 """
 
 # ruff: noqa: E501 — replacement pairs are exact slide strings, kept whole so each stays greppable

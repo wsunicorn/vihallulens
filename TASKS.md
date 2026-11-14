@@ -4998,6 +4998,16 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Dọn repo 14/11/2026:** bộ slide chuyển sang **`docs/slides/`**, cạnh `docs/report/`, để mọi
+    tài liệu commit nằm trong `docs/` và `UniversityRequirements/` chỉ còn giấy tờ hành chính trên máy
+    (gitignore cả thư mục). Bộ chính đổi tên thành `slide_hoi_dong.html` / `.pdf` / `.pptx`, bỏ số
+    slide khỏi tên để sửa về sau không phải đổi tên. Nguồn dựng gom vào `docs/slides/nguon/`: đầu
+    vào `slide_goc_32.html`, ba bước `b1_rut_gon_19.py` → `b2_bo_sung.py` → `b3_hoan_thien.py`, hai
+    bước xuất `xuat_pdf.py`, `xuat_pptx.py`, và `dung_lai.py` chạy cả chuỗi bằng một lệnh; hai bộ
+    trung gian 19 và 23 slide sinh vào `_build/` (gitignore) thay vì commit. Bỏ bộ cũ `slide_v2.html`
+    và giải thích của nó, hai kế hoạch slide v2, v3, ghi chú cho Minh (nội dung đã gộp vào
+    `HUONG_DAN.md`). Kiểm: `dung_lai.py` dựng lại HTML trùng từng byte bản trước khi dọn; `--pdf`
+    xuất lại 31 trang; `xuat_pptx.py` chạy được ở vị trí mới.
   - **Trạng thái 14/11/2026:** bộ chính thành **`slide_hoi_dong_31.html`** (kèm PDF 31 trang), dựng
     từ bộ 23 slide bằng script mới `UniversityRequirements/Slides/nguon_hoan_thien/
     hoan_thien_slide.py`. Mục đích: slide đọc được với cả thành viên hội đồng không chuyên sâu về

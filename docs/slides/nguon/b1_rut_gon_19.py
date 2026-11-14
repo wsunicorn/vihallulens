@@ -1,11 +1,11 @@
 """Build the 19-slide defence deck from Lân's 32-slide HTML deck of 02/10/2026.
 
-Run from UniversityRequirements/Slides:
+Step 1 of the deck build; ``dung_lai.py`` runs all steps. Alone:
 
-    python nguon_19_slide/build_slide19.py nguon_19_slide/slide_goc_32.html slide_rut_gon_19.html
+    python b1_rut_gon_19.py slide_goc_32.html ../_build/slide_rut_gon_19.html
 
-The input is never modified; the output is self-contained and opens offline. The 23-slide deck is
-then rebuilt from it with nguon_bo_sung_15-10/bo_sung_slide_minh.py (steps in HUONG_DAN.md).
+The input is never modified; the output is self-contained and opens offline. Step 2
+(``b2_bo_sung.py``) builds the 23-slide deck from it.
 
 Every text edit is an exact string replacement with an asserted match count, so a change in
 the source deck stops the build instead of silently skipping a fix. Numbers follow the v4

@@ -1,7 +1,7 @@
-# Giải thích từng slide và kịch bản thời gian — bộ `slide_hoi_dong_31.html`
+# Giải thích từng slide và kịch bản thời gian — bộ `slide_hoi_dong.html`
 
 Viết ngày 22/10/2026 cho bộ 23 slide, cập nhật ngày 14/11/2026 cho bộ chính 31 slide. Bản cho bộ
-cũ `slide_v2.html` giữ ở `GIAI_THICH_SLIDE_v2_cu.md`. File này dùng cho hai việc:
+cũ `slide_v2.html` đã bỏ khỏi repo ngày 14/11. File này dùng cho hai việc:
 
 1. **Diễn tập.** Phần đầu là kịch bản thời gian có hai phương án, vì GVHD chưa cho biết thời lượng
    trình bày.
@@ -496,7 +496,7 @@ tham số phải huấn luyện. Mô hình đọc 3B là điểm cân bằng.
 
 **Giải thích.** Số trong ngoặc vuông khớp danh mục 36 tài liệu của quyển, đã đánh lại ngày 24/10
 sau khi T42B thêm bốn tài liệu mới. Thêm hay bớt tài liệu trong quyển thì phải sửa lại slide này
-(`REFS` trong `nguon_bo_sung_15-10/bo_sung_slide_minh.py`).
+(`REFS` trong `nguon/b2_bo_sung.py`).
 
 ### Slide 31 — Cảm ơn
 

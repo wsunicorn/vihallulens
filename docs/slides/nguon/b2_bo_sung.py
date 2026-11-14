@@ -7,10 +7,13 @@ The 19 original slides are kept untouched. Added, in thesis order:
   + The five hypotheses tested   (self-assessment, before the done / not-done slide)
   + Main references              (before the closing slide; numbers follow the thesis list)
 
-The diagrams of the first three come from ``figs_minh_bo_sung.js``, which uses the same drawing
+The diagrams of the first three come from ``figs_bo_sung.js``, which uses the same drawing
 helpers as Minh's deck. Footer page numbers and the "Trả lời ở slide …" pointers are renumbered.
 
-    python bo_sung_slide_minh.py slide_rut_gon_19.html figs_minh_bo_sung.js slide_hoi_dong_23.html
+Step 2 of the deck build; ``dung_lai.py`` runs all steps. Alone:
+
+    python b2_bo_sung.py ../_build/slide_rut_gon_19.html figs_bo_sung.js \
+        ../_build/slide_hoi_dong_23.html
 """
 
 import html
