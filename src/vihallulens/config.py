@@ -46,8 +46,9 @@ class DatasetConfig(_Base):
     def _seed_is_locked(cls, value: int) -> int:
         if value != REQUIRED_SPLIT_SEED:
             raise ValueError(
-                f"split_seed must stay {REQUIRED_SPLIT_SEED}: section 3 of CONVENTIONS.md fixes it and "
-                f"section 7 forbids changing it. Update CONVENTIONS.md first if this is deliberate."
+                f"split_seed must stay {REQUIRED_SPLIT_SEED}: section 3 of CONVENTIONS.md fixes it "
+                f"and section 7 forbids changing it. Update CONVENTIONS.md first if this is "
+                f"deliberate."
             )
         return value
 

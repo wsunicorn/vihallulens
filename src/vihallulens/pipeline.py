@@ -161,7 +161,10 @@ class HallucinationDetector:
     # -- scoring -----------------------------------------------------------------------------
 
     def score(self, context: str, question: str, response: str) -> ScoreResult:
-        """One request, end to end. The response's first token is not scored (CONVENTIONS.md §8.5)."""
+        """One request, end to end.
+
+        The response's first token is not scored (CONVENTIONS.md §8.5).
+        """
         started = time.perf_counter()
         chunks = chunk_context(context, **self._chunk_kwargs)
         features = self.extractor.extract(context, question or "", response, chunks)
