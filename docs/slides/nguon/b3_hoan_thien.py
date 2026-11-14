@@ -830,7 +830,15 @@ js = sub(
     js,
     "  let k = 3;\n  buttons(api, [['Mẫu khác ↻', () => { k = (k + 1) % S.length;",
     E19_SETUP
-    + "  let k = 3;\n  buttons(api, [['Mẫu khác ↻', () => { if (e19On) return; k = (k + 1) % S.length;",
+    + "  let k = 0;\n  buttons(api, [['Mẫu khác ↻', () => { if (e19On) return; k = (k + 1) % S.length;",
+    where="loc",
+)
+# step 2 used to play four samples back to back (6,4 s); it now shows one, and "Mẫu khác" the rest
+js = sub(
+    js,
+    "play: tl => { S.slice(0, 4).forEach((s, j) => { sample(tl, s, j === 0 ? 1.4 : .8); "
+    "tl.to({}, { duration: .45 }); }); } },",
+    "play: tl => { sample(tl, S[0], 1.4); } },",
     where="loc",
 )
 js = sub(
@@ -847,8 +855,129 @@ js = sub(
     js,
     "slides.forEach((s, j) => { try { show(j); } catch (e) {",
     "slides.forEach((s, j) => { try { show(j); const h = s.querySelector('.fig') && s.querySelector('.head'); "
-    "if (h && h.offsetTop + h.offsetHeight > 312) out.push(`slide ${j + 1}: khối tiêu đề cao ${h.offsetTop + h.offsetHeight}px > 312`); } catch (e) {",
+    "if (h && h.offsetTop + h.offsetHeight > 312) out.push(`slide ${j + 1}: khối tiêu đề cao ${h.offsetTop + h.offsetHeight}px > 312`); "
+    "if (cur && cur.goStep) cur.steps.forEach((_, k) => cur.goStep(k, false)); } catch (e) {",
     where="qa",
+)
+
+# Presenter-driven steps. The deck used to play every step of a diagram back to back in 6–15 s
+# while the spoken notes for a slide run 50–85 s, so the picture ran ahead of the speaker. Now the
+# first step plays on arrival and stops; each "next" plays one more step; ?auto restores the old
+# behaviour (for screen recording). ?all, ?at and ?qa behave as before.
+ENGINE_START = "  function mount(s) {\n"
+ENGINE_END = "  function start() {\n"
+a, b = js.index(ENGINE_START), js.index(ENGINE_END)
+assert js.count(ENGINE_START) == 1 and js.count(ENGINE_END) == 1 and a < b
+NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạng thái cuối (khi lùi về slide trước)
+  function mount(s, atEnd) {
+    if (pending) { pending.kill(); pending = null; }
+    if (cur) { if (cur.run) cur.run.kill(); cur.tl.kill(); cur = null; }
+    TIP_HIDE();
+    const name = s.dataset.fig; if (!name || !FIGS[name]) return;
+    const fig = s.querySelector('.fig'), head = s.querySelector('.head');
+    const headB = head.offsetTop + head.offsetHeight;
+    fig.style.top = Math.max(headB + 26, headB + (898 - headB - 560) / 2) + 'px';
+    const svg = fig.querySelector('svg'); svg.innerHTML = '';
+    const t0 = s.querySelector('.terms'); if (t0) t0.style.maxWidth = '';
+    fig.querySelectorAll('.ctl').forEach(c => c.remove());
+    const tl = gsap.timeline({ paused: true });
+    // nút trong hình: chế độ bấm chỉ cho bước đang chạy chạy xong; chế độ tự chạy thì tới cuối như cũ
+    const api = { fig, svg, tl, finish: () => { if (AUTO) { if (tl.progress() < 1) { tl.progress(1); setStep(steps.length - 1); } }
+      else if (c.run) goStep(c.k, false); } };
+    const steps = FIGS[name](svg, api);
+    const ctl = fig.querySelector('.ctl'), terms = s.querySelector('.terms');
+    if (ctl && terms) terms.style.maxWidth = (1680 - ctl.offsetWidth - 40) + 'px';   // chừa chỗ cho nút điều khiển
+    const hb = head.offsetTop + head.offsetHeight;
+    fig.style.top = Math.max(hb + 26, hb + (898 - hb - 560) / 2) + 'px';
+    const dots = s.querySelector('.dots'), cap = s.querySelector('.stepcap .txt');
+    dots.innerHTML = steps.map((_, k) => `<span title="Bước ${k + 1}">${k + 1}</span>`).join('');
+    function setStep(k) { cap.innerHTML = steps[k].cap; [...dots.children].forEach((d, j) => d.classList.toggle('on', j <= k)); }
+    // chế độ bấm: chú thích do goStep đặt, và mỗi bước cách bước sau 0,01 s để điểm cuối bước j
+    // không trùng điểm đầu bước j + 1 (nếu trùng, các lệnh mở đầu bước sau sẽ chạy sớm)
+    steps.forEach((st, k) => { tl.addLabel('s' + k); if (AUTO) tl.call(() => setStep(k)); st.play(tl); tl.addLabel('e' + k);
+      tl.to({}, { duration: AUTO ? (st.hold ?? 1.4) : .01 }); });
+    tl.timeScale(SPEED);
+    const c = { tl, steps, setStep, k: 0, run: null };
+    function goStep(j, animate) {                       // tới cuối bước j; animate: chạy hoạt ảnh của riêng bước j
+      if (c.run) { c.run.kill(); c.run = null; }
+      c.k = j; tl.pause();
+      tl.seek(0, true);                                  // về đầu rồi tua tới để các lệnh đổi trạng thái chạy đúng thứ tự
+      tl.seek(animate ? 's' + j : 'e' + j, false); setStep(j);
+      if (animate) c.run = tl.tweenTo('e' + j, { onComplete: () => { c.run = null; } });
+    }
+    c.goStep = goStep;
+    [...dots.children].forEach((d, j) => d.addEventListener('click', e => { e.stopPropagation(); goStep(j, true); }));
+    cur = c;
+    if (ALL) { tl.progress(1); setStep(steps.length - 1); c.k = steps.length - 1; }
+    else if (AT !== null) { tl.seek(AT, false); let k = 0; steps.forEach((_, j) => { if (tl.labels['s' + j] <= AT) k = j; }); setStep(k); c.k = k; }
+    else if (AUTO) { setStep(0); pending = gsap.delayedCall(.35, () => { pending = null; if (cur === c) tl.play(); }); }
+    else if (atEnd) goStep(steps.length - 1, false);
+    else { setStep(0); pending = gsap.delayedCall(.35, () => { pending = null; if (cur === c) goStep(0, true); }); }
+  }
+
+  function show(n, atEnd) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, j) => s.classList.toggle('active', j === i));
+    document.getElementById('progress').style.width = (100 * (i + 1) / slides.length) + '%';
+    document.getElementById('notes-body').innerHTML = `<b>Slide ${i + 1}/${slides.length}</b><br><br>` + (slides[i].dataset.notes || '');
+    history.replaceState(null, '', location.search + '#' + (i + 1));
+    mount(slides[i], atEnd);
+  }
+
+  // tới: bước 1 chưa bắt đầu thì chạy ngay; đang chạy thì cho xong; còn bước thì chạy bước kế; hết thì sang slide
+  function next() {
+    const c = cur;
+    if (c && !AUTO && !ALL) {
+      if (pending) { pending.kill(); pending = null; c.goStep(0, true); return; }
+      if (c.run) { c.goStep(c.k, false); return; }
+      if (c.k < c.steps.length - 1) { c.goStep(c.k + 1, true); return; }
+    }
+    show(i + 1);
+  }
+  // lùi: lùi một bước; đang ở bước đầu thì về slide trước, hiện sẵn trạng thái cuối
+  function prev() {
+    const c = cur;
+    if (c && !AUTO && !ALL && c.k > 0 && !pending) { c.goStep(c.k - 1, false); return; }
+    show(i - 1, true);
+  }
+
+  const black = document.createElement('div'); black.id = 'black'; document.body.appendChild(black);
+  let typed = '', typedAt = 0;                           // gõ số rồi Enter để nhảy tới slide
+  addEventListener('keydown', e => {
+    if (/^[0-9]$/.test(e.key)) { if (Date.now() - typedAt > 2000) typed = ''; typed += e.key; typedAt = Date.now(); return; }
+    if (e.key === 'Enter' && typed && Date.now() - typedAt < 2000) { e.preventDefault(); show(parseInt(typed, 10) - 1); typed = ''; return; }
+    typed = '';
+    if (e.shiftKey && e.key === 'ArrowRight') { e.preventDefault(); show(i + 1); }
+    else if (e.shiftKey && e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1, true); }
+    else if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'r' || e.key === 'R') { if (cur) { if (AUTO || !cur.goStep) cur.tl.restart(); else cur.goStep(cur.k, true); } }
+    else if (e.key === 'b' || e.key === 'B' || e.key === '.') { black.classList.toggle('on'); }
+    else if (e.key === 'n' || e.key === 'N') { document.getElementById('notes').classList.toggle('on'); }
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1, true);
+  });
+  addEventListener('click', e => {
+    if (black.classList.contains('on')) { black.classList.remove('on'); return; }
+    if (e.target.closest('.fig, .ctl, #notes, button, .grid16, .dots')) return;   // bấm trong sơ đồ: để dành cho tương tác
+    if (e.clientX > innerWidth * .2) next(); else prev();
+  });
+"""
+js = js[:a] + NEW_ENGINE + js[b:]
+js = sub(
+    js,
+    "  let i = 0, cur = null;\n",
+    "  let i = 0, cur = null, pending = null;\n  const AUTO = Q.has('auto');\n",
+    where="engine",
+)
+js = sub(
+    js,
+    "   ← → / Space: đổi slide · R: chạy lại sơ đồ · N: ghi chú · F: toàn màn hình\n",
+    "   → Space PageDown: bước kế, hết bước thì sang slide · ← PageUp: lùi một bước\n"
+    "   Shift+→ / Shift+←: bỏ qua các bước · số + Enter: nhảy tới slide · B: màn hình đen\n"
+    "   R: chạy lại bước hiện tại · N: ghi chú · F: toàn màn hình\n"
+    "   ?auto — sơ đồ tự chạy hết các bước như bản cũ (để quay màn hình)\n",
+    where="engine",
 )
 tail_part = tail_part[:js_start] + js
 
@@ -980,6 +1109,9 @@ CSS = """
 /* === HOÀN THIỆN 14/11: câu tóm tắt dưới tiêu đề, mục lục, slide chuyển phần === */
 .lede { margin-top: 12px; padding-left: 16px; border-left: 4px solid var(--ctx); font: 400 27px/1.38 var(--sans); color: var(--ink); max-width: 1640px; }
 .r6 { transition-delay: .78s; } .r7 { transition-delay: .92s; }
+.dots span { cursor: pointer; }
+#black { position: fixed; inset: 0; background: #000; z-index: 90; display: none; }
+#black.on { display: block; }
 .toc { position: absolute; left: 120px; right: 120px; top: 222px; list-style: none; border-top: 2px solid var(--ink); }
 .toc li { display: grid; grid-template-columns: 100px 500px 1fr 150px; align-items: baseline; padding: 22px 0 20px; border-bottom: 1.5px solid var(--rule); }
 .toc .no { font: 500 42px/1 var(--serif); color: var(--ctx); }

@@ -9,10 +9,8 @@ UniversityRequirements/
 reference_papers/
 
 # --- Bộ slide (docs/slides/): commit HTML, PDF và nguồn dựng ---
-# Bản PPTX nặng hơn 10 MB, dựng lại bằng nguon/dung_lai.py --pptx; bản trung gian và tệp tạm sinh lại được
-docs/slides/*.pptx
+# Bản trung gian do nguon/dung_lai.py sinh lại được
 docs/slides/_build/
-docs/slides/_rec_tmp.html
 
 # --- Kết quả nặng ---
 results/*.npz
