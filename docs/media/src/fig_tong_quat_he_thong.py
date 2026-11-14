@@ -128,7 +128,7 @@ def build() -> None:
     y += 22
     # explicit breaks: a chip is too narrow for a separator to end a line cleanly
     items = ["Python 3.11\nuv.lock", "configs/*.yaml", "hạt giống 42",
-             "results/*.jsonl", "KTC bootstrap\n2.000 lần", "pytest\n688 ca"]
+             "results/*.jsonl", "KTC bootstrap\n2.000 lần", "pytest\n825 ca"]
     bw = (W - 5 * 8) / 6
     c.raw_text(M, y, "MÔI TRƯỜNG VÀ BẰNG CHỨNG TÁI LẬP", T_SMALL, fill=GRAY, weight="bold")
     y += 16

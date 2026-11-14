@@ -4971,6 +4971,20 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       hướng phát triển thành chấm theo đoạn có nhãn mức đoạn.
     - **E17 (T41):** một đoạn ngắn ở mục 8.2, không thêm bảng; ghi kèm split gốc rò rỉ ngữ cảnh.
     - Slide 21 (dòng ViFactCheck, hướng phát triển) và slide 12 (số ca kiểm thử) sửa theo.
+  - **Rà bố cục 14/11/2026** (141 → 137 trang). Rà đủ 141 trang trên bản PDF dựng lại, tìm trang trống
+    nhiều giữa chương. Nguyên tắc của mẫu Khoa là bảng và hình nằm trọn một trang, nên không cho bảng
+    ngắt trang mà xử lý từng chỗ:
+    - Bốn hình chỉ thiếu 1–2 cm là vừa trang trước nên bị đẩy, để lại 40–77 % trang trống: Hình 1.2,
+      4.1, 5.2 thu về 14 cm, Hình 3.2 về 13 cm (`FIT_IMAGES` trong `build_docx.py`). Trang 7 trước
+      Hình 1.2 từ trống 77 % nay đầy.
+    - Bảng 7.1 và Bảng 6.12 đặt sau đoạn văn cùng mục ngay phía sau, chữ lấp chỗ trống; bảng vẫn
+      nằm sau câu nhắc tới nó.
+    - Bảng 6.1: đặt độ rộng cột cố định, tiêu đề "Độ chính xác dự báo dương" từ 5 dòng còn 3, mỗi
+      dòng số liệu còn 2 dòng. Bảng 6.14: tương tự, nay nằm cùng trang với đề mục 6.12 thay vì để
+      trống nửa trang.
+    - Hình 1.2 còn ghi "pytest 688 ca" từ lượt 18/09; vẽ lại thành 825 ca cho khớp mục 5.1.
+    - Giữ nguyên có chủ ý: Bảng 2.1 và 5.1 (gần trọn một trang, ngay sau là đề mục mới), trang
+      ngang của Hình 5.1, và các chỗ trống cuối chương.
   - **Trạng thái 24/10/2026, bản v5 dựng từ `docs/report/`** (141 trang, 22 hình, 45 bảng, 36 tài
     liệu tham khảo):
     - Dựng lại bản v4 từ nguồn trên máy này trước khi sửa: trùng chữ với file Word v4 ở cả 2.378
