@@ -108,6 +108,12 @@ PAGEBREAK_DIV = '<div style="page-break-after: always"></div>'
 
 # charts made with matplotlib read better a little narrower than diagrams/screenshots
 NARROW_IMAGES = ("bieudo_",)
+# Four figures that were 1–2 cm too tall for the space left on their page, so Word
+# pushed each to the next page and left 40–77 % of the page above blank. At 14 cm (90 % of the
+# text width or a little less) each fits where it is first referred to; nothing in them becomes
+# too small to read.
+FIT_IMAGES = {"hinh_tong_quat_he_thong": 14.0, "hinh_co_che_chunk_aware": 14.0,
+              "anh_demo_rag": 14.0, "hinh_chia_theo_nhom": 13.0}  # its caption runs to two lines
 # dense diagrams go on a landscape page — "hình vẽ trình bày theo chiều ngang khổ giấy
 # thì đầu bảng là lề trái của trang"
 LANDSCAPE_IMAGES = ("hinh_trich_huanluyen_phucvu",)
@@ -256,6 +262,7 @@ def preprocess(md: str, work: Path) -> str:
             src = (DOCS / m.group(2)).resolve()
             small = shrink_image(src, media_dir)
             width = 14.0 if src.name.startswith(NARROW_IMAGES) else TEXT_W_CM
+            width = FIT_IMAGES.get(src.stem, width)
             if src.stem in LANDSCAPE_IMAGES:
                 # on its own landscape page the figure and its caption share the text
                 # height (1,3 cm for the caption), so the width follows from the aspect
@@ -1017,9 +1024,9 @@ def fit_columns(table, width_cm: float, pt: float) -> None:
 GLOSSARY_HEADS = {("Từ viết tắt", "Từ đầy đủ", "Nghĩa"): (3.14, 8.03, 4.30),
                   ("Ký hiệu", "Ý nghĩa"): (3.14, TEXT_W_CM - 3.14)}
 
-# Seven data tables whose columns were set by hand in Word for the submitted book (v4):
-# Bảng 7.2, D.1–D.4, G.1 and G.2. Their widths are copied from it, to the twip, so the
-# build lays them out the same way; every other data table keeps fit_columns().
+# Data tables whose column widths are fixed by hand. The first seven (Bảng 7.2, D.1–D.4, G.1,
+# G.2) were set in Word for the submitted book (v4) and are copied from it to the twip; the
+# last two are Bảng 6.1 and 6.14. Every other data table keeps fit_columns().
 BOOK_WIDTHS = {
     ("Cấu hình", "Tham số — lookback gộp", "Tham số — chunk-aware", "ECE — lookback gộp",
      "ECE — chunk-aware", "Bên có ECE thấp hơn"): (2.999, 2.142, 2.434, 2.140, 2.434, 3.351),
@@ -1030,6 +1037,14 @@ BOOK_WIDTHS = {
     ("Tệp", "SHA-256"): (4.674, 10.825),
     ("Hạng mục", "Nhóm thực hiện và quyết định", "Công cụ AI hỗ trợ"): (3.704, 6.703, 5.092),
     ("Ngày", "Yêu cầu (trích)", "Mục đích"): (1.764, 7.585, 6.151),
+    # Bảng 6.1: fit_columns() squeezed "Độ chính xác dự báo dương" into 1,4 cm (five lines);
+    # the binary metrics and the confidence interval get the room their headers need
+    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "Nhị phân", "Độ nhạy", "Độ chính xác dự báo dương",
+     "F1 no", "F1 intr", "F1 extr", "ECE"): (2.7, 2.8, 1.3, 1.3, 2.1, 1.3, 1.3, 1.3, 1.4),
+    # Bảng 6.14: a wider interval column keeps every row to two lines, so the table fits on the
+    # page its section starts on instead of leaving half of that page blank
+    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "ms/mẫu", "VRAM đỉnh", "Tham số huấn luyện",
+     "Loại chi phí"): (3.7, 3.3, 1.7, 1.9, 2.4, 2.5),
 }
 # the hash table (Bảng D.4) sets its rows at 8 pt so every SHA-256 fits on one line, as
 # the book does; its header row keeps the usual size
