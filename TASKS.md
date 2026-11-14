@@ -5012,6 +5012,18 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Điều khiển từng bước 15/11/2026.** Đo trên 19 slide có sơ đồ: mỗi sơ đồ 4–5 bước, trước đây tự
+    chạy hết trong 5,6–15,1 giây (mỗi bước chỉ hiện 1–3 giây) trong khi lời nói mỗi slide dài 50–85 giây,
+    nên hình chạy trước người nói. Nay bước 1 tự chạy khi vào slide rồi dừng; mỗi lần bấm tới
+    (`→`, `Space`, `PageDown`, bút trình chiếu) chạy thêm một bước, hết bước thì sang slide sau; `←`
+    lùi một bước, ở bước 1 thì về slide trước ở trạng thái cuối. Thêm: bấm chấm số để nhảy tới bước,
+    `Shift+→/←` bỏ qua bước, gõ số rồi `Enter` nhảy tới slide, `B` màn hình đen; `?auto` giữ cách tự
+    chạy cũ. Slide 22 bước 2 chỉ chạy một mẫu thay vì bốn mẫu liền 6,4 giây. Slide chữ (7, 29) giữ hiện
+    cùng lúc. Bỏ bản PPTX (video không dừng theo bước, không còn hợp với cách trình bày này) cùng script
+    xuất. Kiểm: `?qa` tua qua mọi bước in `QA-OK`; thử bằng bàn phím trong Chrome: vào slide dừng ở
+    bước 1, bấm khi đang chạy thì cho xong bước, không tự chạy tiếp, lùi đúng, nhảy số đúng.
+  - **Quyển 15/11:** sửa hai câu chưa cập nhật sau E17–E19 — mục 3.1 (ViFactCheck nay ghi là dùng ở
+    E17) và số thí nghiệm ở mục 1.9 và đầu chương 6 (mười sáu → mười chín).
   - **Dọn repo 14/11/2026:** bộ slide chuyển sang **`docs/slides/`**, cạnh `docs/report/`, để mọi
     tài liệu commit nằm trong `docs/` và `UniversityRequirements/` chỉ còn giấy tờ hành chính trên máy
     (gitignore cả thư mục). Bộ chính đổi tên thành `slide_hoi_dong.html` / `.pdf` / `.pptx`, bỏ số

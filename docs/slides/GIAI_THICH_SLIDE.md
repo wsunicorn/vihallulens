@@ -16,7 +16,9 @@ chép lại lời nói đó, chỉ giải thích những gì nằm phía sau.
 chuyển phần trước mỗi phần trong bảy phần; tiêu đề slide nêu tên nội dung thay vì nêu kết luận,
 kết luận chuyển thành dòng tóm tắt ngay dưới tiêu đề; từ ngữ trên slide, nhãn trong hình và ghi
 chú diễn giả chuyển sang cách diễn đạt học thuật, khớp với quyển; kết quả E19 (chú ý so với cắt
-bỏ ngữ cảnh) thành bước thứ năm của slide 22.
+bỏ ngữ cảnh) thành bước thứ năm của slide 22. Sơ đồ không còn tự chạy hết: bước 1 tự chạy khi vào
+slide rồi dừng, mỗi lần bấm tới chạy thêm một bước (phím tắt ở `HUONG_DAN.md`), nên hãy nói xong ý
+của một bước rồi mới bấm.
 
 ---
 
@@ -361,8 +363,8 @@ PhoBERT tinh chỉnh toàn bộ.
 chứng ở 87,8 % số mẫu, và chính xác hơn phương pháp cắt bỏ ngữ cảnh (E19).
 
 **Trên màn hình.** Năm bước. Bốn bước đầu là phép định vị trên ISE-DSC01 và ViWikiFC; bước thứ
-năm thay hình minh họa bên trái bằng ba thanh so sánh của E19. Nút "Mẫu khác" xem thêm ví dụ ở
-bốn bước đầu.
+năm thay hình minh họa bên trái bằng ba thanh so sánh của E19. Bước 2 chỉ chạy một mẫu; bấm "Mẫu
+khác" để xem thêm ví dụ (ở bước 2–4).
 
 **Giải thích.**
 
