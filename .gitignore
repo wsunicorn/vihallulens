@@ -9,6 +9,9 @@ data/raw/*
 UniversityRequirements/*
 !UniversityRequirements/Slides/
 reference_papers/
+# Bản PPTX dựng lại được bằng nguon_hoan_thien/xuat_pptx.py, nặng hơn 10 MB nên chỉ giữ trên máy
+UniversityRequirements/Slides/*.pptx
+UniversityRequirements/Slides/_rec_tmp.html
 
 # --- Kết quả nặng ---
 results/*.npz

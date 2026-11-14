@@ -7,6 +7,7 @@ Cập nhật 14/11/2026. Bộ dùng để báo cáo trước Hội đồng là *
 | File | Là gì |
 |---|---|
 | **`slide_hoi_dong_31.html`** / `.pdf` | **Bộ chính, 31 slide**, dựng từ bộ 23 slide bằng `nguon_hoan_thien/hoan_thien_slide.py` (14/11): thêm slide *Nội dung trình bày* và bảy slide chuyển phần; tiêu đề nêu tên nội dung, kết luận chuyển thành dòng tóm tắt dưới tiêu đề; từ ngữ trên slide, nhãn hình và ghi chú diễn giả theo cách diễn đạt học thuật của quyển; kết quả E19 thành bước 5 của slide 22. Bản PDF là trạng thái cuối của từng slide. |
+| `slide_hoi_dong_31.pptx` | **Bản PowerPoint** cho máy chỉ có PowerPoint (không commit, nặng 13,4 MB; dựng lại bằng lệnh ở mục *Bản PowerPoint*). Mỗi slide là một video quay lại đúng hoạt ảnh của bản HTML, tự chạy khi vào slide và dừng ở trạng thái cuối; chuyển slide mờ dần như bản HTML; ghi chú diễn giả nằm ở phần Notes. Không mang theo được: ô gợi ý khi rê chuột và các nút đổi góc nhìn trong hình (nút vẫn hiện nhưng không bấm được). |
 | `slide_hoi_dong_23.html` / `.pdf` | Bộ 23 slide, đầu vào của bước hoàn thiện; sắp theo bố cục quyển khóa luận như GVHD yêu cầu ngày 05/10: giới thiệu và bài toán → động lực, khoảng trống → cơ sở lý thuyết → dữ liệu → phương pháp đề xuất → hệ thống → thực nghiệm → tự đánh giá → tài liệu tham khảo. Số liệu khớp quyển v5 (số mục, số bảng giữ như v4 nên chân slide vẫn đúng); bốn slide cập nhật theo lượt chạy 23/10: slide 12 (825 ca kiểm thử), 14 (câu về 84,80 %), 21 (kết quả E17, E18), 22 (danh mục 36 tài liệu). Bản PDF là trạng thái cuối của từng slide. |
 | `slide_rut_gon_19.html` / `.pdf` | Bộ 19 slide Minh dựng ngày 14/10, là nền của bộ chính. Dựng bằng script trong `nguon_19_slide/`. |
 | `nguon_19_slide/` | Script `build_slide19.py` dựng bộ 19 slide từ bộ 32 slide ngày 02/10 (`slide_goc_32.html`, không sửa file này). Mỗi chỗ sửa là một phép thay chuỗi có kiểm số lần khớp, nguồn gốc không khớp thì script dừng. |
@@ -60,3 +61,16 @@ Không sửa trực tiếp `slide_hoi_dong_31.html`. Sửa ở nguồn rồi d�
    Mở `slide_hoi_dong_31.html?qa` để kiểm: góc dưới trang phải hiện `QA-OK`.
 4. Xuất lại PDF: chụp từng slide ở chế độ `?all` rồi ghép, hoặc `Ctrl+P` → Save as PDF, bật
    Background graphics.
+
+## Bản PowerPoint
+
+Dựng lại sau mỗi lần sửa bộ chính (khoảng 7 phút, cần Google Chrome):
+
+```
+uv run --no-project --with playwright==1.48.0 --with python-pptx==1.0.2 --with imageio-ffmpeg==0.5.1 --with pillow python nguon_hoan_thien/xuat_pptx.py slide_hoi_dong_31.html slide_hoi_dong_31.pptx
+```
+
+Khi trình chiếu bằng PowerPoint: mỗi slide tự chạy hoạt ảnh, bấm sang slide sau như bình thường.
+Nếu cần dừng ở một bước để giải thích thì dùng bản HTML, vì video không dừng theo bước. Hãy mở
+thử trên đúng máy của phòng bảo vệ trước buổi bảo vệ: PowerPoint 2013 trở lên phát được video
+H.264 nhúng sẵn.

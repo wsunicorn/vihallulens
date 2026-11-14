@@ -5021,7 +5021,13 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       slide trong ngoặc vuông và sửa từ ngữ; `HUONG_DAN.md` thêm bước dựng thứ ba.
     - **Kiểm:** `?qa` in `QA-OK`, kèm kiểm mới là khối tiêu đề không đẩy hình đè lên chú thích
       bước; chụp đủ 31 slide ở trạng thái cuối, xem từng ảnh.
-    - **Còn:** bản PPTX của bộ slide; chọn người nói, diễn tập bấm giờ.
+    - **Bản PPTX** `slide_hoi_dong_31.pptx` (13,4 MB, không commit vì quá 10 MB), dựng bằng
+      `nguon_hoan_thien/xuat_pptx.py`: Chrome chạy bản HTML theo từng khung (tua timeline GSAP, dừng
+      và bước các chuyển tiếp CSS), mỗi slide thành một video H.264 25 khung/giây đặt kín slide, tự
+      chạy khi vào slide, dừng ở trạng thái cuối; chuyển slide mờ dần; ghi chú diễn giả chép sang.
+      Kiểm bằng PowerPoint: 31/31 slide có video kích hoạt kiểu After Previous, chuyển Fade, có ghi
+      chú. Không mang theo được ô gợi ý khi rê chuột và các nút trong hình.
+    - **Còn:** chọn người nói, diễn tập bấm giờ.
   - **Trạng thái 23/10/2026:** đã sửa slide 12 (825 ca kiểm thử, lượt `pytest` ngày 23/10; quyển v4
     còn ghi 688) và slide 21 (E17: lặp lại trên ViFactCheck đạt 0,703, đặc trưng hình dạng không
     tăng điểm kể cả ở đó; E18: hướng phát triển thành chấm theo từng đoạn của câu trả lời, vì chấm
