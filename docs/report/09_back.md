@@ -239,7 +239,7 @@ Các bảng dưới đây được nhắc tới ở Chương 3 và Chương 4.
 
 Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá trình nghiên cứu và phát triển phần mềm của khóa luận: dùng vào việc gì, theo quy trình nào, với những ràng buộc nào, và rút ra kinh nghiệm gì. Mục đích là để người đọc thấy rõ ranh giới giữa phần do nhóm quyết định và phần công cụ hỗ trợ, đồng thời có thể lặp lại cách làm. Mức tái lập của các kết quả thực nghiệm được trình bày riêng ở Phụ lục D.
 
-**Hai vai trò khác nhau của mô hình ngôn ngữ lớn.** Trong khóa luận, mô hình ngôn ngữ lớn xuất hiện ở hai vai trò cần tách bạch. Thứ nhất, chúng là đối tượng nghiên cứu: Qwen2.5 là mô hình đọc mà đặc trưng chú ý được trích ra (Chương 4), còn Gemini là mốc LLM giám khảo được so sánh ở Chương 6; vai trò này thuộc về phương pháp và đã được mô tả ở các chương chính. Thứ hai, nhóm dùng trợ lý lập trình Claude Code (Anthropic), chạy trong trình soạn thảo VS Code, như một công cụ hỗ trợ kỹ thuật. Phụ lục này chỉ nói về vai trò thứ hai.
+**Hai vai trò khác nhau của mô hình ngôn ngữ lớn.** Trong khóa luận, mô hình ngôn ngữ lớn xuất hiện ở hai vai trò cần tách bạch. Thứ nhất, chúng là đối tượng nghiên cứu: Qwen2.5 là mô hình đọc mà đặc trưng chú ý được trích ra (Chương 4), còn Gemini là mốc LLM giám khảo được so sánh ở Chương 6; vai trò này thuộc về phương pháp và đã được mô tả ở các chương chính. Thứ hai, nhóm dùng một trợ lý lập trình dựa trên mô hình ngôn ngữ lớn, tích hợp trong trình soạn thảo mã, như một công cụ hỗ trợ kỹ thuật. Phụ lục này chỉ nói về vai trò thứ hai.
 
 **Phân định vai trò.** Công cụ AI chỉ giữ vai trò hỗ trợ thực thi. Mọi quyết định về đề tài, thiết kế thực nghiệm, cách đánh giá và kết luận do nhóm đưa ra; công cụ thực hiện các phần việc kỹ thuật theo yêu cầu cụ thể của nhóm và chịu sự kiểm duyệt của nhóm ở từng bước ([[tab:phan-dinh-ai]]).
 
@@ -279,7 +279,7 @@ thư viện mới, đổi kiến trúc, thêm phụ thuộc nặng — DỪNG L�
 hỏi người dùng. Không tự quyết.
 ```
 
-**Một số yêu cầu tiêu biểu.** [[tab:yeu-cau-ai]] trích một số yêu cầu nhóm đưa ra trong quá trình làm (rút gọn, giữ nguyên ý), kèm mục đích của từng yêu cầu. Điểm chung là nhóm luôn yêu cầu kiểm tra trước khi tốn tài nguyên và giữ quyền quyết định ở những điểm rẽ của nghiên cứu.
+**Một số yêu cầu tiêu biểu.** [[tab:yeu-cau-ai]] trích một số yêu cầu nhóm đưa ra trong quá trình làm (rút gọn, giữ nguyên ý), kèm mục đích của từng yêu cầu. Điểm chung là nhóm luôn yêu cầu kiểm tra trước khi sử dụng tài nguyên tính toán và giữ quyền quyết định ở những bước then chốt của nghiên cứu.
 
 *[[tab:yeu-cau-ai]] Một số yêu cầu tiêu biểu nhóm đưa cho công cụ*
 
@@ -295,10 +295,10 @@ hỏi người dùng. Không tự quyết.
 
 **Kinh nghiệm rút ra.** Bốn điều nhóm thấy quan trọng nhất khi dùng công cụ AI trong một dự án nghiên cứu:
 
-1. **Công cụ có thể sai một cách tự tin, nên mọi con số phải đối chiếu với tệp kết quả.** Các lỗi nhóm đã phát hiện nhờ đối chiếu: số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống; hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy, đã sửa bằng phép sắp xếp có quy tắc phân định hòa; một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
+1. **Công cụ có thể sai một cách tự tin, nên mọi con số phải đối chiếu với tệp kết quả.** Nhóm đã phát hiện ba lỗi nhờ đối chiếu. Số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống. Hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy; lỗi này đã được sửa bằng phép sắp xếp có quy tắc phân định hòa. Một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
 2. **Quy tắc viết thành văn bản bền hơn lời dặn trong hội thoại.** Khi một phiên làm việc dài bị tóm tắt lại, những lời dặn chỉ nằm trong hội thoại có thể bị bỏ sót; quy tắc trong `CONVENTIONS.md` thì được đọc lại mỗi phiên. Vì vậy mỗi quyết định quan trọng đều được ghi vào tệp này ngay khi chốt.
-3. **Việc tốn GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị đứt không làm mất phần đã chạy.
-4. **Công cụ không thay được phán đoán khoa học.** Những quyết định định hình kết quả — đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày thẳng kết quả bất lợi của phần chunk-aware — đều do nhóm đưa ra.
+3. **Việc sử dụng GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị đứt không làm mất phần đã chạy.
+4. **Công cụ không thay được phán đoán khoa học.** Những quyết định định hình kết quả — đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày đầy đủ kết quả bất lợi của phần chunk-aware — đều do nhóm đưa ra.
 
 **Tính tái lập của quy trình.** Bộ quy tắc `CONVENTIONS.md`, danh sách việc `TASKS.md`, lịch sử 135 pull request (`docs/LICH_SU_PR.md`), các notebook đã chạy và nhật ký `results/runs.jsonl` đều nằm trong kho mã nguồn. Người đọc có thể kiểm tra từng bước đã làm, và có thể lặp lại cách làm này với một công cụ hỗ trợ khác.
 

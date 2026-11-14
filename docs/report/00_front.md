@@ -84,9 +84,9 @@ The detector ships as a Python library, a REST service with an attention view an
 
 Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ lớn bám vào ngữ cảnh truy xuất được, song mô hình vẫn phát biểu những điều ngữ cảnh không bảo chứng. Các bộ phát hiện cho tiếng Việt hiện nay hoặc tinh chỉnh trọn một bộ mã hóa lớn, hoặc gọi mô hình giám khảo cho từng câu trả lời. Khóa luận xét xem bản đồ chú ý của một mô hình đọc mã nguồn mở, lấy trong một lượt truyền xuôi, có đủ tín hiệu để phát hiện ảo giác theo ngữ cảnh hay không.
 
-Khóa luận tái lập Lookback Lens — đo ở từng đầu chú ý phần chú ý mà phản hồi dành cho ngữ cảnh thay vì cho chính nó — rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit chạy vừa một card Tesla T4 16 GB.
+Khóa luận tái lập Lookback Lens — đo ở từng đầu chú ý phần chú ý mà phản hồi dành cho ngữ cảnh thay vì cho chính nó — rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit chạy vừa một GPU Tesla T4 16 GB.
 
-Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước, và đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) dù rẻ hơn khoảng 11 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
+Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước, và đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) với chi phí tính toán thấp hơn khoảng 11 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
 
 Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là chấm điểm theo từng đoạn.
 
@@ -213,7 +213,7 @@ CHỮ KÝ CỦA GIẢNG VIÊN
 | **RAG** | Retrieval-Augmented Generation | Sinh văn bản tăng cường truy xuất |
 | **REST** | Representational State Transfer | Kiểu kiến trúc dịch vụ web |
 | **SHA** | Secure Hash Algorithm | Họ hàm băm mật mã; đề tài dùng SHA-256 |
-| **VRAM** | Video Random Access Memory | Bộ nhớ của card đồ họa |
+| **VRAM** | Video Random Access Memory | Bộ nhớ của GPU |
 | **YAML** | YAML Ain't Markup Language | Định dạng tệp cấu hình dạng văn bản |
 
 <div style="page-break-after: always"></div>
