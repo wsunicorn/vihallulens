@@ -1,12 +1,12 @@
 # Bộ slide — cách dùng
 
-Cập nhật 23/10/2026. Bộ dùng để báo cáo trước Hội đồng là **`slide_hoi_dong_23.html`**.
+Cập nhật 14/11/2026. Bộ dùng để báo cáo trước Hội đồng là **`slide_hoi_dong_23.html`**.
 
 ## File trong thư mục
 
 | File | Là gì |
 |---|---|
-| **`slide_hoi_dong_23.html`** / `.pdf` | **Bộ chính, 23 slide**, sắp theo bố cục quyển khóa luận như GVHD yêu cầu ngày 05/10: giới thiệu và bài toán → động lực, khoảng trống → cơ sở lý thuyết → dữ liệu → phương pháp đề xuất → hệ thống → thực nghiệm → tự đánh giá → tài liệu tham khảo. Số liệu khớp quyển v4, trừ hai chỗ theo lượt chạy ngày 23/10: số ca kiểm thử ở slide 12 và kết quả E17, E18 ở slide 21. Bản PDF là trạng thái cuối của từng slide. |
+| **`slide_hoi_dong_23.html`** / `.pdf` | **Bộ chính, 23 slide**, sắp theo bố cục quyển khóa luận như GVHD yêu cầu ngày 05/10: giới thiệu và bài toán → động lực, khoảng trống → cơ sở lý thuyết → dữ liệu → phương pháp đề xuất → hệ thống → thực nghiệm → tự đánh giá → tài liệu tham khảo. Số liệu khớp quyển v5 (số mục, số bảng giữ như v4 nên chân slide vẫn đúng); bốn slide cập nhật theo lượt chạy 23/10: slide 12 (825 ca kiểm thử), 14 (câu về 84,80 %), 21 (kết quả E17, E18), 22 (danh mục 36 tài liệu). Bản PDF là trạng thái cuối của từng slide. |
 | `slide_rut_gon_19.html` / `.pdf` | Bộ 19 slide Minh dựng ngày 14/10, là nền của bộ chính. Dựng bằng script trong `nguon_19_slide/`. |
 | `nguon_19_slide/` | Script `build_slide19.py` dựng bộ 19 slide từ bộ 32 slide ngày 02/10 (`slide_goc_32.html`, không sửa file này). Mỗi chỗ sửa là một phép thay chuỗi có kiểm số lần khớp, nguồn gốc không khớp thì script dừng. |
 | `nguon_bo_sung_15-10/` | Sơ đồ và script chèn bốn slide còn thiếu so với yêu cầu của thầy (bài toán, các hướng đã có, kiểm định giả thuyết, tài liệu tham khảo) vào bộ 19 slide. Cách chạy ghi ở `GHI_CHU_CHO_MINH.txt`. |

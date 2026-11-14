@@ -6,7 +6,7 @@ Khóa luận tốt nghiệp ngành Khoa học dữ liệu — Trường Đại h
 
 ## Ý tưởng
 
-Khi một mô hình ngôn ngữ đọc lại một câu trả lời cùng với ngữ cảnh đã truy xuất, phân bố trọng số chú ý của nó lên từng đoạn ngữ cảnh mang thông tin về việc câu trả lời có bám vào bằng chứng hay không. Đề tài khai thác tín hiệu này để phân loại ba lớp: không ảo giác, ảo giác nội tại, ảo giác ngoại lai — chi phí gần bằng không vì tận dụng lại phép tính mô hình vốn đã thực hiện, và không cần gọi dịch vụ trả phí nào.
+Khi một mô hình ngôn ngữ đọc lại một câu trả lời cùng với ngữ cảnh đã truy xuất, phân bố trọng số chú ý của nó lên từng đoạn ngữ cảnh mang thông tin về việc câu trả lời có bám vào bằng chứng hay không. Đề tài khai thác tín hiệu này để phân loại ba lớp: không ảo giác, ảo giác nội tại, ảo giác ngoại lai — chỉ cần một lượt đọc của mô hình mở và một bộ phân loại tuyến tính vài trăm tham số, không tinh chỉnh mô hình nào và không gọi dịch vụ trả phí nào.
 
 Đóng góp chính là **chunk-aware lookback ratio**: tách tỷ lệ chú ý theo từng đoạn ngữ cảnh thay vì gộp toàn bộ thành một khối như phương pháp Lookback Lens gốc.
 
@@ -61,6 +61,9 @@ git clone https://github.com/wsunicorn/vihallulens.git
 cd vihallulens
 uv sync --extra dev      # tạo .venv đúng phiên bản trong uv.lock, kèm pytest/ruff/matplotlib
 ```
+
+`.python-version` ghim Python 3.11 cho `uv`. Thiếu file này, `uv` tự chọn bản Python mới nhất
+trên máy (đã gặp 3.14) và các thư viện biên dịch sẵn như numpy, torch không nạp được.
 
 `uv.lock` khóa đúng phiên bản từng thư viện (kể cả `scikit-learn 1.9.x` mà bundle trong
 `models/` cần), nên máy khác `uv sync` là được y hệt môi trường này. Chạy lệnh bằng
@@ -226,6 +229,9 @@ os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 | `data/raw/MANIFEST.md` | Ánh xạ tên file gốc sang tên chuẩn, kèm số dòng đã đối chiếu |
 | `docs/EXPERIMENTS.md` | Kế hoạch thực nghiệm và bảng kết quả |
 | `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các mốc so sánh |
+| `docs/report/` | Bản thảo quyển khóa luận theo chương; cách dựng ra Word và PDF ở `docs/report/README.md` |
+| `docs/media/`, `docs/tools/` | Hình của quyển (mã vẽ ở `docs/media/src/`) và công cụ ghép, đánh số, dựng Word |
+| `UniversityRequirements/Slides/` | Bộ slide bảo vệ `slide_hoi_dong_23.html`, giải thích từng slide, câu hỏi hội đồng dự kiến; cách dùng ở `HUONG_DAN.md` |
 | `docs/LICH_SU_PR.md` | 135 pull request của repo gốc (19/08–22/10/2026), ngày thật và link tới commit gộp; số PR trong `TASKS.md` là số ở file này |
 
 ## Dữ liệu
