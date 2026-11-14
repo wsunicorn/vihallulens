@@ -9,8 +9,12 @@ UniversityRequirements/
 reference_papers/
 
 # --- Bộ slide (docs/slides/): commit HTML, PDF và nguồn dựng ---
-# Bản trung gian do nguon/dung_lai.py sinh lại được
+# Bộ slide riêng tư như quyển báo cáo: chỉ commit nguồn dựng (script, sơ đồ);
+# bản HTML, PDF và bộ slide gốc làm đầu vào chỉ giữ trên máy
 docs/slides/_build/
+docs/slides/slide_hoi_dong.html
+docs/slides/slide_hoi_dong.pdf
+docs/slides/nguon/slide_goc_32.html
 
 # --- Kết quả nặng ---
 results/*.npz

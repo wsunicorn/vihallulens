@@ -5012,6 +5012,21 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Riêng tư, bớt chữ, chỉ bấm khi cần — 15/11/2026.**
+    - Bộ slide giữ riêng như quyển: git chỉ còn nguồn dựng (`nguon/`); `slide_hoi_dong.html`, `.pdf` và
+      đầu vào `slide_goc_32.html` vào `.gitignore`; `dung_lai.py` chép bản cuối sang
+      `UniversityRequirements/Reports/` (`Slide_KLTN_22635801_22643511_PhatHienAoGiac`). `GIAI_THICH_SLIDE.md`
+      và `HOI_DAP_HOI_DONG.md` chuyển vào `UniversityRequirements/MyNotes/`. Các bản cũ vẫn còn trong lịch
+      sử commit (không viết lại lịch sử).
+    - Chỉ bấm từng bước ở bốn sơ đồ có bước sau thay nội dung bước trước (đo tự động: phần tử hiện ở
+      cuối bước bị đổi hoặc mất ở cuối slide): 12, 16, 22, 26. Mười bốn sơ đồ còn lại tự chạy hết một
+      lượt, chú thích từng bước thay bằng một câu tóm tắt; chú thích của bốn slide bấm rút còn ≤ 20 chữ.
+    - Bớt chữ: slide 7 (260 → khoảng 90 chữ) và 29 (267 → khoảng 120) dàn lại thành thẻ có biểu tượng và
+      con số lớn; mục lục bỏ cột mô tả, thêm biểu tượng; slide chuyển phần có biểu tượng; tài liệu tham
+      khảo dạng ngắn (thêm ContextCite [4] và ARC-JSD [18] cho E19); dòng thuật ngữ còn một dòng; bốn ràng
+      buộc ở slide 5 thành biểu tượng. Bộ 16 biểu tượng SVG nét mảnh vẽ trong `b3_hoan_thien.py`.
+    - Kiểm: `?qa` in `QA-OK`; chụp đủ 31 slide; thử phím trong Chrome (slide 4 tự chạy hết, một lần bấm
+      sang slide 5; slide 16, 26 bấm từng bước, lùi đúng).
   - **Điều khiển từng bước 15/11/2026.** Đo trên 19 slide có sơ đồ: mỗi sơ đồ 4–5 bước, trước đây tự
     chạy hết trong 5,6–15,1 giây (mỗi bước chỉ hiện 1–3 giây) trong khi lời nói mỗi slide dài 50–85 giây,
     nên hình chạy trước người nói. Nay bước 1 tự chạy khi vào slide rồi dừng; mỗi lần bấm tới

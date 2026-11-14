@@ -23,6 +23,7 @@ Step 3 of the deck build; ``dung_lai.py`` runs all steps. Alone:
 # ruff: noqa: E501 — replacement pairs are exact slide strings, kept whole so each stays greppable
 
 import html
+import json
 import re
 import sys
 from pathlib import Path
@@ -464,6 +465,218 @@ for key, pairs in HTML_SUBS.items():
         S[IDX[key]] = sub(S[IDX[key]], old, new, where=key)
 
 # ---------------------------------------------------------------------------------------------
+# 3b. Less text: icons, shorter terms, the gaps and results slides as icon cards, short references
+# ---------------------------------------------------------------------------------------------
+# One stroke-icon set (24 × 24 grid, drawn here, no external library), coloured by the slide tokens.
+ICONS = {
+    "intro": '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    "theory": '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M8 7h7M8 11h7"/>',
+    "data": '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    "method": '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 10.5h8M8 18.5h5"/><rect x="7" y="13" width="10" height="3" rx="1" fill="currentColor"/>',
+    "system": '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/>',
+    "results": '<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7"/><rect x="10.5" y="6" width="3" height="12"/><rect x="16" y="13" width="3" height="5"/>',
+    "conclusion": '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+    "locate": '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><path d="M7.5 12.5v-2M10.5 12.5v-4.5M13.5 12.5v-1"/>',
+    "scale": '<path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-3 6a3 3 0 0 0 6 0z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0z"/>',
+    "lang": '<path d="M4 4h16v11H9l-5 4z"/><path d="M8 7.5l2 4.5 2-4.5"/><path d="M15 9v3M15 7.2v.1"/>',
+    "check": '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/>',
+    "alert": '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+    "next": '<circle cx="12" cy="12" r="9"/><path d="M8 12h8M13 8.5l3.5 3.5-3.5 3.5"/>',
+    "noapi": '<path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.6A3.3 3.3 0 0 0 7 18z"/><path d="M3 3l18 18"/>',
+    "frozen": '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    "gpu": '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+}
+
+
+def icon(name: str, cls: str = "ic") -> str:
+    """One stroke icon as inline SVG; its colour follows the surrounding text colour."""
+    return (
+        f'<svg class="{cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        f'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        f"{ICONS[name]}</svg>"
+    )
+
+
+# Terms: one short line each (the full definitions stay in the notes and in the thesis)
+TERMS = {
+    "types": "<b>Nội tại</b> — mâu thuẫn với ngữ cảnh. <b>Ngoại lai</b> — thông tin không có trong ngữ cảnh.",
+    "lb": "<b>Tỷ lệ lookback</b> — phần chú ý dành cho ngữ cảnh so với phần dành cho câu trả lời đứng trước.",
+    "data": "<b>Chia theo ngữ cảnh</b> — các câu trả lời cùng một tài liệu nằm chung một tập.",
+    "chunk": "<b>Đoạn</b> — một câu của ngữ cảnh. <b>Chunk-aware</b> — chú ý tính theo từng đoạn.",
+    "pipe": "<b>Teacher forcing</b> — đưa câu trả lời có sẵn cho mô hình đọc, không để mô hình tự sinh.",
+    "hook": "<b>Forward hook</b> — hàm tự chạy ngay khi một lớp của mô hình tính xong.",
+    "demo": "<b>Điểm rủi ro</b> — 1 trừ xác suất trung thực; càng gần 1 càng có khả năng ảo giác.",
+    "res": "<b>macro-F1</b> — trung bình F1 ba lớp, ngẫu nhiên ≈ 0,33. <b>KTC 95 %</b> — khoảng dao động khi đổi tập kiểm tra.",
+    "loc": "<b>Đầu chú ý</b> — một phép chú ý song song trong một lớp; xét đủ 27 × 28 = 756 đầu.",
+    "iv": "<b>Thí nghiệm can thiệp</b> — chỉ thay đúng một yếu tố rồi đo lại.",
+    "null": "<b>Vùng nhiễu</b> — chênh lệch nhỏ hơn mức dao động tự nhiên, không kết luận được hơn kém.",
+    "cost": "<b>7B, 3B, 1.5B</b> — số tỷ tham số của mô hình đọc.",
+    "xfer": "<b>Chéo bộ</b> — huấn luyện trên bộ này, kiểm tra trên bộ kia.",
+}
+TERMS_RE = re.compile(r'(<p class="terms"><span class="tag">Thuật ngữ</span>).*?(</p>)', re.S)
+for key, text in TERMS.items():
+    k = IDX[key]
+    assert len(TERMS_RE.findall(S[k])) == 1, key
+    S[k] = TERMS_RE.sub(lambda m, t=text: m.group(1) + t + m.group(2), S[k], count=1)
+
+# Slide 7: three icon columns, gap → question → where it is answered (details stay in the notes)
+GAPS = [
+    (
+        "locate",
+        "var(--ctx)",
+        "Khoảng trống 1",
+        "Chưa tách chú ý theo <em>từng đoạn</em>, chưa đối chiếu với vị trí bằng chứng",
+        "Câu hỏi 1 · Tín hiệu",
+        "Chú ý theo đoạn có cải thiện phát hiện và có tập trung đúng đoạn bằng chứng?",
+        "slide 21–24",
+    ),
+    (
+        "scale",
+        "var(--res)",
+        "Khoảng trống 2",
+        "Ba hướng tiếp cận chưa được so trên <em>cùng thang</em> độ chính xác – chi phí",
+        "Câu hỏi 2 · Chi phí",
+        "So với LLM giám khảo và bộ mã hóa, độ chính xác và chi phí ra sao?",
+        "slide 6 và 25",
+    ),
+    (
+        "lang",
+        "#6B4FA0",
+        "Khoảng trống 3",
+        "Chưa có công trình dùng tín hiệu nội tại cho ảo giác <em>tiếng Việt</em>",
+        "Câu hỏi 3 · Chuyển giao",
+        "Chú ý thêm được bao nhiêu so với bề mặt, có dùng được trên bộ khác?",
+        "slide 24 và 26",
+    ),
+]
+gap_html = (
+    '<div class="gq3">'
+    + "".join(
+        f'<div class="gcol rise r{n + 1}" style="--c:{c}"><div class="gtop">{icon(ic)}<div class="k">{k}</div>'
+        f'<div class="s">{gs}</div></div><div class="gar">↓</div><div class="qc"><div class="k">{qk}</div>'
+        f'<div class="q">{q}</div><div class="a">Trả lời ở {a}</div></div></div>'
+        for n, (ic, c, k, gs, qk, q, a) in enumerate(GAPS)
+    )
+    + "</div>\n  "
+)
+g = IDX["gaps"]
+a_, b_ = S[g].index('<div class="gq">'), S[g].index('<div class="foot">')
+S[g] = S[g][:a_] + gap_html + S[g][b_:]
+
+# Slide 29: big numbers with short labels; limitations and next steps as one-line items
+DONE = [
+    (
+        "check",
+        "var(--ok)",
+        "Kết quả đạt được",
+        [
+            ("0,757", "macro-F1 ba lớp, 579 tham số — tương đương PhoBERT"),
+            ("87,8 %", "định vị đúng đoạn bằng chứng; hơn cắt bỏ ngữ cảnh"),
+            ("0,703", "lặp lại trên bộ tin tức ViFactCheck"),
+            ("195", "tham số với mô hình đọc 3B — điểm cân bằng"),
+            ("825", "ca kiểm thử; thư viện, REST, Docker, giao diện"),
+        ],
+    ),
+    (
+        "alert",
+        "var(--bad)",
+        "Hạn chế",
+        [
+            ("", "Đặc trưng hình dạng không tăng điểm phân loại"),
+            ("", "Ba lớp không khái quát sang bộ khác; nhị phân thì được"),
+            ("", "Chưa đo chi phí biên khi một mô hình vừa sinh vừa đọc"),
+            ("", "Docker chưa được kiểm thử trên máy có GPU"),
+        ],
+    ),
+    (
+        "next",
+        "var(--ctx)",
+        "Hướng phát triển",
+        [
+            ("", "Chấm theo từng đoạn câu trả lời, với nhãn mức đoạn"),
+            ("", "Kết hợp chú ý (mạnh ở nội tại) với bộ mã hóa (mạnh ở ngoại lai)"),
+            ("", "Đo chi phí biên trên GPU có bfloat16 gốc"),
+            ("", "Chỉ tính hàng chú ý của phản hồi để đọc ngữ cảnh dài hơn"),
+        ],
+    ),
+]
+done_html = (
+    '<div class="res3">'
+    + "".join(
+        f'<div class="rcol rise r{n + 1}" style="--c:{c}"><h3>{icon(ic)}{title}</h3><ul>'
+        + "".join(
+            f'<li class="{"num" if v else "line"}">'
+            + (f'<span class="v">{v}</span>' if v else "")
+            + f"<span>{t}</span></li>"
+            for v, t in items
+        )
+        + "</ul></div>"
+        for n, (ic, c, title, items) in enumerate(DONE)
+    )
+    + "</div>\n  "
+)
+d = IDX["done"]
+a_, b_ = S[d].index('<div class="three">'), S[d].index('<div class="foot">')
+S[d] = S[d][:a_] + done_html + S[d][b_:]
+
+# Slide 30: short references (author, year, title, venue); numbers follow the thesis list
+REFS_SHORT = [
+    (
+        "Phương pháp nền và đối chiếu",
+        [
+            (3, "Chuang và cộng sự (2024). Lookback Lens. <i>EMNLP 2024</i>."),
+            (32, "Vaswani và cộng sự (2017). Attention Is All You Need. <i>NeurIPS</i>."),
+            (27, "Sun và cộng sự (2025). ReDeEP. <i>ICLR 2025</i>."),
+            (4, "Cohen-Wang và cộng sự (2024). ContextCite. <i>NeurIPS 37</i>."),
+            (18, "Li và cộng sự (2026). ARC-JSD. <i>ICLR 2026</i>."),
+        ],
+    ),
+    (
+        "Dữ liệu",
+        [
+            (22, "Nguyen và cộng sự (2026). DSC2025 – ViHallu Challenge. <i>arXiv:2601.04711</i>."),
+            (31, "UIT Data Science Challenge 2023 (bộ ISE-DSC01)."),
+            (16, "Le và cộng sự (2024). ViWikiFC. <i>arXiv:2405.07615</i>."),
+        ],
+    ),
+    (
+        "Mốc so sánh",
+        [
+            (23, "Nguyen và Nguyen (2020). PhoBERT. <i>Findings of EMNLP 2020</i>."),
+            (5, "Conneau và cộng sự (2020). XLM-R. <i>ACL 2020</i>."),
+            (36, "Zheng và cộng sự (2023). LLM-as-a-Judge. <i>NeurIPS 36</i>."),
+            (29, "Tran và cộng sự (2025). SemViQA. <i>arXiv:2503.00955</i>."),
+        ],
+    ),
+    (
+        "Mô hình và nền tảng",
+        [
+            (25, "Qwen Team (2024). Qwen2.5 Technical Report. <i>arXiv:2412.15115</i>."),
+            (17, "Lewis và cộng sự (2020). Retrieval-Augmented Generation. <i>NeurIPS 33</i>."),
+            (
+                13,
+                "Ji và cộng sự (2023). Survey of Hallucination in NLG. <i>ACM Computing Surveys</i>.",
+            ),
+        ],
+    ),
+]
+refs_html = (
+    '<div class="refs">'
+    + "".join(
+        f'<div class="grp rise r{k + 1}"><h3>{name}</h3><ul>'
+        + "".join(f'<li><span class="rn">[{n}]</span>{t}</li>' for n, t in items)
+        + "</ul></div>"
+        for k, (name, items) in enumerate(REFS_SHORT)
+    )
+    + "</div>"
+)
+r = IDX["refs"]
+S[r] = re.sub(
+    r'<div class="refs">.*?</ul></div></div>', lambda _m: refs_html, S[r], count=1, flags=re.S
+)
+assert "Cohen-Wang" in S[r], "refs block not replaced"
+
+# ---------------------------------------------------------------------------------------------
 # 4. Figure labels and step captions (the drawing code after the last slide)
 # ---------------------------------------------------------------------------------------------
 JS_SUBS = [
@@ -850,6 +1063,105 @@ js = sub(
 LOC_LAST = "tl.to(r.lb, { opacity: 1, duration: .2 }, '<.3'); }); } },"
 js = sub(js, LOC_LAST, LOC_LAST + E19_STEP, where="loc")
 
+
+# Slide 5: the four constraints become icon chips with three or four words each
+CHIP_OLD = (
+    "  ['Không gọi LLM giám khảo', 'Không tinh chỉnh mô hình ngôn ngữ', 'Chạy trên một GPU T4 16 GB', "
+    "'Tiếng Việt, ba lớp nhãn'].forEach((t, i) => {\n"
+    "    el('rect', { x: i * 425, y: 504, width: 405, height: 50, rx: 25, fill: C.ink }, K);\n"
+    "    tx(K, i * 425 + 202, 536, t, { 'text-anchor': 'middle', 'font-size': 19, 'font-weight': 600, fill: '#fff' }); });"
+)
+CHIP_NEW = (
+    "  [['Không gọi LLM giám khảo', CHIP_ICONS[0]], ['Không tinh chỉnh mô hình', CHIP_ICONS[1]], "
+    "['GPU Tesla T4 16 GB', CHIP_ICONS[2]], ['Tiếng Việt, ba lớp nhãn', CHIP_ICONS[3]]].forEach(([t, ic], i) => {\n"
+    "    el('rect', { x: i * 425, y: 504, width: 405, height: 50, rx: 25, fill: C.ink }, K);\n"
+    "    const g = el('g', { transform: `translate(${i * 425 + 24},514) scale(1.25)`, fill: 'none', stroke: '#9FE0D9', "
+    "'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, K); g.innerHTML = ic;\n"
+    "    tx(K, i * 425 + 222, 536, t, { 'text-anchor': 'middle', 'font-size': 20, 'font-weight': 600, fill: '#fff' }); });"
+)
+js = sub(js, CHIP_OLD, CHIP_NEW, where="task")
+CHIP_ICONS = [ICONS[n] for n in ("noapi", "frozen", "gpu", "lang")]
+js = sub(
+    js,
+    "FIGS.task = ",
+    "const CHIP_ICONS = " + json.dumps(CHIP_ICONS, ensure_ascii=False) + ";\nFIGS.task = ",
+    where="task",
+)
+
+# Shorter step captions on the four slides that keep presenter-driven steps
+CAP_SUBS = [
+    (
+        "Ba bộ dữ liệu tiếng Việt công khai. ViHallu là bộ chính; ISE-DSC01 có ngữ cảnh dài và đánh dấu sẵn câu bằng chứng; ViWikiFC dùng để đối chứng.",
+        "Ba bộ chính: <b>ViHallu</b> (chính), <b>ISE-DSC01</b> (ngữ cảnh dài, có bằng chứng), <b>ViWikiFC</b> (đối chứng).",
+    ),
+    (
+        "Nếu chia <b>ngẫu nhiên từng câu trả lời</b>, các câu trả lời của cùng một tài liệu rơi vào cả tập huấn luyện lẫn tập kiểm tra (vạch đỏ): rò rỉ dữ liệu giữa tập huấn luyện và tập kiểm tra.",
+        "Chia <b>ngẫu nhiên</b>: cùng một tài liệu nằm ở cả tập huấn luyện lẫn kiểm tra (vạch đỏ) — rò rỉ dữ liệu.",
+    ),
+    (
+        "Đề tài <b>chia theo ngữ cảnh</b>: mọi câu trả lời của một tài liệu đi chung một tập, tỷ lệ 80/10/10, hạt giống 42. Rò rỉ bằng 0.",
+        "Chia <b>theo ngữ cảnh</b>: mỗi tài liệu nằm trọn một tập, 80/10/10, hạt giống 42 — rò rỉ bằng 0.",
+    ),
+    (
+        "Kiểm tra cả các bộ có sẵn cách chia: tập kiểm tra gốc của ViWikiFC dùng lại <b>100 %</b> ngữ cảnh huấn luyện — nên điểm trên tập đó chỉ đo việc phân loại trên ngữ cảnh đã thấy.",
+        "Tập kiểm tra gốc của ViWikiFC dùng lại <b>100 %</b> ngữ cảnh huấn luyện.",
+    ),
+    (
+        "Mỗi lớp của mô hình tạo ra một <b>ma trận chú ý</b> cho 28 đầu, mỗi cạnh dài bằng độ dài văn bản. Với 4.096 token, một lớp đã chiếm khoảng <b>0,94 GB</b>.",
+        "Mỗi lớp tạo một <b>ma trận chú ý</b> cho 28 đầu: ở 4.096 token chiếm khoảng <b>0,94 GB</b>.",
+    ),
+    (
+        "Cách thông thường giữ lại ma trận của mọi lớp tới cuối lượt đọc. Mới tới <b>lớp 12</b>, tổng bộ nhớ đã vượt 16 GB của GPU T4; giữ đủ 28 lớp cần khoảng <b>26 GB</b> chỉ riêng cho ma trận.",
+        "Giữ ma trận của mọi lớp: tới <b>lớp 12</b> đã vượt 16 GB; đủ 28 lớp cần khoảng <b>26 GB</b>.",
+    ),
+    (
+        "Với <b>forward hook</b>: lớp nào tính xong, hook cộng chú ý theo từng đoạn — chỉ còn vài chục giá trị — rồi giải phóng ma trận ngay. Tại mỗi thời điểm, bộ nhớ chỉ chứa một ma trận.",
+        "<b>Forward hook</b>: tính xong lớp nào thì cộng chú ý theo đoạn rồi giải phóng ma trận lớp đó.",
+    ),
+    (
+        "Bộ nhớ đỉnh đo thực tế trên Tesla T4 ở ngưỡng 4.096 token là <b>8,4 GB</b> — mô hình 7B vận hành trọn vẹn trên một GPU 16 GB miễn phí của Kaggle.",
+        "Đỉnh đo thực tế <b>8,4 GB</b> ở 4.096 token — mô hình 7B vừa một GPU 16 GB.",
+    ),
+    (
+        "Mỗi ngữ cảnh ISE-DSC01 có trung bình <b>22,6 đoạn</b>. Người gán nhãn đã đánh dấu sẵn đoạn chứa bằng chứng (viền đậm).",
+        "Ngữ cảnh ISE-DSC01 trung bình <b>22,6 đoạn</b>; đoạn bằng chứng được đánh dấu sẵn (viền đậm).",
+    ),
+    (
+        "Với mỗi mẫu, xác định đoạn mà đầu chú ý mạnh nhất phân bổ chú ý nhiều nhất. Trùng đoạn bằng chứng là <b>đúng</b>, khác là <b>sai</b>.",
+        "Đoạn nhận nhiều chú ý nhất của đầu mạnh nhất trùng đoạn bằng chứng là <b>đúng</b>.",
+    ),
+    (
+        "Trên 2.376 mẫu, đầu mạnh nhất xác định đúng <b>87,8 %</b>; chọn ngẫu nhiên một đoạn chỉ đạt 6,1 % — thấp hơn <b>14,3 lần</b>.",
+        "2.376 mẫu: đúng <b>87,8 %</b>, gấp <b>14,3 lần</b> chọn ngẫu nhiên (6,1 %).",
+    ),
+    (
+        "Lặp lại trên bộ thứ hai (ViWikiFC): trung bình mọi đầu <b>32,9 %</b> so với 33,2 %. Khả năng định vị thuộc về mô hình, không phụ thuộc bộ dữ liệu.",
+        "Lặp lại trên ViWikiFC: trung bình mọi đầu <b>32,9 %</b> so với 33,2 % — thuộc tính của mô hình.",
+    ),
+    (
+        "Thí nghiệm E19 đối chiếu với <b>cắt bỏ từng đoạn ngữ cảnh</b>: đầu chú ý mạnh nhất xác định đúng <b>85,0&nbsp;%</b> so với 73,3&nbsp;%, với 1 lượt đọc thay vì trung bình 10,9 lượt.",
+        "E19: chú ý đúng <b>85,0&nbsp;%</b>, cắt bỏ ngữ cảnh 73,3&nbsp;% — <b>1</b> lượt đọc so với 10,9.",
+    ),
+    (
+        "Huấn luyện trên ViHallu rồi chấm ISE-DSC01: trong 1.286 câu thật sự <b>ngoại lai</b>, chỉ <b>66</b> câu được phân loại đúng; <b>988 câu</b> bị phân loại thành nội tại.",
+        "ViHallu → ISE-DSC01: 1.286 câu <b>ngoại lai</b>, chỉ <b>66</b> đúng; <b>988</b> bị gọi là nội tại.",
+    ),
+    (
+        "Macro-F1 ba lớp giảm còn <b>0,358</b>, gần mức ngẫu nhiên. Với câu hỏi nhị phân “có ảo giác hay không”, kết quả vẫn đạt <b>0,664</b>, trên mức ngẫu nhiên 0,5.",
+        "Ba lớp còn <b>0,358</b>, gần ngẫu nhiên; nhị phân vẫn <b>0,664</b> (ngẫu nhiên 0,5).",
+    ),
+    (
+        "Chiều ngược lại mất lớp còn lại: trong 234 câu <b>nội tại</b> của ViHallu, 136 câu bị phân loại thành ngoại lai. Nhị phân vẫn đạt <b>0,776</b>.",
+        "Chiều ngược lại: 136/234 câu <b>nội tại</b> bị gọi là ngoại lai; nhị phân vẫn <b>0,776</b>.",
+    ),
+    (
+        "Nguyên nhân khả dĩ nằm ở <b>định nghĩa nhãn</b> của hai bộ: cùng tên lớp nhưng tạo ra theo hai cách khác nhau.",
+        "Nguyên nhân khả dĩ: hai bộ có <b>định nghĩa nhãn</b> khác nhau.",
+    ),
+]
+for old, new in CAP_SUBS:
+    js = sub(js, old, new, where="cap")
+
 # ?qa also reports slides whose title block pushes the figure into the step caption
 js = sub(
     js,
@@ -864,6 +1176,26 @@ js = sub(
 # while the spoken notes for a slide run 50–85 s, so the picture ran ahead of the speaker. Now the
 # first step plays on arrival and stops; each "next" plays one more step; ?auto restores the old
 # behaviour (for screen recording). ?all, ?at and ?qa behave as before.
+# Only four diagrams replace earlier content with later content (measured: elements visible at the
+# end of a step are changed or removed by the end of the slide), so only they keep presenter-driven
+# steps. The other fourteen only add content: they play through once, with one short summary.
+STEP_FIGS = ["data", "hook", "loc", "xfer"]
+FIG_SUMMARY = {
+    "types": "Cùng một ngữ cảnh, ba câu trả lời: điểm rủi ro <b>0,001</b> (trung thực) · <b>0,998</b> (nội tại) · <b>1,000</b> (ngoại lai).",
+    "task": "Mô hình mở đọc ngữ cảnh, câu hỏi, câu trả lời trong <b>một lượt</b>; chỉ bộ phân loại tuyến tính phải huấn luyện.",
+    "costs": "Mỗi hướng hiện có trả một chi phí: <b>thời gian và dữ liệu ra ngoài</b>, <b>tham số huấn luyện</b>, hoặc <b>độ chính xác</b>.",
+    "map": "Khóa luận thuộc nhánh <b>trọng số chú ý</b>: một lượt đọc, bộ phân loại nhỏ, chưa có cho tiếng Việt.",
+    "lb": "Mỗi đầu cho một <b>tỷ lệ lookback</b>; <b>756</b> giá trị đưa vào hồi quy logistic.",
+    "chunk": "Cùng <b>62 %</b> chú ý vào ngữ cảnh: A tập trung một đoạn (entropy 0,65), B phân bố đều (entropy 1,00).",
+    "pipe": "Ghép prompt → một lượt đọc, hook lấy chú ý theo đoạn → <b>192</b> đặc trưng → hồi quy logistic <b>579</b> tham số.",
+    "sys": "Bốn tầng, tầng trên chỉ gọi tầng dưới; bộ phát hiện <b>11,5 KB</b>, nạp lại trùng <b>700/700</b>.",
+    "demo": "Mô hình 3B tự sinh mệnh đề không có căn cứ; bộ phát hiện gán <b>ngoại lai</b>, rủi ro <b>0,997</b>.",
+    "res": "Chunk-aware <b>0,757</b>, lookback gộp <b>0,745</b> — tương đương PhoBERT 0,749, với 579 so với 369 triệu tham số.",
+    "iv": "Thay câu bằng chứng: cả <b>bốn</b> đặc trưng đổi đúng hướng dự đoán ở <b>71–75 %</b> trên 1.836 cặp.",
+    "null": "Sáu phép đo đều trong <b>vùng nhiễu ±0,03</b>; <b>99,9 %</b> tín hiệu hình dạng đã có trong tỷ lệ gộp.",
+    "cost": "XLM-R nhanh nhất; chú ý ít tham số nhất; mô hình đọc <b>3B</b> nhanh gấp đôi, chỉ giảm 0,01 macro-F1.",
+    "hyp": "<b>H1, H3, H4</b> được ủng hộ; <b>H2</b> không; <b>H5</b> bác bỏ ở ba lớp, ủng hộ một phần ở nhị phân.",
+}
 ENGINE_START = "  function mount(s) {\n"
 ENGINE_END = "  function start() {\n"
 a, b = js.index(ENGINE_START), js.index(ENGINE_END)
@@ -881,8 +1213,10 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
     const t0 = s.querySelector('.terms'); if (t0) t0.style.maxWidth = '';
     fig.querySelectorAll('.ctl').forEach(c => c.remove());
     const tl = gsap.timeline({ paused: true });
+    const stepMode = !AUTO && STEP_FIGS.includes(name);   // chỉ bốn sơ đồ có bước sau thay nội dung bước trước
+    const sum = !AUTO && !stepMode ? FIG_SUMMARY[name] : null;
     // nút trong hình: chế độ bấm chỉ cho bước đang chạy chạy xong; chế độ tự chạy thì tới cuối như cũ
-    const api = { fig, svg, tl, finish: () => { if (AUTO) { if (tl.progress() < 1) { tl.progress(1); setStep(steps.length - 1); } }
+    const api = { fig, svg, tl, finish: () => { if (!stepMode) { if (tl.progress() < 1) { tl.progress(1); setStep(steps.length - 1); } }
       else if (c.run) goStep(c.k, false); } };
     const steps = FIGS[name](svg, api);
     const ctl = fig.querySelector('.ctl'), terms = s.querySelector('.terms');
@@ -891,13 +1225,14 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
     fig.style.top = Math.max(hb + 26, hb + (898 - hb - 560) / 2) + 'px';
     const dots = s.querySelector('.dots'), cap = s.querySelector('.stepcap .txt');
     dots.innerHTML = steps.map((_, k) => `<span title="Bước ${k + 1}">${k + 1}</span>`).join('');
-    function setStep(k) { cap.innerHTML = steps[k].cap; [...dots.children].forEach((d, j) => d.classList.toggle('on', j <= k)); }
+    dots.style.display = sum ? 'none' : '';
+    function setStep(k) { cap.innerHTML = sum || steps[k].cap; [...dots.children].forEach((d, j) => d.classList.toggle('on', j <= k)); }
     // chế độ bấm: chú thích do goStep đặt, và mỗi bước cách bước sau 0,01 s để điểm cuối bước j
     // không trùng điểm đầu bước j + 1 (nếu trùng, các lệnh mở đầu bước sau sẽ chạy sớm)
-    steps.forEach((st, k) => { tl.addLabel('s' + k); if (AUTO) tl.call(() => setStep(k)); st.play(tl); tl.addLabel('e' + k);
-      tl.to({}, { duration: AUTO ? (st.hold ?? 1.4) : .01 }); });
+    steps.forEach((st, k) => { tl.addLabel('s' + k); if (!stepMode) tl.call(() => setStep(k)); st.play(tl); tl.addLabel('e' + k);
+      tl.to({}, { duration: stepMode ? .01 : (st.hold ?? 1.4) }); });
     tl.timeScale(SPEED);
-    const c = { tl, steps, setStep, k: 0, run: null };
+    const c = { tl, steps, setStep, k: 0, run: null, stepMode };
     function goStep(j, animate) {                       // tới cuối bước j; animate: chạy hoạt ảnh của riêng bước j
       if (c.run) { c.run.kill(); c.run = null; }
       c.k = j; tl.pause();
@@ -910,7 +1245,8 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
     cur = c;
     if (ALL) { tl.progress(1); setStep(steps.length - 1); c.k = steps.length - 1; }
     else if (AT !== null) { tl.seek(AT, false); let k = 0; steps.forEach((_, j) => { if (tl.labels['s' + j] <= AT) k = j; }); setStep(k); c.k = k; }
-    else if (AUTO) { setStep(0); pending = gsap.delayedCall(.35, () => { pending = null; if (cur === c) tl.play(); }); }
+    else if (!stepMode && atEnd) { tl.progress(1); setStep(steps.length - 1); c.k = steps.length - 1; }
+    else if (!stepMode) { setStep(0); pending = gsap.delayedCall(.35, () => { pending = null; if (cur === c) tl.play(); }); }
     else if (atEnd) goStep(steps.length - 1, false);
     else { setStep(0); pending = gsap.delayedCall(.35, () => { pending = null; if (cur === c) goStep(0, true); }); }
   }
@@ -927,7 +1263,7 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
   // tới: bước 1 chưa bắt đầu thì chạy ngay; đang chạy thì cho xong; còn bước thì chạy bước kế; hết thì sang slide
   function next() {
     const c = cur;
-    if (c && !AUTO && !ALL) {
+    if (c && c.stepMode && !ALL) {
       if (pending) { pending.kill(); pending = null; c.goStep(0, true); return; }
       if (c.run) { c.goStep(c.k, false); return; }
       if (c.k < c.steps.length - 1) { c.goStep(c.k + 1, true); return; }
@@ -937,7 +1273,7 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
   // lùi: lùi một bước; đang ở bước đầu thì về slide trước, hiện sẵn trạng thái cuối
   function prev() {
     const c = cur;
-    if (c && !AUTO && !ALL && c.k > 0 && !pending) { c.goStep(c.k - 1, false); return; }
+    if (c && c.stepMode && !ALL && c.k > 0 && !pending) { c.goStep(c.k - 1, false); return; }
     show(i - 1, true);
   }
 
@@ -951,7 +1287,7 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
     else if (e.shiftKey && e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1, true); }
     else if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
     else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
-    else if (e.key === 'r' || e.key === 'R') { if (cur) { if (AUTO || !cur.goStep) cur.tl.restart(); else cur.goStep(cur.k, true); } }
+    else if (e.key === 'r' || e.key === 'R') { if (cur) { if (!cur.stepMode) cur.tl.restart(); else cur.goStep(cur.k, true); } }
     else if (e.key === 'b' || e.key === 'B' || e.key === '.') { black.classList.toggle('on'); }
     else if (e.key === 'n' || e.key === 'N') { document.getElementById('notes').classList.toggle('on'); }
     else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
@@ -963,6 +1299,13 @@ NEW_ENGINE = r"""  // dựng sơ đồ của slide s; atEnd: hiện sẵn trạn
     if (e.clientX > innerWidth * .2) next(); else prev();
   });
 """
+NEW_ENGINE = NEW_ENGINE.replace(
+    "  // dựng sơ đồ của slide s;",
+    "  const STEP_FIGS = " + json.dumps(STEP_FIGS) + ";\n"
+    "  const FIG_SUMMARY = " + json.dumps(FIG_SUMMARY, ensure_ascii=False) + ";\n"
+    "  // dựng sơ đồ của slide s;",
+    1,
+)
 js = js[:a] + NEW_ENGINE + js[b:]
 js = sub(
     js,
@@ -973,7 +1316,7 @@ js = sub(
 js = sub(
     js,
     "   ← → / Space: đổi slide · R: chạy lại sơ đồ · N: ghi chú · F: toàn màn hình\n",
-    "   → Space PageDown: bước kế, hết bước thì sang slide · ← PageUp: lùi một bước\n"
+    "   → Space PageDown: bước kế (chỉ 4 sơ đồ chia bước), hết bước thì sang slide · ← PageUp: lùi\n"
     "   Shift+→ / Shift+←: bỏ qua các bước · số + Enter: nhảy tới slide · B: màn hình đen\n"
     "   R: chạy lại bước hiện tại · N: ghi chú · F: toàn màn hình\n"
     "   ?auto — sơ đồ tự chạy hết các bước như bản cũ (để quay màn hình)\n",
@@ -1075,10 +1418,11 @@ AGENDA_NOTES = (
     "thuyết, dữ liệu, phương pháp đề xuất, hệ thống, thực nghiệm và kết quả, và cuối cùng là kết "
     "luận. Phần thực nghiệm và kết quả chiếm nhiều thời gian nhất vì chứa các kết quả chính."
 )
+PART_ICONS = ["intro", "theory", "data", "method", "system", "results", "conclusion"]
 rows = "\n".join(
-    f'    <li class="rise r{min(p + 1, 7)}"><span class="no">{p + 1:02d}</span>'
-    f'<span class="nm">{name}</span><span class="ds">{desc}</span><span class="pg">{span(p)}</span></li>'
-    for p, (name, desc, _ch, _k) in enumerate(PARTS)
+    f'    <li class="rise r{min(p + 1, 7)}"><span class="no">{p + 1:02d}</span>{icon(PART_ICONS[p])}'
+    f'<span class="nm">{name}</span><span class="pg">{span(p)}</span></li>'
+    for p, (name, _desc, _ch, _k) in enumerate(PARTS)
 )
 AGENDA = f'''<section class="slide agenda" data-notes="{html.escape(AGENDA_NOTES)}">
   {run_tpl.group(1)}Nội dung trình bày{run_tpl.group(3)}
@@ -1097,6 +1441,7 @@ def divider(p: int) -> str:
         for q in range(len(PARTS))
     )
     return f'''<section class="slide part" data-notes="{html.escape(PART_NOTES[p])}">
+  <div class="pic rise r1">{icon(PART_ICONS[p])}</div>
   <div class="pk rise r1">Phần {p + 1} / {len(PARTS)} · {chap}</div>
   <div class="pt rise r2">{name}</div>
   <div class="pd rise r3">{desc}</div>
@@ -1113,10 +1458,10 @@ CSS = """
 #black { position: fixed; inset: 0; background: #000; z-index: 90; display: none; }
 #black.on { display: block; }
 .toc { position: absolute; left: 120px; right: 120px; top: 222px; list-style: none; border-top: 2px solid var(--ink); }
-.toc li { display: grid; grid-template-columns: 100px 500px 1fr 150px; align-items: baseline; padding: 22px 0 20px; border-bottom: 1.5px solid var(--rule); }
+.toc li { display: grid; grid-template-columns: 100px 76px 1fr 180px; align-items: center; padding: 18px 0 16px; border-bottom: 1.5px solid var(--rule); }
+.toc .ic { width: 46px; height: 46px; color: var(--ctx); }
 .toc .no { font: 500 42px/1 var(--serif); color: var(--ctx); }
 .toc .nm { font: 500 38px/1.15 var(--serif); }
-.toc .ds { font: 400 23px/1.35 var(--sans); color: var(--muted); padding-right: 24px; }
 .toc .pg { font: 600 19px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; }
 .part { background: var(--ink); color: var(--paper); }
 .part::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 18px; background: var(--ctx); }
@@ -1131,6 +1476,28 @@ CSS = """
 .part .plist li.on .n { color: #9FE0D9; }
 .part .plist li.on::before { content: ""; position: absolute; left: -5px; top: 10px; bottom: 10px; width: 8px; border-radius: 4px; background: #9FE0D9; }
 .part .foot { color: #8B94A5; }
+.part .pic { position: absolute; left: 120px; top: 200px; color: #9FE0D9; }
+.part .pic .ic { width: 96px; height: 96px; }
+.gq3 { position: absolute; left: 120px; right: 120px; top: 250px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.gcol .gtop { background: #fff; border: 2px solid var(--rule); border-top: 8px solid var(--c); border-radius: 14px; padding: 30px 34px 32px; min-height: 320px; }
+.gcol .ic { width: 72px; height: 72px; color: var(--c); }
+.gcol .k { margin-top: 16px; font: 700 18px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+.gcol .s { margin-top: 14px; font: 500 35px/1.26 var(--serif); }
+.gcol .s em { font-style: italic; color: var(--c); }
+.gcol .gar { text-align: center; font: 700 30px/1 var(--sans); color: var(--c); padding: 12px 0; }
+.gcol .qc { background: #fff; border: 2px solid var(--c); border-radius: 14px; padding: 26px 34px 28px; }
+.gcol .qc .q { margin-top: 12px; font: 400 28px/1.4 var(--sans); }
+.gcol .qc .a { margin-top: 16px; font: 600 20px/1 var(--sans); color: var(--muted); }
+.res3 { position: absolute; left: 120px; right: 120px; top: 222px; display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 36px; }
+.rcol { background: #fff; border: 2px solid var(--rule); border-top: 8px solid var(--c); border-radius: 14px; padding: 24px 30px 18px; }
+.rcol h3 { display: flex; align-items: center; gap: 14px; font: 600 30px/1.2 var(--serif); color: var(--c); margin-bottom: 10px; }
+.rcol h3 .ic { width: 40px; height: 40px; }
+.rcol ul { list-style: none; }
+.rcol li { display: grid; gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--rule); font: 400 23px/1.38 var(--sans); }
+.rcol li.num { grid-template-columns: 118px 1fr; }
+.rcol li.line { grid-template-columns: 1fr; padding-left: 26px; position: relative; }
+.rcol li.line::before { content: ""; position: absolute; left: 2px; top: 25px; width: 12px; height: 3px; border-radius: 2px; background: var(--c); }
+.rcol li .v { font: 600 36px/1 var(--serif); color: var(--c); }
 """  # noqa: E501 — CSS rules kept one per line
 i = head_part.rindex("</style>")
 head_part = head_part[:i] + CSS + head_part[i:]
