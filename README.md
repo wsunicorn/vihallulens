@@ -231,7 +231,7 @@ os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 | `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các mốc so sánh |
 | `docs/report/` | Bản thảo quyển khóa luận theo chương; cách dựng ra Word và PDF ở `docs/report/README.md` |
 | `docs/media/`, `docs/tools/` | Hình của quyển (mã vẽ ở `docs/media/src/`) và công cụ ghép, đánh số, dựng Word |
-| `UniversityRequirements/Slides/` | Bộ slide bảo vệ `slide_hoi_dong_23.html`, giải thích từng slide, câu hỏi hội đồng dự kiến; cách dùng ở `HUONG_DAN.md` |
+| `UniversityRequirements/Slides/` | Bộ slide bảo vệ `slide_hoi_dong_31.html` (31 slide, kèm bản PDF), giải thích từng slide, câu hỏi hội đồng dự kiến; cách dùng ở `HUONG_DAN.md` |
 | `docs/LICH_SU_PR.md` | 135 pull request của repo gốc (19/08–22/10/2026), ngày thật và link tới commit gộp; số PR trong `TASKS.md` là số ở file này |
 
 ## Dữ liệu

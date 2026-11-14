@@ -4998,6 +4998,30 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Trạng thái 14/11/2026:** bộ chính thành **`slide_hoi_dong_31.html`** (kèm PDF 31 trang), dựng
+    từ bộ 23 slide bằng script mới `UniversityRequirements/Slides/nguon_hoan_thien/
+    hoan_thien_slide.py`. Mục đích: slide đọc được với cả thành viên hội đồng không chuyên sâu về
+    đề tài, nên phải dùng từ học thuật và rõ ràng. Đã làm:
+    - **Bố cục:** thêm slide *Nội dung trình bày* (bảy phần theo tám chương của quyển, ghi dải
+      slide của từng phần) và một slide chuyển phần trước mỗi phần, làm nổi phần sắp trình bày.
+    - **Tiêu đề:** nêu tên nội dung thay vì nêu kết luận hay đặt câu hỏi, ví dụ "Kết quả phân loại
+      trên ViHallu" thay cho "Chỉ một bộ phân loại tuyến tính trên chú ý đã ngang PhoBERT…". Kết
+      luận chuyển thành **dòng tóm tắt** ngay dưới tiêu đề.
+    - **Từ ngữ:** thay các cách nói đời thường trên slide, trong nhãn hình, chú thích từng bước và
+      ghi chú diễn giả, khớp cách dùng từ của quyển sau T48: "bịa / nói sai / tự thêm" → "không có
+      căn cứ / mâu thuẫn với ngữ cảnh / bổ sung thông tin không có trong ngữ cảnh", "đoán bừa" →
+      "mức ngẫu nhiên", "trúng" → "xác định đúng", "ngang" → "tương đương", "card T4" → "GPU
+      Tesla T4", "tỷ lệ nhìn lại" → "tỷ lệ lookback" (như quyển). Script dừng nếu còn sót một
+      trong các từ đã loại.
+    - **E19 lên slide:** slide 22 (định vị) có bước thứ năm: đầu chú ý mạnh nhất 85,0 %, đầu chọn
+      trên ISE-DSC01 79,7 %, cắt bỏ từng đoạn ngữ cảnh 73,3 % với 10,9 lượt đọc (Bảng 6.17). Slide
+      29 và bảng giả thuyết (slide 28, H3) ghi kèm. E17 thêm vào slide dữ liệu và ghi chú slide 24.
+    - `GIAI_THICH_SLIDE.md` viết lại theo số slide mới, kịch bản thời gian tính lại từ ghi chú mới
+      (bản đủ khoảng 26–27 phút, bản rút khoảng 15 phút); `HOI_DAP_HOI_DONG.md` đánh lại mọi số
+      slide trong ngoặc vuông và sửa từ ngữ; `HUONG_DAN.md` thêm bước dựng thứ ba.
+    - **Kiểm:** `?qa` in `QA-OK`, kèm kiểm mới là khối tiêu đề không đẩy hình đè lên chú thích
+      bước; chụp đủ 31 slide ở trạng thái cuối, xem từng ảnh.
+    - **Còn:** bản PPTX của bộ slide; chọn người nói, diễn tập bấm giờ.
   - **Trạng thái 23/10/2026:** đã sửa slide 12 (825 ca kiểm thử, lượt `pytest` ngày 23/10; quyển v4
     còn ghi 688) và slide 21 (E17: lặp lại trên ViFactCheck đạt 0,703, đặc trưng hình dạng không
     tăng điểm kể cả ở đó; E18: hướng phát triển thành chấm theo từng đoạn của câu trả lời, vì chấm
