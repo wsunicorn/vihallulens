@@ -4971,6 +4971,24 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       hướng phát triển thành chấm theo đoạn có nhãn mức đoạn.
     - **E17 (T41):** một đoạn ngắn ở mục 8.2, không thêm bảng; ghi kèm split gốc rò rỉ ngữ cảnh.
     - Slide 21 (dòng ViFactCheck, hướng phát triển) và slide 12 (số ca kiểm thử) sửa theo.
+  - **Rà văn phong học thuật 15/11/2026** (theo danh sách Minh gửi: 125 chỗ từ lặp, 195 câu viết lại).
+    Văn phong học thuật ở đây nghĩa là bỏ cách nói đời thường ("chấm", "dàn trải", "chỉ đúng đoạn",
+    "bám vào") và cách nhân hóa mô hình ("chưa học được gì", "đứng vững", "tự tin khi đoán sai").
+    - **Quyển:** áp 176 câu của Minh nguyên văn, viết khác 8 câu (ngữ pháp, tránh lặp chữ, giữ đủ
+      ý), sửa tay 19 câu đã đụng ở PR #18. "Chấm" (62 chỗ) đổi theo nghĩa từng câu: *đánh giá* khi
+      nói trên một tập, *tính điểm*, *kiểm tra* (phản hồi cần kiểm tra), *được tính* (token được tính
+      vào đặc trưng), *phát hiện* (thời gian phát hiện); E18 đổi tên thành "Gộp đặc trưng theo từng
+      câu phản hồi". Bỏ 94 dấu " — " chêm ý trong văn xuôi (giữ ở bìa, bảng, tiêu đề phụ lục); 11
+      định nghĩa viết tắt thành "(Large Language Model, LLM)". Abstract và Tóm tắt rút gọn để vẫn mỗi
+      phần một trang; Bảng 6.4 và 6.7 đặt sau đoạn văn kế tiếp để không để trống 30 % trang. Vẫn 137
+      trang, mọi mục giữ trang cũ.
+    - **Slide:** bảng `VAN_PHONG` (30 phép thay, mỗi phép khớp đúng một lần) ở bước cuối của
+      `b3_hoan_thien.py`, thêm các cụm cũ vào danh sách chặn; "chấm" nghĩa dấu chấm biểu đồ giữ.
+      `?qa` báo QA-OK.
+    - **Tài liệu khác:** README, `docs/SPEC.md`, `DATA.md`, `REFERENCES.md`, `EXPERIMENTS.md` và
+      ba sổ tay chuẩn bị bảo vệ (giữ riêng) đổi theo cùng bảng từ. Nút "Chấm" trên giao diện web giữ
+      tên vì có trong ảnh chụp Hình 5.3.
+    - Quy ước ghi thành mục "Quy ước dùng từ" trong `docs/report/README.md` để cả nhóm dùng tiếp.
   - **Định dạng theo mẫu và rà nội dung 15/11/2026** (vẫn 137 trang, mọi mục và chú thích giữ trang
     cũ). Đối chiếu với một báo cáo mẫu được Khoa chấp nhận, sửa trong `build_docx.py` và bản thảo:
     - **Định dạng.** Lời cảm ơn có hai cột ký tên song song cho hai sinh viên (marker `@@SIGN@@`).

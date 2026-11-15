@@ -69,6 +69,8 @@ uv run --no-project --with playwright==1.48.0 --with pymupdf==1.25.5 --with pill
 | xuất | `xuat_pdf.py` | PDF | — |
 
 Mỗi chỗ sửa là một phép thay chuỗi có kiểm số lần khớp; nguồn không khớp thì script dừng.
-`b3_hoan_thien.py` còn chặn các từ ngữ đời thường đã loại (ví dụ "bịa", "đoán bừa"). Biểu tượng là
+`b3_hoan_thien.py` còn chặn các từ ngữ đời thường đã loại (ví dụ "bịa", "đoán bừa", "cần chấm",
+"chuyển được"); bảng `VAN_PHONG` ở bước cuối đổi chữ theo quy ước dùng từ của quyển
+(`docs/report/README.md`). Biểu tượng là
 một bộ SVG nét mảnh vẽ trong `b3_hoan_thien.py` (`ICONS`), không dùng thư viện ngoài. `nguon/img/`
 giữ ảnh gốc (logo trường, hình minh họa); trong HTML các ảnh này đã nhúng sẵn.

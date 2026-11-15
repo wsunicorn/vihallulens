@@ -12,7 +12,7 @@ Cả bốn bộ chuẩn hóa về đúng các cột sau, lưu Parquet tại `dat
 | `context` | str | có | Đoạn văn bản làm bằng chứng nguồn |
 | `context_id` | str | có | Hash của `context`, dùng để chia tập theo nhóm |
 | `question` | str | không | Câu hỏi. Rỗng với ba bộ kiểm chứng thông tin. |
-| `response` | str | có | Văn bản cần chấm. Với ViHallu là phản hồi LLM, ba bộ còn lại là claim. |
+| `response` | str | có | Văn bản cần kiểm tra. Với ViHallu là phản hồi LLM, ba bộ còn lại là claim. |
 | `label` | str | có | `no`, `intrinsic`, `extrinsic` — xem mục 3 |
 | `label_original` | str | có | Nhãn gốc chưa ánh xạ, giữ để truy vết |
 | `evidence` | str | không | Câu bằng chứng vàng. Rỗng nếu bộ không có. |
@@ -25,7 +25,7 @@ Cả bốn bộ chuẩn hóa về đúng các cột sau, lưu Parquet tại `dat
 
 Dữ liệu gốc nằm trong `data/raw/`, **để phẳng, không có thư mục con**, đặt tên theo quy ước `{dataset}_{split}.{ext}`. Task T08B đã đổi tên xong ngày 19/08/2026; bảng ánh xạ tên cũ sang tên mới nằm ở `data/raw/MANIFEST.md`.
 
-Đây là danh sách đường dẫn cố định mà code được phép giả định. Thiếu file nào thì raise, không đoán tên khác:
+Đây là danh sách đường dẫn cố định mà code được phép giả định. Thiếu file nào thì raise, không tự suy ra tên khác:
 
 | Bộ | Tập | Đường dẫn | Số dòng | Dùng không |
 |---|---|---|---|---|
@@ -211,7 +211,7 @@ Bài báo ViHallu (arXiv:2601.04711) nói rõ mỗi ngữ cảnh được sinh *
 Bộ dữ liệu không có cột ghi loại prompt nên phải suy ra và ghi vào `meta.prompt_type`:
 
 - `noisy` — nhận diện được tin cậy: prompt **không chứa ký tự có dấu tiếng Việt** trong khi ngữ cảnh có. Dùng dải Unicode tiếng Việt để kiểm tra, không dùng danh sách từ.
-- `factual` và `adversarial` — không tách được bằng luật đơn giản. Ghi `unknown`, **không đoán bừa**.
+- `factual` và `adversarial` — không tách được bằng luật đơn giản. Ghi `unknown`, **không gán tùy tiện**.
 
 Ghi thêm `meta.prompt_has_diacritics` (bool) để phân tích sau này kiểm chứng được.
 

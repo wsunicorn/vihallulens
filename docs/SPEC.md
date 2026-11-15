@@ -66,7 +66,7 @@ Yêu cầu hiện thực bắt buộc:
   `layer_indices` trong kết quả ghi lại lưới thật.
 - **Không dùng `output_attentions=True` ở mức `model(...)`.** Thay vào đó đăng ký `forward_hook` trên từng `self_attn` module.
 - Trong hook: nhận `attn_weights` shape `(batch, n_heads, q_len, k_len)`, tính ngay các tổng cần thiết theo từng chunk, ghi vào bộ tích lũy, rồi `del` tensor.
-- Ghép prompt theo mẫu: ngữ cảnh, câu hỏi, rồi phản hồi. Ghi lại `response_token_start` để biết vùng token nào là phần cần chấm.
+- Ghép prompt theo mẫu: ngữ cảnh, câu hỏi, rồi phản hồi. Ghi lại `response_token_start` để biết vùng token nào là phần cần kiểm tra.
 - Chạy một lượt forward duy nhất với toàn bộ chuỗi (teacher forcing), không sinh token mới.
 - Nếu tổng token vượt `max_context_tokens`, cắt bớt ngữ cảnh từ giữa và ghi cờ `truncated=True` vào metadata.
 
@@ -75,7 +75,7 @@ Yêu cầu hiện thực bắt buộc:
 ```python
 @dataclass
 class AttentionFeatures:
-    # Trục token là các token phản hồi được chấm, tức bỏ token đầu tiên:
+    # Trục token là các token phản hồi được tính, tức bỏ token đầu tiên:
     # n_scored = n_response_tokens - 1. Xem mục 8 quy tắc 5 của CONVENTIONS.md.
     lookback_per_chunk: np.ndarray   # (n_layers, n_heads, n_scored, n_chunks)
     lookback_total: np.ndarray       # (n_layers, n_heads, n_scored) mẫu số cả prompt, như bài gốc
@@ -119,7 +119,7 @@ build_feature_matrix(records, groups, n_layers, n_heads, mode="all", keep=None) 
 
 `records` là bản ghi đọc từ shard `.npz`, `groups` là danh sách nhóm đặc trưng, `mode`/`keep` là
 cách gộp đầu và các cặp (lớp, đầu) được giữ — chính bốn tham số này được `DetectorBundle` lưu
-lại để chấm mẫu mới (mục 2.4).
+lại để đánh giá mẫu mới (mục 2.4).
 
 ### 2.4. `vihallulens.detect`
 
@@ -139,9 +139,9 @@ class DetectorBundle:            # thêm ở T36
 ```
 
 `LookbackDetector.save` chỉ lưu bộ phân loại — không lưu nó đọc cột nào. `DetectorBundle` là thứ
-phải lưu để chấm được mẫu mới: nó mang cả công thức dựng cột và **từ chối** bản ghi trích trên
+phải lưu để đánh giá được mẫu mới: nó mang cả công thức dựng cột và **từ chối** bản ghi trích trên
 lưới lớp khác (E13/E14 đo được cùng chỉ số cột ở hai mô hình khác nhau thì khác nghĩa). Kiểm ở
-T36: bundle E03 chấm lại 700 bản ghi test từng bản một cho **700/700** trùng `y_pred` đã ghi.
+T36: bundle E03 đánh giá lại 700 bản ghi test từng bản một cho **700/700** trùng `y_pred` đã ghi.
 
 Trên cùng là `vihallulens.pipeline.HallucinationDetector` — một lời gọi từ
 `(context, question, response)` tới đúng schema `/score` ở mục 2.6, nạp bằng
@@ -173,7 +173,7 @@ Sinh bảng kết quả để dán vào báo cáo.
 
 ### 2.6. `vihallulens.serve`
 
-FastAPI (`serve/app.py`, hàm `create_app`). Ba endpoint chấm điểm theo bản đặc tả đầu, thêm hai
+FastAPI (`serve/app.py`, hàm `create_app`). Ba endpoint tính điểm theo bản đặc tả đầu, thêm hai
 endpoint của hệ RAG minh họa (T40) và trang quan sát (T39):
 
 | Route | Nhận | Trả |
@@ -186,7 +186,7 @@ endpoint của hệ RAG minh họa (T40) và trang quan sát (T39):
 | `GET /` | — | trang quan sát `serve/static/index.html` |
 
 Quy ước: `status` là `loading` cho tới khi mô hình nạp xong, `ok` sau đó, `error` kèm lý do khi
-nạp hỏng; hai route chấm điểm trả **503** trong lúc chờ. `chunk_strategy` phải trùng cách chia
+nạp hỏng; hai route tính điểm trả **503** trong lúc chờ. `chunk_strategy` phải trùng cách chia
 đoạn bộ phát hiện được khớp cùng, khác thì **400**. `chunk_attention` mỗi phần tử là
 `{index, text, char_start, char_end, share}` với `context[char_start:char_end] == text`.
 
@@ -234,7 +234,7 @@ scripts/demo_rag.py         --question "..." [--out ket_qua.json]
 ```
 
 `train_detector.py` và `evaluate.py` trong bản đặc tả đầu gộp thành `run_chunk_aware.py`: chọn
-cách gộp đầu trên dev, chấm test một lần, ghi `results/runs.jsonl`, và lưu bundle nếu được yêu
+cách gộp đầu trên dev, đánh giá test một lần, ghi `results/runs.jsonl`, và lưu bundle nếu được yêu
 cầu. Tách hai bước ra thì bước "huấn luyện" không có gì để ghi — bộ phân loại 579 tham số khớp
 trong vài giây và chỉ có nghĩa cùng với con số dev đã chọn nó.
 

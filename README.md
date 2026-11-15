@@ -6,7 +6,7 @@ Khóa luận tốt nghiệp ngành Khoa học dữ liệu — Trường Đại h
 
 ## Ý tưởng
 
-Khi một mô hình ngôn ngữ đọc lại một câu trả lời cùng với ngữ cảnh đã truy xuất, phân bố trọng số chú ý của nó lên từng đoạn ngữ cảnh mang thông tin về việc câu trả lời có bám vào bằng chứng hay không. Đề tài khai thác tín hiệu này để phân loại ba lớp: không ảo giác, ảo giác nội tại, ảo giác ngoại lai — chỉ cần một lượt đọc của mô hình mở và một bộ phân loại tuyến tính vài trăm tham số, không tinh chỉnh mô hình nào và không gọi dịch vụ trả phí nào.
+Khi một mô hình ngôn ngữ đọc lại một câu trả lời cùng với ngữ cảnh đã truy xuất, phân bố trọng số chú ý của nó lên từng đoạn ngữ cảnh mang thông tin về việc câu trả lời có dựa trên bằng chứng hay không. Đề tài khai thác tín hiệu này để phân loại ba lớp: không ảo giác, ảo giác nội tại, ảo giác ngoại lai — chỉ cần một lượt đọc của mô hình mở và một bộ phân loại tuyến tính vài trăm tham số, không tinh chỉnh mô hình nào và không gọi dịch vụ trả phí nào.
 
 Đóng góp chính là **chunk-aware lookback ratio**: tách tỷ lệ chú ý theo từng đoạn ngữ cảnh thay vì gộp toàn bộ thành một khối như phương pháp Lookback Lens gốc.
 
@@ -96,7 +96,7 @@ python scripts/normalize_data.py --dataset viwikifc
 python scripts/normalize_data.py --dataset vifactcheck
 ```
 
-Chạy một thí nghiệm — trích đặc trưng trên GPU rồi chấm trên CPU:
+Chạy một thí nghiệm — trích đặc trưng trên GPU rồi đánh giá trên CPU:
 
 ```bash
 python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml --split train
@@ -106,7 +106,7 @@ python scripts/run_chunk_aware.py  --config configs/e03_chunk_sentence_vihallu.y
     --save-bundle models/e03_chunk_aware.pkl
 ```
 
-Bước thứ hai chọn cách gộp đầu chú ý trên tập dev, chấm tập test đúng một lần, ghi kết quả vào
+Bước thứ hai chọn cách gộp đầu chú ý trên tập dev, đánh giá tập test đúng một lần, ghi kết quả vào
 `results/runs.jsonl`, và với `--save-bundle` thì lưu bộ phát hiện đã khớp **kèm công thức dựng
 cột của nó** — đó là thứ thư viện và API nạp lên.
 
@@ -135,7 +135,7 @@ và có 579 tham số.
 
 Hai con số cần đọc đúng. `risk_score` là con số một hệ RAG nên hành động theo: Bảng 1 và Bảng 7
 trong `docs/EXPERIMENTS.md` đo được bộ phát hiện tách "trung thực hay không" tốt hơn hẳn tách hai
-loại ảo giác, và chỉ phán đoán nhị phân mới chuyển được giữa các bộ dữ liệu. `chunk_attention` là
+loại ảo giác, và chỉ phán đoán nhị phân mới chuyển giao được giữa các bộ dữ liệu. `chunk_attention` là
 tỷ trọng chú ý trung bình trên mọi lớp và đầu — chính đại lượng E06 đã đo hit@1 87,8 % so với đoạn
 bằng chứng vàng — không phải thứ bộ phân loại đọc.
 
@@ -151,13 +151,13 @@ Trang chủ ở `http://127.0.0.1:8000/` vừa giới thiệu đề tài (cơ ch
 |---|---|---|
 | `POST /score` | `{context, response, question?, chunk_strategy?}` | `{label, proba, risk_score, chunk_attention, elapsed_ms, …}` |
 | `POST /score/batch` | `{items: [...]}`, tối đa 64 | `{results: [...], elapsed_ms}` |
-| `GET /health` | — | mô hình đã nạp chưa, tên mô hình, VRAM đang giữ, bộ sinh đã nạp chưa, số request đã chấm |
+| `GET /health` | — | mô hình đã nạp chưa, tên mô hình, VRAM đang giữ, bộ sinh đã nạp chưa, số request đã xử lý |
 | `POST /demo/ask` | `{question, top_k?}` | tài liệu truy xuất, câu trả lời sinh ra, và điểm của nó (mục dưới) |
 | `GET /demo/corpus` | — | 21 tài liệu của kho minh họa |
 | `GET /` | — | trang quan sát |
 
 Mô hình nạp **một lần lúc khởi động** (khoảng một phút với Qwen2.5-7B NF4 trên T4). `GET /health`
-trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do nếu nạp hỏng; hai route chấm
+trả `loading` cho tới khi nạp xong, `ok` sau đó, `error` kèm lý do nếu nạp hỏng; hai route tính
 điểm trả **503** trong lúc chờ. `chunk_strategy` phải trùng cách chia đoạn bộ phát hiện được khớp
 cùng — gửi cách khác bị từ chối **400** chứ không bị lặng lẽ bỏ qua, vì năm đặc trưng hình dạng
 mô tả phân bố trên đúng các đoạn ấy.
@@ -166,7 +166,7 @@ mô tả phân bố trên đúng các đoạn ấy.
 
 Dịch vụ kèm một hệ RAG tối giản trên **21 tài liệu ngắn về Việt Nam** (`serve/demo_corpus.jsonl`):
 truy xuất BM25, sinh câu trả lời bằng **Qwen2.5-3B nạp ở `bfloat16`** (cùng chat template đã chốt
-ở mục 8 `CONVENTIONS.md`, giải mã tham lam), rồi chấm câu trả lời ấy bằng bộ phát hiện. Vì sao không
+ở mục 8 `CONVENTIONS.md`, giải mã tham lam), rồi đánh giá câu trả lời ấy bằng bộ phát hiện. Vì sao không
 dùng chính bản 7B `float16` đang nạp để sinh: lớp 27 của nó tràn số — bộ phát hiện né được bằng
 cách không đọc lớp đó, nhưng LM head thì không né được, và logit NaN cho ra toàn `!`. Vì sao không
 nạp thêm 7B `bfloat16`: hai bản 7B không nằm chung một card 16 GB (thử ngày 11/09, hết bộ nhớ lúc
