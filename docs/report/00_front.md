@@ -106,21 +106,7 @@ Cuối cùng, chúng em cảm ơn gia đình đã luôn động viên trong su�
 
 Mặc dù đã cố gắng, khóa luận không tránh khỏi thiếu sót. Chúng em rất mong nhận được ý kiến đóng góp của quý thầy cô.
 
-> **Người thực hiện đề tài**
->
->  
->
->  
->
->  
->
-> Nguyễn Ngọc Lân
->
->  
->
->  
->
-> Nguyễn Tấn Minh
+@@SIGN@@
 
 <div style="page-break-after: always"></div>
 

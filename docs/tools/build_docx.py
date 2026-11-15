@@ -27,10 +27,15 @@ The numbers come from chapter 2 of the Khoa template, "docs/Mau bao cao KLTN_DS.
 
 Everything chapter 2 leaves unsaid is copied from how the template file itself looks:
 the style names (Content, Bullet, CoverB, Heading 1N), chapter and section numbers drawn
-by a Word multilevel list ("CHƯƠNG 1" + tab, "1.1" + tab, hanging indent), italic
-captions, centred unnumbered titles for the lists and the back matter, the covers (20 pt
-title, art page border on the outer cover, a plain frame on the English one) and the
-13 pt footer.
+by a Word multilevel list, centred unnumbered titles for the lists and the back matter,
+the covers (20 pt title, art page border on the outer cover, a plain frame on the English
+one) and the 13 pt footer.
+
+What follows the reference report the Khoa accepted (checked 15/11): chapter titles read
+"CHƯƠNG 1. GIỚI THIỆU" on one line; captions are upright with a bold "Bảng 1.1." label;
+table header rows are shaded grey; bullets use an en dash; the acknowledgement ends with
+two signature columns, one per student; numbers stay on the line of their unit
+("0,94 GB") and labels on the line of their number ("Hình 6.1").
 
 Pipeline: the Markdown is pre-processed into pandoc-friendly form, pandoc produces a raw
 .docx (inline $...$ math becomes native Word equations there), python-docx applies every
@@ -73,9 +78,9 @@ OUT_DOCX = DOCS / "BaoCao_KLTN.docx"
 LOGO = DOCS / "media" / "logo_iuh.png"
 
 FONT = "Times New Roman"
-# list marker: a Times New Roman hyphen, not the Symbol-font round dot pandoc emits.
-# The Khoa template carries this exact definition — "-" (U+002D) in Times New Roman.
-BULLET = "-"
+# list marker: an en dash in Times New Roman, as in the reference report the team was given
+# (15/11/2026), rather than the template's short hyphen or the Symbol-font dot pandoc emits.
+BULLET = "\u2013"
 PAGE_W_CM, PAGE_H_CM = 21.0, 29.7
 MARGIN = dict(top=3.0, bottom=3.0, left=3.5, right=2.0)
 TEXT_W_CM = PAGE_W_CM - MARGIN["left"] - MARGIN["right"]      # 15.5 cm
@@ -151,9 +156,23 @@ PLAIN_PERCENT = ("cùng phiên đã chậm đi 10–15 % do hạ xung",
                  "sau khi phát hiện hạ xung làm chậm 10–15 %")
 
 
+# A number and the unit after it, and a label and the number after it, stay on one line:
+# "0,94 GB", "437,6 ms", "Hình 6.1", "lớp 27". Headings and captions are left alone (their
+# numbers are matched by plain-space patterns later in the build).
+UNITS = ("%", "GB", "GiB", "MB", "KB", "ms", "giây", "phút", "giờ", "token", "lần", "triệu",
+         "tỷ", "mẫu", "đoạn", "câu", "lớp", "đầu", "cặp", "lượt", "tham số", "bộ")
+UNIT_RE = re.compile(r"(\d) (?=(?:" + "|".join(re.escape(u) for u in UNITS) + r")(?![\w]))")
+LABELS = ("Hình", "Bảng", "mục", "Mục", "Chương", "chương", "lớp", "Lớp", "đầu", "Đầu",
+          "bước", "Bước", "công thức", "Phụ lục", "phụ lục")
+LABEL_RE = re.compile(r"\b(" + "|".join(LABELS) + r") (?=\d|[A-H]\.\d|[A-H]\b)")
+
+
 def nbsp(line: str) -> str:
-    """Tie a number to the percent sign after it so Word cannot break the line between."""
-    line = re.sub(r"(\d) %", "\\1\u00a0%", line)
+    """Tie numbers to their units and labels to their numbers so Word cannot break between."""
+    if line.startswith(("#", "![", "*Hình ", "*Bảng ")):
+        return line
+    line = UNIT_RE.sub("\\1\u00a0", line)
+    line = LABEL_RE.sub("\\1\u00a0", line)
     for phrase in PLAIN_PERCENT:
         line = line.replace(phrase.replace(" %", "\u00a0%"), phrase)
     return line
@@ -168,6 +187,8 @@ def preprocess(md: str, work: Path) -> str:
     media_dir.mkdir(exist_ok=True)
     i = 0
     skip_until_break = None
+    # display equations never reach nbsp(): their handler below reads the LaTeX straight
+    # from `lines` and jumps past the closing "$$"
     in_code = False
     while i < len(lines):
         line = lines[i]
@@ -512,17 +533,19 @@ def heading_numbering(doc) -> int:
 
     a = el("w:abstractNum", **{"w:abstractNumId": abs_id})
     a.append(el("w:multiLevelType", **{"w:val": "multilevel"}))
-    # text at the same place as in the template: 1 cm, 1.27 cm, 1.52 cm; a chapter needs
-    # room for "CHƯƠNG 1" itself, so its title starts at 3.5 cm
-    levels = [("CHƯƠNG %1", 3.5), ("%1.%2", 1.0), ("%1.%2.%3", 1.27), ("%1.%2.%3.%4", 1.52)]
-    for ilvl, (text, indent) in enumerate(levels):
+    # "CHƯƠNG 1. GIỚI THIỆU" and "1.1 Bối cảnh …" on one line, number and title separated by a
+    # space, as in the template's outline and the reference report (changed 15/11/2026 from
+    # a tab and a hanging indent); a long title wraps back to the margin
+    levels = ["CHƯƠNG %1.", "%1.%2", "%1.%2.%3", "%1.%2.%3.%4"]
+    for ilvl, text in enumerate(levels):
         lvl = el("w:lvl", **{"w:ilvl": ilvl})
         lvl.append(el("w:start", **{"w:val": 1}))
         lvl.append(el("w:numFmt", **{"w:val": "decimal"}))
+        lvl.append(el("w:suff", **{"w:val": "space"}))
         lvl.append(el("w:lvlText", **{"w:val": text}))
         lvl.append(el("w:lvlJc", **{"w:val": "left"}))
         ppr = el("w:pPr")
-        ppr.append(el("w:ind", **{"w:left": twips(indent), "w:hanging": twips(indent)}))
+        ppr.append(el("w:ind", **{"w:left": 0, "w:hanging": 0}))
         lvl.append(ppr)
         a.append(lvl)
     numbering.insert(0, a)
@@ -588,22 +611,21 @@ def apply_styles(doc) -> None:
     # "Bullet: 13, 0/0, 1.5 lines, canh trái" — the indent is set on each list item,
     # because table cells share this style
     define(doc, "Compact", "Bullet", line=1.5)
-    # "Heading 1: 14, đậm, in hoa, 24/24, 1.15 lines, căn trái"; the hanging indent leaves
-    # "CHƯƠNG n" and the tab after it their own column, as in the template
+    # "Heading 1: 14, đậm, in hoa, 24/24, 1.15 lines, không thụt đầu dòng, căn trái"
     define(doc, "Heading1", "heading 1", size=14, bold=True, caps=True, before=24, after=24,
-           line=1.15, keep_next=True, outline=0, left=3.5, first=-3.5)
+           line=1.15, keep_next=True, outline=0, left=0, first=0)
     # "Heading 2: 13, đậm và đứng, 6/12, 1.15"
     define(doc, "Heading2", "heading 2", bold=True, before=6, after=12, line=1.15,
-           keep_next=True, outline=1, left=1.0, first=-1.0)
+           keep_next=True, outline=1, left=0, first=0)
     # "Heading 3: 13, đậm và nghiêng, 6/12, 1.15"
     define(doc, "Heading3", "heading 3", bold=True, italic=True, before=6, after=12,
-           line=1.15, keep_next=True, outline=2, left=1.27, first=-1.27)
+           line=1.15, keep_next=True, outline=2, left=0, first=0)
     # "Heading 4: 13, nghiêng, 6/12, 1.15"
     define(doc, "Heading4", "heading 4", italic=True, before=6, after=12, line=1.15,
-           keep_next=True, outline=3, left=1.52, first=-1.52)
-    # "Caption: 13, 6/12, 1.15, căn giữa" — italic, the way the template's own style is
-    define(doc, "Caption", "caption", italic=True, before=6, after=12, line=1.15,
-           align="center")
+           keep_next=True, outline=3, left=0, first=0)
+    # "Caption: 13, 6/12, 1.15, căn giữa"; upright, its label in bold ("Bảng 6.1." + title),
+    # as in the reference report
+    define(doc, "Caption", "caption", before=6, after=12, line=1.15, align="center")
     # "Heading 1N" of the template: a chapter-sized title with no number, centred, still
     # picked up by the table of contents — but at outline level 5, so that its entries
     # land in "toc 5" instead of "toc 1". A numbered chapter entry and an unnumbered page
@@ -634,21 +656,19 @@ def apply_styles(doc) -> None:
     # tail back at 0 and the tab after it finds that 1.680 stop instead of the dotted
     # right one, dropping the page number mid-line with no leader. Hanging the same
     # amount keeps the first line where it was and starts the tail under the title.
-    define(doc, "TOC1", "toc 1", after=5, line=1.3, tabs=dots,
-           left=TOC1_HANG_CM, first=-TOC1_HANG_CM)
-    define(doc, "TOC2", "toc 2", after=5, left=0.46, first=1.0, line=1.3, tabs=dots)
-    define(doc, "TOC3", "toc 3", after=5, left=0.92, first=1.0, line=1.3, tabs=dots)
-    # level 4 keeps the ladder going, for a sub-section numbered with four digits
-    define(doc, "TOC4", "toc 4", after=5, left=1.38, first=1.0, line=1.3, tabs=dots)
-    # level 5 belongs to the unnumbered page titles — "PHỤ LỤC", "TÀI LIỆU THAM KHẢO",
-    # the lists. They carry no number, so they need no column for one, and above all no
-    # hanging indent: that indent is itself a tab stop, and "PHỤ LỤC" is short enough to
-    # end before it, which used to send the tab before the page number to 2,96 cm and
-    # print "PHỤ LỤC     g" with no dot leader. Flush left, the only stop left is the
-    # dotted one at the right margin, which is where the page number belongs.
-    define(doc, "TOC5", "toc 5", after=5, line=1.3, tabs=dots)
-    # the lists of figures and tables do have a rule: "Normal, 13, 0/0 pt, 1.15 lines"
-    define(doc, "TableofFigures", "table of figures", line=1.15, tabs=dots)
+    # Table of contents as in the reference report: chapter lines and unnumbered page titles
+    # in bold capitals at the margin, sections 0,5 cm further in per level, no space after
+    # an entry. With the chapter number separated by a space there is no tab stop before
+    # the title, so a title long enough to wrap cannot catch the page-number tab early.
+    define(doc, "TOC1", "toc 1", bold=True, line=1.3, tabs=dots, left=0, first=0)
+    define(doc, "TOC2", "toc 2", left=0.5, first=0, line=1.3, tabs=dots)
+    define(doc, "TOC3", "toc 3", left=1.0, first=0, line=1.3, tabs=dots)
+    define(doc, "TOC4", "toc 4", left=1.5, first=0, line=1.3, tabs=dots)
+    define(doc, "TOC5", "toc 5", bold=True, line=1.3, tabs=dots)
+    # the lists of figures and tables: "Normal, 13, 0/0 pt, 1.15 lines"; a long title hangs
+    # under its own first word instead of returning to the margin
+    define(doc, "TableofFigures", "table of figures", line=1.15, tabs=dots, left=2.3,
+           first=-2.3)
 
     for s in doc.styles.element.findall(qn("w:style")):
         sid = s.get(qn("w:styleId"))
@@ -771,8 +791,40 @@ def rebuild_caption(p, first_in_chapter: bool) -> str:
     clear_runs(p)
     p.add_run(f"{kind} {ch}.")
     add_field(p, f"SEQ {seq} \\* ARABIC" + (" \\r 1" if first_in_chapter else ""), n)
+    p.add_run(".")
+    for r in p.runs:
+        r.bold = True
     p.add_run(f" {rest}")
     return kind
+
+
+SIGNERS = ("Nguyễn Ngọc Lân", "Nguyễn Tấn Minh")
+
+
+def sign_table(doc, marker) -> None:
+    """Replace the marker with two side-by-side signature blocks, one per student.
+
+    A borderless two-column table: "Sinh viên thực hiện", a line for the signature, the
+    name. format_tables() has already run, so this table keeps the plain look."""
+    tbl = doc.add_table(rows=1, cols=2)
+    tblpr = tbl._tbl.tblPr
+    no_borders(tblpr, "w:tblBorders")
+    put(tblpr, el("w:tblW", **{"w:w": twips(TEXT_W_CM), "w:type": "dxa"}))
+    put(tblpr, el("w:tblLayout", **{"w:type": "fixed"}))
+    put(tblpr, el("w:tblCaption", **{"w:val": "SIGN"}))
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for col, cell, name in zip(tbl.columns, tbl.rows[0].cells, SIGNERS, strict=True):
+        col.width = cell.width = Cm(TEXT_W_CM / 2)
+        lines = [("Sinh viên thực hiện", "b"), ("(Ký và ghi rõ họ tên)", "i"),
+                 ("", ""), ("", ""), ("", ""), (name, "b")]
+        for k, (txt, fmt) in enumerate(lines):
+            cp = cell.paragraphs[0] if k == 0 else cell.add_paragraph()
+            r = cp.add_run(txt)
+            r.bold, r.italic = fmt == "b", fmt == "i"
+            spacing(cp, before=12 if k == 0 else 0, line=1.5, align=WD_ALIGN_PARAGRAPH.CENTER,
+                    left=0, first=0)
+    marker._p.addnext(tbl._tbl)
+    marker._p.getparent().remove(marker._p)
 
 
 def is_bullet(doc, numpr) -> bool:
@@ -889,6 +941,10 @@ def body_pass(doc, num_id: int) -> dict:
             add_field(p, f'TOC \\h \\z \\c "{m.group(1)}"', "Nhấn F9 để cập nhật danh mục")
             continue
 
+        if text == "@@SIGN@@":
+            sign_table(doc, p)
+            continue
+
         if text == "@@DOTS@@":
             clear_runs(p)
             p.add_run("\t")
@@ -965,7 +1021,8 @@ def body_pass(doc, num_id: int) -> dict:
             # the template keeps a bullet at the margin but sets a numbered list in,
             # its number at 1 cm and the text at 1,6 cm
             numbered = npr.find(qn("w:numId")) is not None and not is_bullet(doc, npr)
-            left = (1.6 if numbered else 0.5) + 0.75 * depth
+            # a bullet's dash sits 0,5 cm in and its text at 1 cm, as in the reference report
+            left = (1.6 if numbered else 1.0) + 0.75 * depth
             spacing(p, line=1.5, align=WD_ALIGN_PARAGRAPH.LEFT,
                     left=left, first=-0.6 if numbered else -0.5)
     counts["section_ends"] = section_ends
@@ -996,7 +1053,9 @@ def fit_columns(table, width_cm: float, pt: float) -> None:
     mins, wants = [], []
     for texts in cols:
         # Word may break after a space, an en dash or a slash, never inside a number
-        pieces = [w for t in texts for w in re.split(r"[\s–/]+", t) if w]
+        # a date such as 28/08/2026 is one unbreakable piece, so "/" does not split, and
+        # neither does the no-break space that ties a number to its unit
+        pieces = [w for t in texts for w in re.split(r"[ \t\n–]+", t) if w]
         longest_word = max((len(w) for w in pieces), default=1)
         lens = [len(t) for t in texts[1:]] or [len(texts[0])]
         # the widest word decides the column: it is often set bold, or in Cambria Math,
@@ -1021,7 +1080,9 @@ def fit_columns(table, width_cm: float, pt: float) -> None:
 
 # the two front-matter lists are laid out like the template's own: 13 pt, no shading,
 # a plain grid, the term centred and bold, its explanation on the left
-GLOSSARY_HEADS = {("Từ viết tắt", "Từ đầy đủ", "Nghĩa"): (3.14, 8.03, 4.30),
+# the abbreviation table follows the reference report's proportions (about 18 / 40 / 42 %),
+# so the meaning column no longer wraps three or four lines while the full form has room
+GLOSSARY_HEADS = {("Từ viết tắt", "Từ đầy đủ", "Nghĩa"): (2.8, 6.2, 6.5),
                   ("Ký hiệu", "Ý nghĩa"): (3.14, TEXT_W_CM - 3.14)}
 
 # Data tables whose column widths are fixed by hand. The first seven (Bảng 7.2, D.1–D.4, G.1,
@@ -1044,7 +1105,16 @@ BOOK_WIDTHS = {
     # Bảng 6.14: a wider interval column keeps every row to two lines, so the table fits on the
     # page its section starts on instead of leaving half of that page blank
     ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "ms/mẫu", "VRAM đỉnh", "Tham số huấn luyện",
-     "Loại chi phí"): (3.7, 3.3, 1.7, 1.9, 2.4, 2.5),
+     "Loại chi phí"): (3.3, 3.2, 1.75, 2.25, 2.55, 2.45),
+    # Bảng 2.1, 3.1, 6.18: fit_columns() sized these by their longest single cell, so a
+    # column of short names took a quarter of the width while the prose column wrapped
+    # five or six lines
+    ("Hướng", "Tín hiệu sử dụng", "Công trình tiêu biểu", "Cần huấn luyện",
+     "Chi phí khi suy luận", "Hạn chế chính"): (2.2, 2.5, 2.9, 2.3, 2.4, 3.2),
+    ("Bộ dữ liệu", "Vai trò", "Đặc điểm quyết định vai trò"): (2.7, 3.9, 8.9),
+    ("Cách gộp trục phản hồi", "macro-F1 [KTC 95 %]", "F1 extr",
+     "Hiệu F1 extr so với whole [KTC ghép cặp]", "macro-F1 trên phản hồi từ hai câu"):
+        (4.4, 3.0, 1.5, 3.5, 3.1),
 }
 # the hash table (Bảng D.4) sets its rows at 8 pt so every SHA-256 fits on one line, as
 # the book does; its header row keeps the usual size
@@ -1081,6 +1151,35 @@ def table_height_cm(table, pt: float) -> float:
     return total
 
 
+def audit_tables(doc) -> None:
+    """Report columns where Word would have to break a word, number or date, and columns
+    far wider than the text they hold. Printed only; the widths are fixed above."""
+    issues = []
+    for t, table in enumerate(doc.tables, 1):
+        head = [cell_text(c).strip() for c in table.rows[0].cells]
+        rows = [[cell_text(c) for c in row.cells] for row in table.rows]
+        widths = [c.width.cm if c.width else 0 for c in table.rows[-1].cells]
+        n_cols = len(widths)
+        pt = 13 if tuple(head) in GLOSSARY_HEADS else (10 if n_cols >= 8 else TABLE_PT)
+        char_cm = 0.019 * pt
+        total = sum(widths) or 1
+        lens = [sum(len(r[k]) for r in rows[1:]) for k in range(n_cols)]
+        all_len = sum(lens) or 1
+        for k in range(n_cols):
+            # a no-break space ties a number to its unit into one block Word cannot split
+            words = [w for r in rows for w in re.split(r"[ \t\n–]+", r[k]) if w]
+            longest = max(words, key=len, default="")
+            if len(longest) * char_cm > widths[k] - 0.2:
+                issues.append(f"bảng {t} «{head[0][:18]}» cột {k + 1}: «{longest[:20]}» không vừa "
+                              f"{widths[k]:.2f} cm")
+            share_w, share_t = widths[k] / total, lens[k] / all_len
+            if widths[k] > 3 and share_w > 2.2 * max(share_t, 0.02):
+                issues.append(f"bảng {t} «{head[0][:18]}» cột {k + 1} «{head[k][:16]}»: rộng "
+                              f"{share_w:.0%} mà chỉ chứa {share_t:.0%} lượng chữ")
+    if issues:
+        print("   kiểm bảng:\n     " + "\n     ".join(issues))
+
+
 def format_tables(doc) -> int:
     n = 0
     long_tables = []
@@ -1112,8 +1211,10 @@ def format_tables(doc) -> int:
             elif is_log:
                 put(trpr, el("w:trHeight", **{"w:val": twips(1.3), "w:hRule": "atLeast"}))
             for ci, cell in enumerate(row.cells):
-                if ri == 0:              # no fill anywhere: the template's tables are plain
+                if ri == 0:              # header row shaded light grey, as in the reference report
                     cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+                    put(cell._tc.get_or_add_tcPr(),
+                        el("w:shd", **{"w:val": "clear", "w:color": "auto", "w:fill": "D9D9D9"}))
                 centred = ri == 0 or (is_glossary and ci == 0)
                 for cp in cell.paragraphs:
                     spacing(cp, before=2, after=2, line=1.15, left=0, first=0,
@@ -1121,13 +1222,17 @@ def format_tables(doc) -> int:
                             else WD_ALIGN_PARAGRAPH.LEFT)
                     for r in cp.runs:
                         r.font.size = Pt(pt if ri == 0 else BODY_PT.get(tuple(head), pt))
+                        if ri == 0:
+                            r.font.bold = True
         if is_log:
             # the two date columns must hold "03/08/2026" on one line
             mar = el("w:tblCellMar")
             for side in ("left", "right"):
                 mar.append(el(f"w:{side}", **{"w:w": twips(0.12), "w:type": "dxa"}))
             put(tblpr, mar)
-            set_widths(table, (1.2, 2.4, 2.4, 1.9, 4.8, 2.8))
+            # every date column holds "28/08/2026" on one line (the report column was 1,9 cm
+            # and broke the year); the week column is wide enough for its header "Tuần"
+            set_widths(table, (1.3, 2.35, 2.35, 2.35, 4.55, 2.6))
         elif is_glossary:
             set_widths(table, GLOSSARY_HEADS[tuple(head)])
         elif tuple(head) in BOOK_WIDTHS:
@@ -1146,6 +1251,7 @@ def format_tables(doc) -> int:
                         cp.paragraph_format.keep_with_next = True
         else:
             long_tables.append(f"{head[0][:24]} ({height:.0f} cm)")
+    audit_tables(doc)
     print(f"   {n - len(long_tables)} bảng giữ trọn một trang; được ngắt vì dài hơn một "
           f"trang: {', '.join(long_tables) or 'không có'}")
     return n

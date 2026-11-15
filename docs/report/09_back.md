@@ -256,12 +256,12 @@ Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá tr
 
 **Quy trình làm việc.** Để công cụ không tự ý quyết định thay nhóm và để mọi bước kiểm tra được, nhóm tổ chức công việc theo sáu nguyên tắc:
 
-1. **Bộ quy tắc dự án viết thành văn bản.** Tệp `CONVENTIONS.md` (khoảng 200 dòng) ghi ràng buộc cứng về phần cứng và ngân sách, các quyết định đã chốt và những điều bị cấm. Công cụ đọc tệp này ở đầu mỗi phiên, nên quy tắc không phụ thuộc vào trí nhớ của một cuộc hội thoại.
-2. **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 52 việc trong 10 giai đoạn, mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Việc làm đúng thứ tự, không làm trước việc chưa tới.
-3. **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thật nằm ở `docs/LICH_SU_PR.md`.
-4. **Chỉ đánh dấu hoàn thành khi có bằng chứng.** Một việc chỉ được đánh dấu xong khi lệnh trong tiêu chí chạy được và đầu ra được dán vào pull request; với việc cần GPU, notebook Kaggle đã chạy được lưu nguyên đầu ra trong thư mục `notebooks/`.
-5. **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc — thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại — công cụ phải dừng lại để nhóm quyết định.
-6. **Ghi nhật ký diễn giải.** Sau mỗi việc, mục đích, kết quả số và điều rút ra được ghi lại trong `TASKS.md` và `docs/EXPERIMENTS.md`; đây cũng là nguồn số liệu ở Phụ lục E.
+- **Bộ quy tắc dự án viết thành văn bản.** Tệp `CONVENTIONS.md` (khoảng 200 dòng) ghi ràng buộc cứng về phần cứng và ngân sách, các quyết định đã chốt và những điều bị cấm. Công cụ đọc tệp này ở đầu mỗi phiên, nên quy tắc không phụ thuộc vào trí nhớ của một cuộc hội thoại.
+- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 52 việc trong 10 giai đoạn, mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Việc làm đúng thứ tự, không làm trước việc chưa tới.
+- **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thật nằm ở `docs/LICH_SU_PR.md`.
+- **Chỉ đánh dấu hoàn thành khi có bằng chứng.** Một việc chỉ được đánh dấu xong khi lệnh trong tiêu chí chạy được và đầu ra được dán vào pull request; với việc cần GPU, notebook Kaggle đã chạy được lưu nguyên đầu ra trong thư mục `notebooks/`.
+- **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc — thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại — công cụ phải dừng lại để nhóm quyết định.
+- **Ghi nhật ký diễn giải.** Sau mỗi việc, mục đích, kết quả số và điều rút ra được ghi lại trong `TASKS.md` và `docs/EXPERIMENTS.md`; đây cũng là nguồn số liệu ở Phụ lục E.
 
 **Các ràng buộc đặt cho công cụ.** Dưới đây là một số quy tắc trích nguyên văn từ `CONVENTIONS.md`. Đây là dạng câu lệnh chuyên biệt quan trọng nhất của quy trình: chúng được áp dụng cho mọi phiên làm việc chứ không chỉ cho một yêu cầu.
 
@@ -295,10 +295,10 @@ hỏi người dùng. Không tự quyết.
 
 **Kinh nghiệm rút ra.** Bốn điều nhóm thấy quan trọng nhất khi dùng công cụ AI trong một dự án nghiên cứu:
 
-1. **Công cụ có thể sai một cách tự tin, nên mọi con số phải đối chiếu với tệp kết quả.** Nhóm đã phát hiện ba lỗi nhờ đối chiếu. Số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống. Hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy; lỗi này đã được sửa bằng phép sắp xếp có quy tắc phân định hòa. Một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
-2. **Quy tắc viết thành văn bản bền hơn lời dặn trong hội thoại.** Khi một phiên làm việc dài bị tóm tắt lại, những lời dặn chỉ nằm trong hội thoại có thể bị bỏ sót; quy tắc trong `CONVENTIONS.md` thì được đọc lại mỗi phiên. Vì vậy mỗi quyết định quan trọng đều được ghi vào tệp này ngay khi chốt.
-3. **Việc sử dụng GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị đứt không làm mất phần đã chạy.
-4. **Công cụ không thay được phán đoán khoa học.** Những quyết định định hình kết quả — đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày đầy đủ kết quả bất lợi của phần chunk-aware — đều do nhóm đưa ra.
+- **Công cụ có thể sai một cách tự tin, nên mọi con số phải đối chiếu với tệp kết quả.** Nhóm đã phát hiện ba lỗi nhờ đối chiếu. Số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống. Hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy; lỗi này đã được sửa bằng phép sắp xếp có quy tắc phân định hòa. Một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
+- **Quy tắc viết thành văn bản bền hơn lời dặn trong hội thoại.** Khi một phiên làm việc dài bị tóm tắt lại, những lời dặn chỉ nằm trong hội thoại có thể bị bỏ sót; quy tắc trong `CONVENTIONS.md` thì được đọc lại mỗi phiên. Vì vậy mỗi quyết định quan trọng đều được ghi vào tệp này ngay khi chốt.
+- **Việc sử dụng GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị đứt không làm mất phần đã chạy.
+- **Công cụ không thay được phán đoán khoa học.** Những quyết định định hình kết quả — đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày đầy đủ kết quả bất lợi của phần chunk-aware — đều do nhóm đưa ra.
 
 **Tính tái lập của quy trình.** Bộ quy tắc `CONVENTIONS.md`, danh sách việc `TASKS.md`, lịch sử 135 pull request (`docs/LICH_SU_PR.md`), các notebook đã chạy và nhật ký `results/runs.jsonl` đều nằm trong kho mã nguồn. Người đọc có thể kiểm tra từng bước đã làm, và có thể lặp lại cách làm này với một công cụ hỗ trợ khác.
 
