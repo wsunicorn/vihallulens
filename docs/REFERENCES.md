@@ -27,7 +27,7 @@ Bốn điểm dễ làm sai khi tái lập:
 3. Bộ phân loại là `sklearn.linear_model.LogisticRegression` — đúng như quyết định đã chốt trong `CONVENTIONS.md`.
 4. Bài gốc có hai cách lấy span: **predefined span** (khi có nhãn theo đoạn) và **sliding window kích thước 8 token**. Đề tài của nhóm có nhãn ở mức toàn phản hồi nên dùng nguyên phản hồi làm một span; ghi rõ khác biệt này trong báo cáo.
 
-Cách nhóm hiện thực, chốt ở T07 sau khi đo: lưu **hai** biến thể tính từ cùng một ma trận. `lookback_total` lấy X là toàn bộ token trước phản hồi, đúng như công thức trên, và là bản E02 dùng. `lookback_context` chỉ đếm ngữ cảnh truy xuất, dễ diễn giải hơn và là nền của phần chunk-aware. Token phản hồi đầu tiên không được chấm vì mẫu số `t-1` bằng 0.
+Cách nhóm hiện thực, chốt ở T07 sau khi đo: lưu **hai** biến thể tính từ cùng một ma trận. `lookback_total` lấy X là toàn bộ token trước phản hồi, đúng như công thức trên, và là bản E02 dùng. `lookback_context` chỉ đếm ngữ cảnh truy xuất, dễ diễn giải hơn và là nền của phần chunk-aware. Token phản hồi đầu tiên không được đánh giá vì mẫu số `t-1` bằng 0.
 
 Khác biệt về bài toán phải nêu khi so sánh: bài gốc phân loại **nhị phân** (factual / hallucinated) và báo cáo **AUROC**; đề tài phân loại **ba lớp** và báo cáo **macro-F1**. Không đặt hai con số cạnh nhau.
 
@@ -44,7 +44,7 @@ arXiv:2601.04711 · PDF cục bộ: `reference_papers/ViHallu/2601.04711v1.pdf` 
 
 | Công trình | Vai trò | Nguồn |
 |---|---|---|
-| **SemViQA** (Tran, D. X. và cộng sự, 2025) | SOTA trên cả ISE-DSC01 lẫn ViWikiFC. **Nhóm tác giả cùng Trường ĐH Công nghiệp TP.HCM** — có mã nguồn, thư viện PyPI và checkpoint công khai, và có thể hỏi trực tiếp qua GVHD nếu cần làm rõ cách chấm điểm. | arXiv:2503.00955 · github.com/DAVID-NGUYEN-S16/SemViQA · pypi.org/project/semviqa · huggingface.co/SemViQA |
+| **SemViQA** (Tran, D. X. và cộng sự, 2025) | SOTA trên cả ISE-DSC01 lẫn ViWikiFC. **Nhóm tác giả cùng Trường ĐH Công nghiệp TP.HCM** — có mã nguồn, thư viện PyPI và checkpoint công khai, và có thể hỏi trực tiếp qua GVHD nếu cần làm rõ cách tính điểm. | arXiv:2503.00955 · github.com/DAVID-NGUYEN-S16/SemViQA · pypi.org/project/semviqa · huggingface.co/SemViQA |
 | **ViWikiFC** (Le, H. T. và cộng sự, 2024) | Bộ đối chứng ngoài; bài gốc công bố số theo từng nhãn nên đối chiếu trực tiếp được. | arXiv:2405.07615 · huggingface.co/datasets/NghiemAbe/ViWikiFC |
 | **ViFactCheck** (Tran, T.-H. và cộng sự, AAAI 2025) | Bộ chuyển miền tin tức, dự phòng. | arXiv:2412.15308 · github.com/QuangDiy/ViFactCheck |
 

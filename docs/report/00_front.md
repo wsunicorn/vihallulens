@@ -66,13 +66,11 @@ HO CHI MINH CITY — DECEMBER 2026
 
 **Research and development of a hallucination detection system for Vietnamese retrieval-augmented large language models based on internal attention signals**
 
-Retrieval-augmented generation (RAG) grounds a large language model (LLM) in retrieved passages, yet it still states things those passages do not support. Vietnamese detectors today either fine-tune a large encoder or call a judge LLM per answer. This thesis asks whether the attention maps of an open reading model, read from one forward pass, can detect such contextual hallucination.
+Retrieval-augmented generation (RAG) grounds a large language model (LLM) in retrieved passages, yet it can still generate content those passages do not support. Existing Vietnamese detectors either fine-tune a large encoder or employ an LLM judge for each answer. This thesis investigates whether the attention maps of an open reading model, from a single forward pass, can detect such contextual hallucination.
 
-We reproduce Lookback Lens, which measures per head how much of the response's attention goes to the context rather than to itself, and extend it into a chunk-aware lookback ratio: the same attention split over context chunks, its shape summarised by five statistics. Per-layer forward hooks keep a 4-bit Qwen2.5-7B-Instruct inside one 16 GB Tesla T4.
+We reproduce Lookback Lens, which measures per head the share of the response's attention allocated to the context rather than to itself, and extend it into a chunk-aware lookback ratio: the same attention split over context chunks, its shape summarised by five statistics. Per-layer forward hooks let a 4-bit Qwen2.5-7B-Instruct run within one 16 GB Tesla T4.
 
-Across nineteen experiments on four Vietnamese corpora, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, matching a fine-tuned PhoBERT-large (0.749) and beating it on intrinsic hallucination. The strongest head points at the gold-evidence chunk in 87.8% of ISE-DSC01 samples, 14.3 times the random floor, and deleting that sentence moves all four pre-registered shape statistics as predicted. A single head also localises evidence better than context ablation (0.850 vs 0.733) at 10.9 times lower cost. The chunk-aware gain is not significant (0.757 against 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78).
-
-The detector ships as a Python library, a REST service with an attention view and a Docker image; future work covers span-level scoring.
+Across nineteen experiments, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, comparable to a fine-tuned PhoBERT-large (0.749) and higher on the intrinsic class. The strongest head ranks the gold-evidence chunk first in 87.8% of ISE-DSC01 samples, 14.3 times the chance level; removing that sentence shifts all four pre-registered shape statistics as predicted, and a single head localises evidence better than context ablation (0.850 vs 0.733) at 10.9 times lower computational cost. The chunk-aware gain is not statistically significant (0.757 vs 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78). The detector is released as a Python library, a REST service with an attention view and a Docker image.
 
 **Keywords: hallucination detection, retrieval-augmented generation, attention analysis, Vietnamese natural language processing, model calibration.**
 
@@ -82,13 +80,11 @@ The detector ships as a Python library, a REST service with an attention view an
 
 **Nghiên cứu và xây dựng hệ thống phát hiện ảo giác cho mô hình ngôn ngữ lớn tăng cường truy xuất tiếng Việt dựa trên tín hiệu chú ý nội tại**
 
-Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ lớn bám vào ngữ cảnh truy xuất, song mô hình vẫn phát biểu những điều ngữ cảnh không bảo chứng. Các bộ phát hiện cho tiếng Việt hiện nay hoặc tinh chỉnh một bộ mã hóa lớn, hoặc gọi mô hình giám khảo cho từng câu trả lời. Khóa luận xét xem bản đồ chú ý của một mô hình đọc mã nguồn mở, lấy từ một lượt truyền xuôi, có đủ tín hiệu để phát hiện ảo giác theo ngữ cảnh hay không.
+Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ lớn (LLM) dựa trên ngữ cảnh truy xuất, song vẫn có thể sinh ra phát biểu không có căn cứ trong ngữ cảnh. Các bộ phát hiện cho tiếng Việt hiện nay hoặc tinh chỉnh một bộ mã hóa lớn, hoặc dùng một LLM làm giám khảo cho từng câu trả lời. Khóa luận khảo sát liệu bản đồ chú ý của một mô hình đọc mã nguồn mở, lấy từ một lượt truyền xuôi, có đủ tín hiệu để phát hiện ảo giác theo ngữ cảnh hay không.
 
-Khóa luận tái lập Lookback Lens — đo ở từng đầu chú ý phần chú ý mà phản hồi dành cho ngữ cảnh thay vì cho chính nó — rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit chạy vừa một GPU Tesla T4 16 GB.
+Khóa luận tái lập Lookback Lens, phương pháp đo ở từng đầu chú ý tỷ lệ chú ý mà phản hồi dành cho ngữ cảnh, rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit vận hành trong 16 GB bộ nhớ của một GPU Tesla T4.
 
-Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, tương đương PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước. Định vị bằng chú ý cũng đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) với chi phí thấp hơn 10,9 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
-
-Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là chấm điểm theo từng đoạn.
+Qua mười chín thí nghiệm, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, tương đương PhoBERT-large đã tinh chỉnh (0,749) và cao hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất xác định đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi loại bỏ câu bằng chứng, cả bốn đại lượng hình dạng thay đổi đúng hướng đã xác định trước. Định vị bằng chú ý cũng chính xác hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) với chi phí tính toán thấp hơn 10,9 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển giao được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển giao được (0,78). Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là phát hiện theo từng đoạn phản hồi.
 
 **Từ khóa: phát hiện ảo giác, sinh văn bản tăng cường truy xuất, phân tích chú ý, xử lý ngôn ngữ tự nhiên tiếng Việt, hiệu chỉnh xác suất.**
 
@@ -98,9 +94,9 @@ Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan s�
 
 Trước hết, chúng em xin gửi lời cảm ơn chân thành đến ThS. Trương Vĩnh Linh, giảng viên hướng dẫn của đề tài. Thầy đã nhận hướng dẫn một đề tài có rủi ro kỹ thuật cao ngay từ tuần đầu và theo sát nhóm trong suốt quá trình thực hiện. Những góp ý của thầy qua các buổi báo cáo tiến độ đã giúp chúng em giữ nguyên tắc đo đạc trước khi kết luận, và trình bày kết quả đúng với mức độ chắc chắn mà số liệu cho phép.
 
-Chúng em xin cảm ơn quý thầy cô Khoa Công nghệ Thông tin, Trường Đại học Công nghiệp Thành phố Hồ Chí Minh đã trang bị cho chúng em nền tảng về học máy, thống kê và kỹ thuật phần mềm — ba mảng kiến thức mà đề tài này đều cần đến.
+Chúng em xin cảm ơn quý thầy cô Khoa Công nghệ Thông tin, Trường Đại học Công nghiệp Thành phố Hồ Chí Minh đã trang bị cho chúng em nền tảng về học máy, thống kê và kỹ thuật phần mềm, ba mảng kiến thức mà đề tài này đều cần đến.
 
-Chúng em trân trọng cảm ơn các nhóm tác giả đã công khai dữ liệu và mã nguồn mà khóa luận sử dụng: nhóm ViHallu (UIT Data Science Challenge 2025), nhóm ISE-DSC01, nhóm ViWikiFC, nhóm ViFactCheck, nhóm SemViQA — cũng thuộc Trường Đại học Công nghiệp Thành phố Hồ Chí Minh — và nhóm Lookback Lens, công trình mà đề tài mở rộng trực tiếp.
+Chúng em trân trọng cảm ơn các nhóm tác giả đã công khai dữ liệu và mã nguồn mà khóa luận sử dụng: nhóm ViHallu (UIT Data Science Challenge 2025), nhóm ISE-DSC01, nhóm ViWikiFC, nhóm ViFactCheck, nhóm SemViQA (cũng thuộc Trường Đại học Công nghiệp Thành phố Hồ Chí Minh) và nhóm Lookback Lens, công trình mà đề tài mở rộng trực tiếp.
 
 Cuối cùng, chúng em cảm ơn gia đình đã luôn động viên trong suốt thời gian thực hiện khóa luận.
 
@@ -212,7 +208,7 @@ CHỮ KÝ CỦA GIẢNG VIÊN
 | $L$, $H$ | Số lớp và số đầu chú ý mỗi lớp của mô hình đọc |
 | $l$, $h$ | Chỉ số lớp và chỉ số đầu chú ý |
 | $n$ | Độ dài chuỗi đầu vào, tính bằng token |
-| $T$ | Số token của phản hồi cần chấm |
+| $T$ | Số token của phản hồi cần kiểm tra |
 | $t$ | Chỉ số token phản hồi đang xét, đếm trong phạm vi phản hồi ($1 \le t \le T$) |
 | $X$ | Tập token đứng trước phản hồi dùng làm mẫu số của tỷ lệ lookback |
 | $C$, $C_k$ | Tập token ngữ cảnh truy xuất; tập token của đoạn thứ $k$ |

@@ -67,6 +67,42 @@ Danh mục tài liệu tham khảo nằm trong từ điển `BIB` của `docs/to
 không được nhắc tới trong thân bài (hoặc chỉ được nhắc sau khi đã xuất hiện), một mục chỉ
 có đúng một mục con, và khi tệp ảnh không tồn tại.
 
+## Quy ước dùng từ
+
+Chốt ngày 15/11/2026 sau lượt rà văn phong cả quyển. Áp dụng cho quyển, bộ slide, sổ tay chuẩn
+bị bảo vệ và tài liệu trong `docs/`.
+
+- **Văn học thuật, không văn nói.** Thay cách nói đời thường và cách nhân hóa mô hình bằng từ chuẩn:
+
+  | Không viết | Viết |
+  |---|---|
+  | chấm (một phản hồi, trên một tập) | đánh giá; *tính điểm* khi nói điểm số; *kiểm tra* khi nói phản hồi cần kiểm tra; *được tính* khi nói token được tính vào đặc trưng |
+  | chấm theo từng câu (E18) | gộp đặc trưng theo từng câu |
+  | chuyển được (sang bộ khác) | chuyển giao được |
+  | dàn trải, tản ra | phân tán |
+  | nhọn | tập trung |
+  | chỉ đúng đoạn | xác định đúng đoạn |
+  | bám vào ngữ cảnh | dựa trên ngữ cảnh |
+  | bảo chứng | có căn cứ trong (ngữ cảnh) |
+  | ngang (PhoBERT) | tương đương |
+  | đoán | dự đoán |
+  | đổi đúng hướng | thay đổi đúng hướng |
+  | hạ xung | giảm xung nhịp |
+  | bịa, nói sai, tự thêm | không có căn cứ, mâu thuẫn với ngữ cảnh, bổ sung thông tin không có trong ngữ cảnh |
+  | khóa bằng ca kiểm thử | được kiểm tra bằng ca kiểm thử |
+  | chưa học được gì, học được (XLM-R) | tương ứng với dự đoán đồng đều cho ba lớp, hội tụ |
+
+  "Chấm" theo nghĩa dấu chấm của biểu đồ, nút "Chấm" trên giao diện web, và các câu trích nguyên
+  văn (Phụ lục G) giữ nguyên.
+- **Dùng thuật ngữ gốc khi bản dịch không tự nhiên:** seed, dev/test, prompt, token, forward hook.
+- **Hạn chế gạch ngang dài " — " để chêm ý.** Dùng dấu phẩy, hai chấm, chấm phẩy hoặc ngoặc đơn;
+  định nghĩa viết tắt viết "(Large Language Model, LLM)". Giữ " — " ở trang bìa, trong bảng và
+  ở tiêu đề phụ lục.
+- **Một con số, một cách viết ở mọi nơi** (ví dụ chi phí định vị "thấp hơn 10,9 lần"); Tóm tắt
+  và Abstract được làm tròn một chữ số.
+- Mỗi lần sửa chữ ở Abstract, Tóm tắt hay cuối một mục có bảng, dựng lại và so vị trí trang của
+  từng mục: chỉ một hai dòng thêm cũng có thể đẩy cả một trang.
+
 ## Công thức
 
 Viết LaTeX trong khối `$$ … $$` và kết thúc bằng `\tag{[[eq:key]]}`. Word dựng công thức từ

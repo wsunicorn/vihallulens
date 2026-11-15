@@ -1520,6 +1520,75 @@ deck = "\n".join(
 # 6. Leftover colloquial wording anywhere visible: fail rather than ship it
 # ---------------------------------------------------------------------------------------------
 out = head_part + deck + tail_part
+# Academic wording agreed for the thesis on 15/11 ("chấm" → đánh giá / kiểm tra / phát hiện,
+# "chuyển được" → "chuyển giao được", "đổi đúng hướng" → "thay đổi đúng hướng"), applied to the
+# finished deck so every earlier step keeps its own strings. "chấm" as a chart dot stays.
+VAN_PHONG = [
+    ('khi nạp lại và chấm 700 mẫu kiểm tra, kết quả trùng',
+     'khi nạp lại và đánh giá 700 mẫu test, kết quả trùng'),
+    ('lưu ý Gemini chỉ được chấm trên 300 mẫu',
+     'lưu ý Gemini chỉ được đánh giá trên 300 mẫu'),
+    ('chấm theo từng câu của phản hồi (E18)',
+     'gộp đặc trưng theo từng câu của phản hồi (E18)'),
+    ('Nhóm đã thử chấm theo từng câu (E18)',
+     'Nhóm đã thử gộp đặc trưng theo từng câu (E18)'),
+    ('hướng phát triển tiếp theo là chấm theo từng đoạn',
+     'hướng phát triển tiếp theo là phát hiện theo từng đoạn'),
+    ('<span>Chấm theo từng đoạn câu trả lời',
+     '<span>Phát hiện theo từng đoạn câu trả lời'),
+    ('Giám khảo Gemini (bản miễn phí) chấm 300 mẫu;',
+     'Giám khảo Gemini (bản miễn phí) đánh giá 300 mẫu;'),
+    ("'VÙNG PHẢN HỒI · câu cần chấm'",
+     "'VÙNG PHẢN HỒI · câu cần kiểm tra'"),
+    ('và câu trả lời cần chấm được ghép vào',
+     'và câu trả lời cần kiểm tra được ghép vào'),
+    ("'Gọi Gemini chấm từng mẫu — 8,2 giây/mẫu, không huấn luyện · chấm trên 300/700 mẫu test'",
+     "'Gemini đánh giá từng mẫu — 8,2 giây/mẫu, không huấn luyện · đánh giá trên 300/700 mẫu test'"),
+    ("'† Gemini chấm trên 300/700 mẫu test",
+     "'† Gemini được đánh giá trên 300/700 mẫu test"),
+    ("'Bộ nhớ GPU đỉnh khi chấm ViHallu (MB)'",
+     "'Bộ nhớ GPU đỉnh khi trích đặc trưng ViHallu (MB)'"),
+    ("'Huấn luyện ViHallu → chấm ISE-DSC01'",
+     "'Huấn luyện ViHallu → đánh giá ISE-DSC01'"),
+    ("'Huấn luyện ISE-DSC01 → chấm ViHallu'",
+     "'Huấn luyện ISE-DSC01 → đánh giá ViHallu'"),
+    ("'macro-F1 khi chấm chéo bộ'",
+     "'macro-F1 khi đánh giá chéo bộ'"),
+    ('Điều <b>chuyển được</b> là “có bám ngữ cảnh hay không”; điều không chuyển được là “ảo giác loại nào”.',
+     'Phần <b>chuyển giao được</b> là “có dựa trên ngữ cảnh hay không”; phần không chuyển giao được là “ảo giác loại nào”.'),
+    ('nạp lại chấm 700 mẫu kiểm tra trùng',
+     'nạp lại và đánh giá 700 mẫu test, trùng'),
+    ('Qwen2.5-7B chỉ đọc lại để chấm.',
+     'Qwen2.5-7B chỉ đọc lại để phát hiện ảo giác.'),
+    ("'CÂU TRẢ LỜI r CẦN CHẤM · của bất kỳ hệ RAG nào'",
+     "'CÂU TRẢ LỜI r CẦN KIỂM TRA · của bất kỳ hệ RAG nào'"),
+    ('nên chấm được câu trả lời của hệ RAG khác.',
+     'nên kiểm tra được câu trả lời của hệ RAG khác.'),
+    ('và <b>câu trả lời</b> cần chấm.',
+     'và <b>câu trả lời</b> cần kiểm tra.'),
+    ("'Chi phí mỗi lần chấm một câu trả lời →'",
+     "'Chi phí mỗi lần kiểm tra một câu trả lời →'"),
+    ('nhưng mỗi lần chấm là một lượt gọi mô hình khác',
+     'nhưng mỗi lần kiểm tra là một lượt gọi mô hình khác'),
+    ('Cả bốn đặc trưng đổi đúng hướng ở 71–75 %',
+     'Cả bốn đặc trưng thay đổi đúng hướng ở 71–75 %'),
+    ('thì chuyển được sang bộ dữ liệu khác.',
+     'thì chuyển giao được sang bộ dữ liệu khác.'),
+    ('đặc trưng đổi đúng hướng dự đoán',
+     'đặc trưng thay đổi đúng hướng dự đoán'),
+    ("'Tỷ lệ cặp đổi đúng hướng dự đoán'",
+     "'Tỷ lệ cặp thay đổi đúng hướng dự đoán'"),
+    ("số cặp đổi đúng hướng đã ghi trước",
+     "số cặp thay đổi đúng hướng đã ghi trước"),
+    ("đại lượng hình dạng đổi đúng hướng ở 71–75 %",
+     "đại lượng hình dạng thay đổi đúng hướng ở 71–75 %"),
+    ("chi phí mỗi lần chấm ---",
+     "chi phí mỗi lần kiểm tra ---"),
+]
+for old, new in VAN_PHONG:
+    if out.count(old) != 1:
+        problems.append(f"van phong: «{old[:60]}» khớp {out.count(old)} lần")
+    out = out.replace(old, new)
 visible = re.sub(r"data:[^\"')]+", "", out)
 BANNED = [
     "bịa",
@@ -1538,6 +1607,10 @@ BANNED = [
     "tỷ lệ nhìn lại",
     "cái giá",
     "dồn ",
+    "cần chấm", "CẦN CHẤM", "chấm theo", "Chấm theo", "chấm trên", "được chấm", "chấm từng",
+    "chấm chéo", "lần chấm", "để chấm", "chấm được", "→ chấm", "chấm 300", "chấm 700",
+    "chuyển được", "cặp đổi đúng", "trưng đổi đúng", "dạng đổi đúng", "dàn trải", "bám ngữ cảnh", "bám vào", "hạ xung",
+    "chỉ đúng đoạn", "bảo chứng",
 ]
 for w in BANNED:
     for m in re.finditer(re.escape(w), visible):

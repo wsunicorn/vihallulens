@@ -8,7 +8,7 @@
 
 ## Phụ lục A — Cấu trúc mã nguồn và kiểm thử
 
-Mã nguồn của hệ thống được tổ chức theo bố cục `src/` với gói `vihallulens`; bộ kiểm thử khóa các bất biến quan trọng của phép tính, như các ví dụ ở mục [[sec:c3-chia-tap]], [[sec:c4-dac-trung]] và [[sec:c4-hook]]. Lượt chạy kiểm thử trên máy cá nhân ngày 24/10/2026 cho kết quả 825 ca đạt, 0 ca thất bại, 0 ca bỏ qua, trong 15,9 giây; các ca kiểm thử chạy trên CPU, không cần GPU. [[fig:terminal]] cho thấy cây thư mục, lượt chạy kiểm thử và trạng thái của dịch vụ; [[tab:duong-dan]] liệt kê vị trí các thành phần chính.
+Mã nguồn của hệ thống được tổ chức theo bố cục `src/` với gói `vihallulens`; bộ kiểm thử kiểm tra các bất biến quan trọng của phép tính, như các ví dụ ở mục [[sec:c3-chia-tap]], [[sec:c4-dac-trung]] và [[sec:c4-hook]]. Lượt chạy kiểm thử trên máy cá nhân ngày 24/10/2026 cho kết quả 825 ca đạt, 0 ca thất bại, 0 ca bỏ qua, trong 15,9 giây; các ca kiểm thử chạy trên CPU, không cần GPU. [[fig:terminal]] cho thấy cây thư mục, lượt chạy kiểm thử và trạng thái của dịch vụ; [[tab:duong-dan]] liệt kê vị trí các thành phần chính.
 
 ![Cấu trúc mã nguồn, lượt chạy kiểm thử và trạng thái dịch vụ](media/hinh_terminal_ma_nguon.png)
 
@@ -32,7 +32,7 @@ Dữ liệu thô không được đưa vào kho Git; bảng ánh xạ từ tên 
 
 ## Phụ lục B — Tài liệu giao diện lập trình và đóng gói
 
-Dịch vụ REST tự sinh tài liệu OpenAPI tại đường dẫn `/docs` ([[fig:openapi]]). Trang chủ của hệ thống trình bày ba cách sử dụng bộ phát hiện — thư viện Python, dịch vụ REST và ảnh Docker ([[fig:ba-cach-dung]]).
+Dịch vụ REST tự sinh tài liệu OpenAPI tại đường dẫn `/docs` ([[fig:openapi]]). Trang chủ của hệ thống trình bày ba cách sử dụng bộ phát hiện: thư viện Python, dịch vụ REST và ảnh Docker ([[fig:ba-cach-dung]]).
 
 ![Tài liệu OpenAPI tự sinh của dịch vụ REST](media/anh_tai_lieu_rest_api.png)
 
@@ -52,7 +52,7 @@ docker compose up --build
 
 ## Phụ lục C — Trang giới thiệu hệ thống
 
-Ngoài giao diện quan sát và hệ RAG minh họa, hệ thống có một trang giới thiệu trình bày đề tài cho người đọc chưa có kiến thức nền ([[fig:trang-chu]]). Trang gồm một khối tương tác so sánh cách tính của Lookback Lens gốc — gộp cả ngữ cảnh thành một con số — với cách tính chunk-aware — mỗi đoạn một tỷ trọng, kèm các đại lượng hình dạng cập nhật theo thanh trượt ([[fig:khoi-tuong-tac]]); khối này ghi rõ trên giao diện rằng số liệu chỉ mang tính minh họa.
+Ngoài giao diện quan sát và hệ RAG minh họa, hệ thống có một trang giới thiệu trình bày đề tài cho người đọc chưa có kiến thức nền ([[fig:trang-chu]]). Trang gồm một khối tương tác so sánh cách tính của Lookback Lens gốc, vốn gộp cả ngữ cảnh thành một con số, với cách tính chunk-aware, trong đó mỗi đoạn có một tỷ trọng và các đại lượng hình dạng cập nhật theo thanh trượt ([[fig:khoi-tuong-tac]]); khối này ghi rõ trên giao diện rằng số liệu chỉ mang tính minh họa.
 
 ![Trang giới thiệu của hệ thống](media/anh_trang_chu_hero.png)
 
@@ -64,7 +64,7 @@ Ngoài giao diện quan sát và hệ RAG minh họa, hệ thống có một tra
 
 ## Phụ lục D — Tái lập kết quả
 
-Phụ lục này gồm hai phần: các lệnh dựng lại kết quả từ dữ liệu gốc, và mức tái lập thực tế của từng loại kết quả — thứ gì lặp lại được trùng từng chữ số, thứ gì chỉ lặp lại được trong một sai số nhỏ, thứ gì không lặp lại được và vì sao.
+Phụ lục này gồm hai phần: các lệnh dựng lại kết quả từ dữ liệu gốc, và mức tái lập thực tế của từng loại kết quả: kết quả nào lặp lại được trùng từng chữ số, kết quả nào chỉ lặp lại được trong một sai số nhỏ, kết quả nào không lặp lại được và vì sao.
 
 Chuẩn bị môi trường:
 
@@ -85,7 +85,7 @@ Trích đặc trưng cho một thí nghiệm (cần GPU):
 python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml
 ```
 
-Khớp và chấm bộ phát hiện (chạy trên CPU):
+Khớp và đánh giá bộ phát hiện (chạy trên CPU):
 
 ```
 python scripts/run_chunk_aware.py --config configs/e03_chunk_sentence_vihallu.yaml
@@ -126,10 +126,10 @@ python docs/tools/build_docx.py
 | Chia tập | Theo ngữ cảnh, tỷ lệ 80/10/10, seed 42. Thứ tự các nhóm lấy từ giá trị băm SHA-256 của cặp (seed, mã ngữ cảnh), nên không phụ thuộc thứ tự đọc tệp (mục [[sec:c3-chia-tap]]). |
 | Cấu hình | 23 tệp YAML cấu hình thí nghiệm (cùng một tệp mẫu) trong `configs/`, được pydantic kiểm tra khi nạp. Mỗi tệp đặc trưng và mỗi bản ghi kết quả mang mã băm của cấu hình đã sinh ra nó. |
 | Mã nguồn | Mỗi bản ghi trong `results/runs.jsonl` mang mã commit Git của lượt chạy. Ô đầu của mỗi notebook Kaggle in mã commit và phiên bản thư viện; notebook được lưu nguyên đầu ra. |
-| Mẫu prompt | Chốt ngày 19/08/2026 (mục [[sec:c4-prompt]]), không đổi trong suốt các thí nghiệm. |
+| Mẫu prompt | Cố định từ ngày 19/08/2026 (mục [[sec:c4-prompt]]), không đổi trong suốt các thí nghiệm. |
 | Mô hình đọc | Qwen2.5-7B-Instruct, kho Hugging Face ở mã commit `a09a3545`; kiểu số float16 bỏ lớp 27, riêng Qwen2.5-1.5B dùng bfloat16 ([[tab:kieu-so]]). |
-| Bộ phân loại | Hồi quy logistic của scikit-learn với `random_state=42`; cách gộp đầu chú ý chọn trên tập dev, tập test chỉ chấm một lần. |
-| LLM giám khảo | Mỗi phản hồi của Gemini được lưu vào `results/judge_cache.jsonl` theo khóa SHA-256 của (mô hình, prompt); chấm lại đọc từ bộ nhớ đệm này thay vì gọi lại API. |
+| Bộ phân loại | Hồi quy logistic của scikit-learn với `random_state=42`; cách gộp đầu chú ý chọn trên tập dev, tập test chỉ đánh giá một lần. |
+| LLM giám khảo | Mỗi phản hồi của Gemini được lưu vào `results/judge_cache.jsonl` theo khóa SHA-256 của (mô hình, prompt); khi đánh giá lại, kết quả được đọc từ bộ nhớ đệm này thay vì gọi lại API. |
 | Dữ liệu gốc | Không sửa tệp nào trong `data/raw/`; mã băm SHA-256 của các tệp đã dùng ở [[tab:ma-bam]]. |
 
 **Môi trường đã chạy.** Các lượt chạy diễn ra trên hai môi trường. Phiên bản thư viện thực tế đọc từ đầu ra của các notebook và từ tệp khóa `uv.lock` ([[tab:moi-truong]]).
@@ -139,7 +139,7 @@ python docs/tools/build_docx.py
 | Môi trường | Python | PyTorch | transformers | Dùng cho |
 |---|---|---|---|---|
 | Kaggle, Tesla T4 | 3.12.13 | 2.10.0 | 5.0.0 – 5.16.1 | Trích đặc trưng, tinh chỉnh bộ mã hóa, đo thời gian và bộ nhớ |
-| Máy cá nhân | 3.11.9 | 2.14.0 | 5.17.0 | Khớp bộ phân loại, chấm điểm, kiểm thử, dịch vụ |
+| Máy cá nhân | 3.11.9 | 2.14.0 | 5.17.0 | Khớp bộ phân loại, đánh giá, kiểm thử, dịch vụ |
 
 Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm chạy nên phiên bản thay đổi giữa các notebook; vì vậy mỗi notebook in ra phiên bản đã dùng ngay ở ô đầu. bitsandbytes là 0.50.1 ở T07–T08 và 0.50.2 từ T20 trở đi.
 
@@ -149,13 +149,13 @@ Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm ch
 
 | Loại kết quả | Mức tái lập | Ghi chú |
 |---|---|---|
-| Chuẩn hóa, chia tập, thống kê dữ liệu, phân tích rò rỉ | Trùng từng chữ số | Tính toán thuần, có kiểm thử khóa kết quả. |
-| Dự đoán của bộ phát hiện đã đóng gói | Trùng từng dự đoán | Nạp lại `models/e03_chunk_aware.pkl` và chấm 700 mẫu test: trùng 700/700 với lúc thí nghiệm. |
-| Khớp lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập dev lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được chấm trên cùng một máy. |
-| Trích đặc trưng chú ý | Trùng trên cùng loại GPU; trong sai số số học nếu khác phần cứng | Tính ở float16 trên GPU nên không bảo đảm trùng từng bit giữa các phần cứng và phiên bản. Trên cùng Tesla T4 của Kaggle thì trùng: lượt trích lại ViHallu ngày 23/10/2026 cho E18 khớp tuyệt đối với lượt trích của E03 ngày 30/08/2026 ở cả 7.000 mẫu (giá trị lưu ở 6 chữ số thập phân), và chấm lại ra đúng macro-F1 0,7567. Tệp đặc trưng không đưa lên kho mã vì dung lượng; chạy lại phải trích lại trên GPU, gần một giờ T4 cho riêng ViHallu. |
-| Tinh chỉnh PhoBERT, XLM-R | Dao động theo seed và theo lượt | Ba seed mỗi mô hình, độ lệch chuẩn 0,011 (PhoBERT) và 0,017 (XLM-R), ghi trong `results/runs.jsonl`. Cố định seed chưa đủ: cùng seed 42, XLM-R học được ở lượt ngày 27/08 nhưng không học được ở lượt ngày 28/08. |
+| Chuẩn hóa, chia tập, thống kê dữ liệu, phân tích rò rỉ | Trùng từng chữ số | Tính toán thuần, có ca kiểm thử kiểm tra kết quả. |
+| Dự đoán của bộ phát hiện đã đóng gói | Trùng từng dự đoán | Nạp lại `models/e03_chunk_aware.pkl` và đánh giá 700 mẫu test: trùng 700/700 với lúc thí nghiệm. |
+| Khớp lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập dev lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được tính trên cùng một máy. |
+| Trích đặc trưng chú ý | Trùng trên cùng loại GPU; trong sai số số học nếu khác phần cứng | Tính ở float16 trên GPU nên không bảo đảm trùng từng bit giữa các phần cứng và phiên bản. Trên cùng Tesla T4 của Kaggle thì trùng: lượt trích lại ViHallu ngày 23/10/2026 cho E18 khớp tuyệt đối với lượt trích của E03 ngày 30/08/2026 ở cả 7.000 mẫu (giá trị lưu ở 6 chữ số thập phân), và đánh giá lại cho đúng macro-F1 0,7567. Tệp đặc trưng không đưa lên kho mã vì dung lượng; chạy lại phải trích lại trên GPU, gần một giờ T4 cho riêng ViHallu. |
+| Tinh chỉnh PhoBERT, XLM-R | Dao động theo seed và theo lượt | Ba seed mỗi mô hình, độ lệch chuẩn 0,011 (PhoBERT) và 0,017 (XLM-R), ghi trong `results/runs.jsonl`. Cố định seed chưa đủ: cùng seed 42, XLM-R hội tụ ở lượt ngày 27/08 nhưng không hội tụ ở lượt ngày 28/08. |
 | LLM giám khảo Gemini | Từ bộ nhớ đệm | Gọi lại API có thể cho kết quả khác vì mô hình phía nhà cung cấp thay đổi theo thời gian; số trong báo cáo tái lập được từ `results/judge_cache.jsonl`. |
-| Thời gian và bộ nhớ GPU | Gắn với phần cứng | Đo trên Tesla T4, mỗi cấu hình một phiên riêng hoặc đo xen kẽ, vì hai lượt nối nhau trong cùng phiên đã chậm đi 10–15 % do hạ xung. |
+| Thời gian và bộ nhớ GPU | Gắn với phần cứng | Đo trên Tesla T4, mỗi cấu hình một phiên riêng hoặc đo xen kẽ, vì hai lượt nối nhau trong cùng phiên đã chậm đi 10–15 % do giảm xung nhịp. |
 
 **Kiểm tra dữ liệu gốc.** Dữ liệu không nằm trong kho mã và phải tải lại từ nguồn công bố của từng bộ (mục [[sec:c3-bon-bo]]). [[tab:ma-bam]] ghi mã băm SHA-256 của đúng các tệp đã dùng, để người chạy lại kiểm tra mình có cùng dữ liệu hay không (lệnh `sha256sum` trên Linux, `Get-FileHash` trên Windows).
 
@@ -210,7 +210,7 @@ Các bảng dưới đây được nhắc tới ở Chương 3 và Chương 4.
 | `context_id` | chuỗi | Định danh ngữ cảnh, băm SHA-256 từ nội dung ngữ cảnh; là đơn vị chia tập |
 | `context` | chuỗi | Ngữ cảnh truy xuất |
 | `question` | chuỗi hoặc rỗng | Câu hỏi; rỗng với ba bộ kiểm chứng thông tin |
-| `response` | chuỗi | Phản hồi (hoặc phát biểu) cần chấm |
+| `response` | chuỗi | Phản hồi (hoặc phát biểu) cần kiểm tra |
 | `label` | ba lớp | `no` / `intrinsic` / `extrinsic` |
 | `evidence`, `evidence_start` | chuỗi, số nguyên | Câu bằng chứng nguyên văn và vị trí ký tự của nó trong ngữ cảnh, nếu bộ dữ liệu có |
 | `meta` | từ điển | Thông tin riêng từng bộ, ví dụ loại prompt của ViHallu |
@@ -257,13 +257,13 @@ Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá tr
 **Quy trình làm việc.** Để công cụ không tự ý quyết định thay nhóm và để mọi bước kiểm tra được, nhóm tổ chức công việc theo sáu nguyên tắc:
 
 - **Bộ quy tắc dự án viết thành văn bản.** Tệp `CONVENTIONS.md` (khoảng 200 dòng) ghi ràng buộc cứng về phần cứng và ngân sách, các quyết định đã chốt và những điều bị cấm. Công cụ đọc tệp này ở đầu mỗi phiên, nên quy tắc không phụ thuộc vào trí nhớ của một cuộc hội thoại.
-- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 50 mã việc trong 10 giai đoạn (58 việc nếu tính cả các việc bổ sung như T08B, T35B), mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Việc làm đúng thứ tự, không làm trước việc chưa tới.
-- **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thật nằm ở `docs/LICH_SU_PR.md`.
+- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 50 mã việc trong 10 giai đoạn (58 việc nếu tính cả các việc bổ sung như T08B, T35B), mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Các việc được thực hiện tuần tự, không làm trước việc chưa đến lượt.
+- **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thực tế nằm ở `docs/LICH_SU_PR.md`.
 - **Chỉ đánh dấu hoàn thành khi có bằng chứng.** Một việc chỉ được đánh dấu xong khi lệnh trong tiêu chí chạy được và đầu ra được dán vào pull request; với việc cần GPU, notebook Kaggle đã chạy được lưu nguyên đầu ra trong thư mục `notebooks/`.
-- **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc — thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại — công cụ phải dừng lại để nhóm quyết định.
+- **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc (thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại), công cụ phải dừng lại để nhóm quyết định.
 - **Ghi nhật ký diễn giải.** Sau mỗi việc, mục đích, kết quả số và điều rút ra được ghi lại trong `TASKS.md` và `docs/EXPERIMENTS.md`; đây cũng là nguồn số liệu ở Phụ lục E.
 
-**Các ràng buộc đặt cho công cụ.** Dưới đây là một số quy tắc trích nguyên văn từ `CONVENTIONS.md`. Đây là dạng câu lệnh chuyên biệt quan trọng nhất của quy trình: chúng được áp dụng cho mọi phiên làm việc chứ không chỉ cho một yêu cầu.
+**Các ràng buộc đặt cho công cụ.** Dưới đây là một số quy tắc trích nguyên văn từ `CONVENTIONS.md`. Đây là phần quan trọng nhất của quy trình, vì các quy tắc này áp dụng cho mọi phiên làm việc chứ không chỉ cho một yêu cầu.
 
 ```
 Phần cứng: GPU Tesla T4 16 GB trên Kaggle/Colab. Mọi thứ phải
@@ -286,19 +286,19 @@ hỏi người dùng. Không tự quyết.
 | Ngày | Yêu cầu (trích) | Mục đích |
 |---|---|---|
 | 19/08 | “Câu ‘dừng và báo’ trong TASKS.md nghĩa là dừng để hỏi ý kiến, không phải dừng để đổi đề tài.” | Giữ quyền quyết định hướng đề tài ở nhóm trước bước kiểm tra khả thi T07 |
-| 19/08 | “Các file dữ liệu trên Kaggle đều có định dạng như này, hãy xem code lại coi có chỗ nào sai không trước khi tôi chạy.” | Rà mã trước khi tiêu tốn hạn mức GPU |
-| 20/08 | “Có cần so sánh chạy hai phiên khác nhau phần ô 6 và 7 không?” | Dẫn tới quy tắc đo chi phí mỗi cấu hình một phiên riêng, sau khi phát hiện hạ xung làm chậm 10–15 % |
+| 19/08 | “Các file dữ liệu trên Kaggle đều có định dạng như này, hãy xem code lại coi có chỗ nào sai không trước khi tôi chạy.” | Rà soát mã trước khi sử dụng hạn mức GPU |
+| 20/08 | “Có cần so sánh chạy hai phiên khác nhau phần ô 6 và 7 không?” | Dẫn tới quy tắc đo chi phí mỗi cấu hình một phiên riêng, sau khi phát hiện giảm xung nhịp làm chậm 10–15 % |
 | 27/08 | “Kiểm tra lại lần nữa coi đúng chưa và cho tôi biết 5 seed có cần thiết không.” | Cân nhắc độ tin cậy với chi phí GPU trước khi quyết định |
 | 30/08 | “… phép đối chứng để tách nốt câu hỏi ‘câu thắng vì ngữ nghĩa hay vì không chồng lấn’.” | Đặt câu hỏi dẫn tới phép đối chứng cửa sổ không chồng lấn ở mục [[sec:c6-chia-doan]] |
-| 11/09 | “Dựa vào log lúc nãy chạy là thành công rồi hả, sao đã tick vào ô 40?” | Bắt lỗi đánh dấu hoàn thành khi chưa đối chiếu minh chứng |
+| 11/09 | “Dựa vào log lúc nãy chạy là thành công rồi hả, sao đã tick vào ô 40?” | Phát hiện lỗi đánh dấu hoàn thành khi chưa đối chiếu minh chứng |
 | 11/09 | “Kiểm tra lại toàn bộ repo xem các file có sai sót và không khớp nhau ở chỗ nào không.” | Rà soát chéo toàn bộ kho mã trước giai đoạn tổng hợp kết quả |
 
 **Kinh nghiệm rút ra.** Bốn điều nhóm thấy quan trọng nhất khi dùng công cụ AI trong một dự án nghiên cứu:
 
-- **Công cụ có thể sai một cách tự tin, nên mọi con số phải đối chiếu với tệp kết quả.** Nhóm đã phát hiện ba lỗi nhờ đối chiếu. Số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống. Hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy; lỗi này đã được sửa bằng phép sắp xếp có quy tắc phân định hòa. Một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
-- **Quy tắc viết thành văn bản bền hơn lời dặn trong hội thoại.** Khi một phiên làm việc dài bị tóm tắt lại, những lời dặn chỉ nằm trong hội thoại có thể bị bỏ sót; quy tắc trong `CONVENTIONS.md` thì được đọc lại mỗi phiên. Vì vậy mỗi quyết định quan trọng đều được ghi vào tệp này ngay khi chốt.
-- **Việc sử dụng GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị đứt không làm mất phần đã chạy.
-- **Công cụ không thay được phán đoán khoa học.** Những quyết định định hình kết quả — đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày đầy đủ kết quả bất lợi của phần chunk-aware — đều do nhóm đưa ra.
+- **Công cụ có thể đưa ra kết quả sai với độ tự tin cao, nên mọi con số phải đối chiếu với tệp kết quả.** Nhóm đã phát hiện ba lỗi nhờ đối chiếu. Số mẫu ISE-DSC01 có bằng chứng nguyên văn bị đếm thành 23.785 thay vì 23.783, do hai mẫu có bằng chứng chỉ là dòng trống. Hàm xếp hạng BM25 dùng phép sắp xếp không ổn định khiến 17 trên 1.836 cặp ngữ cảnh khác nhau giữa hai máy; lỗi này đã được sửa bằng phép sắp xếp có quy tắc xử lý giá trị bằng nhau. Một việc từng bị đánh dấu hoàn thành trước khi nhật ký chạy được kiểm tra.
+- **Quy tắc được văn bản hóa có hiệu lực lâu dài hơn chỉ dẫn trong hội thoại.** Khi một phiên làm việc dài bị tóm tắt lại, những chỉ dẫn chỉ nằm trong hội thoại có thể bị bỏ sót; quy tắc trong `CONVENTIONS.md` thì được đọc lại mỗi phiên. Vì vậy mỗi quyết định quan trọng đều được ghi vào tệp này ngay khi chốt.
+- **Việc sử dụng GPU phải được ước tính và chạy lại được từng phần.** Nhóm yêu cầu mọi notebook ước tính thời gian trước khi chạy và ghi kết quả từng mẫu ngay khi tính xong, để một phiên Kaggle bị gián đoạn không làm mất phần đã chạy.
+- **Công cụ không thay thế được phán đoán khoa học.** Những quyết định định hình kết quả, như đặt phép đối chứng nào, ghi hướng dự đoán trước khi chạy, trình bày đầy đủ kết quả bất lợi của phần chunk-aware, đều do nhóm đưa ra.
 
 **Tính tái lập của quy trình.** Bộ quy tắc `CONVENTIONS.md`, danh sách việc `TASKS.md`, lịch sử 135 pull request (`docs/LICH_SU_PR.md`), các notebook đã chạy và nhật ký `results/runs.jsonl` đều nằm trong kho mã nguồn. Người đọc có thể kiểm tra từng bước đã làm, và có thể lặp lại cách làm này với một công cụ hỗ trợ khác.
 
@@ -327,7 +327,7 @@ hỏi người dùng. Không tự quyết.
 | 9 | 28/09/2026 | 04/10/2026 | 02/10/2026 | Gửi báo cáo giữa kỳ cho GVHD (T28); sửa định dạng quyển theo mẫu của Khoa. |  |
 | 10 | 05/10/2026 | 11/10/2026 |  | Tiếp thu ý kiến GVHD ngày 05/10: in một mặt, giữ bố cục tám chương, thêm phần sử dụng công cụ AI và tái lập; dựng lại quyển v3. |  |
 | 11 | 12/10/2026 | 18/10/2026 | 16/10/2026 | Rà soát định dạng, mục lục và chú thích (T47); quyển v4, 130 trang; bộ slide Hội đồng rút gọn; gửi GVHD quyển v4 và slide. |  |
-| 12 | 19/10/2026 | 25/10/2026 |  | Ghim phiên bản mô hình và thư viện, thêm mã băm dữ liệu gốc; bộ slide Hội đồng 23 trang; ba thí nghiệm bổ sung: chuyển miền sang ViFactCheck (E17), chấm theo từng câu phản hồi (E18), so định vị bằng chú ý với cắt bỏ ngữ cảnh (E19); đưa nguồn dựng quyển vào kho mã; cập nhật quyển với kết quả mới. |  |
+| 12 | 19/10/2026 | 25/10/2026 |  | Ghim phiên bản mô hình và thư viện, thêm mã băm dữ liệu gốc; bộ slide Hội đồng 23 trang; ba thí nghiệm bổ sung: chuyển miền sang ViFactCheck (E17), gộp đặc trưng theo từng câu phản hồi (E18), so sánh định vị bằng chú ý với cắt bỏ ngữ cảnh (E19); đưa nguồn dựng quyển vào kho mã; cập nhật quyển với kết quả mới. |  |
 | 13 | 26/10/2026 | 01/11/2026 |  | Làm bộ slide trình bày trước Hội đồng; hoàn thiện quyển báo cáo. |  |
 | 14 | 02/11/2026 | 08/11/2026 |  | Tiếp tục làm bộ slide và hoàn thiện quyển báo cáo. |  |
 | 15 | 09/11/2026 | 15/11/2026 |  | Hoàn thiện bộ slide Hội đồng (31 slide); rà dùng từ, bố cục và định dạng quyển theo mẫu báo cáo. |  |
