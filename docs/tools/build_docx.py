@@ -665,10 +665,9 @@ def apply_styles(doc) -> None:
     define(doc, "TOC3", "toc 3", left=1.0, first=0, line=1.3, tabs=dots)
     define(doc, "TOC4", "toc 4", left=1.5, first=0, line=1.3, tabs=dots)
     define(doc, "TOC5", "toc 5", bold=True, line=1.3, tabs=dots)
-    # the lists of figures and tables: "Normal, 13, 0/0 pt, 1.15 lines"; a long title hangs
-    # under its own first word instead of returning to the margin
-    define(doc, "TableofFigures", "table of figures", line=1.15, tabs=dots, left=2.3,
-           first=-2.3)
+    # the lists of figures and tables: "Normal, 13, 0/0 pt, 1.15 lines"; a long title wraps
+    # back to the margin, level with "Hình" / "Bảng"
+    define(doc, "TableofFigures", "table of figures", line=1.15, tabs=dots, left=0, first=0)
 
     for s in doc.styles.element.findall(qn("w:style")):
         sid = s.get(qn("w:styleId"))
@@ -1021,8 +1020,8 @@ def body_pass(doc, num_id: int) -> dict:
             # the template keeps a bullet at the margin but sets a numbered list in,
             # its number at 1 cm and the text at 1,6 cm
             numbered = npr.find(qn("w:numId")) is not None and not is_bullet(doc, npr)
-            # a bullet's dash sits 0,5 cm in and its text at 1 cm, as in the reference report
-            left = (1.6 if numbered else 1.0) + 0.75 * depth
+            # a bullet's dash sits on the margin, level with the body text, its text at 0,5 cm
+            left = (1.6 if numbered else 0.5) + 0.75 * depth
             spacing(p, line=1.5, align=WD_ALIGN_PARAGRAPH.LEFT,
                     left=left, first=-0.6 if numbered else -0.5)
     counts["section_ends"] = section_ends

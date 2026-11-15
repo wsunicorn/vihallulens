@@ -4971,6 +4971,29 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       hướng phát triển thành chấm theo đoạn có nhãn mức đoạn.
     - **E17 (T41):** một đoạn ngắn ở mục 8.2, không thêm bảng; ghi kèm split gốc rò rỉ ngữ cảnh.
     - Slide 21 (dòng ViFactCheck, hướng phát triển) và slide 12 (số ca kiểm thử) sửa theo.
+  - **Định dạng theo mẫu và rà nội dung 15/11/2026** (vẫn 137 trang, mọi mục và chú thích giữ trang
+    cũ). Đối chiếu với một báo cáo mẫu được Khoa chấp nhận, sửa trong `build_docx.py` và bản thảo:
+    - **Định dạng.** Lời cảm ơn có hai cột ký tên song song cho hai sinh viên (marker `@@SIGN@@`).
+      Tiêu đề chương "CHƯƠNG 1. GIỚI THIỆU" một dòng. Chú thích chữ đứng, nhãn "**Bảng 1.1.**" in
+      đậm có dấu chấm; hàng tiêu đề bảng tô xám. Danh mục hình/bảng xuống dòng sát lề trái. Gạch đầu
+      dòng dùng dấu "–", đặt sát lề trái như phần chữ; 13 danh sách đánh số chuyển thành gạch đầu
+      dòng (ba khoảng trống ở mục 1.2 dùng nhãn in đậm thay vì đánh số).
+    - **Khoảng trắng không ngắt** (non-breaking space — dấu cách mà Word không được xuống dòng tại
+      đó) giữa số và đơn vị ("0,94 GB"), giữa nhãn và số ("Hình 6.1"). Sửa luôn một lỗi: cờ "đang ở
+      trong công thức" bị lật lệch sau mỗi khối công thức nên nửa quyển trước đó không được áp dụng.
+    - **Độ rộng cột.** Bảng viết tắt theo tỷ lệ của bản mẫu; Nhật kí giữ ngày trên một dòng; Bảng
+      2.1, 3.1, 6.14, 6.18 đặt cột bằng tay. `audit_tables()` in các cột có chữ không vừa hoặc rộng
+      thừa; một lượt so chữ trong ô bảng với PDF xác nhận không còn số hay chữ bị cắt ngang dòng.
+    - **Nội dung (người dùng duyệt từng mục).** Mục 1.3 "E01–E16" thành E01–E19; mục 5.5 15 thành 18
+      notebook; Bảng D.1 20 thành 23 tệp YAML; Phụ lục G 52 thành 50 mã việc (58 kể cả việc bổ
+      sung); mục 6.14.3 lớp 17 đầu 4 "nằm trong hai đầu dẫn đầu" trên cả bốn bộ (ở ViHallu nó hạng
+      2); ghi chú Bảng 3.2 thêm ISE-DSC01; mục 3.3 giải thích "chưa chắc" là ghi chú cạnh nhãn, không
+      phải nhãn `khong_chac`; tách câu dễ hiểu sai ở Tóm tắt, Abstract và mục 6.11.2; thống nhất
+      "seed", "dev/test", "độ nhạy / độ chính xác dự báo dương"; Fleiss kappa 0,9587; thêm GVHD vào
+      bảng viết tắt; thang cỡ ảnh hưởng dẫn nguồn Vargha và Delaney (2000), tài liệu thứ 37; Nhật kí
+      tuần 13–15 ghi theo thực tế (làm slide và hoàn thiện quyển).
+    - Học được: thêm vài chữ cũng có thể đẩy cả một trang (Abstract, Tóm tắt, cuối chương 3 đều
+      từng tràn 1–2 dòng), nên mỗi lần sửa chữ phải so lại vị trí trang của từng mục với bản trước.
   - **Rà bố cục 14/11/2026** (141 → 137 trang). Rà đủ 141 trang trên bản PDF dựng lại, tìm trang trống
     nhiều giữa chương. Nguyên tắc của mẫu Khoa là bảng và hình nằm trọn một trang, nên không cho bảng
     ngắt trang mà xử lý từng chỗ:

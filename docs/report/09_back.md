@@ -124,11 +124,11 @@ python docs/tools/build_docx.py
 | Thành phần | Cách cố định |
 |---|---|
 | Chia tập | Theo ngữ cảnh, tỷ lệ 80/10/10, seed 42. Thứ tự các nhóm lấy từ giá trị băm SHA-256 của cặp (seed, mã ngữ cảnh), nên không phụ thuộc thứ tự đọc tệp (mục [[sec:c3-chia-tap]]). |
-| Cấu hình | 20 tệp YAML cấu hình thí nghiệm trong `configs/`, được pydantic kiểm tra khi nạp. Mỗi tệp đặc trưng và mỗi bản ghi kết quả mang mã băm của cấu hình đã sinh ra nó. |
+| Cấu hình | 23 tệp YAML cấu hình thí nghiệm (cùng một tệp mẫu) trong `configs/`, được pydantic kiểm tra khi nạp. Mỗi tệp đặc trưng và mỗi bản ghi kết quả mang mã băm của cấu hình đã sinh ra nó. |
 | Mã nguồn | Mỗi bản ghi trong `results/runs.jsonl` mang mã commit Git của lượt chạy. Ô đầu của mỗi notebook Kaggle in mã commit và phiên bản thư viện; notebook được lưu nguyên đầu ra. |
 | Mẫu prompt | Chốt ngày 19/08/2026 (mục [[sec:c4-prompt]]), không đổi trong suốt các thí nghiệm. |
 | Mô hình đọc | Qwen2.5-7B-Instruct, kho Hugging Face ở mã commit `a09a3545`; kiểu số float16 bỏ lớp 27, riêng Qwen2.5-1.5B dùng bfloat16 ([[tab:kieu-so]]). |
-| Bộ phân loại | Hồi quy logistic của scikit-learn với `random_state=42`; cách gộp đầu chú ý chọn trên tập kiểm định, tập kiểm tra chỉ chấm một lần. |
+| Bộ phân loại | Hồi quy logistic của scikit-learn với `random_state=42`; cách gộp đầu chú ý chọn trên tập dev, tập test chỉ chấm một lần. |
 | LLM giám khảo | Mỗi phản hồi của Gemini được lưu vào `results/judge_cache.jsonl` theo khóa SHA-256 của (mô hình, prompt); chấm lại đọc từ bộ nhớ đệm này thay vì gọi lại API. |
 | Dữ liệu gốc | Không sửa tệp nào trong `data/raw/`; mã băm SHA-256 của các tệp đã dùng ở [[tab:ma-bam]]. |
 
@@ -150,8 +150,8 @@ Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm ch
 | Loại kết quả | Mức tái lập | Ghi chú |
 |---|---|---|
 | Chuẩn hóa, chia tập, thống kê dữ liệu, phân tích rò rỉ | Trùng từng chữ số | Tính toán thuần, có kiểm thử khóa kết quả. |
-| Dự đoán của bộ phát hiện đã đóng gói | Trùng từng dự đoán | Nạp lại `models/e03_chunk_aware.pkl` và chấm 700 mẫu kiểm tra: trùng 700/700 với lúc thí nghiệm. |
-| Khớp lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập kiểm định lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được chấm trên cùng một máy. |
+| Dự đoán của bộ phát hiện đã đóng gói | Trùng từng dự đoán | Nạp lại `models/e03_chunk_aware.pkl` và chấm 700 mẫu test: trùng 700/700 với lúc thí nghiệm. |
+| Khớp lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập dev lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được chấm trên cùng một máy. |
 | Trích đặc trưng chú ý | Trùng trên cùng loại GPU; trong sai số số học nếu khác phần cứng | Tính ở float16 trên GPU nên không bảo đảm trùng từng bit giữa các phần cứng và phiên bản. Trên cùng Tesla T4 của Kaggle thì trùng: lượt trích lại ViHallu ngày 23/10/2026 cho E18 khớp tuyệt đối với lượt trích của E03 ngày 30/08/2026 ở cả 7.000 mẫu (giá trị lưu ở 6 chữ số thập phân), và chấm lại ra đúng macro-F1 0,7567. Tệp đặc trưng không đưa lên kho mã vì dung lượng; chạy lại phải trích lại trên GPU, gần một giờ T4 cho riêng ViHallu. |
 | Tinh chỉnh PhoBERT, XLM-R | Dao động theo seed và theo lượt | Ba seed mỗi mô hình, độ lệch chuẩn 0,011 (PhoBERT) và 0,017 (XLM-R), ghi trong `results/runs.jsonl`. Cố định seed chưa đủ: cùng seed 42, XLM-R học được ở lượt ngày 27/08 nhưng không học được ở lượt ngày 28/08. |
 | LLM giám khảo Gemini | Từ bộ nhớ đệm | Gọi lại API có thể cho kết quả khác vì mô hình phía nhà cung cấp thay đổi theo thời gian; số trong báo cáo tái lập được từ `results/judge_cache.jsonl`. |
@@ -257,7 +257,7 @@ Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá tr
 **Quy trình làm việc.** Để công cụ không tự ý quyết định thay nhóm và để mọi bước kiểm tra được, nhóm tổ chức công việc theo sáu nguyên tắc:
 
 - **Bộ quy tắc dự án viết thành văn bản.** Tệp `CONVENTIONS.md` (khoảng 200 dòng) ghi ràng buộc cứng về phần cứng và ngân sách, các quyết định đã chốt và những điều bị cấm. Công cụ đọc tệp này ở đầu mỗi phiên, nên quy tắc không phụ thuộc vào trí nhớ của một cuộc hội thoại.
-- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 52 việc trong 10 giai đoạn, mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Việc làm đúng thứ tự, không làm trước việc chưa tới.
+- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 50 mã việc trong 10 giai đoạn (58 việc nếu tính cả các việc bổ sung như T08B, T35B), mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Việc làm đúng thứ tự, không làm trước việc chưa tới.
 - **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thật nằm ở `docs/LICH_SU_PR.md`.
 - **Chỉ đánh dấu hoàn thành khi có bằng chứng.** Một việc chỉ được đánh dấu xong khi lệnh trong tiêu chí chạy được và đầu ra được dán vào pull request; với việc cần GPU, notebook Kaggle đã chạy được lưu nguyên đầu ra trong thư mục `notebooks/`.
 - **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc — thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại — công cụ phải dừng lại để nhóm quyết định.
@@ -328,8 +328,8 @@ hỏi người dùng. Không tự quyết.
 | 10 | 05/10/2026 | 11/10/2026 |  | Tiếp thu ý kiến GVHD ngày 05/10: in một mặt, giữ bố cục tám chương, thêm phần sử dụng công cụ AI và tái lập; dựng lại quyển v3. |  |
 | 11 | 12/10/2026 | 18/10/2026 | 16/10/2026 | Rà soát định dạng, mục lục và chú thích (T47); quyển v4, 130 trang; bộ slide Hội đồng rút gọn; gửi GVHD quyển v4 và slide. |  |
 | 12 | 19/10/2026 | 25/10/2026 |  | Ghim phiên bản mô hình và thư viện, thêm mã băm dữ liệu gốc; bộ slide Hội đồng 23 trang; ba thí nghiệm bổ sung: chuyển miền sang ViFactCheck (E17), chấm theo từng câu phản hồi (E18), so định vị bằng chú ý với cắt bỏ ngữ cảnh (E19); đưa nguồn dựng quyển vào kho mã; cập nhật quyển với kết quả mới. |  |
-| 13 | 26/10/2026 | 01/11/2026 |  | *(Dự kiến)* Tiếp thu ý kiến GVHD về mục 7.2; chuẩn bị kịch bản trình bày và câu hỏi của Hội đồng. |  |
-| 14 | 02/11/2026 | 08/11/2026 |  | *(Dự kiến)* Rà soát lần cuối số liệu, hình, bảng và tài liệu tham khảo của quyển. |  |
-| 15 | 09/11/2026 | 15/11/2026 |  | *(Dự kiến)* Chốt bản nộp, in quyển một mặt; diễn tập trình bày. |  |
+| 13 | 26/10/2026 | 01/11/2026 |  | Làm bộ slide trình bày trước Hội đồng; hoàn thiện quyển báo cáo. |  |
+| 14 | 02/11/2026 | 08/11/2026 |  | Tiếp tục làm bộ slide và hoàn thiện quyển báo cáo. |  |
+| 15 | 09/11/2026 | 15/11/2026 |  | Hoàn thiện bộ slide Hội đồng (31 slide); rà dùng từ, bố cục và định dạng quyển theo mẫu báo cáo. |  |
 
-*Ghi chú: cột "Tóm tắt công việc đã thực hiện" ghi theo công việc thực tế đến tuần 12, đối chiếu với ngày hoàn thành trong `TASKS.md`, lịch sử pull request (`docs/LICH_SU_PR.md`) và thời điểm ghi kết quả trong `results/runs.jsonl`; tuần 13–15 là kế hoạch. Cột "Ngày báo cáo GVHD" ghi ngày gửi thư báo cáo; từ tháng 10, theo ý kiến GVHD, nhóm chỉ báo cáo khi có kết quả mới.*
+*Ghi chú: cột "Tóm tắt công việc đã thực hiện" ghi theo công việc thực tế, đối chiếu với ngày hoàn thành trong `TASKS.md`, lịch sử pull request (`docs/LICH_SU_PR.md`) và thời điểm ghi kết quả trong `results/runs.jsonl`. Cột "Ngày báo cáo GVHD" ghi ngày gửi thư báo cáo; từ tháng 10, theo ý kiến GVHD, nhóm chỉ báo cáo khi có kết quả mới.*

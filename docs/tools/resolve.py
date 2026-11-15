@@ -113,6 +113,9 @@ BIB = {
                             'Conference on Artificial Intelligence* 39 (1), pp. 308–316.'),
     "uitdsc2023": ('UIT Data Science Challenge 2023, Group B – UIT Data Science Challenge 2023 '
                    '(10-2023), https://codalab.lisn.upsaclay.fr/competitions/15497'),
+    "vargha2000": ('Vargha, A., Delaney, H. D. (2000), "A Critique and Improvement of the CL '
+                   'Common Language Effect Size Statistics of McGraw and Wong", *Journal of '
+                   'Educational and Behavioral Statistics* 25 (2), pp. 101–132.'),
     "vaswani2017": ('Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. '
                     'N., Kaiser, Ł., Polosukhin, I. (2017), "Attention Is All You Need", '
                     '*Advances in Neural Information Processing Systems* 30, pp. 5998–6008.'),

@@ -70,7 +70,7 @@ Retrieval-augmented generation (RAG) grounds a large language model (LLM) in ret
 
 We reproduce Lookback Lens, which measures per head how much of the response's attention goes to the context rather than to itself, and extend it into a chunk-aware lookback ratio: the same attention split over context chunks, its shape summarised by five statistics. Per-layer forward hooks keep a 4-bit Qwen2.5-7B-Instruct inside one 16 GB Tesla T4.
 
-Across nineteen experiments on four Vietnamese corpora, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, matching a fine-tuned PhoBERT-large (0.749) and beating it on intrinsic hallucination. The strongest head points at the gold-evidence chunk in 87.8% of ISE-DSC01 samples, 14.3 times the random floor, and deleting that sentence moves all four pre-registered shape statistics as predicted, and the head beats context ablation (0.850 vs 0.733) at one-eleventh of the cost. The chunk-aware gain itself is not significant (0.757 against 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78).
+Across nineteen experiments on four Vietnamese corpora, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, matching a fine-tuned PhoBERT-large (0.749) and beating it on intrinsic hallucination. The strongest head points at the gold-evidence chunk in 87.8% of ISE-DSC01 samples, 14.3 times the random floor, and deleting that sentence moves all four pre-registered shape statistics as predicted. A single head also localises evidence better than context ablation (0.850 vs 0.733) at one-eleventh of the cost. The chunk-aware gain is not significant (0.757 against 0.745); three-class detectors do not transfer across corpora, while the binary decision does (0.78).
 
 The detector ships as a Python library, a REST service with an attention view and a Docker image; future work covers span-level scoring.
 
@@ -82,11 +82,11 @@ The detector ships as a Python library, a REST service with an attention view an
 
 **Nghiên cứu và xây dựng hệ thống phát hiện ảo giác cho mô hình ngôn ngữ lớn tăng cường truy xuất tiếng Việt dựa trên tín hiệu chú ý nội tại**
 
-Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ lớn bám vào ngữ cảnh truy xuất được, song mô hình vẫn phát biểu những điều ngữ cảnh không bảo chứng. Các bộ phát hiện cho tiếng Việt hiện nay hoặc tinh chỉnh trọn một bộ mã hóa lớn, hoặc gọi mô hình giám khảo cho từng câu trả lời. Khóa luận xét xem bản đồ chú ý của một mô hình đọc mã nguồn mở, lấy trong một lượt truyền xuôi, có đủ tín hiệu để phát hiện ảo giác theo ngữ cảnh hay không.
+Sinh văn bản tăng cường truy xuất (RAG) giúp mô hình ngôn ngữ lớn bám vào ngữ cảnh truy xuất, song mô hình vẫn phát biểu những điều ngữ cảnh không bảo chứng. Các bộ phát hiện cho tiếng Việt hiện nay hoặc tinh chỉnh một bộ mã hóa lớn, hoặc gọi mô hình giám khảo cho từng câu trả lời. Khóa luận xét xem bản đồ chú ý của một mô hình đọc mã nguồn mở, lấy từ một lượt truyền xuôi, có đủ tín hiệu để phát hiện ảo giác theo ngữ cảnh hay không.
 
 Khóa luận tái lập Lookback Lens — đo ở từng đầu chú ý phần chú ý mà phản hồi dành cho ngữ cảnh thay vì cho chính nó — rồi mở rộng thành chunk-aware lookback ratio: tách tỷ lệ ấy theo từng đoạn ngữ cảnh và mô tả hình dạng bằng năm đại lượng. Forward hook trên từng lớp giúp Qwen2.5-7B-Instruct 4 bit chạy vừa một GPU Tesla T4 16 GB.
 
-Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước, và đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) với chi phí tính toán thấp hơn khoảng 11 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
+Qua mười chín thí nghiệm trên bốn bộ dữ liệu tiếng Việt, bộ phân loại tuyến tính trên 756 tỷ lệ lookback (2.271 tham số) đạt macro-F1 ba lớp 0,745, ngang PhoBERT-large đã tinh chỉnh (0,749) và tốt hơn ở lớp ảo giác nội tại. Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng ở 87,8 % mẫu ISE-DSC01, gấp 14,3 lần mức ngẫu nhiên; khi xóa câu bằng chứng, cả bốn đại lượng hình dạng đổi đúng hướng đã xác định trước. Định vị bằng chú ý cũng đúng hơn cắt bỏ ngữ cảnh (0,850 so với 0,733) mà rẻ hơn khoảng 11 lần. Phần cải thiện của chunk-aware không có ý nghĩa thống kê (0,757 so với 0,745); bộ phát hiện ba lớp không chuyển được sang bộ dữ liệu khác, còn quyết định nhị phân thì chuyển được (0,78).
 
 Sản phẩm gồm thư viện Python, dịch vụ REST kèm giao diện quan sát chú ý và ảnh Docker; hướng phát triển là chấm điểm theo từng đoạn.
 
@@ -188,6 +188,7 @@ CHỮ KÝ CỦA GIẢNG VIÊN
 | **DSC** | Data Science Challenge | Cuộc thi Khoa học dữ liệu của Trường Đại học Công nghệ Thông tin, ĐHQG TP.HCM |
 | **ECE** | Expected Calibration Error | Sai số hiệu chỉnh kỳ vọng |
 | **GPU** | Graphics Processing Unit | Bộ xử lý đồ họa |
+| **GVHD** | — | Giảng viên hướng dẫn |
 | **H** | — | Giả thuyết nghiên cứu (H1–H5) |
 | **KTC** | — | Khoảng tin cậy |
 | **LLM** | Large Language Model | Mô hình ngôn ngữ lớn |
@@ -222,7 +223,7 @@ CHỮ KÝ CỦA GIẢNG VIÊN
 | $\mathrm{MAX}$, $\mathrm{ENT}$, $\mathrm{GINI}$, $\mathrm{GAP}$, $\mathrm{DRIFT}$ | Năm đặc trưng hình dạng của phân bố chú ý theo đoạn |
 | $\mathcal{C}$ | Tập nhãn $\{\mathrm{no}, \mathrm{intrinsic}, \mathrm{extrinsic}\}$ |
 | $\mathbf{z}$, $d$ | Véc-tơ đặc trưng đã chuẩn hóa của một mẫu và số chiều của nó |
-| $P_c$, $R_c$, $\mathrm{F1}_{c}$ | Độ chính xác, độ bao phủ và F1 của lớp $c$ |
+| $P_c$, $R_c$, $\mathrm{F1}_{c}$ | Độ chính xác dự báo dương, độ nhạy và F1 của lớp $c$ |
 | $\kappa$ | Hệ số đồng thuận kappa của Cohen |
 | $r_{\mathrm{rb}}$ | Hệ số tương quan hạng hai chuỗi (rank-biserial), dùng làm cỡ ảnh hưởng |
 | $B$, $R$ | Số khoảng (bin) chia theo độ tự tin khi tính ECE; số lần lấy mẫu lại bootstrap |
