@@ -99,7 +99,8 @@ def mann_whitney(a, b) -> dict:
 def describe_effect(effect: float) -> str:
     """Plain words for a rank-biserial correlation, so the write-up cannot lean on p alone.
 
-    Thresholds follow the conventional reading of Cliff's delta, which shares this scale.
+    Thresholds are Vargha and Delaney's (2000) small / medium / large cut-offs for A
+    (0.556 / 0.638 / 0.714), carried over to this scale by r = 2A - 1.
     """
     size = abs(effect)
     if size < 0.11:
