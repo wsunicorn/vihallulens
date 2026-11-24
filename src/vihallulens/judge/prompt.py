@@ -59,6 +59,30 @@ nhất cả nước."
 
 Phải chọn một mã, không được bỏ trống và không được trả lời là không chắc."""
 
+# The annotation sheet had two more parts by the time the students finished (23/08/2026): a test
+# for hard cases and the rule for wrong figures. ``RUBRIC`` predates neither but carries neither,
+# so E10 as published judged by the first half of the sheet. ``RUBRIC_FULL`` adds them (T19B);
+# the original stays, because the published row was measured with it.
+RUBRIC_FULL = RUBRIC + """
+
+Khi phân vân, dùng phép thử: chỉ với ngữ cảnh này, có BÁC BỎ được câu trả lời không?
+- Bác bỏ được, vì ngữ cảnh nói về đúng chuyện đó và nói khác đi → `noi_tai`.
+- Không bác bỏ được, cũng không xác nhận được, vì ngữ cảnh không nói về chuyện đó → `ngoai_lai`.
+- Xác nhận được → `khong`.
+
+Số liệu sai là `noi_tai` nếu ngữ cảnh có nói về đúng thuộc tính đó của đúng đối tượng đó, \
+dù giá trị mới không xuất hiện trong ngữ cảnh. Ví dụ, ngữ cảnh: "Khoảng 65% bệnh nhân \
+genotype 4 đáp ứng lâu dài với 48 tuần điều trị."
+
+- "65% bệnh nhân genotype 4 đáp ứng với 72 tuần." → `noi_tai`, ngữ cảnh nói 48, bác bỏ được.
+- "30% bệnh nhân genotype 4 đáp ứng với 48 tuần." → `noi_tai`, ngữ cảnh nói 65%, bác bỏ được.
+- "65% bệnh nhân genotype 5 đáp ứng với 48 tuần." → `ngoai_lai`, không nói gì về genotype 5.
+- "Genotype 4 tốn 12 triệu đồng mỗi đợt." → `ngoai_lai`, không nói gì về chi phí.
+
+Diễn đạt gần đúng ("48 tuần" thành "gần 50 tuần") là `khong`; chỉ là `noi_tai` khi giá trị \
+mới loại trừ giá trị trong ngữ cảnh."""
+RUBRICS = {"v1": RUBRIC, "full": RUBRIC_FULL}
+
 # propertyOrdering makes the model write ``ly_do`` first. Gemini generates the fields in the
 # order given, so this is what turns the reason into reasoning rather than into an excuse.
 RESPONSE_SCHEMA = {
@@ -73,15 +97,15 @@ RESPONSE_SCHEMA = {
 }
 
 
-def build_prompt(context: str, response: str, question: str = "") -> str:
+def build_prompt(context: str, response: str, question: str = "", rubric: str = "v1") -> str:
     """Assemble one judging prompt.
 
     The material shown mirrors what the encoder baseline of E09 is given — context, question,
     response and nothing else — so that Bảng 1 compares methods rather than compares who was
     shown more. The question block disappears entirely when there is none, following rule 1 of
-    section 8 of CONVENTIONS.md.
+    section 8 of CONVENTIONS.md. ``rubric`` picks the published wording or the complete one.
     """
-    parts = [RUBRIC, "", "Ngữ cảnh:", str(context).strip()]
+    parts = [RUBRICS[rubric], "", "Ngữ cảnh:", str(context).strip()]
     if str(question).strip():
         parts += ["", f"Câu hỏi: {str(question).strip()}"]
     parts += ["", "Câu trả lời cần chấm:", str(response).strip()]
