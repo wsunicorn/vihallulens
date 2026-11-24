@@ -4989,6 +4989,23 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
       ba sổ tay chuẩn bị bảo vệ (giữ riêng) đổi theo cùng bảng từ. Nút "Chấm" trên giao diện web giữ
       tên vì có trong ảnh chụp Hình 5.3.
     - Quy ước ghi thành mục "Quy ước dùng từ" trong `docs/report/README.md` để cả nhóm dùng tiếp.
+  - **Rà diễn đạt toàn quyển 24/11/2026** (137 → 154 trang). Mục đích: người có chuyên môn nhưng đọc lần
+    đầu phải hiểu được ngay, không phải đoán nghĩa của từ dịch sát hay của mã thí nghiệm.
+    - **Tên thay cho mã.** Mục 1.6 giới thiệu mười chín thí nghiệm theo năm nhóm; từ đó về sau gọi "tên
+      ngắn (Exx)", nhắc H1–H5 và CH1–CH3 thì nhắc kèm nội dung. Bảng 3.6 có tên ngắn và mục trình bày.
+    - **Từ ngữ.** "Mốc" tách theo nghĩa: *phương pháp so sánh* (baseline), *ngưỡng*, *bước*; "đầu mạnh
+      nhất" → *đầu định vị tốt nhất* (có định nghĩa); "tự giám sát / giám sát ngoài" → *kịch bản tự kiểm
+      tra / kiểm tra bằng mô hình khác*; "bằng chứng vàng" → *bằng chứng chuẩn*; "vùng nhiễu" → *phạm vi
+      sai số ngẫu nhiên*; "đổi dấu" → *lúc dương, lúc âm*; "bậc thang" → *mô hình đọc nhỏ hơn*.
+    - **Cấu trúc.** Chương 1–4 và 6–8 viết lại; mỗi mục chương 6 theo bốn bước: câu hỏi, cách làm, kết
+      quả chính, diễn giải. Thuật ngữ được giải thích ở lần xuất hiện đầu (mô hình đọc, token khung, chi
+      phí biên, bộ nguồn và bộ đích, truy nguồn).
+    - **Hình.** Chữ trong mười hình cũng đổi theo (kế hoạch, kết quả chính, chi phí, ba loại ảo giác, cơ
+      chế chunk-aware, cách chia đoạn, quy trình dữ liệu, loại bỏ câu bằng chứng, tổng quan, Hình 5.1).
+    - **Slide:** danh sách `TU_NGU` trong `b3_hoan_thien.py`, biểu đồ slide 24 ghi tên thí nghiệm; slide
+      30 sửa số tài liệu còn theo danh mục cũ (36 → 37, [32] → [33], [36] → [37]). `?qa` báo QA-OK.
+    - **Kiểm:** so tập con số của từng chương với bản trước, không số nào mất; ba số mới là 90 và 0,8
+      (ví dụ minh họa) và 160 nghìn (369 triệu chia 2.271). Abstract, Tóm tắt mỗi phần một trang.
   - **Định dạng theo mẫu và rà nội dung 15/11/2026** (vẫn 137 trang, mọi mục và chú thích giữ trang
     cũ). Đối chiếu với một báo cáo mẫu được Khoa chấp nhận, sửa trong `build_docx.py` và bản thảo:
     - **Định dạng.** Lời cảm ơn có hai cột ký tên song song cho hai sinh viên (marker `@@SIGN@@`).

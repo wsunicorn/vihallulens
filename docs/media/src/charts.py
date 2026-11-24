@@ -123,11 +123,11 @@ def chart_main() -> None:
     ax.set_xlim(0.55, 0.885)
     ax.set_xlabel("macro-F1 (ba lớp) với khoảng tin cậy 95 % của tập test")
     # the dagger on the Gemini row is explained inside the figure, where the reader meets it
-    ax.text(1.0, -0.285, "† chấm trên 300/700 mẫu test", transform=ax.transAxes,
+    ax.text(1.0, -0.285, "† đánh giá trên 300/700 mẫu test", transform=ax.transAxes,
             ha="right", va="top", fontsize=9.5, color="#3f3f46")
     vn_axis(ax.xaxis)
     ax.axvline(0.8184, color=NAVY, linestyle="--", linewidth=1.0, alpha=0.8)
-    ax.text(0.866, 2.6, "mốc “hơn hẳn”: 0,818",
+    ax.text(0.866, 2.6, "ngưỡng vượt XLM-R: 0,818",
             color=NAVY, fontsize=9.5, va="center", ha="left", rotation=90)
     ax.grid(axis="y", visible=False)
     ax.set_axisbelow(True)
@@ -184,7 +184,7 @@ def chart_localization() -> None:
            edgecolor="#2b2b31", linewidth=0.7)
     ax.bar(x, mean, w, label="Trung bình 756 đầu chú ý", color=BLUE,
            edgecolor="#2b2b31", linewidth=0.7)
-    ax.bar(x + w, best, w, label="Đầu chú ý mạnh nhất", color=RED,
+    ax.bar(x + w, best, w, label="Đầu định vị tốt nhất", color=RED,
            edgecolor="#2b2b31", linewidth=0.7)
     for xi, (f, m, b) in enumerate(zip(floor, mean, best, strict=False)):
         for dx, v in ((-w, f), (0, m), (w, b)):
@@ -229,13 +229,13 @@ def chart_tradeoff() -> None:
         ax.annotate(name, (ms, f1), textcoords="offset points", xytext=off,
                     fontsize=10, ha=ha, va=va)
     ax.set_xscale("log")
-    ax.set_xlabel("Chi phí suy luận mỗi mẫu (ms, thang log) — càng trái càng rẻ")
+    ax.set_xlabel("Chi phí suy luận mỗi mẫu (ms, thang log), bên trái thấp hơn")
     ax.set_ylabel("macro-F1")
     vn_axis(ax.yaxis)
     ax.set_ylim(0.63, 0.80)
     ax.set_xlim(5e-4, 3e5)       # room on the right for the labels of the 7B and 1.5B points
     ax.axhspan(0.7570, 0.8184, color=NAVY, alpha=0.07, zorder=0)
-    ax.text(7e-4, 0.7875, "khoảng tin cậy của XLM-R — mốc phải vượt",
+    ax.text(7e-4, 0.7875, "khoảng tin cậy 95 % của XLM-R",
             fontsize=9.5, color=NAVY)
     ax.grid(which="both", alpha=0.55)
     ax.set_axisbelow(True)
@@ -321,14 +321,14 @@ def chart_cross() -> None:
 
     fig, ax = plt.subplots(figsize=(8.0, 4.4))
     ax.bar(x, own, 0.56, color=LIGHT, edgecolor="#2b2b31", linewidth=0.7,
-           label="Đích tự chấm (huấn luyện trên chính bộ đích)")
+           label="Huấn luyện trên chính bộ đích")
     ax.bar(x, cross, 0.56, color=RED, edgecolor="#2b2b31", linewidth=0.7,
            label="Chéo bộ (huấn luyện trên bộ nguồn)")
     for xi in x:
         ax.text(xi, cross[xi] - 0.045, vnum(cross[xi]), ha="center",
                 fontsize=10, color="white", weight="bold")
         ax.text(xi, own[xi] + 0.008, vnum(own[xi]), ha="center", fontsize=10)
-        ax.annotate(f"sụt {vnum(own[xi] - cross[xi])}", xy=(xi, (own[xi] + cross[xi]) / 2),
+        ax.annotate(f"giảm {vnum(own[xi] - cross[xi])}", xy=(xi, (own[xi] + cross[xi]) / 2),
                     ha="center", fontsize=10, color="#2b2b31")
     # the chance line is named in the legend: a label on the line itself would sit on a bar
     ax.axhline(0.3333, color=GRAY, linestyle="--", linewidth=1.1,
@@ -500,20 +500,20 @@ def chart_plan() -> None:
             ("Kiểm chứng thủ công ánh xạ nhãn NEI", 4, 1),
             ("Chia tập theo ngữ cảnh, báo cáo rò rỉ", 4, 1),
             ("Chia đoạn và kho truy xuất ViWikiFC", 4, 1)]),
-        ("Mốc so sánh và tái lập", TEAL, [
-            ("Mốc đặc trưng bề mặt", 5, 1),
-            ("Mốc bộ mã hóa tinh chỉnh", 5, 1),
-            ("Mốc LLM giám khảo", 5, 1),
+        ("So sánh và tái lập", TEAL, [
+            ("Phân loại bằng đặc trưng bề mặt", 5, 1),
+            ("Tinh chỉnh bộ mã hóa", 5, 1),
+            ("LLM giám khảo (Gemini)", 5, 1),
             ("Tái lập Lookback Lens", 5, 1)]),
         ("Đóng góp và kiểm chứng cơ chế", RED, [
             ("Hiện thực đặc trưng chunk-aware", 6, 1),
-            ("So sánh cách chia đoạn, chốt cấu hình", 6, 2),
-            ("Định vị chú ý trên ISE-DSC01", 7, 1),
-            ("Ngữ cảnh dài và thí nghiệm can thiệp", 7, 2)]),
+            ("So sánh, chọn cách chia đoạn", 6, 2),
+            ("Định vị bằng chứng trên ISE-DSC01", 7, 1),
+            ("Ngữ cảnh dài, loại câu bằng chứng", 7, 2)]),
         ("Thực nghiệm mở rộng", ORANGE, [
-            ("Ablation, mô hình đọc, bậc thang kích thước", 10, 2),
-            ("Đánh đổi chi phí, đối chứng ngoài", 10, 2),
-            ("Khái quát hóa chéo bộ, phân tích sai sót", 11, 1)]),
+            ("Nhóm đặc trưng, các mô hình đọc khác", 10, 2),
+            ("Chi phí, kết quả đã công bố", 10, 2),
+            ("Đánh giá chéo bộ, phân tích sai sót", 11, 1)]),
         ("Hệ thống", "#7a6a9c", [
             ("Thư viện, dịch vụ REST, Docker", 12, 2),
             ("Giao diện quan sát, hệ RAG minh họa", 13, 1)]),
@@ -610,7 +610,7 @@ def chart_intervention() -> None:
 # 14. Localisation replicated on a second corpus
 # =========================================================================
 def chart_localization_replication() -> None:
-    groups = ["Đầu chú ý mạnh nhất", "Trung bình 756 đầu", "Mức ngẫu nhiên"]
+    groups = ["Đầu định vị tốt nhất", "Trung bình 756 đầu", "Mức ngẫu nhiên"]
     ise = [0.8779, 0.3320, 0.0614]
     wiki = [0.8529, 0.3289, 0.1027]
     x = np.arange(3)

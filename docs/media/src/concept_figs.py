@@ -106,18 +106,18 @@ def fig_ba_loai_ao_giac() -> None:
     cards = [
         ("no", "trung thực", GREEN, TINT_GREEN,
          "Vịnh Hạ Long được UNESCO công nhận là Di sản thiên nhiên thế giới lần đầu năm 1994.",
-         "Mọi mệnh đề đều truy được về ngữ cảnh.",
-         "Nhọn vào đoạn 3 — đúng đoạn mang mệnh đề.",
+         "Mọi mệnh đề đều có căn cứ trong ngữ cảnh.",
+         "Tập trung vào đoạn 3, đoạn chứa thông tin.",
          [0.06, 0.09, 0.71, 0.14], 2),
         ("intrinsic", "ảo giác nội tại", ORANGE, TINT_ORANGE,
          "Vịnh Hạ Long được UNESCO công nhận là Di sản thiên nhiên thế giới lần đầu năm 2000.",
-         "Ngữ cảnh CÓ nói về năm; mô hình đọc rồi dùng sai câu.",
-         "Vẫn nhọn, nhưng nhọn vào đoạn 4 — đọc nhầm câu.",
+         "Ngữ cảnh CÓ nói về năm; phản hồi lấy từ câu khác.",
+         "Vẫn tập trung, nhưng vào đoạn 4, sai câu.",
          [0.05, 0.08, 0.29, 0.58], 3),
         ("extrinsic", "ảo giác ngoại lai", RED, TINT_RED,
          "Vịnh Hạ Long được công nhận năm 1994 và mỗi năm đón hơn bảy triệu lượt khách.",
-         "Ngữ cảnh KHÔNG hề nói về lượng khách.",
-         "Tản đều — không có đoạn nào để bám vào.",
+         "Ngữ cảnh KHÔNG nói về lượng khách.",
+         "Phân tán: không đoạn nào chứa thông tin.",
          [0.24, 0.27, 0.26, 0.23], None),
     ]
 
@@ -135,7 +135,7 @@ def fig_ba_loai_ao_giac() -> None:
         c.raw_text(m + 16, y + 21, name, T_LABEL, fill=color, weight="bold", family=MONO)
         c.raw_text(m + w - 16, y + 21, vi, T_LABEL, anchor="end", fill=color)
 
-        c.raw_text(m + 16, y + 58, "PHẢN HỒI CẦN CHẤM", T_SMALL, fill=GRAY, weight="bold")
+        c.raw_text(m + 16, y + 58, "PHẢN HỒI CẦN KIỂM TRA", T_SMALL, fill=GRAY, weight="bold")
         yy = text_left(c, m + 16, y + 88, resp, txt_w - 20, T_BODY, line_h=LH)
         text_left(c, m + 16, yy + 8, note, txt_w - 20, T_BODY, fill=color, weight="bold",
                   line_h=LH)
@@ -237,7 +237,7 @@ def fig_mau_prompt() -> None:
     rules = [
         "1.  Vị trí hai vùng được tìm bằng cách dò chuỗi trong prompt đã render rồi ánh xạ "
         "sang token qua return_offsets_mapping — không đếm ký tự khung.",
-        "2.  Token phản hồi đầu tiên không được chấm vì mẫu số t − 1 bằng 0; trục token của "
+        "2.  Token phản hồi đầu tiên không được tính vì mẫu số t − 1 bằng 0; trục token của "
         "mọi mảng đặc trưng vì thế có độ dài T − 1.",
     ]
     n_lines = sum(len(wrap(r, inner_w - 44, T_BODY)) for r in rules)
@@ -307,7 +307,7 @@ def fig_co_che_chunk_aware() -> None:
     fy = gy + n_resp * cell + 64
     rows = [
         ("MAX", "tỷ trọng của đoạn được chú ý nhiều nhất"),
-        ("ENT", "entropy chuẩn hóa: phân bố dàn trải hay tập trung"),
+        ("ENT", "entropy chuẩn hóa: phân bố phân tán hay tập trung"),
         ("GINI", "mức bất bình đẳng giữa các đoạn"),
         ("GAP", "khoảng cách giữa hai đoạn dẫn đầu"),
         ("DRIFT", "mức dịch chuyển của phân bố giữa hai token liên tiếp"),
@@ -330,11 +330,11 @@ def fig_co_che_chunk_aware() -> None:
     tw = pw - 32
     panels = (
         (m, TINT_ORANGE, ORANGE, "Lookback Lens gốc — lookback gộp",
-         "Gộp cả ngữ cảnh thành một khối, chỉ hỏi “nhìn lại bao nhiêu”:",
-         "một khối → 1 con số / đầu", "#8a5a1f"),
+         "Gộp cả ngữ cảnh làm một, chỉ đo tổng chú ý vào ngữ cảnh:",
+         "cả ngữ cảnh → 1 giá trị / đầu", "#8a5a1f"),
         (m + pw + 20, TINT_RED, RED, "Đề xuất của khóa luận — chunk-aware",
          "Giữ véc-tơ tỷ trọng theo đoạn rồi mô tả hình dạng của nó:",
-         "[0,09 0,62 0,17 0,12]\n→ 5 con số / đầu", RED),
+         "[0,09 0,62 0,17 0,12]\n→ 5 giá trị / đầu", RED),
     )
     n_body = max(len(wrap(b, tw, T_BODY)) for _, _, _, _, b, _, _ in panels)
     n_form = max(f.count("\n") + 1 for *_, f, _ in panels)
@@ -427,7 +427,7 @@ def fig_hai_cach_chia_chunk() -> None:
     y = note_after(y + 20 + 2 * rh + 6 + 26, "Ranh giới cắt ngang câu · không chồng lấn · "
                    "trung bình 5,56 đoạn — gần bằng cách chia theo câu") - 4
 
-    note = ("Cấu hình (c) giống (a) về chồng lấn và độ phân giải, chỉ khác một yếu tố: ranh "
+    note = ("Cấu hình (c) giống (a) về chồng lấn và độ dài đoạn, chỉ khác một yếu tố: ranh "
             "giới đoạn có trùng ranh giới câu hay không.")
     n = len(wrap(note, inner_w - 40, T_BODY, bold=True))
     c.band(m, y, inner_w, 24 + n * LH, TINT_GRAY, radius=8, stroke="#c8c8d0")

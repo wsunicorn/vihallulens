@@ -15,7 +15,7 @@
 | E03 | Chunk-aware, chia theo câu | CH1 | ViHallu | E02 |
 | E04 | Chunk-aware, chia theo cửa sổ token | CH1 | ViHallu | E02 |
 | E05 | So sánh hai cách chia chunk, chọn cách tốt hơn | CH1 | ViHallu | E03, E04 |
-| E06 | Định vị chú ý so với đoạn bằng chứng vàng | CH1 | ISE-DSC01 | E05 |
+| E06 | Định vị chú ý so với đoạn bằng chứng chuẩn | CH1 | ISE-DSC01 | E05 |
 | E07 | Chunk-aware trên ngữ cảnh dài | CH1 | ISE-DSC01 | E05 |
 | E08 | Thí nghiệm lớp ngoại lai (NEI có bằng chứng) | CH1 | ViWikiFC | E05 |
 | E09 | Baseline bộ mã hóa (PhoBERT, XLM-R, InfoXLM) | CH2 | ViHallu | — |
@@ -23,7 +23,7 @@
 | E11 | Bảng đánh đổi độ chính xác và chi phí | CH2 | ViHallu | E05, E09, E10 |
 | E12 | Ablation: nhóm đặc trưng nào đóng góp | CH3 | ViHallu | E05 |
 | E13 | Ablation: mô hình đọc Qwen2.5-7B với Sailor2-8B | CH1, CH3 | ViHallu | E05 |
-| E14 | Ablation: bậc thang kích thước 7B / 3B / 1.5B | CH2 | ViHallu | E05 |
+| E14 | Mô hình đọc nhỏ hơn: 7B / 3B / 1.5B | CH2 | ViHallu | E05 |
 
 **E14 — ba nấc, ba kiểu hỏng số học khác nhau, và một nấc lệch kiểu số.** Đo ở T31 ngày
 09/09/2026 trên 20 mẫu trải từ 47 tới 4.805 từ:
@@ -43,7 +43,7 @@ Nấc 1.5B phải chạy `bfloat16` vì `float16` không còn lớp nào dùng �
 kèm bảng kết quả:
 
 1. **So nấc 1.5B với nấc 3B là để hai thứ đổi cùng lúc** — cỡ mô hình và kiểu số. Chỉ đụng
-   vào phần so tuyệt đối; phần "chunk-aware có hơn mốc lookback của chính nó không" tính
+   vào phần so tuyệt đối; phần "chunk-aware có hơn lookback gộp của chính nó không" tính
    trong nội bộ từng cỡ, chung mô hình chung kiểu số chung shard, nên sạch. `bfloat16` lại
    trung thực hơn `float16`, nên nếu 1.5B vẫn kém hơn thì đó là kết luận thận trọng.
 2. **Con số chi phí gắn với T4.** Turing không có `bfloat16` gốc nên phải giả lập, chậm 4,1
@@ -136,13 +136,13 @@ Hai đặc trưng tái lập đúng bảng trên: độ dài trung bình ra **ch
 
 **Ba điều con số này quyết định:**
 
-1. **Ngưỡng thật để vượt là 0,689, không phải 0,328 mà cũng không phải 0,656.** PhoBERT công bố 32,83 %, nhưng hai đặc trưng bề mặt đã đạt gấp đôi con số đó. Và vì khoảng tin cậy của E01 chạm tới **0,689**, một phương pháp muốn nói là hơn hẳn E01 thì phải vượt mốc đó chứ không phải vượt 0,656 — vượt 0,67 chỉ là nằm trong khoảng nhiễu của cùng một kết quả.
+1. **Ngưỡng thật để vượt là 0,689, không phải 0,328 mà cũng không phải 0,656.** PhoBERT công bố 32,83 %, nhưng hai đặc trưng bề mặt đã đạt gấp đôi con số đó. Và vì khoảng tin cậy của E01 chạm tới **0,689**, một phương pháp muốn nói là hơn hẳn E01 thì phải vượt ngưỡng đó chứ không phải vượt 0,656 — vượt 0,67 chỉ là nằm trong khoảng nhiễu của cùng một kết quả.
 2. **`intrinsic` là lớp khó nhất, cách hai lớp kia hơn 0,2 điểm F1.** Điều đó hợp lý: ảo giác nội tại là xáo trộn thông tin đã có trong ngữ cảnh, nên nó *vẫn* trùng lặp từ vựng cao và không lộ ra ở hai đặc trưng bề mặt. Đây chính là chỗ tín hiệu chú ý theo đoạn có cơ hội đóng góp nhiều nhất, và nên là chỗ E05 tập trung chứng minh.
-3. **Chi phí gần bằng không** — 9 tham số, 0,001 ms/mẫu, không GPU. Cột chi phí của E11 vì thế có một mốc dưới rất khắc nghiệt.
+3. **Chi phí gần bằng không** — 9 tham số, 0,001 ms/mẫu, không GPU. Cột chi phí của E11 vì thế có một cận dưới rất thấp.
 
 ### E02 — Tái lập Lookback Lens gốc
 
-Đây là mốc so sánh nội bộ quan trọng nhất: nếu chunk-aware không hơn E02 thì đóng góp của đề tài không đứng vững. Vì vậy E02 phải tái lập **đúng** công thức gốc, không phải một biến thể gần đúng.
+Đây là phép so sánh nội bộ quan trọng nhất: nếu chunk-aware không hơn E02 thì đóng góp của đề tài không đứng vững. Vì vậy E02 phải tái lập **đúng** công thức gốc, không phải một biến thể gần đúng.
 
 Công thức nguyên bản, bốn điểm dễ làm sai và khác biệt về bài toán: xem mục 1 của `docs/REFERENCES.md`. Tóm tắt điểm dễ sai nhất — lookback ratio gốc là **trung bình chú ý theo token** (chia cho số token ngữ cảnh và số token đã sinh), không phải tổng khối lượng chú ý.
 
@@ -158,7 +158,7 @@ Ghi rõ trong báo cáo rằng nhóm đã thử cả hai họ chiến lược tr
 
 Thí nghiệm quan trọng nhất cho CH1. Chỉ chạy trên các mẫu ISE-DSC01 có bằng chứng, tức nhãn SUPPORTED và REFUTED.
 
-Với mỗi mẫu: chia ngữ cảnh thành chunk, xác định chunk chứa bằng chứng vàng, tính phân bố chú ý trên các chunk, rồi đo:
+Với mỗi mẫu: chia ngữ cảnh thành chunk, xác định chunk chứa bằng chứng chuẩn, tính phân bố chú ý trên các chunk, rồi đo:
 
 - `hit@1` — chunk được chú ý nhiều nhất có phải chunk bằng chứng không
 - `hit@3`
@@ -188,13 +188,13 @@ con số điểm.
 
 ### E10 — Baseline LLM giám khảo
 
-Mốc so sánh thứ ba, và là mốc mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì, E09 đọc được nhưng phải tinh chỉnh trước, còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
+Phương pháp so sánh thứ ba, và là phương pháp mà lập luận chi phí ở CH2 thật sự nhắm vào. E01 không đọc gì, E09 đọc được nhưng phải tinh chỉnh trước, còn E10 đọc được mà **không huấn luyện gì cả** — đổi lại là một lượt gọi API và một vòng mạng cho mỗi mẫu.
 
 **Bộ tiêu chí đánh giá chép nguyên từ `results/nei_mapping_audit_HUONGDAN.md`** — bản hướng dẫn hai sinh viên đã gán nhãn tay ở T13 — chứ không viết lại. Đưa cho giám khảo một định nghĩa ba lớp khác với định nghĩa con người đã dùng thì Bảng 1 thành ra so **đề bài**, và người phản biện có quyền nói vậy.
 
 Hai chỗ cố ý khác bản hướng dẫn, ghi lại vì chúng ảnh hưởng cách đọc điểm:
 
-1. Con người được trả lời `khong_chac`. Giám khảo thì không: một mốc so sánh phải ra nhãn cho mọi mẫu, nếu không macro-F1 của nó tính trên một tập khác với mọi dòng còn lại.
+1. Con người được trả lời `khong_chac`. Giám khảo thì không: một phương pháp so sánh phải ra nhãn cho mọi mẫu, nếu không macro-F1 của nó tính trên một tập khác với mọi dòng còn lại.
 2. Giám khảo phải **nêu lý do trước rồi mới chốt nhãn**. `propertyOrdering` trong schema ép thứ tự đó, nên mô hình lần theo bằng chứng trước khi quyết, thay vì biện minh cho một nhãn đã trót đưa ra.
 
 #### Cỡ mẫu, và vì sao chỉ 300
@@ -265,7 +265,7 @@ Dòng "Chunk-aware (E05)" của bản đặc tả đầu không còn: E05 là b�
 
 Đo ngày 28/08/2026 trên T4, 3 seed mỗi mô hình, 3 epoch, learning rate 1e-5. Độ lệch chuẩn qua seed — 0,011 cho PhoBERT và 0,017 cho XLM-R — nằm trong `results/runs.jsonl` dưới khóa `_std`, tách khỏi sai số chuẩn bootstrap ở khóa `_se`. Dòng E10 đo ngày 27/08.
 
-**¶** Cột `ms/mẫu` sửa ngày 10/09/2026. Bản cũ ghi 464 ms cho E02 và 528 ms cho E03 — hai con số cho **cùng một lượt trích**, vì hai dòng dùng chung shard `8c49fc0417f1` và chung `extraction_hash`. Chênh lệch 64 ms là nhiễu giữa hai phép đo, không phải chi phí thật của chunk-aware. Số mới 438 ms lấy từ lượt đo **xen kẽ** của T31, quy về phân bố độ dài của ViHallu, độ trôi giữa hai lượt 2,09 %; VRAM 8.328 MB đo trong cùng lượt ấy. Xem Bảng 8. Cột này là **thời gian chạy mô hình đọc để lấy ma trận chú ý**, không phải thời gian của bộ phân loại — bộ phân loại chỉ có 2.271 tham số và chạy trong micro giây. VRAM lấy từ phép đo T08 trên đúng cấu hình này. Con số 464 ms là chi phí **tuyệt đối**; lập luận của đề tài là chi phí **biên** trong một hệ RAG thật gần bằng 0 vì lượt đọc đó dù sao cũng phải chạy — nhưng thí nghiệm này **không đo** điều đó, nên phải nói rõ khi trình bày.
+**¶** Cột `ms/mẫu` sửa ngày 10/09/2026. Bản cũ ghi 464 ms cho E02 và 528 ms cho E03 — hai con số cho **cùng một lượt trích**, vì hai dòng dùng chung shard `8c49fc0417f1` và chung `extraction_hash`. Chênh lệch 64 ms là nhiễu giữa hai phép đo, không phải chi phí thật của chunk-aware. Số mới 438 ms lấy từ lượt đo **xen kẽ** của T31, quy về phân bố độ dài của ViHallu, mức chênh lệch giữa hai lượt 2,09 %; VRAM 8.328 MB đo trong cùng lượt ấy. Xem Bảng 8. Cột này là **thời gian chạy mô hình đọc để lấy ma trận chú ý**, không phải thời gian của bộ phân loại — bộ phân loại chỉ có 2.271 tham số và chạy trong micro giây. VRAM lấy từ phép đo T08 trên đúng cấu hình này. Con số 464 ms là chi phí **tuyệt đối**; lập luận của đề tài là chi phí **biên** trong một hệ RAG thật gần bằng 0 vì lượt đọc đó dù sao cũng phải chạy — nhưng thí nghiệm này **không đo** điều đó, nên phải nói rõ khi trình bày.
 
 **§** XLM-R chỉ **2 trên 3 seed học được** ở lượt chạy này; seed 42 đứng ở `ln(3)` và bị loại. Chính seed đó **học được** ở lượt 27/08 với cùng cấu hình — xem phần T18 của `TASKS.md`. Gộp cả hai lượt thì 5 trên 6 lượt seed thành công, trung bình **0,7730 ± 0,0199**, và đó là ước lượng đáng tin hơn bất kỳ lượt đơn lẻ nào. Bảng này dùng lượt 28/08 cho mọi cột vì chỉ lượt đó có dự đoán thô để tính chỉ số nhị phân.
 
@@ -275,11 +275,11 @@ Năm điều bảng này nói:
 
 1. **Giám khảo LLM là bộ phát hiện tốt và bộ phân loại kém, và con số ba lớp che mất điều đó.** Trên cùng 300 mẫu: ba lớp 0,664 so với 0,686 của E01 — thua; nhị phân 0,821 so với 0,814 — hơn; và **bắt được 97,4 % số mẫu có ảo giác so với 88,9 %**. Nghĩa là nó gần như không bỏ sót ảo giác nào, chỉ gọi sai tên loại. Đây là lý do chỉ số nhị phân được thêm vào mục 3: nếu chỉ nhìn con số ba lớp thì kết luận sẽ là "Gemini không hơn hai đặc trưng bề mặt", mà kết luận đó bỏ sót phần quan trọng nhất.
 
-2. **Mốc phải vượt nay là 0,776 chứ không phải 0,689.** Và muốn nói *hơn hẳn* XLM-R thì phải vượt **0,818**, cận trên khoảng tin cậy của nó — cùng nguyên tắc đã dùng để đặt mốc 0,689 cho E01.
+2. **Ngưỡng phải vượt nay là 0,776 chứ không phải 0,689.** Và muốn nói *hơn hẳn* XLM-R thì phải vượt **0,818**, cận trên khoảng tin cậy của nó — cùng nguyên tắc đã dùng để đặt ngưỡng 0,689 cho E01.
 3. **Lớp `intrinsic` vẫn khó nhất ở cả bốn phương pháp**, nhưng bộ mã hóa cải thiện được nhiều: 0,533 → 0,729. Khoảng cách giữa lớp dễ nhất và khó nhất thu từ 0,209 xuống 0,115.
 4. **Giá phải trả là chi phí suy luận.** XLM-R chậm hơn E01 khoảng **25.000 lần** mỗi mẫu và cần 11 GB VRAM, đổi lấy 0,120 macro-F1. Đây chính là trục đánh đổi mà E11 phải vẽ ra.
 
-5. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,081 → 0,097. Bộ mã hóa tinh chỉnh dự đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của mốc so sánh và đáng nêu ở phần bàn luận.
+5. **Càng mạnh càng tự tin thái quá.** ECE đi ngược chiều macro-F1: 0,061 → 0,081 → 0,097. Bộ mã hóa tinh chỉnh dự đoán đúng hơn nhưng **hiệu chỉnh xác suất tệ hơn** hai đặc trưng bề mặt. Với bài toán phát hiện ảo giác, nơi người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là một điểm yếu thật của phương pháp so sánh và đáng nêu ở phần bàn luận.
 
 ### E02 tái lập được, và nó nói đúng điều đề tài cần nghe
 
@@ -305,7 +305,7 @@ Ba điều, và điều thứ hai là quan trọng nhất từ đầu đề tài
 
 **Điều E02 KHÔNG chứng minh, phải nói rõ.** Nó chưa vượt XLM-R: 0,746 so với 0,776, và hai khoảng tin cậy chồng nhau nhiều ([0,713–0,777] và [0,757–0,818]) nên cũng chưa kết luận được XLM-R hơn hẳn. Và chi phí tuyệt đối cao hơn — 464 ms mỗi mẫu so với 25 ms. Lập luận chi phí của đề tài dựa trên chi phí **biên** trong hệ RAG thật, thứ thí nghiệm này không đo.
 
-**Và đây mới là mốc thật của phần đóng góp.** `chunk-aware` phải vượt **0,746**, không phải vượt 0,656 của E01 — vì nó là cùng một họ phương pháp, chỉ khác cách chia mẫu số. Vượt E01 thì chỉ chứng minh chú ý có ích; vượt E02 mới chứng minh **chia theo đoạn** có ích.
+**Và đây mới là ngưỡng thật của phần đóng góp.** `chunk-aware` phải vượt **0,746**, không phải vượt 0,656 của E01 — vì nó là cùng một họ phương pháp, chỉ khác cách chia mẫu số. Vượt E01 thì chỉ chứng minh chú ý có ích; vượt E02 mới chứng minh **chia theo đoạn** có ích.
 
 ### E03 vượt E02 ở tổng, nhưng câu chuyện nằm ở từng lớp
 
@@ -334,7 +334,7 @@ Không gian tìm kiếm vì thế đã chứa E02 như một trường hợp ri�
 
 ### Ba điều E03 làm được, ghi rõ để khỏi bị con số tổng che
 
-1. **Hiệu chỉnh xác suất tốt nhất cả bảng.** ECE 0,044 so với 0,109 của E02 và 0,097 của XLM-R — giảm hơn một nửa. Với bài toán mà người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là kết quả đứng riêng được, và nó đi ngược xu hướng "càng mạnh càng tự tin thái quá" của ba mốc kia.
+1. **Hiệu chỉnh xác suất tốt nhất cả bảng.** ECE 0,044 so với 0,109 của E02 và 0,097 của XLM-R — giảm hơn một nửa. Với bài toán mà người dùng cần biết *mức độ tin* chứ không chỉ nhãn, đây là kết quả đứng riêng được, và nó đi ngược xu hướng "càng mạnh càng tự tin thái quá" của ba phương pháp so sánh kia.
 2. **Chỉ số nhị phân 0,8636**, cao thứ hai cả bảng sau XLM-R, với `báo đúng` 0,915 — cao nhất.
 3. **Năm đặc trưng mới chiếm 87 % trọng số** (`chunk_entropy` 26,8 %, `chunk_max_share` 22,6 %, `top1_top2_gap` 15,5 %, `chunk_gini` 15,0 %, `chunk_drift` 7,2 %) so với 12,9 % của `lookback_total`. Bộ phân loại không dùng lại E02 rồi ăn may — nó thật sự dựa vào hình dạng.
 
@@ -342,7 +342,7 @@ Không gian tìm kiếm vì thế đã chứa E02 như một trường hợp ri�
 
 E03 mới là **một** cách chia đoạn. T23 quét cách chia theo cửa sổ token 64/128/256, T24 chốt. Chia theo câu cho trung bình 5,3 đoạn mỗi ngữ cảnh, có thể là quá thô để hình dạng phân bố nói lên điều gì trên lớp `intrinsic`.
 
-Và E06 — định vị chú ý so với đoạn bằng chứng vàng trên ISE-DSC01 — mới là phép kiểm **trực tiếp** của cơ chế, thay vì suy ra từ điểm phân loại.
+Và E06 — định vị chú ý so với đoạn bằng chứng chuẩn trên ISE-DSC01 — mới là phép kiểm **trực tiếp** của cơ chế, thay vì suy ra từ điểm phân loại.
 
 ### Cột nhị phân nói gì
 
@@ -374,16 +374,16 @@ Ghi lại như một kết quả về **độ ổn định**, không phải mộ
 Chạy 31/08/2026 trên toàn bộ tập dev, 3.646 mẫu, 65,1 phút GPU, **0 lỗi**. Chia theo câu, cấu
 hình chốt ở T24. 2.376 mẫu có bằng chứng định vị được, trung bình **22,6 đoạn** mỗi ngữ cảnh.
 
-| Chỉ số | Đầu mạnh nhất | Trung bình 756 đầu | Sàn ngẫu nhiên | Gấp sàn (đầu / trung bình) |
+| Chỉ số | Đầu định vị tốt nhất | Trung bình 756 đầu | Sàn ngẫu nhiên | Gấp sàn (đầu / trung bình) |
 |---|---|---|---|---|
 | **hit@1** | **0,8779** (lớp 14, đầu 6) | 0,3320 | 0,0614 | **14,29×** / 5,40× |
 | hit@3 | 0,9562 (lớp 16, đầu 7) | 0,5177 | 0,1843 | 5,19× / 2,81× |
 | MRR | 0,9200 (lớp 16, đầu 7) | 0,4709 | 0,1987 | 4,63× / 2,37× |
 
-**Đầu mạnh nhất xác định đúng đoạn chứa bằng chứng trong 87,8 % số mẫu, chọn giữa trung bình 22,6
+**Đầu định vị tốt nhất xác định đúng đoạn chứa bằng chứng trong 87,8 % số mẫu, chọn giữa trung bình 22,6
 đoạn.** Đây là phép kiểm trực tiếp của cơ chế, không suy ra từ điểm phân loại nào.
 
-### Đầu mạnh nhất chọn trên chính dữ liệu báo cáo — và điều đó không giải thích được kết quả
+### Đầu định vị tốt nhất chọn trên chính dữ liệu báo cáo — và điều đó không giải thích được kết quả
 
 Con số 0,8779 là cận trên: nó là max trên 756 ô, chọn trên đúng tập được báo cáo. Câu hỏi đúng
 là phần nào của nó do may mắn khi chọn.
@@ -398,14 +398,14 @@ Và nó không phải một đầu ăn may:
   đầu tốt nhất        0,878          10 đầu đầu bảng   0,878 … 0,863
   trung vị 756 đầu    0,178 (2,9x)   192/756 đầu vượt 10x sàn
   trung bình          0,332 (5,4x)   453/756 đầu vượt  2x sàn
-  đầu kém nhất        0,048          5 lớp mạnh nhất: 14, 16, 15, 19, 8
+  đầu kém nhất        0,048          5 lớp cao nhất: 14, 16, 15, 19, 8
 ```
 
 **Trung bình mọi đầu đã là 5,40× sàn**, và con số ấy **không dính lựa chọn nào**. Nếu chỉ được
 báo cáo một số thì nên là số này.
 
 Khác Lookback Lens ở một điểm đáng nói: bài gốc thấy tín hiệu tập trung ở vài đầu. Ở đây **một
-phần tư số đầu vượt 10 lần sàn**, và các lớp mạnh nhất quây quanh giữa mạng (14, 15, 16, 19).
+phần tư số đầu vượt 10 lần sàn**, và các lớp định vị tốt nhất quây quanh giữa mạng (14, 15, 16, 19).
 Định vị bằng chứng là thuộc tính rộng của Qwen2.5-7B chứ không phải một mạch chuyên biệt.
 
 ### Nhãn không có bằng chứng thì chú ý tản hơn
@@ -434,7 +434,7 @@ loại khỏi phần định vị thay vì âm thầm tính nhầm đoạn khác
 thử trên dữ liệu thật.
 
 **Kết quả tái lập chính xác giữa hai môi trường.** Đánh giá lại trên máy cá nhân từ shard tải về cho
-**trùng từng chữ số** — khác hẳn độ trôi tới 0,0075 đo ở T23. Lý do là E06 chỉ có số học thuần
+**trùng từng chữ số** — khác hẳn mức chênh lệch tới 0,0075 đo ở T23. Lý do là E06 chỉ có số học thuần
 (xếp hạng, đếm, trung bình), không có bộ tối ưu lặp nào như `LogisticRegression` để hội tụ khác
 nhau theo phiên bản BLAS.
 
@@ -476,7 +476,7 @@ lên [0,7714; 0,7982] của lookback gộp. Đúng đắn nhất là nói: **chu
 một cách nhất quán về hướng nhưng không có ý nghĩa thống kê, ở cả hai bộ dữ liệu.**
 
 Lý do lợi thế co lại thì đọc được ngay từ bảng: **lookback gộp trên ISE-DSC01 đã rất mạnh sẵn**
-(0,7851 so với 0,7451 trên ViHallu). Ngữ cảnh dài không làm chunk-aware yếu đi — nó làm *mốc so*
+(0,7851 so với 0,7451 trên ViHallu). Ngữ cảnh dài không làm chunk-aware yếu đi — nó làm *kết quả đối chiếu*
 khỏe lên, và phần dư địa còn lại để cải thiện thì ít đi.
 
 ### Khoảng cách giữa "định vị đúng" và "phân loại đúng" mới là phát hiện
@@ -541,7 +541,7 @@ Chạy 01/09/2026, 43,1 phút GPU, **0 lỗi trên 3.672 dòng**, 0 cắt ngữ 
 1.836 cặp, mỗi cặp là **cùng một claim đọc hai lần** trên hai ngữ cảnh mười câu khác nhau **đúng
 một câu ở đúng một vị trí**.
 
-| Đặc trưng | Có vàng | Mất vàng | Đổi | % cặp đúng hướng | Cỡ ảnh hưởng |
+| Đặc trưng | Có bằng chứng | Mất bằng chứng | Đổi | % cặp đúng hướng | Cỡ ảnh hưởng |
 |---|---|---|---|---|---|
 | `chunk_entropy` ↑ | 0,7966 | 0,8176 | **+0,0156** | **75,4 %** | +0,7156 |
 | `chunk_gini` ↓ | 0,5064 | 0,4860 | −0,0158 | 74,5 % | −0,6855 |
@@ -564,7 +564,7 @@ Bảng này **can thiệp**. Giữ nguyên phản hồi, giữ nguyên chín câ
 bốn cặp trên năm chuyển động **đúng hướng cơ chế dự đoán**, với cỡ ảnh hưởng 0,62–0,72, tức mức
 **lớn** trên thang rank-biserial.
 
-Nhãn nửa "mất vàng" cũng không do ai gán: rút câu vàng ra thì phản hồi khẳng định điều ngữ cảnh
+Nhãn nửa "mất bằng chứng" cũng không do ai gán: rút câu bằng chứng ra thì phản hồi khẳng định điều ngữ cảnh
 không chứa, đúng định nghĩa ảo giác ngoại lai. T13 đo được ranh giới nội tại–ngoại lai đánh bại
 hai người gán nhãn (kappa 0,70 và 0,50) và cả Gemini (0,474); ở đây ranh giới ấy được **dựng ra**
 chứ không được **đoán**, nên lần đầu tiên phần khó nhất của bài toán không phụ thuộc chất lượng
@@ -593,14 +593,14 @@ trên bộ khác.
 
 ### E08 lặp lại E06 trên bộ dữ liệu thứ hai, và con số gần như trùng
 
-Nửa "có vàng" của mỗi cặp đo được đúng thứ E06 đo, nên E08 là một **phép lặp độc lập**:
+Nửa "có bằng chứng" của mỗi cặp đo được đúng thứ E06 đo, nên E08 là một **phép lặp độc lập**:
 
 | | E06 · ISE-DSC01 | E08 · ViWikiFC |
 |---|---|---|
 | Cách dựng ngữ cảnh | tài liệu tự nhiên | mười câu BM25 truy xuất, **đã xáo thứ tự** |
 | Đoạn mỗi ngữ cảnh | 22,6 | 9,8 |
 | Sàn ngẫu nhiên hit@1 | 0,0614 | 0,1027 |
-| **hit@1 đầu mạnh nhất** | 0,8779 (lớp 14, đầu 6) | **0,8529** (lớp 19, đầu 20) |
+| **hit@1 đầu định vị tốt nhất** | 0,8779 (lớp 14, đầu 6) | **0,8529** (lớp 19, đầu 20) |
 | **hit@1 trung bình 756 đầu** | 0,3320 | **0,3289** |
 | hit@3 | 0,9562 | 0,9461 |
 | MRR | 0,9200 | 0,9049 |
@@ -666,7 +666,7 @@ câu đứng trên **cả bốn**. Cách giải thích còn lại là **ranh gi�
 ### Độ lớn: nhỏ, nhưng hướng thì nhất quán 8 trên 8
 
 Phải nói thẳng về biên độ. Chia theo câu hơn cửa sổ tốt nhất **0,0085**, hơn đối chứng **0,0119**
-— trên 700 mẫu dev, với biên độ trôi giữa hai môi trường đo được tới 0,0075. **Không đủ để gọi là
+— trên 700 mẫu dev, với mức chênh lệch giữa hai môi trường đo được tới 0,0075. **Không đủ để gọi là
 có ý nghĩa thống kê.**
 
 Thứ nâng nó lên khỏi mức ngẫu nhiên là tính nhất quán. Bốn cấu hình cửa sổ × hai môi trường là
@@ -688,7 +688,7 @@ mà chưa ai thử bác.
 ### Cách gộp đầu lại đảo chỗ giữa hai môi trường
 
 Đối chứng chọn `mixed k=8` trên Kaggle (0,7604) và `topk k=32` trên máy cá nhân (0,7649). Bảng
-chọn của nó rất phẳng ở đỉnh — ba ứng viên đầu cách nhau 0,002 — nên đây là biểu hiện của độ trôi
+chọn của nó rất phẳng ở đỉnh — ba ứng viên đầu cách nhau 0,002 — nên đây là biểu hiện của mức chênh lệch
 đã ghi ở T23, lần thứ ba liên tiếp. Củng cố kết luận: **con số `k` phải để dev chọn từng lần, chỉ
 họ `topk_heads` là chốt được.**
 
@@ -718,7 +718,7 @@ Dữ liệu vào giống hệt — chính là file shard tải về.
 
 Hệ quả phải nhớ khi đọc mọi bảng dev về sau:
 
-1. **Biên độ trôi lên tới 0,0075**, và ở cửa sổ 64 nó đủ để **đổi cấu hình mà dev chọn** từ
+1. **Mức chênh lệch lên tới 0,0075**, và ở cửa sổ 64 nó đủ để **đổi cấu hình mà dev chọn** từ
    `topk k=32` sang `topk k=16`. Lựa chọn thắng sát nhau thì không bền theo môi trường.
 2. **Chỉ so các cấu hình được đánh giá trên cùng một máy.** Bảng trên vì thế đánh giá lại cả bốn dòng
    tại chỗ, thay vì ghép số Kaggle của E04 với số cũ của E03.
@@ -732,25 +732,24 @@ một bài học: **"đã cố định seed" không đồng nghĩa với "tái l
 **Chia theo câu thắng cả ba cỡ cửa sổ**, ở cả hai môi trường. Và kết quả **không đơn điệu theo
 số đoạn** — đó mới là phần đáng nói.
 
-Nói ngay về độ lớn: khoảng cách tới cửa sổ 128 là **0,0085** trên 700 mẫu dev, so với biên độ
-trôi giữa hai môi trường đo được tới **0,0075**. Nghĩa là đây là **một thứ tự nhất quán chứ chưa
+Nói ngay về độ lớn: khoảng cách tới cửa sổ 128 là **0,0085** trên 700 mẫu dev, so với mức chênh lệch giữa hai môi trường đo được tới **0,0075**. Nghĩa là đây là **một thứ tự nhất quán chứ chưa
 phải một chiến thắng có ý nghĩa thống kê**. Điều làm nó đáng tin không phải độ lớn mà là hình
 dạng: thứ tự giống nhau ở hai môi trường, và tính không đơn điệu dưới đây không thể sinh ra từ
 nhiễu theo cách nào tự nhiên.
 
-### Không phải độ phân giải, mà là ranh giới ngữ nghĩa
+### Không phải kích thước đoạn, mà là ranh giới ngữ nghĩa
 
 Trước khi chạy, Bảng 3 được dựng để phân biệt hai giả thuyết: nếu điểm đi theo **số đoạn** thì
-thứ quyết định là độ phân giải; nếu chia theo câu thắng ở mật độ đoạn tương đương thì là **ranh
+thứ quyết định là kích thước đoạn; nếu chia theo câu thắng ở mật độ đoạn tương đương thì là **ranh
 giới ngữ nghĩa**. Số liệu trả lời dứt khoát.
 
 Cửa sổ 64 cho **7,1** đoạn, cửa sổ 128 cho **3,3** — chênh **2,15 lần** — mà điểm chỉ lệch
 **0,0021**. Trong khi đó chia theo câu nằm **giữa** hai cỡ ấy ở 5,3 đoạn và hơn cả hai
 **0,0085–0,0106**. Sắp theo số đoạn thì thứ tự điểm là 7,1 → 5,3 → 3,3 → 1,4 ứng với
 0,7662 → **0,7768** → 0,7683 → 0,7589: đỉnh rơi vào chia theo câu chứ không vào một đầu nào của
-thang phân giải. Hình dạng này giống hệt ở lượt đánh giá trên Kaggle.
+thang kích thước đoạn. Hình dạng này giống hệt ở lượt đánh giá trên Kaggle.
 
-Nếu độ phân giải quyết định, câu ở 5,3 đoạn phải nằm **giữa** cửa sổ 64 và 128 về điểm số. Nó
+Nếu kích thước đoạn quyết định, câu ở 5,3 đoạn phải nằm **giữa** cửa sổ 64 và 128 về điểm số. Nó
 không. Kết luận: **ranh giới câu mang thông tin mà cửa sổ token tùy tiện không có** — chunk-aware
 không chỉ là "chia nhỏ ngữ cảnh ra" mà là "chia theo đơn vị nghĩa".
 
@@ -796,7 +795,7 @@ vào tỷ lệ lookback đầy đủ. **Cách gộp đầu được chọn tự 
 ai nói trước.
 
 Cửa sổ 64 thì đổi giữa `topk k=32` và `topk k=16` tùy môi trường — hai ứng viên chỉ cách nhau
-0,002 nên việc chúng đảo chỗ là biểu hiện của độ trôi ở trên, không phải của cấu trúc nào.
+0,002 nên việc chúng đảo chỗ là biểu hiện của mức chênh lệch ở trên, không phải của cấu trúc nào.
 
 ### Chi phí không phụ thuộc cách chia đoạn — số cho E11
 
@@ -977,7 +976,7 @@ hạn, xem mục "0,7 % mẫu hỏng" bên dưới.
 Hai điều, và điều thứ hai là kết quả thật của E13:
 
 1. **Tỷ lệ lookback gộp chuyển gần như hoàn hảo giữa hai mô hình đọc.** 0,7451 so với 0,7377,
-   lệch 0,0074 — nhỏ hơn cả biên độ trôi 0,0075 giữa hai môi trường máy tính đo ở T23. Đổi hẳn
+   lệch 0,0074 — nhỏ hơn cả mức chênh lệch 0,0075 giữa hai môi trường máy tính đo ở T23. Đổi hẳn
    mô hình đọc mà điểm gần như không nhúc nhích.
 
 2. **Nhóm chunk-aware thì không chuyển.** Trên Qwen nó cộng +0,0116; trên Sailor2 nó **trừ
@@ -1037,7 +1036,7 @@ báo cáo**, đúng cách đang làm với tỷ lệ cắt ngữ cảnh.
 
 ### Ba hạn chế phải nói rõ
 
-1. **Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không.** Lượt mốc `bfloat16` hết
+1. **Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không.** Lượt đối chiếu `bfloat16` hết
    bộ nhớ hai lần, kể cả sau khi sửa phần giải phóng mô hình. Với Qwen, T07 kiểm được 27 lớp còn
    lại khớp `float32` tới 0,07 % thang đo; với Sailor2 không có con số tương đương. Hai bên vì
    thế đứng trên hai mức kiểm chứng khác nhau.
@@ -1046,7 +1045,7 @@ báo cáo**, đúng cách đang làm với tỷ lệ cắt ngữ cảnh.
    sau vài phút chạy liên tục, nên chênh lệch 8 % này nằm gọn trong phần nhiễu đó. Muốn so chi
    phí thật thì phải đo xen kẽ trong cùng một phiên.
 3. **Mới đo trên một bộ dữ liệu.** Kết luận "chunk-aware không chuyển giữa hai mô hình" hiện chỉ
-   đứng trên ViHallu. E16 khái quát hóa chéo bộ sẽ nói thêm.
+   đứng trên ViHallu. E16 đánh giá chéo bộ dữ liệu sẽ nói thêm.
 
 ### Bảng 5b — Bậc thang kích thước mô hình đọc (E14, ViHallu)
 
@@ -1081,10 +1080,10 @@ Ba phép đo độc lập, ba câu hỏi khác nhau, cùng một hướng:
 | Thí nghiệm | Hỏi gì | Trả lời |
 |---|---|---|
 | E12 (Bảng 4) | cộng thêm bao nhiêu khi đứng cạnh đặc trưng bề mặt | không phân biệt được với 0 |
-| E13 (Bảng 5) | có chuyển sang họ mô hình khác không | không, đổi dấu |
-| **E14 (bảng này)** | **có ổn định qua các cỡ cùng một họ không** | **không, đổi dấu hai lần** |
+| E13 (Bảng 5) | có chuyển sang họ mô hình khác không | không, chênh lệch trái dấu |
+| **E14 (bảng này)** | **có ổn định qua các cỡ cùng một họ không** | **không, chênh lệch lúc dương, lúc âm** |
 
-### Nhưng cột mốc lookback lại là tin tốt, và nó trả lời CH2
+### Nhưng cột lookback gộp lại là tin tốt, và nó trả lời CH2
 
 Bỏ cột chunk-aware đi, nhìn riêng cột lookback gộp:
 
@@ -1196,7 +1195,7 @@ Và đây chính là **lời giải thích cơ chế** cho cột chênh đảo d
 đọc phân bố chú ý *từ các đầu cụ thể*. Nếu các đầu ấy nằm ở độ sâu khác nhau tùy cỡ mô hình, thì
 hình dạng phân bố mà chúng cho ra không có lý do gì để cư xử giống nhau giữa các cỡ. Tỷ lệ gộp
 thì trái lại — nó cộng dồn toàn bộ ngữ cảnh nên không phụ thuộc đầu nào nằm ở đâu, và đó là lý do
-cột mốc giảm đều trong khi cột chunk-aware nhảy lung tung.
+cột lookback gộp giảm đều trong khi cột chunk-aware nhảy lung tung.
 
 ### Bảng 6 — Đối chứng ngoài trên ViWikiFC (E15)
 
@@ -1205,7 +1204,7 @@ Chạy 10/09/2026. Trích 20.919 mẫu trên Kaggle trong 138 phút, **0 lỗi, 
 
 | Phương pháp | Nguồn | Đầu vào | Strict Acc | VC Acc | ER Acc | macro-F1 |
 |---|---|---|---|---|---|---|
-| InfoXLM large | Bài gốc ViWikiFC | **bằng chứng vàng** | — | — | — | 86,51 |
+| InfoXLM large | Bài gốc ViWikiFC | **bằng chứng chuẩn** | — | — | — | 86,51 |
 | BM25 + InfoXLM large | Bài gốc ViWikiFC | câu BM25 xếp hạng 1 | 67,00 | — | — | — |
 | SemViQA | Bài SemViQA | câu do hệ tự truy xuất | 80,82 | 83,88 | 95,31 | — |
 | **Lookback gộp, Qwen2.5-7B** | nhóm | **toàn bộ `context`** | — | 70,73 | — | **70,66** [68,72–72,55] |
@@ -1220,11 +1219,11 @@ bằng chứng**: mô hình đọc cả ngữ cảnh rồi phân loại, không 
 Bốn dòng trên nhận **bốn thứ khác nhau**, và đó là lý do không đặt con số nào cạnh con số nào
 mà không nói rõ.
 
-InfoXLM ở dòng đầu được đưa **đúng câu bằng chứng vàng** rồi mới phân loại. Đó là bài toán dễ
+InfoXLM ở dòng đầu được đưa **đúng câu bằng chứng chuẩn** rồi mới phân loại. Đó là bài toán dễ
 hơn hẳn bài toán mà hai dòng nhóm giải — đọc cả ngữ cảnh ba tới năm câu, tự tìm chỗ cần nhìn, rồi
-phân loại — nên 86,51 **không phải mốc để vượt**, nó là trần của một bài toán khác.
+phân loại — nên 86,51 **không phải ngưỡng để vượt**, nó là trần của một bài toán khác.
 
-Mốc so được nhất là **SemViQA VC Acc 83,88**: verdict accuracy của một hệ đầu cuối tự truy xuất
+Kết quả so sánh được trực tiếp nhất là **SemViQA VC Acc 83,88**: verdict accuracy của một hệ đầu cuối tự truy xuất
 rồi phân loại. Hai dòng nhóm đạt **70,73** và **70,59**. Khoảng cách **13 điểm**, và phải viết
 đúng như vậy.
 
@@ -1262,7 +1261,7 @@ phải may ở một bộ.
 
 ### Cùng một đầu chú ý dẫn đầu trên cả ba bộ dữ liệu
 
-Với **cùng** mô hình Qwen2.5-7B, đầu mạnh nhất theo trọng số của bộ phân loại lookback:
+Với **cùng** mô hình Qwen2.5-7B, đầu có trọng số lớn nhất trong bộ phân loại lookback:
 
 | Bộ dữ liệu | #1 | #2 | #3 |
 |---|---|---|---|
@@ -1283,7 +1282,7 @@ Ghép với E13 và E14, nơi **đổi mô hình** thì đầu dời chỗ hẳn
 luyện trên bộ này có cơ sở để chuyển sang bộ kia — và E16 đo chính điều đó.
 
 
-### Bảng 7 — Khái quát hóa chéo bộ (E16)
+### Bảng 7 — Đánh giá chéo bộ dữ liệu (E16)
 
 Chạy 11/09/2026 trên máy cá nhân, **0 giây GPU** — đọc lại shard `8c49fc0417f1` (ViHallu) và
 `15ef31521fd6` (ISE-DSC01), cùng Qwen2.5-7B, cùng lưới 27 × 28. Cách gộp đầu chọn trên **dev của
@@ -1304,7 +1303,7 @@ nhiên của macro-F1 ba lớp là khoảng 0,33.
 
 ### Tín hiệu không khái quát hóa được thành bộ phát hiện ba lớp — câu trả lời cho nửa sau CH3
 
-Hai chiều đều sụt nặng, và sụt **bất đối xứng**. Huấn luyện trên ViHallu rồi đánh giá trên ISE-DSC01 rơi
+Hai chiều đều giảm mạnh, và mức giảm **bất đối xứng**. Huấn luyện trên ViHallu rồi đánh giá trên ISE-DSC01 rơi
 về **gần mức ngẫu nhiên** (0,36–0,43). Chiều ngược lại giữ được 0,55 — tốt hơn, nhưng vẫn **dưới
 cả baseline bề mặt E01** của ViHallu (0,6562). Bộ lớn hơn, ngữ cảnh dài hơn, đa dạng hơn thì
 chuyển đi tốt hơn; nhưng không chiều nào chuyển giao được tới mức dùng.
@@ -1475,7 +1474,7 @@ Bảng 1 ghi E02 tốn **464 ms** và E03 tốn **528 ms**. Hai con số ấy kh
 hình đọc**. Một lượt trích không thể có hai giá đồng thời.
 
 Chênh lệch 64 ms là nhiễu giữa hai phép đo ở hai thời điểm, bị đọc nhầm thành "chunk-aware đắt hơn
-lookback". Lượt đo xen kẽ của T31 cho **437,6 ms** cho cả hai, với độ trôi giữa hai lượt là
+lookback". Lượt đo xen kẽ của T31 cho **437,6 ms** cho cả hai, với mức chênh lệch giữa hai lượt là
 **2,09 %**. Đã sửa hai ô đó ở Bảng 1.
 
 Bài học chung: **hai dòng dùng chung một `extraction_hash` phải dùng chung một ô chi phí.** Đây là
@@ -1572,7 +1571,7 @@ Hai hình dạng còn lại là chất lượng nhãn và chất lượng câu h
 
 Trích 23/10/2026 trên Kaggle T4: 7.232 mẫu (5.062 / 723 / 1.447), khoảng 1,3 giây mỗi mẫu, 0 lỗi,
 0 tràn số, 4 mẫu test bị cắt ngữ cảnh. Ngữ cảnh trung bình 19,4 đoạn. Công thức E15, chỉ đổi bộ dữ
-liệu. Đánh giá trên máy bằng `run_chunk_aware.py`, mốc trước rồi chunk-aware; hai bản ghi
+liệu. Đánh giá trên máy bằng `run_chunk_aware.py`, lookback gộp trước rồi chunk-aware; hai bản ghi
 `e17_baseline_lookback_vifactcheck` và `e17_chunk_vifactcheck` trong `results/runs.jsonl`.
 
 **Phải ghi kèm mọi con số ở đây:** split gốc của ViFactCheck **rò rỉ ngữ cảnh** giống ViWikiFC. Đo
@@ -1588,7 +1587,7 @@ Hiệu trên cùng 1.447 mẫu test, bootstrap ghép cặp:
 
 | So sánh | Δ macro-F1 | Δ F1 extrinsic |
 |---|---|---|
-| Chunk-aware − lookback (dòng mốc ở trên, 64 đầu) | +0,023 [−0,002; +0,048] | +0,035 [+0,002; +0,069] |
+| Chunk-aware − lookback (dòng lookback ở trên, 64 đầu) | +0,023 [−0,002; +0,048] | +0,035 [+0,002; +0,069] |
 | Chunk-aware − lookback **giữ đủ 756 đầu** ¹ | **+0,009 [−0,004; +0,023]** | +0,015 [−0,003; +0,033] |
 
 ¹ Phép kiểm phụ, chạy trên máy ngày 23/10 bằng chính các hàm của `run_chunk_aware.py`, không ghi
@@ -1602,17 +1601,17 @@ cỡ với ViWikiFC (0,707 ở E15). Đầu `l17_h4` lại nặng ký nhất c�
 bốn** bộ dữ liệu.
 
 **2. Mức hơn +0,023 phần lớn không thuộc về đặc trưng hình dạng.** Nhánh chunk-aware chọn cách gộp
-`mixed`, giữ đủ 756 đầu cho tỷ lệ gộp, còn nhánh mốc chọn 64 đầu. Tách hai thứ ra thì phần của hình
-dạng chỉ còn +0,009, nằm trong vùng nhiễu. Trọng số của bộ phân loại nói cùng điều đó: khối
+`mixed`, giữ đủ 756 đầu cho tỷ lệ gộp, còn nhánh lookback chọn 64 đầu. Tách hai thứ ra thì phần của hình
+dạng chỉ còn +0,009, nằm trong phạm vi sai số ngẫu nhiên. Trọng số của bộ phân loại nói cùng điều đó: khối
 `lookback_total` chiếm 90,5 %, năm khối hình dạng cộng lại 9,5 %. Sau ViHallu (+0,012), ISE-DSC01
-(+0,007) và ViWikiFC (−0,001), đây là lần thứ tư hình dạng nằm trong vùng nhiễu.
+(+0,007) và ViWikiFC (−0,001), đây là lần thứ tư hình dạng nằm trong phạm vi sai số ngẫu nhiên.
 
 **3. Một chi phí mới: hiệu chỉnh xác suất tệ đi.** ECE tăng từ 0,024 lên 0,153. Ở ViHallu thì ngược
 lại (E02 0,109, E03 0,044). Hai chiều ngược nhau trên hai bộ nên chưa rút ra quy luật, chỉ ghi nhận.
 
 **Quyết định cho quyển** (theo trạng thái T41 ngày 22/10): kết quả lặp lại E15 và E16, nên **ghi một
 đoạn ngắn ở mục 8.2, không thêm bảng**. Đoạn đó nói ba điều: tín hiệu chuyển giao được sang miền tin tức;
-hình dạng lại nằm trong vùng nhiễu khi so cùng số đầu; split gốc rò rỉ ngữ cảnh.
+hình dạng lại nằm trong phạm vi sai số ngẫu nhiên khi so cùng số đầu; split gốc rò rỉ ngữ cảnh.
 
 ### Bảng 11 — Gộp đặc trưng theo từng câu phản hồi (E18, ViHallu)
 
@@ -1664,7 +1663,7 @@ Lời giải thích thứ hai ở chương 7 (*một mệnh đề bịa bị tru
 câu**, đúng như mục 8.4 đã báo trước có thể xảy ra. Ba giới hạn giữ kết luận ở đúng phạm vi:
 
 - **Câu chưa phải mệnh đề.** Một câu tiếng Việt có thể chứa cả phần chép đúng lẫn cụm bịa, như câu
-  Hồ Hoàn Kiếm của demo. Mức đoạn phản hồi (span) mà Multi-View Attention dùng mịn hơn, và cần nhãn
+  Hồ Hoàn Kiếm của demo. Mức đoạn phản hồi (span) mà Multi-View Attention dùng có đơn vị nhỏ hơn, và cần nhãn
   ở mức đoạn mà ViHallu không có.
 - **Nhãn vẫn ở mức cả phản hồi.** Bộ phân loại được dạy trên nhãn của cả câu trả lời, nên nó không
   biết câu nào mang lỗi; gộp max chỉ thay cách nén, không thêm thông tin giám sát.
@@ -1680,8 +1679,8 @@ theo câu với nhãn mức phản hồi đã thử và không giúp; hướng c
 ### Bảng 12 — Định vị bằng chú ý so với cắt bỏ ngữ cảnh (E19, ViWikiFC)
 
 Chạy 23/10/2026 trên Kaggle T4. Mô hình đọc Qwen2.5-7B, NF4, **bfloat16**, vì cắt bỏ cần phân phối
-đầu ra mà float16 cho NaN ở tầng dự đoán token. 300 mẫu có bằng chứng vàng của E08, chọn với
-hạt giống 42 (`configs/e19_attribution_samples.json`). Tổng 3.274 lượt đọc trong 167 phút, 0 lỗi,
+đầu ra mà float16 cho NaN ở tầng dự đoán token. 300 mẫu có bằng chứng chuẩn của E08, chọn với
+seed 42 (`configs/e19_attribution_samples.json`). Tổng 3.274 lượt đọc trong 167 phút, 0 lỗi,
 VRAM đỉnh 5.659 MB. Phía chú ý đọc lại từ shard E08 có sẵn, không chạy lại. Đánh giá bằng
 `python scripts/run_attribution.py report`; bản ghi `e19_attribution_viwikifc` trong
 `results/runs.jsonl`.
@@ -1689,7 +1688,7 @@ VRAM đỉnh 5.659 MB. Phía chú ý đọc lại từ shard E08 có sẵn, khô
 | Cách định vị | hit@1 [KTC 95 %] | hit@3 | MRR | Lượt đọc/mẫu |
 |---|---|---|---|---|
 | Cắt bỏ ngữ cảnh (ARC-JSD) | 0,733 [0,683–0,783] | 0,917 | 0,830 | 10,9 |
-| **Đầu chú ý mạnh nhất** (lớp 19, đầu 20), chọn trên 1.536 mẫu E08 khác | **0,850** [0,807–0,890] | **0,940** | **0,902** | 1 |
+| **Đầu định vị tốt nhất** (lớp 19, đầu 20), chọn trên 1.536 mẫu E08 khác | **0,850** [0,807–0,890] | **0,940** | **0,902** | 1 |
 | Đầu E06 (lớp 14, đầu 6), chọn trên ISE-DSC01 | 0,797 [0,750–0,840] | 0,900 | 0,861 | 1 |
 | Trung bình 756 đầu | 0,349 [0,324–0,375] | 0,582 | 0,518 | 1 |
 | Chọn bừa một đoạn | 0,102 | | | |
@@ -1698,12 +1697,12 @@ Hiệu hit@1 trên cùng 300 mẫu, khoảng tin cậy bằng bootstrap ghép c�
 
 | So sánh | Hiệu | KTC 95 % | Cả hai đúng | Chỉ đầu đúng | Chỉ cắt bỏ đúng | Cả hai sai |
 |---|---|---|---|---|---|---|
-| Đầu mạnh nhất − cắt bỏ | **+0,117** | [+0,077; +0,160] | 214 | 41 | 6 | 39 |
+| Đầu định vị tốt nhất − cắt bỏ | **+0,117** | [+0,077; +0,160] | 214 | 41 | 6 | 39 |
 | Đầu E06 − cắt bỏ | **+0,063** | [+0,017; +0,110] | 203 | 36 | 17 | 44 |
 
 Theo nhãn (hit@1):
 
-| Nhãn | n | Cắt bỏ | Đầu mạnh nhất | Đầu E06 |
+| Nhãn | n | Cắt bỏ | Đầu định vị tốt nhất | Đầu E06 |
 |---|---|---|---|---|
 | no (SUPPORTED) | 102 | 0,824 | 0,971 | 0,882 |
 | intrinsic (REFUTED) | 98 | 0,745 | 0,898 | 0,888 |
@@ -1713,28 +1712,28 @@ Theo nhãn (hit@1):
 
 Hai dự đoán ghi trước khi chạy (khóa trong `src/vihallulens/attribution.py`):
 
-1. *Cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất* — **sai**. Cắt bỏ thấp hơn 0,117, và khoảng
+1. *Cắt bỏ đạt hit@1 cao hơn đầu định vị tốt nhất* — **sai**. Cắt bỏ thấp hơn 0,117, và khoảng
    tin cậy ghép cặp nằm trọn dưới 0.
 2. *Mức hơn nhỏ hơn mức chênh chi phí* — đúng, nhưng thành vô nghĩa khi chiều hơn kém đảo lại.
 
-Dự đoán dựa trên lập luận của ContextCite: chú ý chỉ là tương quan, cắt bỏ là can thiệp nhân quả,
+Dự đoán dựa trên lập luận của ContextCite: chú ý chỉ là tương quan, cắt bỏ là can thiệp trực tiếp,
 nên cắt bỏ phải chính xác hơn và chú ý chỉ thắng về giá. Trên bài toán này điều đó không xảy ra.
 **Đầu chú ý tốt nhất vừa rẻ hơn 10,9 lần vừa định vị đúng hơn.**
 
 Hai phép kiểm loại trừ cách giải thích "đầu tốt nhất ăn may nhờ chọn":
 
-- Đầu mạnh nhất được chọn trên 1.536 mẫu E08 **khác**, không chạm 300 mẫu này.
+- Đầu định vị tốt nhất được chọn trên 1.536 mẫu E08 **khác**, không chạm 300 mẫu này.
 - Đầu E06 được chọn trên **một bộ dữ liệu khác hẳn** (ISE-DSC01), vẫn hơn cắt bỏ 0,063 với khoảng
   tin cậy nằm trên 0. Nghĩa là không cần chọn đầu trên dữ liệu đích.
 
 Hai phép kiểm loại trừ lỗi kỹ thuật ở phía cắt bỏ: không mẫu nào có điểm hòa ở đỉnh, không mẫu nào
-có điểm bằng 0. Khi trượt, đoạn vàng thường đứng hạng 2 (35/80 lần trượt), tức cắt bỏ "gần đúng"
+có điểm bằng 0. Khi trượt, đoạn bằng chứng thường đứng hạng 2 (35/80 lần trượt), tức cắt bỏ "gần đúng"
 chứ không ngẫu nhiên.
 
 ### Vì sao cắt bỏ thua, và ranh giới của kết luận
 
 Cắt bỏ đo **mô hình phụ thuộc vào đoạn nào để ra đúng phân phối của phản hồi**. Định vị ở đây được đánh giá
-theo **đoạn chứa bằng chứng vàng do người gán**. Hai thứ trùng nhau khi bằng chứng là thứ duy nhất
+theo **đoạn chứa bằng chứng chuẩn do người gán**. Hai thứ trùng nhau khi bằng chứng là thứ duy nhất
 đỡ cho phản hồi. Hai trường hợp có thể làm chúng lệch nhau; trường hợp đầu là giả thuyết, **chưa
 đo riêng**:
 
@@ -1744,17 +1743,17 @@ theo **đoạn chứa bằng chứng vàng do người gán**. Hai thứ trùng 
 - **Phản hồi không bám bằng chứng.** Với nhãn NEI, câu "bằng chứng" không thật sự đỡ cho phát biểu,
   nên không đoạn nào làm phân phối đổi rõ. Cả hai cách đều yếu nhất ở lớp này (0,63–0,68).
 
-Vì vậy kết luận phải giữ đúng phạm vi: *trên bài toán định vị bằng chứng vàng, một đầu chú ý cố
+Vì vậy kết luận phải giữ đúng phạm vi: *trên bài toán định vị bằng chứng chuẩn, một đầu chú ý cố
 định chính xác hơn cắt bỏ từng đoạn.* Kết quả này **không** chứng minh chú ý là lời giải thích
-trung thành theo nghĩa của ContextCite. Đó là câu hỏi về quy trách nhiệm nhân quả, cần nhãn khác.
+trung thành theo nghĩa của ContextCite. Đó là câu hỏi về quy trách nhiệm (truy nguồn), cần nhãn khác.
 Nó trả lời câu hội đồng dễ hỏi theo hướng cụ thể: đề tài dùng chú ý để **định vị**, và trên phép đo
-định vị thì chú ý không thua phương pháp nhân quả đắt gấp 11 lần.
+định vị thì chú ý không thua phương pháp can thiệp có chi phí gấp 10,9 lần.
 
 Một điều phụ: trung bình 756 đầu chỉ đạt 0,349. Tín hiệu định vị nằm ở **một số đầu**, đúng như
 Lookback Lens gốc thấy, nên "chú ý" nói chung và "một đầu được chọn" là hai thứ khác nhau khi trích
 dẫn kết quả này.
 
-## 6. Các mốc so sánh đã công bố
+## 6. Các kết quả đã công bố dùng để so sánh
 
 Ghi lại để không phải tra lại:
 
@@ -1785,8 +1784,8 @@ phép đo. Một câu trả lời âm vẫn tính là đã trả lời.
 | | Câu hỏi | Mức | Đã có | Còn thiếu |
 |---|---|---|---|---|
 | CH1 | Chunk-aware có hơn lookback gộp không; chú ý có tập trung đúng đoạn bằng chứng không? | ~100 % | Vế cơ chế: **có**, ba nguồn độc lập (E06 hit@1 0,8779 gấp 14,29 lần ngẫu nhiên; E08 lặp lại lệch 0,003; can thiệp đúng 4/4 hướng ghi trước). Vế điểm số: **không**, năm phép đo (Bảng 4, 4b, 5, 5b, 6) | Không còn thí nghiệm nào cần để trả lời câu hỏi như đã đặt |
-| CH2 | Hướng nội tại đứng ở đâu trên mặt phẳng chính xác – chi phí? | ~85 % | Độ chính xác, ms/mẫu, VRAM, tham số huấn luyện; bậc thang 7B/3B/1.5B đo xen kẽ (Bảng 5b, 8) | **Chi phí biên trong hệ RAG thật** — chính là lập luận trung tâm "lượt đọc dù sao cũng phải chạy". T4 không có bf16 gốc nên bộ sinh và bộ đọc phải là hai mô hình (T40), không đo được |
-| CH3 | Tín hiệu chú ý cộng thêm bao nhiêu; có khái quát hóa không? | ~90 % | Đóng góp thêm +0,109 (ViHallu) và +0,307 (ISE-DSC01) ở E12; khái quát hóa qua 2 bộ (E16), 1 đối chứng ngoài (E15), 4 mô hình đọc (E13, E14) | E17 — bộ thứ ba khác miền, tùy chọn |
+| CH2 | Hướng nội tại đứng ở đâu trên mặt phẳng chính xác – chi phí? | ~85 % | Độ chính xác, ms/mẫu, VRAM, tham số huấn luyện; các cỡ 7B/3B/1.5B đo xen kẽ (Bảng 5b, 8) | **Chi phí biên trong hệ RAG thật** — chính là lập luận trung tâm "lượt đọc dù sao cũng phải chạy". T4 không có bf16 gốc nên bộ sinh và bộ đọc phải là hai mô hình (T40), không đo được |
+| CH3 | Tín hiệu chú ý cộng thêm bao nhiêu; có khái quát hóa không? | ~90 % | Đóng góp thêm +0,109 (ViHallu) và +0,307 (ISE-DSC01) ở E12; khái quát hóa qua 2 bộ (E16), 1 so sánh với kết quả đã công bố (E15), 4 mô hình đọc (E13, E14) | E17 — bộ thứ ba khác miền, tùy chọn |
 
 Tổng quát: **khoảng 92 % phần trả lời câu hỏi nghiên cứu**, 46/52 đầu việc.
 
@@ -1794,7 +1793,7 @@ Tổng quát: **khoảng 92 % phần trả lời câu hỏi nghiên cứu**, 46/
 
 **Tăng macro-F1 ba lớp bằng cách tinh chỉnh đặc trưng hình dạng ở mức toàn phản hồi.** Ba bằng
 chứng nội tại đã đủ: 99,9 % tín hiệu của nhóm hình dạng nằm sẵn trong tỷ lệ gộp (Bảng 4c); năm
-phép đo đổi dấu theo mô hình đọc và theo bộ dữ liệu; nhãn nội tại – ngoại lai tự nó nhiễu
+phép đo lúc dương, lúc âm khi đổi mô hình đọc và theo bộ dữ liệu; nhãn nội tại – ngoại lai tự nó nhiễu
 (κ 0,505, mục 3 của `docs/DATA.md`).
 
 Có một xác nhận độc lập từ bên ngoài. Bài *Hallucinated Span Detection with Multi-View
@@ -1867,7 +1866,7 @@ phân phối đầu ra khi đủ ngữ cảnh và khi cắt bỏ từng đoạn.
 chạy cắt bỏ từng đoạn trên 300 mẫu (khoảng 10 đoạn × 300 lượt đọc) là có bảng *"chú ý rẻ hơn
 N lần, đạt X % hit@1 của phương pháp cắt bỏ"*. Đây là chỗ tăng giá trị học thuật lớn nhất với
 chi phí nhỏ nhất, và trả lời trước một câu hội đồng dễ hỏi: "chú ý có phải lời giải thích
-không?". *Dự đoán ghi trước:* cắt bỏ đạt hit@1 cao hơn đầu chú ý mạnh nhất, nhưng khoảng cách
+không?". *Dự đoán ghi trước:* cắt bỏ đạt hit@1 cao hơn đầu định vị tốt nhất, nhưng khoảng cách
 nhỏ hơn mức chênh chi phí.
 
 **E20 — chi phí biên trên GPU có bf16 gốc (CH2, một buổi).** Một bản 7B vừa sinh vừa đọc trong

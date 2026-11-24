@@ -85,7 +85,7 @@ def build() -> None:
         ("TẦNG DỮ LIỆU", "CPU", NAVY, TINT_BLUE,
          [["Bốn bộ dữ liệu thô\nViHallu · ISE-DSC01 · ViWikiFC · ViFactCheck",
            "Chuẩn hóa về lược đồ chung\nvà định vị câu bằng chứng"],
-          ["Chia tập theo ngữ cảnh\n80/10/10, hạt giống 42",
+          ["Chia tập theo ngữ cảnh\n80/10/10, seed 42",
            "Chia ngữ cảnh thành đoạn\ntheo câu, min_words = 5",
            "Kiểm tra rò rỉ ngữ cảnh\ngiữa các tập"]],
          "7.000 · 36.369 · 20.919 · 7.232 mẫu có nhãn sau chuẩn hóa",
@@ -105,17 +105,17 @@ def build() -> None:
            "Ghép véc-tơ và chuẩn hóa\nz theo thống kê tập huấn luyện"],
           ["Hồi quy logistic đa lớp\n2.271 tham số",
            "Nhãn argmax\nvà điểm rủi ro 1 − P(no)",
-           "Chấm trên tập dev\nmacro-F1 và ECE"]],
-         "Bộ phát hiện đã khớp được đóng gói thành bundle .pkl kèm tệp mô tả .json — 11,5 KB.",
+           "Đánh giá trên tập dev\nmacro-F1 và ECE"]],
+         "Bộ phát hiện đã huấn luyện được đóng gói thành bundle .pkl kèm tệp .json — 11,5 KB.",
          "models/ bundle .pkl"),
         ("TẦNG PHỤC VỤ", "CPU", PURPLE, TINT_PURPLE,
-         [["Thư viện Python\nnạp bundle, chấm theo lô",
+         [["Thư viện Python\nnạp bundle, đánh giá theo lô",
            "Dịch vụ REST FastAPI\nPOST /score · /score/batch\nGET /health",
            "Đóng gói Docker\nchạy bằng một lệnh"],
           ["Giao diện quan sát\ntô màu đoạn theo tỷ trọng chú ý",
-           "Hệ RAG minh họa\ntruy xuất BM25 → sinh → chấm",
+           "Hệ RAG minh họa\ntruy xuất → sinh → kiểm tra",
            "Cảnh báo ảo giác\nkèm đoạn ngữ cảnh đáng ngờ"]],
-         "Chi phí biên trong hệ RAG tự giám sát chưa được đo: trên T4, mô hình sinh và "
+         "Chi phí tăng thêm của kịch bản tự kiểm tra chưa được đo: trên T4, mô hình sinh và "
          "mô hình đọc là hai mô hình khác nhau.", None),
     ]
     for title, subtitle, color, tint, rows, note, store in tiers:
@@ -127,7 +127,7 @@ def build() -> None:
     # the environment every tier is pinned to
     y += 22
     # explicit breaks: a chip is too narrow for a separator to end a line cleanly
-    items = ["Python 3.11\nuv.lock", "configs/*.yaml", "hạt giống 42",
+    items = ["Python 3.11\nuv.lock", "configs/*.yaml", "seed 42",
              "results/*.jsonl", "KTC bootstrap\n2.000 lần", "pytest\n825 ca"]
     bw = (W - 5 * 8) / 6
     c.raw_text(M, y, "MÔI TRƯỜNG VÀ BẰNG CHỨNG TÁI LẬP", T_SMALL, fill=GRAY, weight="bold")

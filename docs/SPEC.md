@@ -108,7 +108,7 @@ Từ `AttentionFeatures` sinh véc-tơ đặc trưng cho bộ phân loại:
 | Chunk-aware | `chunk_gini` | Hệ số Gini của phân bố |
 | Chunk-aware | `top1_top2_gap` | Khoảng cách giữa chunk nhất và chunk nhì |
 | Ổn định | `chunk_drift` | Độ lệch trung bình của phân bố chunk giữa các bước sinh liên tiếp |
-| Định vị | `evidence_chunk_rank` | Thứ hạng của chunk chứa bằng chứng vàng (chỉ có khi có nhãn bằng chứng) |
+| Định vị | `evidence_chunk_rank` | Thứ hạng của chunk chứa bằng chứng chuẩn (chỉ có khi có nhãn bằng chứng) |
 | Bề mặt | `response_len`, `lexical_overlap` | Dùng cho baseline tầm thường, xem `docs/EXPERIMENTS.md` |
 
 Mọi đặc trưng tính riêng cho từng cặp (lớp, đầu), sau đó có ba chế độ gộp: `all` giữ nguyên, `mean_over_heads`, `topk_heads` chọn k đầu tốt nhất theo validation.

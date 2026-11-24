@@ -1589,6 +1589,93 @@ for old, new in VAN_PHONG:
     if out.count(old) != 1:
         problems.append(f"van phong: «{old[:60]}» khớp {out.count(old)} lần")
     out = out.replace(old, new)
+# thuật ngữ dùng chung với quyển (24/11/2026): (cũ, mới, số lần phải gặp)
+TU_NGU = [
+    ('Đầu chú ý mạnh nhất', 'Đầu định vị tốt nhất', 3),
+    ('đầu chú ý mạnh nhất', 'đầu định vị tốt nhất', 3),
+    ("'Đầu mạnh nhất'", "'Đầu định vị tốt nhất'", 1),
+    ('chú ý của đầu mạnh nhất', 'chú ý của đầu định vị tốt nhất', 1),
+    ('nhiều chú ý nhất của đầu mạnh nhất trùng',
+     'nhiều chú ý nhất ở đầu định vị tốt nhất trùng', 1),
+    ('Hai mốc đầu, đặc trưng bề mặt', 'Hai phương pháp so sánh đầu tiên, đặc trưng bề mặt', 1),
+    ('Hai mốc đầu: ', 'Hai phương pháp so sánh đầu tiên: ', 1),
+    ('— mốc cần vượt.', '— mức cần vượt.', 1),
+    ('Mốc mạnh nhất · ECE', 'Phương pháp so sánh có điểm cao nhất · ECE', 1),
+    ('Bốn mốc so sánh.', 'Bốn phương pháp so sánh.', 1),
+    ('<h3>Mốc so sánh</h3>', '<h3>Phương pháp so sánh</h3>', 1),
+    ('Các mốc so sánh là PhoBERT', 'Các phương pháp so sánh là PhoBERT', 1),
+    ('nằm trong vùng nhiễu ở cả sáu phép đo.',
+     'nằm trong phạm vi sai số ngẫu nhiên ở cả sáu phép đo.', 1),
+    ('<b>Vùng nhiễu</b> — chênh lệch nhỏ hơn mức dao động tự nhiên, không kết luận được hơn kém.',
+     '<b>Phạm vi sai số ngẫu nhiên</b> — chênh lệch nhỏ hơn mức dao động khi đổi tập kiểm tra, nên không kết luận được hơn kém.', 1),
+    ("'vùng nhiễu ≈ ±0,03 (nửa khoảng tin cậy)'",
+     "'phạm vi sai số ≈ ±0,03 (nửa khoảng tin cậy)'", 1),
+    ('Nằm trong vùng nhiễu — không kết luận được chênh lệch.',
+     'Nằm trong phạm vi sai số ngẫu nhiên — không kết luận được chênh lệch.', 1),
+    ('khi đổi tập kiểm tra — đây là <b>vùng nhiễu</b>.',
+     'khi đổi tập kiểm tra — đây là <b>phạm vi sai số ngẫu nhiên</b>.', 1),
+    ('Tất cả nằm trong vùng nhiễu, và <b>dấu còn đổi chiều</b>.',
+     'Tất cả nằm trong phạm vi sai số ngẫu nhiên, và <b>chênh lệch lúc dương, lúc âm</b>.', 1),
+    ('tất cả đều nằm trong vùng nhiễu, và dấu của chênh lệch còn đổi chiều.',
+     'tất cả đều nằm trong phạm vi sai số ngẫu nhiên, và chênh lệch lúc dương, lúc âm.', 1),
+    ('mức tăng nằm trong vùng nhiễu. Nhóm trình bày đầy đủ',
+     'mức tăng nằm trong phạm vi sai số ngẫu nhiên. Nhóm trình bày đầy đủ', 1),
+    ('<b>vùng nhiễu ±0,03</b>', '<b>phạm vi sai số ±0,03</b>', 1),
+    ('chỉ 0,007 trên ngữ cảnh dài, và đổi dấu theo mô hình đọc.',
+     'chỉ 0,007 trên ngữ cảnh dài, và lúc dương, lúc âm khi đổi mô hình đọc.', 1),
+    ('chỉ +0,007 trên ngữ cảnh dài; dấu đổi chiều theo mô hình đọc;',
+     'chỉ +0,007 trên ngữ cảnh dài; lúc dương, lúc âm khi đổi mô hình đọc;', 1),
+    ('Ba lớp sụt 0,19–0,43;', 'Ba lớp giảm 0,19–0,43;', 1),
+    ("'E03 · ViHallu, Qwen2.5-7B'", "'Bản chính trên ViHallu (E03)'", 1),
+    ("'E12 · thêm đặc trưng bề mặt'", "'Thêm đặc trưng bề mặt (E12)'", 1),
+    ("'E13 · đổi sang Sailor2-8B'", "'Mô hình đọc Sailor2-8B (E13)'", 1),
+    ("'E14 · thu nhỏ xuống 3B'", "'Mô hình đọc nhỏ hơn, 3B (E14)'", 1),
+    ("'E14 · thu nhỏ xuống 1.5B'", "'Mô hình đọc nhỏ hơn, 1.5B (E14)'", 1),
+    ("'E15 · ViWikiFC, 7B'", "'Bộ dữ liệu ViWikiFC (E15)'", 1),
+    ('gain(gộp) + gain(hình dạng) − gain(cả hai). Trên ISE-DSC01 bằng 99,9 % gain của nhóm hình dạng.',
+     'mức tăng của gộp + mức tăng của hình dạng − mức tăng của cả hai. Trên ISE-DSC01, phần chồng lấn bằng 99,9 % mức tăng của nhóm hình dạng.', 1),
+    ('và chi phí biên trong hệ RAG tự giám sát chưa được đo.',
+     'và chi phí tăng thêm khi một mô hình vừa sinh vừa đọc (kịch bản tự kiểm tra) chưa được đo.', 1),
+    ('Chưa đo chi phí biên khi một mô hình vừa sinh vừa đọc',
+     'Chưa đo chi phí tăng thêm khi một mô hình vừa sinh vừa đọc', 1),
+    ('Đo chi phí biên trên GPU có bfloat16 gốc',
+     'Đo chi phí tăng thêm đó trên GPU hỗ trợ sẵn bfloat16', 1),
+    ('Ba lớp không khái quát sang bộ khác; nhị phân thì được',
+     'Ba lớp không chuyển giao sang bộ khác; nhị phân thì có', 1),
+    ('Kết hợp chú ý (mạnh ở nội tại) với bộ mã hóa (mạnh ở ngoại lai)',
+     'Kết hợp chú ý (tốt ở lớp nội tại) với bộ mã hóa (tốt ở lớp ngoại lai)', 1),
+    ('chi phí và khái quát hóa chéo bộ dữ liệu', 'chi phí và đánh giá chéo bộ dữ liệu', 1),
+    ('<h2>Khái quát hóa chéo bộ dữ liệu</h2>', '<h2>Đánh giá chéo bộ dữ liệu</h2>', 1),
+    ('kiểm chứng cơ chế, chi phí và khả năng khái quát hóa.',
+     'kiểm chứng cơ chế, chi phí và khả năng chuyển giao.', 1),
+    ('là khả năng khái quát hóa. Khi huấn luyện',
+     'là khả năng chuyển giao giữa các bộ dữ liệu. Khi huấn luyện', 1),
+    ('ViWikiFC dùng làm đối chứng ngoài.', 'ViWikiFC dùng để so sánh với kết quả đã công bố.', 1),
+    ("role: 'đối chứng ngoài · Wikipedia", "role: 'so sánh với kết quả đã công bố · Wikipedia", 1),
+    ('<b>ViWikiFC</b> (đối chứng)', '<b>ViWikiFC</b> (so sánh với kết quả đã công bố)', 1),
+    ('hạt giống 42', 'seed 42', 2),
+    ('câu bằng chứng (vàng)', 'câu bằng chứng chuẩn', 1),
+    ('Nghịch lý 1.5B', 'Trường hợp 1.5B', 1),
+    ('đỉnh bớt nổi', 'đỉnh kém nổi bật', 1),
+    ('ví dụ thật: câu hỏi Hồ Hoàn Kiếm', 'ví dụ thực tế: câu hỏi Hồ Hoàn Kiếm', 2),
+    ('[32]</span>Vaswani', '[33]</span>Vaswani', 1),
+    ('[36]</span>Zheng', '[37]</span>Zheng', 1),
+    ('danh mục 36 tài liệu', 'danh mục 37 tài liệu', 2),
+    ("cap: 'E19: chú ý đúng ", "cap: 'Cùng 300 mẫu (E19): chú ý đúng ", 1),
+    ("Ba giả thuyết được ủng hộ (H1, H3, H4); H2 về chunk-aware không được ủng hộ; "
+     "H5 bị bác bỏ ở bài toán ba lớp.</p>",
+     "Được ủng hộ: lookback gộp (H1), định vị (H3), mất bằng chứng (H4); "
+     "không: chunk-aware (H2), chuyển giao ba lớp (H5).</p>", 1),
+    ('"hyp": "<b>H1, H3, H4</b> được ủng hộ; <b>H2</b> không; <b>H5</b> bác bỏ ở ba lớp, '
+     'ủng hộ một phần ở nhị phân."',
+     '"hyp": "Chú ý phân loại được và <b>định vị đúng bằng chứng</b>; chia theo đoạn '
+     '<b>không</b> tăng điểm; chỉ quyết định <b>nhị phân</b> chuyển giao được."', 1),
+    ("tx(venn, VX - 120, VY - 120, 'tỷ lệ gộp'", "tx(venn, VX - 110, VY - 80, 'tỷ lệ gộp'", 1),
+]
+for old, new, n in TU_NGU:
+    if out.count(old) != n:
+        problems.append(f"tu ngu: «{old[:60]}» gặp {out.count(old)}/{n} lần")
+    out = out.replace(old, new)
 visible = re.sub(r"data:[^\"')]+", "", out)
 BANNED = [
     "bịa",
@@ -1611,6 +1698,8 @@ BANNED = [
     "chấm chéo", "lần chấm", "để chấm", "chấm được", "→ chấm", "chấm 300", "chấm 700",
     "chuyển được", "cặp đổi đúng", "trưng đổi đúng", "dạng đổi đúng", "dàn trải", "bám ngữ cảnh", "bám vào", "hạ xung",
     "chỉ đúng đoạn", "bảo chứng",
+    "đầu mạnh nhất", "chú ý mạnh nhất", "mốc so sánh", "Mốc ", "mốc đầu", "nằm trong vùng nhiễu", "Vùng nhiễu",
+    "tự giám sát", "đối chứng ngoài", "hái quát hóa chéo", "hạt giống", "sụt",
 ]
 for w in BANNED:
     for m in re.finditer(re.escape(w), visible):

@@ -128,7 +128,7 @@ def fig_khung_nghien_cuu() -> None:
                 "đoạn bằng chứng không?", RED, TINT_RED, [
             ("H2", "Tách theo đoạn làm tăng macro-F1, mức tăng lớn hơn khi ngữ cảnh nhiều đoạn",
              "E03 chunk-aware · E04–E05 chiến lược chia đoạn · E07 ngữ cảnh dài · E12 ablation"),
-            ("H3", "Đầu chú ý mạnh nhất tập trung vào đúng đoạn chứa bằng chứng",
+            ("H3", "Đầu định vị tốt nhất tập trung vào đúng đoạn chứa bằng chứng",
              "E06 định vị bằng chứng trên ISE-DSC01 · E08 lặp lại phép đo trên ViWikiFC"),
             ("H4", "Loại bỏ câu bằng chứng làm phân bố chú ý dàn trải hơn theo hướng định trước",
              "E08 can thiệp theo cặp: chỉ loại bỏ câu bằng chứng (1.836 cặp)")]),
@@ -142,9 +142,9 @@ def fig_khung_nghien_cuu() -> None:
         ("CH3", "Chú ý đóng góp thêm bao nhiêu so với đặc trưng bề mặt, và có khái quát hóa không?",
          GREEN, TINT_GREEN, [
             ("H1", "Phần đóng góp riêng của nhóm đặc trưng chú ý, tách khỏi đặc trưng bề mặt",
-             "E12 ablation cộng dồn theo nhóm đặc trưng trên ViHallu và ISE-DSC01"),
+             "E12 phân tích đóng góp của từng nhóm đặc trưng trên ViHallu và ISE-DSC01"),
             ("H5", "Bộ phát hiện giữ được hiệu năng trên bộ dữ liệu khác",
-             "E15 ViWikiFC theo cách chia gốc · E16 khái quát hóa chéo bộ dữ liệu")]),
+             "E15 ViWikiFC theo cách chia gốc · E16 đánh giá chéo bộ dữ liệu")]),
     ]
     m, lw, rw = 30, 360, 444
     w = PAGE_W - 2 * m
@@ -186,12 +186,12 @@ def fig_khung_nghien_cuu() -> None:
         (m, "Bộ dữ liệu", NAVY, TINT_BLUE,
          [("ViHallu", "bộ chính, phản hồi do GPT-4o sinh"),
           ("ISE-DSC01", "ngữ cảnh dài, có câu bằng chứng"),
-          ("ViWikiFC", "đối chứng ngoài, thí nghiệm can thiệp"),
+          ("ViWikiFC", "so sánh với kết quả đã công bố, loại bỏ câu bằng chứng"),
           ("ViFactCheck", "dự phòng, thí nghiệm chuyển miền")]),
         (m + w / 2 + 10, "Mô hình đọc", PURPLE, TINT_PURPLE,
          [("Qwen2.5-7B-Instruct", "mô hình chính, 27 lớp × 28 đầu"),
-          ("Qwen2.5-3B-Instruct", "bậc thang, 36 × 16"),
-          ("Qwen2.5-1.5B-Instruct", "bậc thang, 28 × 12"),
+          ("Qwen2.5-3B-Instruct", "mô hình nhỏ hơn, 36 × 16"),
+          ("Qwen2.5-1.5B-Instruct", "mô hình nhỏ hơn, 28 × 12"),
           ("Sailor2-8B-SFT", "đổi họ mô hình, 30 × 28")]),
     ):
         pw = w / 2 - 10
@@ -246,13 +246,13 @@ def fig_quy_trinh_du_lieu() -> None:
         ("3", "Định vị bằng chứng", BLUE, TINT_BLUE,
          "So khớp nguyên văn câu bằng chứng trong ngữ cảnh để lấy evidence_start, "
          "hoặc −1 nếu không tìm thấy",
-         "khớp được 23.783/23.784 mẫu ISE-DSC01 và 20.918/20.919 mẫu ViWikiFC"),
+         "tìm thấy ở 23.783/23.784 mẫu ISE-DSC01 và 20.918/20.919 mẫu ViWikiFC"),
         ("4", "Kiểm tra lược đồ", GREEN, TINT_GREEN,
          "Kiểm tra kiểu dữ liệu, trường bắt buộc và nhãn hợp lệ ngay khi ghi tệp",
-         "hàm ghi báo lỗi thay vì ghi ra dữ liệu hỏng"),
+         "hàm ghi báo lỗi thay vì ghi dữ liệu không hợp lệ"),
         ("5", "Chia tập theo ngữ cảnh", GREEN, TINT_GREEN,
-         "ViHallu và ISE-DSC01: 80/10/10 theo context_id, thứ tự lấy từ SHA-256 với hạt "
-         "giống 42; ViWikiFC và ViFactCheck giữ cách chia gốc",
+         "ViHallu và ISE-DSC01: 80/10/10 theo context_id, thứ tự lấy từ SHA-256 với seed "
+         "42; ViWikiFC và ViFactCheck giữ cách chia gốc",
          "báo lỗi nếu một context_id rơi vào hai tập"),
         ("6", "Báo cáo rò rỉ", GREEN, TINT_GREEN,
          "Đếm số ngữ cảnh và số dòng của tập đánh giá đã xuất hiện trong tập huấn luyện",
@@ -514,12 +514,12 @@ def fig_thiet_ke_can_thiep() -> None:
             c.raw_text(x + cell_w / 2, y + 21, f"câu {k + 1}", T_SMALL, anchor="middle",
                        fill=color if hot else INK, weight="bold" if hot else "normal")
             if hot:
-                c.raw_text(x + cell_w / 2, y + 44, "vàng" if gold else "nhiễu", T_SMALL,
+                c.raw_text(x + cell_w / 2, y + 44, "chuẩn" if gold else "thay thế", T_SMALL,
                            anchor="middle", fill=color, weight="bold")
         y += ch + 34
     y = text_left(c, m, y - 8, "Giữ nguyên: phát biểu, chín câu còn lại, thứ tự, độ dài và số "
-                  "đoạn. Câu vàng được thay bằng câu nhiễu kế tiếp trong danh sách truy xuất, "
-                  "nên nhãn của bản mất bằng chứng là ảo giác ngoại lai theo cấu tạo — không "
+                  "đoạn. Câu bằng chứng được thay bằng câu kế tiếp trong danh sách truy xuất, "
+                  "nên nhãn của bản mất bằng chứng là ảo giác ngoại lai theo cách dựng, không "
                   "cần người gán nhãn.", w, T_SMALL, fill=SOFT, style="italic", line_h=24)
 
     # both versions go through the same reader

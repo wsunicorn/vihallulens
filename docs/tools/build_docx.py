@@ -1099,20 +1099,25 @@ BOOK_WIDTHS = {
     ("Ngày", "Yêu cầu (trích)", "Mục đích"): (1.764, 7.585, 6.151),
     # Bảng 6.1: fit_columns() squeezed "Độ chính xác dự báo dương" into 1,4 cm (five lines);
     # the binary metrics and the confidence interval get the room their headers need
-    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "Nhị phân", "Độ nhạy", "Độ chính xác dự báo dương",
-     "F1 no", "F1 intr", "F1 extr", "ECE"): (2.7, 2.8, 1.3, 1.3, 2.1, 1.3, 1.3, 1.3, 1.4),
+    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "macro-F1 nhị phân", "Độ nhạy",
+     "Độ chính xác dự báo dương", "F1 no", "F1 intr", "F1 extr", "ECE"):
+        (2.7, 2.5, 1.8, 1.3, 2.1, 1.3, 1.3, 1.3, 1.2),
     # Bảng 6.14: a wider interval column keeps every row to two lines, so the table fits on the
     # page its section starts on instead of leaving half of that page blank
-    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "ms/mẫu", "VRAM đỉnh", "Tham số huấn luyện",
+    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "ms/mẫu", "VRAM cao nhất", "Tham số huấn luyện",
      "Loại chi phí"): (3.3, 3.2, 1.75, 2.25, 2.55, 2.45),
     # Bảng 2.1, 3.1, 6.18: fit_columns() sized these by their longest single cell, so a
     # column of short names took a quarter of the width while the prose column wrapped
     # five or six lines
     ("Hướng", "Tín hiệu sử dụng", "Công trình tiêu biểu", "Cần huấn luyện",
-     "Chi phí khi suy luận", "Hạn chế chính"): (2.2, 2.5, 2.9, 2.3, 2.4, 3.2),
+     "Chi phí khi suy luận", "Hạn chế chính"): (2.2, 2.4, 2.9, 2.1, 2.4, 3.5),
     ("Bộ dữ liệu", "Vai trò", "Đặc điểm quyết định vai trò"): (2.7, 3.9, 8.9),
-    ("Cách gộp trục phản hồi", "macro-F1 [KTC 95 %]", "F1 extr",
-     "Hiệu F1 extr so với whole [KTC ghép cặp]", "macro-F1 trên phản hồi từ hai câu"):
+    # Bảng 3.6 and 7.1: the prose column needs the room that fit_columns() gave the short ones
+    ("Mã", "Tên ngắn và nội dung", "Giả thuyết", "Bộ dữ liệu", "Mô hình đọc", "Mục"):
+        (1.3, 5.8, 1.7, 2.7, 2.6, 1.4),
+    ("Giả thuyết", "Bằng chứng chính", "Thí nghiệm", "Kết luận"): (3.3, 5.3, 4.1, 2.8),
+    ("Cách gộp đặc trưng trên các câu của phản hồi", "macro-F1 [KTC 95 %]", "F1 extr",
+     "Hiệu F1 extr so với whole [KTC ghép cặp]", "macro-F1 trên phản hồi có từ hai câu"):
         (4.4, 3.0, 1.5, 3.5, 3.1),
 }
 # the hash table (Bảng D.4) sets its rows at 8 pt so every SHA-256 fits on one line, as

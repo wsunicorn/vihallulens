@@ -137,7 +137,7 @@ Hai con số cần đọc đúng. `risk_score` là con số một hệ RAG nên 
 trong `docs/EXPERIMENTS.md` đo được bộ phát hiện tách "trung thực hay không" tốt hơn hẳn tách hai
 loại ảo giác, và chỉ phán đoán nhị phân mới chuyển giao được giữa các bộ dữ liệu. `chunk_attention` là
 tỷ trọng chú ý trung bình trên mọi lớp và đầu — chính đại lượng E06 đã đo hit@1 87,8 % so với đoạn
-bằng chứng vàng — không phải thứ bộ phân loại đọc.
+bằng chứng chuẩn — không phải thứ bộ phân loại đọc.
 
 ## Chạy dịch vụ REST
 
@@ -170,7 +170,7 @@ truy xuất BM25, sinh câu trả lời bằng **Qwen2.5-3B nạp ở `bfloat16`
 dùng chính bản 7B `float16` đang nạp để sinh: lớp 27 của nó tràn số — bộ phát hiện né được bằng
 cách không đọc lớp đó, nhưng LM head thì không né được, và logit NaN cho ra toàn `!`. Vì sao không
 nạp thêm 7B `bfloat16`: hai bản 7B không nằm chung một card 16 GB (thử ngày 11/09, hết bộ nhớ lúc
-nạp). 3B là cỡ lớn nhất của bậc thang còn vừa cạnh bộ đọc; nạp lười ở câu hỏi đầu tiên, đổi bằng
+nạp). 3B là cỡ lớn nhất còn vừa cạnh bộ đọc; nạp lười ở câu hỏi đầu tiên, đổi bằng
 `scripts/serve.py --generator`. Trên trang quan sát là ô "Hỏi hệ
 RAG"; qua API là `POST /demo/ask {question, top_k?}`; qua dòng lệnh:
 
@@ -228,7 +228,7 @@ os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 | `docs/DATA.md` | Schema chung, đường dẫn dữ liệu và cách chuẩn hóa bốn bộ |
 | `data/raw/MANIFEST.md` | Ánh xạ tên file gốc sang tên chuẩn, kèm số dòng đã đối chiếu |
 | `docs/EXPERIMENTS.md` | Kế hoạch thực nghiệm và bảng kết quả |
-| `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các mốc so sánh |
+| `docs/REFERENCES.md` | Bài báo nền, công thức gốc Lookback Lens và các phương pháp so sánh |
 | `docs/report/` | Bản thảo quyển khóa luận theo chương; cách dựng ra Word và PDF ở `docs/report/README.md` |
 | `docs/media/`, `docs/tools/` | Hình của quyển (mã vẽ ở `docs/media/src/`) và công cụ ghép, đánh số, dựng Word |
 | `docs/slides/` | Nguồn dựng bộ slide bảo vệ (`nguon/`) và cách dùng (`HUONG_DAN.md`); bản HTML, PDF chỉ giữ trên máy như quyển báo cáo |
