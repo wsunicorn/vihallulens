@@ -4938,19 +4938,36 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Còn lại cho quyển:** đoạn trong mục 7.2 về ranh giới *định vị* và *quy trách nhiệm*. Mục 7.2
     đang chờ GVHD đọc lại, nên đoạn này chuyển sang danh sách sửa quyển của T48.
 
-- [ ] **T45E** · L · **E20** — đo chi phí biên trên GPU có `bfloat16` gốc — **một buổi, CẦN HỎI
-  NGƯỜI DÙNG TRƯỚC**
-  - **Vì sao:** là 15 % còn thiếu của CH2. Cột "chi phí biên" của Bảng 8 hiện là lập luận chứ
-    chưa phải phép đo: trên T4, bộ đọc `float16` không sinh được văn bản (T40) nên bộ sinh và bộ
-    đọc phải là hai mô hình.
-  - **Vướng ràng buộc cứng** ở mục 2 của `CONVENTIONS.md`: cần GPU Ampere trở lên (L4, A100) — Kaggle
-    và Colab miễn phí không có, Colab Pro tốn phí. **Không tự làm**; hỏi người dùng có máy phòng
-    lab hoặc có chấp nhận chi phí không.
-  - **Làm gì nếu được duyệt:** một bản Qwen2.5-7B `bfloat16` sinh câu trả lời cho 100 câu hỏi của
-    hệ RAG minh họa, đo thời gian sinh trần và thời gian sinh có gắn hook; hiệu hai số là chi phí
-    biên.
-  - **Kiểm tra:** con số chi phí biên (ms/mẫu và %) thay cho lập luận ở Bảng 8, ghi rõ tên phần
-    cứng. Nếu không có máy: giữ nguyên hạn chế đã nêu trong quyển, không tick task này.
+- [ ] **T45E** · L · **Chi phí trong kịch bản tự kiểm tra, trên Qwen2.5-3B** — gộp vào E11 (trước đây
+  dự kiến là E20) — **Kaggle T4, 1,5–2 giờ**
+  - **Vì sao đổi cách làm:** bản cũ đòi GPU có `bfloat16` gốc, vì Qwen2.5-7B tràn số ở `float16` nên không
+    sinh được trên T4. Nhưng T31 đã đo Qwen2.5-3B không có lớp nào tràn số, nên một bản 3B có thể vừa
+    sinh vừa cung cấp trọng số chú ý trên chính T4.
+  - **Làm gì:** `scripts/measure_self_check.py`, notebook `t45e_tu_kiem_tra_3b_t4.ipynb`. 100 ngữ cảnh test
+    ViHallu (seed 42); sinh một lần rồi phát lại đúng chuỗi token theo bốn cách: A (SDPA), B (eager),
+    C (eager và hook đọc chú ý ngay khi sinh), R (đọc lại một lượt). C − B là chi phí phát hiện, B − A là
+    chi phí tắt cài đặt tối ưu, R là chi phí nếu phải đọc lại.
+  - **Phần lõi:** `src/vihallulens/extract/incremental.py` rút gọn từng hàng chú ý bằng đúng công thức của
+    bộ trích. Nhờ mặt nạ nhân quả, hàng chú ý của một token lúc sinh chính là hàng của nó trong lượt đọc
+    lại; `tests/test_incremental.py` kiểm điều này trên mô hình nhỏ, và script đo lại trên từng mẫu thật.
+  - **Dự đoán ghi trước:** C − B dưới 10 % thời gian sinh; B − A dương; C − A nhỏ hơn R; độ lệch đặc trưng
+    giữa hai cách đọc dưới 0,01.
+  - **Giới hạn:** chỉ đo chi phí, vì câu trả lời tự sinh không có nhãn; T4 không chạy được FlashAttention nên
+    phép đo là SDPA so với eager.
+  - **Kiểm tra:** `report` in đủ bốn cách kèm khoảng tin cậy; số vào mục 6.12 và 8.2 của quyển.
+
+- [ ] **T30B** · L · **Đối chiếu kiểu số của Sailor2-8B** — bổ sung cho E13 — **Kaggle T4, 1–1,5 giờ**
+  - Hai lần trước hết bộ nhớ ở lượt đối chiếu. `compare_dtypes.py --save / --from-saved` cho mỗi kiểu số chạy
+    ở một tiến trình riêng; đối chiếu `float16` với `bfloat16`, kèm Qwen2.5-7B làm mức tham chiếu.
+    Notebook `t30b_sailor2_kieu_so_t4.ipynb`.
+  - **Dự đoán ghi trước:** độ lệch trung bình của Sailor2 không quá hai lần của Qwen2.5-7B.
+  - **Kiểm tra:** hai bảng so sánh, hoặc ghi rõ lần thử thứ ba vẫn hết bộ nhớ.
+
+- [ ] **T22B** · L · **So sánh ghép cặp chunk-aware với lookback gộp** — bổ sung cho E03, E07, E13–E15 — CPU
+- [ ] **T22C** · L · **Hiệu chỉnh xác suất sau huấn luyện** — bổ sung cho E02, E03 — CPU
+- [ ] **T19B** · L · **LLM giám khảo với tiêu chí đầy đủ** — bổ sung cho E10 — Gemini bản miễn phí
+- [ ] **T13B** · LM · **Gán nhãn NEI vòng 2** — hai người gán độc lập
+- [ ] **T34B** · LM · **Đọc 100 mẫu bộ phát hiện dự đoán sai** — hai người đọc độc lập
 
 ---
 

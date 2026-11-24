@@ -93,6 +93,57 @@ def extract_all(extractor, samples, dtype_name: str):
     return results
 
 
+def save_run(path: Path, results, n_layers: int, model: str, dtype_name: str) -> None:
+    """Keep one dtype pass on disk, so the other one can run in a process of its own.
+
+    Two models in one process ran out of memory twice on Sailor2-8B, the second time even after
+    an explicit garbage collection (T30). A process that exits gives its whole card back.
+    """
+    arrays = {f"total_{i}": item["total"] for i, item in enumerate(results)}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "model": model,
+        "dtype": dtype_name,
+        "n_layers": n_layers,
+        "n_samples": len(results),
+        "nonfinite": [sorted(int(layer) for layer in item["nonfinite"]) for item in results],
+        "elapsed_ms": [float(item["elapsed_ms"]) for item in results],
+        "peak_vram_mb": [float(item["peak_vram_mb"]) for item in results],
+    }
+    np.savez_compressed(path, meta=np.array(json.dumps(meta)), **arrays)
+
+
+def load_run(path: Path) -> tuple[dict, list[dict]]:
+    with np.load(path) as data:
+        meta = json.loads(str(data["meta"]))
+        results = [
+            {"total": data[f"total_{i}"], "nonfinite": set(meta["nonfinite"][i]),
+             "elapsed_ms": meta["elapsed_ms"][i], "peak_vram_mb": meta["peak_vram_mb"][i]}
+            for i in range(meta["n_samples"])
+        ]
+    return meta, results
+
+
+def report_saved(low_path: Path, high_path: Path) -> int:
+    """The comparison of two saved passes. Needs no GPU."""
+    low_meta, low = load_run(low_path)
+    high_meta, high = load_run(high_path)
+    for key in ("model", "n_layers", "n_samples"):
+        if low_meta[key] != high_meta[key]:
+            raise SystemExit(f"hai tệp khác nhau ở {key}: {low_meta[key]} và {high_meta[key]}")
+    n_layers = low_meta["n_layers"]
+    print(f"{low_meta['model']}: {low_meta['dtype']} so với {high_meta['dtype']}, "
+          f"{len(low)} mẫu, {n_layers} lớp")
+    for meta, items in ((low_meta, low), (high_meta, high)):
+        bad = sorted({layer for item in items for layer in item["nonfinite"]})
+        print(f"  {meta['dtype']:<9}: lớp từng tràn số {bad}")
+    broken = sorted({layer for item in low + high for layer in item["nonfinite"]})
+    print(f"EXCLUDE_LAYERS={broken}")
+    per_layer_report(low, high, n_layers, low_meta["dtype"])
+    overall_report(low, high, n_layers, broken, low_meta["dtype"])
+    return 0
+
+
 def per_layer_report(low, high, n_layers: int, dtype_name: str = "float16") -> None:
     """How often the dtype under test breaks, and how far it drifts where it does not."""
     print()
@@ -186,7 +237,22 @@ def main() -> int:
              "float16 tràn, mà tốn bộ nhớ ngang float16. none thì bỏ hẳn phần so, chỉ báo lớp "
              "tràn số.",
     )
+    parser.add_argument(
+        "--save", type=Path, default=None,
+        help="ghi kết quả của lượt --dtype ra tệp .npz rồi thoát, không chạy lượt đối chiếu. Dùng "
+             "khi hai kiểu số phải chạy ở hai tiến trình riêng.",
+    )
+    parser.add_argument(
+        "--from-saved", type=Path, nargs=2, default=None, metavar=("DANG_XET", "DOI_CHIEU"),
+        help="so hai tệp .npz đã ghi bằng --save; không cần GPU.",
+    )
     args = parser.parse_args()
+    if args.save:
+        args.reference = "none"
+    if args.from_saved:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        return report_saved(*args.from_saved)
     if args.dtype == args.reference:
         parser.error("--dtype và --reference phải khác nhau, nếu không không có gì để so")
 
@@ -246,6 +312,9 @@ def main() -> int:
 
     low = runs[args.dtype]
     high = runs.get(args.reference)
+    if args.save:
+        save_run(args.save, low, n_layers, args.model, args.dtype)
+        print(f"  đã ghi {args.save}")
 
     print()
     for dtype_name, results in runs.items():

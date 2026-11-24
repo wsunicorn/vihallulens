@@ -21,7 +21,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from compare_dtypes import overall_report, per_layer_report  # noqa: E402
+from compare_dtypes import (  # noqa: E402
+    load_run,
+    overall_report,
+    per_layer_report,
+    report_saved,
+    save_run,
+)
 
 N_LAYERS = 4
 N_VALUES = 6
@@ -113,3 +119,35 @@ def test_report_never_raises(broken, capsys):
     overall_report(low, high, N_LAYERS, broken)
     per_layer_report(low, high, N_LAYERS)
     capsys.readouterr()
+
+
+def saved(tmp_path, name, offset, bad=(), model="m"):
+    items = []
+    for i in range(2):
+        total = np.full((N_LAYERS, N_VALUES), 0.5 + offset, dtype=np.float32)
+        for layer in bad:
+            total[layer] = np.nan
+        items.append({"total": total, "nonfinite": set(bad), "elapsed_ms": 1.0 + i,
+                      "peak_vram_mb": 2.0})
+    path = tmp_path / f"{name}.npz"
+    save_run(path, items, N_LAYERS, model, name)
+    return path
+
+
+def test_saved_pass_round_trips(tmp_path):
+    meta, items = load_run(saved(tmp_path, "float16", 0.0, bad=(3,)))
+    assert meta["dtype"] == "float16" and meta["n_layers"] == N_LAYERS
+    assert items[1]["nonfinite"] == {3} and items[1]["elapsed_ms"] == 2.0
+    assert np.isnan(items[0]["total"][3]).all()
+
+
+def test_two_saved_passes_are_compared(tmp_path, capsys):
+    low, high = saved(tmp_path, "float16", 0.0, bad=(3,)), saved(tmp_path, "bfloat16", 0.01)
+    assert report_saved(low, high) == 0
+    out = capsys.readouterr().out
+    assert "EXCLUDE_LAYERS=[3]" in out and "0.01000" in out
+
+
+def test_saved_passes_of_different_models_are_refused(tmp_path):
+    with pytest.raises(SystemExit, match="model"):
+        report_saved(saved(tmp_path, "a", 0.0), saved(tmp_path, "b", 0.0, model="other"))
