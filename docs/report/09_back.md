@@ -8,7 +8,7 @@
 
 ## Phụ lục A — Cấu trúc mã nguồn và kiểm thử
 
-Mã nguồn của hệ thống được tổ chức theo bố cục `src/` với gói `vihallulens`; bộ kiểm thử kiểm tra các bất biến quan trọng của phép tính, như các ví dụ ở mục [[sec:c3-chia-tap]], [[sec:c4-dac-trung]] và [[sec:c4-hook]]. Lượt chạy kiểm thử trên máy cá nhân ngày 24/10/2026 cho kết quả 825 ca đạt, 0 ca thất bại, 0 ca bỏ qua, trong 15,9 giây; các ca kiểm thử chạy trên CPU, không cần GPU. [[fig:terminal]] cho thấy cây thư mục, lượt chạy kiểm thử và trạng thái của dịch vụ; [[tab:duong-dan]] liệt kê vị trí các thành phần chính.
+Mã nguồn của hệ thống được tổ chức theo bố cục `src/` với gói `vihallulens`; bộ kiểm thử kiểm tra các điều kiện luôn phải đúng của phép tính, như các ví dụ ở mục [[sec:c3-chia-tap]], [[sec:c4-dac-trung]] và [[sec:c4-hook]]. Lượt chạy kiểm thử trên máy cá nhân ngày 24/10/2026 cho kết quả 825 ca đạt, 0 ca thất bại, 0 ca bỏ qua, trong 15,9 giây; các ca kiểm thử chạy trên CPU, không cần GPU. [[fig:terminal]] cho thấy cây thư mục, lượt chạy kiểm thử và trạng thái của dịch vụ; [[tab:duong-dan]] liệt kê vị trí các thành phần chính.
 
 ![Cấu trúc mã nguồn, lượt chạy kiểm thử và trạng thái dịch vụ](media/hinh_terminal_ma_nguon.png)
 
@@ -85,7 +85,7 @@ Trích đặc trưng cho một thí nghiệm (cần GPU):
 python scripts/extract_features.py --config configs/e03_chunk_sentence_vihallu.yaml
 ```
 
-Khớp và đánh giá bộ phát hiện (chạy trên CPU):
+Huấn luyện và đánh giá bộ phát hiện (chạy trên CPU):
 
 ```
 python scripts/run_chunk_aware.py --config configs/e03_chunk_sentence_vihallu.yaml
@@ -139,9 +139,9 @@ python docs/tools/build_docx.py
 | Môi trường | Python | PyTorch | transformers | Dùng cho |
 |---|---|---|---|---|
 | Kaggle, Tesla T4 | 3.12.13 | 2.10.0 | 5.0.0 – 5.16.1 | Trích đặc trưng, tinh chỉnh bộ mã hóa, đo thời gian và bộ nhớ |
-| Máy cá nhân | 3.11.9 | 2.14.0 | 5.17.0 | Khớp bộ phân loại, đánh giá, kiểm thử, dịch vụ |
+| Máy cá nhân | 3.11.9 | 2.14.0 | 5.17.0 | Huấn luyện bộ phân loại, đánh giá, kiểm thử, dịch vụ |
 
-Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm chạy nên phiên bản thay đổi giữa các notebook; vì vậy mỗi notebook in ra phiên bản đã dùng ngay ở ô đầu. bitsandbytes là 0.50.1 ở T07–T08 và 0.50.2 từ T20 trở đi.
+Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm chạy nên phiên bản thay đổi giữa các notebook; vì vậy mỗi notebook in ra phiên bản đã dùng ngay ở ô đầu. Thư viện bitsandbytes ở phiên bản 0.50.1 trong hai bước kiểm tra khả thi (19–20/08/2026) và 0.50.2 từ lượt tái lập Lookback Lens (28/08/2026) trở đi.
 
 **Mức tái lập của từng loại kết quả.** [[tab:muc-tai-lap]] phân loại các kết quả theo mức lặp lại được khi chạy lại.
 
@@ -151,8 +151,8 @@ Trên Kaggle, thư viện được cài bản mới nhất ở thời điểm ch
 |---|---|---|
 | Chuẩn hóa, chia tập, thống kê dữ liệu, phân tích rò rỉ | Trùng từng chữ số | Tính toán thuần, có ca kiểm thử kiểm tra kết quả. |
 | Dự đoán của bộ phát hiện đã đóng gói | Trùng từng dự đoán | Nạp lại `models/e03_chunk_aware.pkl` và đánh giá 700 mẫu test: trùng 700/700 với lúc thí nghiệm. |
-| Khớp lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập dev lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được tính trên cùng một máy. |
-| Trích đặc trưng chú ý | Trùng trên cùng loại GPU; trong sai số số học nếu khác phần cứng | Tính ở float16 trên GPU nên không bảo đảm trùng từng bit giữa các phần cứng và phiên bản. Trên cùng Tesla T4 của Kaggle thì trùng: lượt trích lại ViHallu ngày 23/10/2026 cho E18 khớp tuyệt đối với lượt trích của E03 ngày 30/08/2026 ở cả 7.000 mẫu (giá trị lưu ở 6 chữ số thập phân), và đánh giá lại cho đúng macro-F1 0,7567. Tệp đặc trưng không đưa lên kho mã vì dung lượng; chạy lại phải trích lại trên GPU, gần một giờ T4 cho riêng ViHallu. |
+| Huấn luyện lại bộ phân loại từ tệp đặc trưng | Trùng trong cùng một môi trường | Giữa Kaggle và máy cá nhân, điểm trên tập dev lệch tối đa 0,0075 ở cấu hình phụ, do bộ tối ưu lbfgs hội tụ khác nhau theo phiên bản thư viện số; cấu hình được chọn cho 0,7768 ở cả hai. Vì vậy mọi bảng so sánh được tính trên cùng một máy. |
+| Trích đặc trưng chú ý | Trùng trên cùng loại GPU; trong sai số số học nếu khác phần cứng | Tính ở float16 trên GPU nên không bảo đảm trùng từng bit giữa các phần cứng và phiên bản. Trên cùng Tesla T4 của Kaggle thì trùng: lượt trích lại ViHallu ngày 23/10/2026 cho thí nghiệm gộp đặc trưng theo từng câu (E18) trùng hoàn toàn với lượt trích của bộ phát hiện chunk-aware (E03) ngày 30/08/2026 ở cả 7.000 mẫu (giá trị lưu ở 6 chữ số thập phân), và đánh giá lại cho đúng macro-F1 0,7567. Tệp đặc trưng không đưa lên kho mã vì dung lượng; chạy lại phải trích lại trên GPU, gần một giờ T4 cho riêng ViHallu. |
 | Tinh chỉnh PhoBERT, XLM-R | Dao động theo seed và theo lượt | Ba seed mỗi mô hình, độ lệch chuẩn 0,011 (PhoBERT) và 0,017 (XLM-R), ghi trong `results/runs.jsonl`. Cố định seed chưa đủ: cùng seed 42, XLM-R hội tụ ở lượt ngày 27/08 nhưng không hội tụ ở lượt ngày 28/08. |
 | LLM giám khảo Gemini | Từ bộ nhớ đệm | Gọi lại API có thể cho kết quả khác vì mô hình phía nhà cung cấp thay đổi theo thời gian; số trong báo cáo tái lập được từ `results/judge_cache.jsonl`. |
 | Thời gian và bộ nhớ GPU | Gắn với phần cứng | Đo trên Tesla T4, mỗi cấu hình một phiên riêng hoặc đo xen kẽ, vì hai lượt nối nhau trong cùng phiên đã chậm đi 10–15 % do giảm xung nhịp. |
@@ -239,7 +239,7 @@ Các bảng dưới đây được nhắc tới ở Chương 3 và Chương 4.
 
 Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá trình nghiên cứu và phát triển phần mềm của khóa luận: dùng vào việc gì, theo quy trình nào, với những ràng buộc nào, và rút ra kinh nghiệm gì. Mục đích là để người đọc thấy rõ ranh giới giữa phần do nhóm quyết định và phần công cụ hỗ trợ, đồng thời có thể lặp lại cách làm. Mức tái lập của các kết quả thực nghiệm được trình bày riêng ở Phụ lục D.
 
-**Hai vai trò khác nhau của mô hình ngôn ngữ lớn.** Trong khóa luận, mô hình ngôn ngữ lớn xuất hiện ở hai vai trò cần tách bạch. Thứ nhất, chúng là đối tượng nghiên cứu: Qwen2.5 là mô hình đọc mà đặc trưng chú ý được trích ra (Chương 4), còn Gemini là mốc LLM giám khảo được so sánh ở Chương 6; vai trò này thuộc về phương pháp và đã được mô tả ở các chương chính. Thứ hai, nhóm dùng một trợ lý lập trình dựa trên mô hình ngôn ngữ lớn, tích hợp trong trình soạn thảo mã, như một công cụ hỗ trợ kỹ thuật. Phụ lục này chỉ nói về vai trò thứ hai.
+**Hai vai trò khác nhau của mô hình ngôn ngữ lớn.** Trong khóa luận, mô hình ngôn ngữ lớn xuất hiện ở hai vai trò cần tách bạch. Thứ nhất, chúng là đối tượng nghiên cứu: Qwen2.5 là mô hình đọc mà đặc trưng chú ý được trích ra (Chương 4), còn Gemini là phương pháp so sánh dùng LLM giám khảo ở Chương 6; vai trò này thuộc về phương pháp và đã được mô tả ở các chương chính. Thứ hai, nhóm dùng một trợ lý lập trình dựa trên mô hình ngôn ngữ lớn, tích hợp trong trình soạn thảo mã, như một công cụ hỗ trợ kỹ thuật. Phụ lục này chỉ nói về vai trò thứ hai.
 
 **Phân định vai trò.** Công cụ AI chỉ giữ vai trò hỗ trợ thực thi. Mọi quyết định về đề tài, thiết kế thực nghiệm, cách đánh giá và kết luận do nhóm đưa ra; công cụ thực hiện các phần việc kỹ thuật theo yêu cầu cụ thể của nhóm và chịu sự kiểm duyệt của nhóm ở từng bước ([[tab:phan-dinh-ai]]).
 
@@ -248,7 +248,7 @@ Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá tr
 | Hạng mục | Nhóm thực hiện và quyết định | Công cụ AI hỗ trợ |
 |---|---|---|
 | Đề tài, câu hỏi và giả thuyết | Chọn đề tài và ý tưởng chunk-aware; đặt ba câu hỏi nghiên cứu, năm giả thuyết; ghi hướng dự đoán trước khi chạy thí nghiệm can thiệp | Không tham gia |
-| Thiết kế thực nghiệm | Chọn bộ dữ liệu, cách chia tập, các mốc so sánh, ràng buộc phần cứng và ngân sách GPU; duyệt từng thí nghiệm trước khi chạy; đặt các phép đối chứng | Trả lời câu hỏi kỹ thuật và nêu phương án khi được hỏi |
+| Thiết kế thực nghiệm | Chọn bộ dữ liệu, cách chia tập, các phương pháp so sánh, ràng buộc phần cứng và ngân sách GPU; duyệt từng thí nghiệm trước khi chạy; đặt các phép đối chứng | Trả lời câu hỏi kỹ thuật và nêu phương án khi được hỏi |
 | Mã nguồn và kiểm thử | Đặt yêu cầu và tiêu chí hoàn thành cho từng việc; đọc lại, chạy và duyệt từng pull request trước khi gộp | Viết mã và kiểm thử theo yêu cầu |
 | Chạy thực nghiệm | Chạy notebook trên Kaggle, theo dõi hạn mức GPU, lưu notebook và nhật ký làm minh chứng, đối chiếu kết quả | Dựng notebook; đọc nhật ký lỗi để chỉ ra nguyên nhân |
 | Kiểm chứng nhãn | Hai thành viên gán nhãn độc lập 100 mẫu NEI (mục [[sec:c3-anh-xa]]) | Không tham gia gán nhãn |
@@ -257,7 +257,7 @@ Phụ lục này trình bày cách nhóm sử dụng công cụ AI trong quá tr
 **Quy trình làm việc.** Để công cụ không tự ý quyết định thay nhóm và để mọi bước kiểm tra được, nhóm tổ chức công việc theo sáu nguyên tắc:
 
 - **Bộ quy tắc dự án viết thành văn bản.** Tệp `CONVENTIONS.md` (khoảng 200 dòng) ghi ràng buộc cứng về phần cứng và ngân sách, các quyết định đã chốt và những điều bị cấm. Công cụ đọc tệp này ở đầu mỗi phiên, nên quy tắc không phụ thuộc vào trí nhớ của một cuộc hội thoại.
-- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 50 mã việc trong 10 giai đoạn (58 việc nếu tính cả các việc bổ sung như T08B, T35B), mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Các việc được thực hiện tuần tự, không làm trước việc chưa đến lượt.
+- **Danh sách việc tuần tự.** Tệp `TASKS.md` chia công việc thành 50 mã việc trong 10 giai đoạn (58 việc nếu tính cả các việc bổ sung), mỗi việc có tiêu chí hoàn thành là một lệnh chạy được. Các việc được thực hiện tuần tự, không làm trước việc chưa đến lượt.
 - **Mỗi việc một pull request.** Từ 19/08 đến 22/10/2026, kho mã có 135 pull request; nhóm đọc và gộp từng pull request. Ngày 22/10/2026 kho mã được tạo lại với đúng lịch sử commit của nhánh chính; 135 pull request gốc vẫn giữ trong kho lưu trữ `vihallulens-luu-tru`, và danh sách đầy đủ kèm ngày thực tế nằm ở `docs/LICH_SU_PR.md`.
 - **Chỉ đánh dấu hoàn thành khi có bằng chứng.** Một việc chỉ được đánh dấu xong khi lệnh trong tiêu chí chạy được và đầu ra được dán vào pull request; với việc cần GPU, notebook Kaggle đã chạy được lưu nguyên đầu ra trong thư mục `notebooks/`.
 - **Dừng lại và hỏi.** Mọi quyết định chưa có trong bộ quy tắc (thêm thư viện, đổi kiến trúc, đổi hướng khi một bước kiểm tra thất bại), công cụ phải dừng lại để nhóm quyết định.
@@ -318,16 +318,16 @@ hỏi người dùng. Không tự quyết.
 |---|---|---|---|---|---|
 | 1 | 03/08/2026 | 09/08/2026 |  | Khảo sát tài liệu về phát hiện ảo giác trong RAG; xác định hướng đề tài. |  |
 | 2 | 10/08/2026 | 16/08/2026 |  | Thu thập bốn bộ dữ liệu tiếng Việt; kiểm tra cấu trúc và chất lượng nhãn; viết đề xuất đề tài. |  |
-| 3 | 17/08/2026 | 23/08/2026 | 19/08/2026 | Dựng khung mã nguồn, cấu hình và bộ ghi kết quả; nạp Qwen2.5-7B 4 bit trên Kaggle T4; chốt mẫu prompt và trích chú ý bằng forward hook, qua mốc kiểm tra khả thi kỹ thuật (T01–T08); chuẩn hóa bốn bộ dữ liệu, kiểm chứng thủ công ánh xạ NEI, chia tập theo ngữ cảnh, báo cáo rò rỉ, chia đoạn và dựng kho truy xuất ViWikiFC (T09–T16). |  |
-| 4 | 24/08/2026 | 30/08/2026 | 28/08/2026 | Các mốc so sánh: đặc trưng bề mặt (E01), tinh chỉnh PhoBERT, XLM-R, InfoXLM (E09), Gemini giám khảo (E10); tái lập Lookback Lens (E02); chunk-aware chia theo câu (E03); quét cửa sổ token và phép đối chứng, chốt chia theo câu (E04, E05). |  |
-| 5 | 31/08/2026 | 06/09/2026 | 06/09/2026 | Định vị chú ý trên ISE-DSC01 (E06); chunk-aware trên ngữ cảnh dài (E07); thí nghiệm can thiệp loại bỏ câu bằng chứng (E08); ablation nhóm đặc trưng (E12); bắt đầu đổi mô hình đọc sang Sailor2-8B (E13). |  |
-| 6 | 07/09/2026 | 13/09/2026 | 11/09/2026 | Xong E13; bậc thang kích thước 7B / 3B / 1.5B (E14); bảng đánh đổi chi phí (E11); đối chứng ngoài trên ViWikiFC (E15); khái quát hóa chéo bộ (E16); phân tích sai sót; thư viện Python, dịch vụ REST, Docker, giao diện quan sát và hệ RAG minh họa chạy trên T4 (T36–T40). |  |
+| 3 | 17/08/2026 | 23/08/2026 | 19/08/2026 | Dựng khung mã nguồn, cấu hình và bộ ghi kết quả; nạp Qwen2.5-7B 4 bit trên Kaggle T4; chốt mẫu prompt và trích chú ý bằng forward hook, vượt qua bước kiểm tra khả thi kỹ thuật; chuẩn hóa bốn bộ dữ liệu, kiểm chứng thủ công phép ánh xạ nhãn NEI, chia tập theo ngữ cảnh, báo cáo rò rỉ, chia đoạn và xây dựng kho truy xuất ViWikiFC. |  |
+| 4 | 24/08/2026 | 30/08/2026 | 28/08/2026 | Các phương pháp so sánh: đặc trưng bề mặt (E01), tinh chỉnh PhoBERT, XLM-R, InfoXLM (E09), Gemini giám khảo (E10); tái lập Lookback Lens (E02); chunk-aware chia theo câu (E03); thử các cửa sổ token và cấu hình đối chứng, chọn cách chia theo câu (E04, E05). |  |
+| 5 | 31/08/2026 | 06/09/2026 | 06/09/2026 | Định vị chú ý trên ISE-DSC01 (E06); chunk-aware trên ngữ cảnh dài (E07); thí nghiệm loại bỏ câu bằng chứng (E08); phân tích đóng góp của từng nhóm đặc trưng (E12); bắt đầu đổi mô hình đọc sang Sailor2-8B (E13). |  |
+| 6 | 07/09/2026 | 13/09/2026 | 11/09/2026 | Hoàn thành thí nghiệm Sailor2-8B (E13); mô hình đọc nhỏ hơn 3B và 1.5B (E14); so sánh độ chính xác và chi phí (E11); so sánh với kết quả đã công bố trên ViWikiFC (E15); đánh giá chéo bộ dữ liệu (E16); phân tích sai sót; thư viện Python, dịch vụ REST, Docker, giao diện quan sát và hệ RAG minh họa chạy trên T4. |  |
 | 7 | 14/09/2026 | 20/09/2026 | 20/09/2026 | Dựng bộ slide trình bày với GVHD; trang giới thiệu hệ thống; rà soát toàn bộ kho mã, sửa các chỗ tài liệu lệch mã nguồn. |  |
-| 8 | 21/09/2026 | 27/09/2026 |  | Viết bản thảo đầy đủ tám chương của quyển (T42–T46); tự đánh giá mức hoàn thành ba câu hỏi nghiên cứu, đề xuất ba thí nghiệm bổ sung. |  |
-| 9 | 28/09/2026 | 04/10/2026 | 02/10/2026 | Gửi báo cáo giữa kỳ cho GVHD (T28); sửa định dạng quyển theo mẫu của Khoa. |  |
+| 8 | 21/09/2026 | 27/09/2026 |  | Viết bản thảo đầy đủ tám chương của quyển; tự đánh giá mức hoàn thành ba câu hỏi nghiên cứu, đề xuất ba thí nghiệm bổ sung. |  |
+| 9 | 28/09/2026 | 04/10/2026 | 02/10/2026 | Gửi báo cáo giữa kỳ cho GVHD; sửa định dạng quyển theo mẫu của Khoa. |  |
 | 10 | 05/10/2026 | 11/10/2026 |  | Tiếp thu ý kiến GVHD ngày 05/10: in một mặt, giữ bố cục tám chương, thêm phần sử dụng công cụ AI và tái lập; dựng lại quyển v3. |  |
-| 11 | 12/10/2026 | 18/10/2026 | 16/10/2026 | Rà soát định dạng, mục lục và chú thích (T47); quyển v4, 130 trang; bộ slide Hội đồng rút gọn; gửi GVHD quyển v4 và slide. |  |
-| 12 | 19/10/2026 | 25/10/2026 |  | Ghim phiên bản mô hình và thư viện, thêm mã băm dữ liệu gốc; bộ slide Hội đồng 23 trang; ba thí nghiệm bổ sung: chuyển miền sang ViFactCheck (E17), gộp đặc trưng theo từng câu phản hồi (E18), so sánh định vị bằng chú ý với cắt bỏ ngữ cảnh (E19); đưa nguồn dựng quyển vào kho mã; cập nhật quyển với kết quả mới. |  |
+| 11 | 12/10/2026 | 18/10/2026 | 16/10/2026 | Rà soát định dạng, mục lục và chú thích; quyển v4, 130 trang; bộ slide Hội đồng rút gọn; gửi GVHD quyển v4 và slide. |  |
+| 12 | 19/10/2026 | 25/10/2026 |  | Cố định phiên bản mô hình và thư viện, thêm mã băm dữ liệu gốc; bộ slide Hội đồng 23 trang; ba thí nghiệm bổ sung: chuyển sang miền tin tức trên ViFactCheck (E17), gộp đặc trưng theo từng câu phản hồi (E18), so sánh định vị bằng chú ý với cắt bỏ ngữ cảnh (E19); đưa nguồn dựng quyển vào kho mã; cập nhật quyển với kết quả mới. |  |
 | 13 | 26/10/2026 | 01/11/2026 |  | Làm bộ slide trình bày trước Hội đồng; hoàn thiện quyển báo cáo. |  |
 | 14 | 02/11/2026 | 08/11/2026 |  | Tiếp tục làm bộ slide và hoàn thiện quyển báo cáo. |  |
 | 15 | 09/11/2026 | 15/11/2026 |  | Hoàn thiện bộ slide Hội đồng (31 slide); rà dùng từ, bố cục và định dạng quyển theo mẫu báo cáo. |  |

@@ -15,7 +15,7 @@ Cả bốn bộ chuẩn hóa về đúng các cột sau, lưu Parquet tại `dat
 | `response` | str | có | Văn bản cần kiểm tra. Với ViHallu là phản hồi LLM, ba bộ còn lại là claim. |
 | `label` | str | có | `no`, `intrinsic`, `extrinsic` — xem mục 3 |
 | `label_original` | str | có | Nhãn gốc chưa ánh xạ, giữ để truy vết |
-| `evidence` | str | không | Câu bằng chứng vàng. Rỗng nếu bộ không có. |
+| `evidence` | str | không | Câu bằng chứng chuẩn. Rỗng nếu bộ không có. |
 | `evidence_start` | int | không | Vị trí ký tự bắt đầu của bằng chứng trong `context`, `-1` nếu không xác định |
 | `evidence_end` | int | không | Vị trí ký tự kết thúc, `-1` nếu không xác định |
 | `response_is_generated` | bool | có | `True` chỉ với ViHallu |
@@ -233,7 +233,7 @@ Chú ý mẫu thứ hai: ngoài bỏ dấu còn có nhân đôi ký tự (`Coo`,
 
 **Sửa số ở T10 ngày 20/08/2026: đúng là 23.783/23.784, không phải 23.785/23.786.** Con số cũ đếm cả **hai mẫu có `evidence` chỉ gồm hai ký tự xuống dòng**, tức một dòng trống. Khoảng trắng là giá trị rỗng duy nhất mà `context.find` vẫn **tìm thấy**: nó trả về vị trí của một dòng trống nào đó trong ngữ cảnh, và mẫu đó mang một `evidence_start` trỏ vào chỗ không có gì trong khi trông vẫn hợp lệ. Đúng hai mẫu, đúng hai đơn vị chênh lệch.
 
-Vì sao phải sửa chứ không mặc kệ hai dòng trên ba vạn: E06 đo hit@1, hit@3 và MRR bằng cách so đoạn được chú ý nhiều nhất với **đoạn chứa bằng chứng vàng**. Một `evidence_start` trỏ vào dòng trống sẽ được E06 coi là đáp án đúng cần trúng. Hai mẫu không đủ làm lệch kết quả, nhưng chi phí sửa bằng không và đây là loại lỗi âm thầm khó truy về sau. Hàm `find_evidence` trong `src/vihallulens/data/schema.py` vì thế coi bằng chứng chỉ gồm khoảng trắng là **không có bằng chứng**.
+Vì sao phải sửa chứ không mặc kệ hai dòng trên ba vạn: E06 đo hit@1, hit@3 và MRR bằng cách so đoạn được chú ý nhiều nhất với **đoạn chứa bằng chứng chuẩn**. Một `evidence_start` trỏ vào dòng trống sẽ được E06 coi là đáp án đúng cần trúng. Hai mẫu không đủ làm lệch kết quả, nhưng chi phí sửa bằng không và đây là loại lỗi âm thầm khó truy về sau. Hàm `find_evidence` trong `src/vihallulens/data/schema.py` vì thế coi bằng chứng chỉ gồm khoảng trắng là **không có bằng chứng**.
 
 Ngoài ra còn **đúng một mẫu trượt thật**: bằng chứng ghi `...ông Thiệu nói..` với hai dấu chấm, còn ngữ cảnh chỉ có một dấu chấm rồi xuống dòng. Đây là lỗi của bộ dữ liệu gốc, xử lý theo đúng quy tắc trên: `evidence_start = -1`, đếm vào báo cáo, không dùng khớp gần đúng.
 

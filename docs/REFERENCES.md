@@ -45,10 +45,10 @@ arXiv:2601.04711 · PDF cục bộ: `reference_papers/ViHallu/2601.04711v1.pdf` 
 | Công trình | Vai trò | Nguồn |
 |---|---|---|
 | **SemViQA** (Tran, D. X. và cộng sự, 2025) | SOTA trên cả ISE-DSC01 lẫn ViWikiFC. **Nhóm tác giả cùng Trường ĐH Công nghiệp TP.HCM** — có mã nguồn, thư viện PyPI và checkpoint công khai, và có thể hỏi trực tiếp qua GVHD nếu cần làm rõ cách tính điểm. | arXiv:2503.00955 · github.com/DAVID-NGUYEN-S16/SemViQA · pypi.org/project/semviqa · huggingface.co/SemViQA |
-| **ViWikiFC** (Le, H. T. và cộng sự, 2024) | Bộ đối chứng ngoài; bài gốc công bố số theo từng nhãn nên đối chiếu trực tiếp được. | arXiv:2405.07615 · huggingface.co/datasets/NghiemAbe/ViWikiFC |
+| **ViWikiFC** (Le, H. T. và cộng sự, 2024) | Bộ dùng để so sánh với kết quả đã công bố; bài gốc công bố số theo từng nhãn nên đối chiếu trực tiếp được. | arXiv:2405.07615 · huggingface.co/datasets/NghiemAbe/ViWikiFC |
 | **ViFactCheck** (Tran, T.-H. và cộng sự, AAAI 2025) | Bộ chuyển miền tin tức, dự phòng. | arXiv:2412.15308 · github.com/QuangDiy/ViFactCheck |
 
-Số liệu công bố dùng làm mốc so sánh: xem mục 6 của `docs/EXPERIMENTS.md`.
+Số liệu công bố dùng để so sánh: xem mục 6 của `docs/EXPERIMENTS.md`.
 
 ## 3. Công trình đọc để định vị, không tái lập
 
@@ -69,7 +69,7 @@ việc đưa vào chương 2 là T42B.
 | Công trình | Nói gì | Vì sao quan trọng với đề tài |
 |---|---|---|
 | **Hallucinated Span Detection with Multi-View Attention Features** (arXiv:2504.04335) | Đặc trưng chú ý theo từng token phản hồi — chú ý trung bình nhận vào, entropy chú ý vào và ra, cho mỗi (lớp, đầu) — đưa vào Transformer + CRF gán nhãn chuỗi. RAGTruth, Llama-3-8B-Instruct: F1 56,3 / 55,3 / 42,7 (QA / Data2Text / tóm tắt); LLM tinh chỉnh 59,7 / 50,4 / 41,6; **Lookback Lens 13,2 / 0,0 / 0,0** | Xác nhận độc lập rằng **gộp trung bình cả phản hồi là nút thắt**, không phải đặc trưng — cùng kết luận chương 7 của quyển tự đo ra. Cũng là bằng chứng hướng "hình dạng phân bố chú ý" (entropy) là một hướng nghiên cứu có thật, chỉ khác trục: họ đo trên trục token phản hồi, đề tài đo trên trục đoạn ngữ cảnh. Nền cho E18 |
-| **ContextCite** (Cohen-Wang và cộng sự, NeurIPS 2024) | Quy trách nhiệm câu trả lời cho nguồn ngữ cảnh bằng cắt bỏ nguồn và mô hình thay thế tuyến tính; vượt các baseline dùng trọng số chú ý, gradient, độ tương đồng. Kết luận **trọng số chú ý thô thường không đáng tin để quy trách nhiệm** | Câu hội đồng dễ hỏi nhất về E06: "chú ý có phải lời giải thích không?". Đề tài đo *định vị trên bằng chứng vàng* chứ không đo *quy trách nhiệm*, nên hai kết luận không mâu thuẫn — nhưng phải nói rõ ranh giới đó. Nền cho E19 |
+| **ContextCite** (Cohen-Wang và cộng sự, NeurIPS 2024) | Quy trách nhiệm câu trả lời cho nguồn ngữ cảnh bằng cắt bỏ nguồn và mô hình thay thế tuyến tính; vượt các baseline dùng trọng số chú ý, gradient, độ tương đồng. Kết luận **trọng số chú ý thô thường không đáng tin để quy trách nhiệm** | Câu hội đồng dễ hỏi nhất về E06: "chú ý có phải lời giải thích không?". Đề tài đo *định vị trên bằng chứng chuẩn* chứ không đo *quy trách nhiệm*, nên hai kết luận không mâu thuẫn — nhưng phải nói rõ ranh giới đó. Nền cho E19 |
 | **ARC-JSD** (arXiv:2505.16415, ICLR 2026) | Quy trách nhiệm bằng độ lệch Jensen–Shannon giữa phân phối đầu ra khi đủ ngữ cảnh và khi cắt bỏ từng đoạn; không tinh chỉnh, không gradient, không mô hình thay thế | Cùng thiết kế "cắt bỏ một đoạn rồi đo lại" với E08, dùng cho mục đích khác. Là phương pháp đối chứng trực tiếp cho E19 |
 | **LUMINA** (arXiv:2509.21875, ICLR 2026) | Tách mức dùng ngữ cảnh ngoài (khoảng cách phân phối) và mức dùng tri thức nội tại (biến đổi token qua các lớp); hơn các phương pháp đo mức dùng ngữ cảnh trước đó tới +13 % AUROC trên HalluRAG | Đại diện mới nhất của hướng nội tại "ngữ cảnh đối lại tri thức tham số", cùng họ với ReDeEP. Đặt cạnh Lookback Lens ở bảng 2.1 của quyển để chương 2 không dừng ở 2024 |
 

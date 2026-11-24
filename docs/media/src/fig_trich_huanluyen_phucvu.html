@@ -234,12 +234,12 @@ function draw() {
     text(x + cw / 2, cy0 + ch + 118, (share[i] * 100).toFixed(0) + '%', { size: 21.1 });
   }
   line(70, cy0 + ch + 96, 538, cy0 + ch + 96, { strokeWidth: 1.2 });
-  text(324, 482, 'Phản hồi nhìn lại từng đoạn, không nhìn lại cả khối.\nHình dạng của phân bố này là tín hiệu.', { size: 22.8 });
+  text(324, 482, 'Chú ý được tách theo từng đoạn ngữ cảnh.\nHình dạng của phân bố này là tín hiệu.', { size: 22.8 });
   logo('qwen', 500, 186, 34);
 
   /* ================= extraction panel ============================== */
   folder(1414, 258, 150, 108, 'Bốn bộ dữ liệu đã chuẩn hóa');
-  const x1 = node(1198, 384, 438, 66, 'Mẫu prompt + chia chunk theo câu');
+  const x1 = node(1198, 384, 438, 66, 'Mẫu prompt + chia đoạn theo câu');
   const x2 = node(1198, 500, 438, 66, 'Qwen2.5-7B-Instruct · NF4 4-bit');
   const x3 = node(1198, 616, 438, 66, 'Forward hook — 27 lớp × 28 đầu');
   const x4 = node(1198, 732, 438, 66, '4.536 đặc trưng mỗi mẫu (756 × 6)');
@@ -257,12 +257,12 @@ function draw() {
 
   /* ================= training / evaluation panel =================== */
   const t1 = node(196, 596, 394, 64, 'Chuẩn hóa + hồi quy logistic');
-  const t2 = node(196, 716, 394, 64, 'Chấm trên tập dev · macro-F1, ECE');
-  const t3 = node(196, 886, 394, 64, 'Chốt cấu hình, đóng gói bundle');
+  const t2 = node(196, 716, 394, 64, 'Đánh giá trên tập dev · macro-F1, ECE');
+  const t3 = node(196, 886, 394, 64, 'Chọn cấu hình, đóng gói bundle');
 
   curveArrow([393, 660], [367, 690], [393, 716], { head: 12 });
   curveArrow([393, 780], [371, 830], [393, 886], { head: 12 });
-  text(470, 847, 'nếu vượt mốc\nlookback gộp', { size: 21.1, opacity: 0.9 });
+  text(470, 847, 'nếu cao hơn\nlookback gộp', { size: 21.1, opacity: 0.9 });
 
   logo('scikitlearn', 105, 588, 40, 'scikit-learn', 21, true);
   logo('numpy',       105, 750, 40, 'NumPy', 21, true);
@@ -294,7 +294,7 @@ function draw() {
   arrow([[812, 592], [812, 644], [769, 644], [769, 682]], { strokeWidth: 1.3 });
   arrow([[660, 723], [614, 723], [614, 748], [596, 748]], { strokeWidth: 1.3 });
 
-  text(770, 838, 'Chi phí biên trong hệ RAG\ntự giám sát: chưa đo', { size: 21.1 });
+  text(770, 838, 'Chi phí tăng thêm khi\ntự kiểm tra: chưa đo', { size: 21.1 });
 
   node(652, 920, 462, 66, 'Cảnh báo ảo giác + tô màu đoạn ngữ cảnh', { size: 21.7 });
   arrow([[1106, 550], [1136, 550], [1136, 953], [1114, 953]], { strokeWidth: 1.3 });

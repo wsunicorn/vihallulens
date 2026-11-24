@@ -69,7 +69,7 @@ có đúng một mục con, và khi tệp ảnh không tồn tại.
 
 ## Quy ước dùng từ
 
-Chốt ngày 15/11/2026 sau lượt rà văn phong cả quyển. Áp dụng cho quyển, bộ slide, sổ tay chuẩn
+Chốt ngày 15/11/2026 sau lượt rà văn phong cả quyển, bổ sung ngày 24/11/2026. Áp dụng cho quyển, bộ slide, sổ tay chuẩn
 bị bảo vệ và tài liệu trong `docs/`.
 
 - **Văn học thuật, không văn nói.** Thay cách nói đời thường và cách nhân hóa mô hình bằng từ chuẩn:
@@ -91,9 +91,27 @@ bị bảo vệ và tài liệu trong `docs/`.
   | bịa, nói sai, tự thêm | không có căn cứ, mâu thuẫn với ngữ cảnh, bổ sung thông tin không có trong ngữ cảnh |
   | khóa bằng ca kiểm thử | được kiểm tra bằng ca kiểm thử |
   | chưa học được gì, học được (XLM-R) | tương ứng với dự đoán đồng đều cho ba lớp, hội tụ |
+  | mốc (baseline) | phương pháp so sánh; *ngưỡng* khi nói giá trị phải vượt; *bước* khi nói tiến độ |
+  | đầu mạnh nhất | đầu định vị tốt nhất; *đầu có trọng số lớn nhất* khi nói bộ phân loại |
+  | tự giám sát / giám sát ngoài | kịch bản tự kiểm tra / kiểm tra bằng mô hình khác |
+  | bằng chứng vàng, câu vàng | bằng chứng chuẩn, câu bằng chứng |
+  | vùng nhiễu | phạm vi sai số ngẫu nhiên |
+  | đổi dấu, đổi chiều | lúc dương, lúc âm |
+  | độ phân giải, độ mịn (của đoạn) | kích thước đoạn |
+  | độ trôi | mức chênh lệch |
+  | bậc thang | mô hình đọc nhỏ hơn |
+  | đối chứng ngoài | so sánh với kết quả đã công bố |
+  | khái quát hóa chéo bộ | đánh giá chéo bộ dữ liệu |
+  | khớp (fit) | huấn luyện |
+  | sụt | giảm |
 
   "Chấm" theo nghĩa dấu chấm của biểu đồ, nút "Chấm" trên giao diện web, và các câu trích nguyên
   văn (Phụ lục G) giữ nguyên.
+- **Gọi tên, không gọi mã trơ.** Viết "tên ngắn (Exx)" theo Bảng 3.6; nhắc H hay CH thì nhắc kèm nội
+  dung. `docs/EXPERIMENTS.md` được dùng mã vì là sổ ghi thí nghiệm.
+- **Giải thích thuật ngữ ở lần xuất hiện đầu**; mỗi mục chương 6 theo bốn bước: câu hỏi, cách làm, kết
+  quả chính, diễn giải.
+- **Chữ trong hình theo cùng bảng từ** (`docs/media/src`); đổi chữ xong phải vẽ lại và xem có tràn không.
 - **Dùng thuật ngữ gốc khi bản dịch không tự nhiên:** seed, dev/test, prompt, token, forward hook.
 - **Hạn chế gạch ngang dài " — " để chêm ý.** Dùng dấu phẩy, hai chấm, chấm phẩy hoặc ngoặc đơn;
   định nghĩa viết tắt viết "(Large Language Model, LLM)". Giữ " — " ở trang bìa, trong bảng và
