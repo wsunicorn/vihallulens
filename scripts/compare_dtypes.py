@@ -93,6 +93,52 @@ def extract_all(extractor, samples, dtype_name: str):
     return results
 
 
+FLOAT32_LATE = "float32_late"
+
+
+def to_float32_activations(model) -> int:
+    """Run an already loaded NF4 model with float32 activations. Returns tensors converted.
+
+    Loading Sailor2-8B in float32 does not fit on a T4: transformers casts every tensor to the
+    compute dtype on the card *before* bitsandbytes quantises it. Loading in float16 does fit, and
+    what overflows is the activations, not the NF4 weights. So the model is loaded in float16 and
+    everything that is not a 4-bit weight (embeddings, norms, biases) is widened afterwards, and
+    the 4-bit layers are told to compute in float32.
+
+    The weights are the ones quantised from float16, so this is not bit-for-bit the float32 run of
+    T07. Running Qwen2.5-7B the same way shows how far apart the two are: T07 measured 0.0007.
+    """
+    import torch
+
+    converted = 0
+    for module in model.modules():
+        if hasattr(module, "compute_dtype"):
+            module.compute_dtype = torch.float32
+            module.compute_type_is_set = True
+        for name, parameter in module.named_parameters(recurse=False):
+            four_bit = name == "weight" and hasattr(module, "compute_dtype")
+            if parameter.is_floating_point() and not four_bit:
+                parameter.data = parameter.data.float()
+                converted += 1
+    # logits are never read here, and 4.096 rows of float32 logits would cost 2,5 GB
+    model.lm_head = torch.nn.Identity()
+    return converted
+
+
+def load_extractor(model_name: str, dtype_name: str, max_context_tokens: int):
+    """``AttentionExtractor``, with the extra ``float32_late`` route described above."""
+    late = dtype_name == FLOAT32_LATE
+    extractor = AttentionExtractor(
+        model_name,
+        max_context_tokens=max_context_tokens,
+        device="cuda",
+        compute_dtype="float16" if late else dtype_name,
+    )
+    if late:
+        print(f"    chuyển {to_float32_activations(extractor.model)} tensor sang float32")
+    return extractor
+
+
 def save_run(path: Path, results, n_layers: int, model: str, dtype_name: str) -> None:
     """Keep one dtype pass on disk, so the other one can run in a process of its own.
 
@@ -222,7 +268,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Compare float16 and float32 extraction.")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument(
-        "--dtype", default="float16", choices=("float16", "bfloat16"),
+        "--dtype", default="float16", choices=("float16", "bfloat16", FLOAT32_LATE),
         help="kiểu số ĐANG XÉT — lượt này chạy trước và danh sách lớp tràn số lấy từ nó. Mặc "
              "định float16 vì đó là kiểu số đã chốt ở mục 3 CONVENTIONS.md. Đổi sang bfloat16 khi "
              "float16 đã đo được là không dùng nổi, như Qwen2.5-1.5B ở T31.",
@@ -283,12 +329,7 @@ def main() -> int:
     n_layers = None
     for dtype_name in wanted:
         try:
-            extractor = AttentionExtractor(
-                args.model,
-                max_context_tokens=args.max_context_tokens,
-                device="cuda",
-                compute_dtype=dtype_name,
-            )
+            extractor = load_extractor(args.model, dtype_name, args.max_context_tokens)
             runs[dtype_name] = extract_all(extractor, samples, dtype_name)
             n_layers = len(extractor.layer_indices)
             del extractor
