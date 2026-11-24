@@ -22,6 +22,8 @@ from vihallulens.judge.client import (
 )
 from vihallulens.judge.prompt import (
     RESPONSE_SCHEMA,
+    RUBRIC,
+    RUBRIC_FULL,
     VERDICT_TO_LABEL,
     build_prompt,
     clamp_confidence,
@@ -497,3 +499,11 @@ def test_a_different_model_does_not_reuse_the_first_one_s_answers(tmp_path):
     judge_one(client, cache, row, "model-a")
     record, _ = judge_one(None, cache, row, "model-b")
     assert "chưa có trong cache" in record["error"]
+
+
+def test_published_rubric_is_unchanged_and_full_one_extends_it():
+    """E10's published row was measured with v1, so its wording must stay reproducible."""
+    assert RUBRIC_FULL.startswith(RUBRIC)
+    assert "BÁC BỎ" in RUBRIC_FULL and "BÁC BỎ" not in RUBRIC
+    assert "72 tuần" in build_prompt("a", "b", rubric="full")
+    assert "72 tuần" not in build_prompt("a", "b")

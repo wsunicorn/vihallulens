@@ -84,7 +84,7 @@ def choose_samples(frame, limit: int, seed: int = REQUIRED_SPLIT_SEED):
     return picked.sort_values("sample_id").reset_index(drop=True)
 
 
-def judge_one(judge, cache, row, model: str) -> tuple[dict, bool]:
+def judge_one(judge, cache, row, model: str, rubric: str = "v1") -> tuple[dict, bool]:
     """One verdict, from the cache when possible. Returns the record and whether it was fresh.
 
     ``model`` is passed in rather than read off ``judge``, because a dry run has no judge and
@@ -92,7 +92,7 @@ def judge_one(judge, cache, row, model: str) -> tuple[dict, bool]:
     fell back to the string ``"dry-run"``, so ``--dry-run`` computed a key that could never
     match anything and reported all 300 samples as missing from a cache that held all 300.
     """
-    prompt = build_prompt(row["context"], row["response"], row.get("question", ""))
+    prompt = build_prompt(row["context"], row["response"], row.get("question", ""), rubric)
     cached = cache.get(cache_key(model, prompt))
     if cached is not None:
         return cached, False
@@ -163,6 +163,9 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--rpm", type=int, default=DEFAULT_RPM,
                         help="số lượt gọi mỗi phút; để dưới hạn mức free tier")
+    parser.add_argument("--rubric", choices=("v1", "full"), default="v1",
+                        help="v1 là tiêu chí của lượt đã công bố; full thêm phép thử và quy tắc "
+                             "số liệu sai của bản hướng dẫn gán nhãn (T19B)")
     parser.add_argument("--dry-run", action="store_true",
                         help="không gọi API, chỉ chấm những mẫu đã có trong cache")
     parser.add_argument("--interim-dir", type=Path, default=DEFAULT_INTERIM_DIR)
@@ -206,7 +209,7 @@ def main() -> int:
     stopped_early = None
     for position, row in enumerate(chosen.to_dict("records"), start=1):
         try:
-            record, is_fresh = judge_one(judge, cache, row, args.model)
+            record, is_fresh = judge_one(judge, cache, row, args.model, args.rubric)
         except QuotaExhaustedError as error:
             stopped_early = str(error)
             break
@@ -306,7 +309,8 @@ def main() -> int:
     config = {
         "experiment": "E10",
         "dataset": {"name": args.dataset, "split_seed": REQUIRED_SPLIT_SEED},
-        "judge": {"model": args.model, "temperature": 0.0, "limit": args.limit},
+        "judge": {"model": args.model, "temperature": 0.0, "limit": args.limit,
+                  "rubric": args.rubric},
     }
     extra = {
         "n_test": len(y_pred),
@@ -338,7 +342,8 @@ def main() -> int:
         print("  đúng thứ cần kiểm.")
         return 0
 
-    record = log_result(RUN_NAME, config, {**point, **spread}, extra, path=args.results_path)
+    run_name = RUN_NAME if args.rubric == "v1" else f"{RUN_NAME}_{args.rubric}"
+    record = log_result(run_name, config, {**point, **spread}, extra, path=args.results_path)
     print()
     print(f"  Đã ghi {args.results_path} — config_hash {record['config_hash']}")
     print(f"  Cache: {len(cache):,} câu trả lời, {cache.writes:,} mới ghi lần này")

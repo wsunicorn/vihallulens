@@ -22,11 +22,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from compare_dtypes import (  # noqa: E402
+    FLOAT32_LATE,
     load_run,
     overall_report,
     per_layer_report,
     report_saved,
     save_run,
+    to_float32_activations,
 )
 
 N_LAYERS = 4
@@ -151,3 +153,21 @@ def test_two_saved_passes_are_compared(tmp_path, capsys):
 def test_saved_passes_of_different_models_are_refused(tmp_path):
     with pytest.raises(SystemExit, match="model"):
         report_saved(saved(tmp_path, "a", 0.0), saved(tmp_path, "b", 0.0, model="other"))
+
+
+def test_late_conversion_widens_activations_but_not_the_quantised_weights():
+    import torch
+
+    class FourBit(torch.nn.Linear):
+        compute_dtype = torch.float16
+
+    layer = FourBit(3, 3).half()
+    model = torch.nn.Module()
+    model.embed, model.proj = torch.nn.Embedding(4, 3).half(), layer
+    model.lm_head = torch.nn.Linear(3, 4).half()
+    assert to_float32_activations(model) == 4  # embedding, the bias, and lm_head's two
+    assert model.embed.weight.dtype == torch.float32
+    assert layer.weight.dtype == torch.float16 and layer.bias.dtype == torch.float32
+    assert layer.compute_dtype == torch.float32
+    assert isinstance(model.lm_head, torch.nn.Identity)
+    assert FLOAT32_LATE == "float32_late"

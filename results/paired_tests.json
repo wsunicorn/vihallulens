@@ -1,0 +1,268 @@
+{
+  "h2": [
+    {
+      "name": "ViHallu, Qwen2.5-7B",
+      "a": "e03_chunk_aware",
+      "b": "e02_lookback_lens",
+      "n": 700,
+      "macro_a": 0.7567130878616751,
+      "macro_b": 0.7451033243486074,
+      "delta": 0.01160976351306775,
+      "lo": -0.023312683525917664,
+      "hi": 0.04533033785344971,
+      "p_bootstrap": 0.524,
+      "mcnemar": {
+        "only_a": 81,
+        "only_b": 72,
+        "p": 0.5179210307990438
+      },
+      "p_holm": 1.0
+    },
+    {
+      "name": "ViHallu, Qwen2.5-3B",
+      "a": "e14_qwen3b_vihallu",
+      "b": "e14_baseline_lookback_qwen3b",
+      "n": 700,
+      "macro_a": 0.7216742627216105,
+      "macro_b": 0.7345172963016061,
+      "delta": -0.01284303357999561,
+      "lo": -0.04416348578980105,
+      "hi": 0.01862342658833588,
+      "p_bootstrap": 0.4254,
+      "mcnemar": {
+        "only_a": 61,
+        "only_b": 70,
+        "p": 0.4847202181285303
+      },
+      "p_holm": 1.0
+    },
+    {
+      "name": "ViHallu, Qwen2.5-1.5B",
+      "a": "e14_qwen15b_vihallu",
+      "b": "e14_baseline_lookback_qwen15b",
+      "n": 700,
+      "macro_a": 0.7345479581901021,
+      "macro_b": 0.7231918893683599,
+      "delta": 0.011356068821742227,
+      "lo": -0.005635487414534374,
+      "hi": 0.028603367715171826,
+      "p_bootstrap": 0.1974,
+      "mcnemar": {
+        "only_a": 23,
+        "only_b": 15,
+        "p": 0.2558750795433298
+      },
+      "p_holm": 0.987
+    },
+    {
+      "name": "ViHallu, Sailor2-8B",
+      "a": "e13_sailor2_vihallu",
+      "b": "e13_baseline_lookback_sailor2",
+      "n": 697,
+      "macro_a": 0.7119706095997854,
+      "macro_b": 0.7377312962118631,
+      "delta": -0.025760686612077643,
+      "lo": -0.05701142228507642,
+      "hi": 0.005328173702774156,
+      "p_bootstrap": 0.10620000000000007,
+      "mcnemar": {
+        "only_a": 51,
+        "only_b": 69,
+        "p": 0.12032782773865786
+      },
+      "p_holm": 0.6688
+    },
+    {
+      "name": "ISE-DSC01, 29.077 mẫu huấn luyện",
+      "a": "e07_chunk_aware_isedsc01",
+      "b": "e07_baseline_lookback_isedsc01",
+      "n": 3646,
+      "macro_a": 0.791857745261237,
+      "macro_b": 0.7850886930667539,
+      "delta": 0.006769052194483094,
+      "lo": -0.0009923121920251906,
+      "hi": 0.014445254603870005,
+      "p_bootstrap": 0.088,
+      "mcnemar": {
+        "only_a": 117,
+        "only_b": 92,
+        "p": 0.09665740462816495
+      },
+      "p_holm": 0.6688
+    },
+    {
+      "name": "ISE-DSC01, 5.600 mẫu huấn luyện",
+      "a": "e07_chunk_aware_isedsc01_train5600",
+      "b": "e07_baseline_lookback_isedsc01_train5600",
+      "n": 3646,
+      "macro_a": 0.7387612082568048,
+      "macro_b": 0.7337406388547701,
+      "delta": 0.005020569402034658,
+      "lo": -0.004545681841321617,
+      "hi": 0.014502785053370633,
+      "p_bootstrap": 0.3034,
+      "mcnemar": {
+        "only_a": 164,
+        "only_b": 145,
+        "p": 0.30583693464798223
+      },
+      "p_holm": 1.0
+    },
+    {
+      "name": "ViWikiFC",
+      "a": "e15_chunk_viwikifc",
+      "b": "e15_baseline_lookback_viwikifc",
+      "n": 2091,
+      "macro_a": 0.7053720387824057,
+      "macro_b": 0.7066029941681286,
+      "delta": -0.0012309553857228206,
+      "lo": -0.013201864568988609,
+      "hi": 0.010604775210934012,
+      "p_bootstrap": 0.8464,
+      "mcnemar": {
+        "only_a": 79,
+        "only_b": 82,
+        "p": 0.874817867201542
+      },
+      "p_holm": 1.0
+    },
+    {
+      "name": "ViFactCheck",
+      "a": "e17_chunk_vifactcheck",
+      "b": "e17_baseline_lookback_vifactcheck",
+      "n": 1447,
+      "macro_a": 0.7257561570123068,
+      "macro_b": 0.7031853258033222,
+      "delta": 0.02257083120898462,
+      "lo": -0.002852397893374195,
+      "hi": 0.04781863247674135,
+      "p_bootstrap": 0.0836,
+      "mcnemar": {
+        "only_a": 189,
+        "only_b": 158,
+        "p": 0.10715767299864426
+      },
+      "p_holm": 0.6688
+    }
+  ],
+  "others": [
+    {
+      "name": "Lookback gộp − đặc trưng bề mặt",
+      "a": "e02_lookback_lens",
+      "b": "e01_surface_baseline",
+      "n": 700,
+      "macro_a": 0.7451033243486074,
+      "macro_b": 0.6562428116984713,
+      "delta": 0.08886051265013606,
+      "lo": 0.04879290708043928,
+      "hi": 0.12903379700700557,
+      "p_bootstrap": 0.0,
+      "mcnemar": {
+        "only_a": 136,
+        "only_b": 77,
+        "p": 6.395153672735604e-05
+      }
+    },
+    {
+      "name": "Chunk-aware − đặc trưng bề mặt",
+      "a": "e03_chunk_aware",
+      "b": "e01_surface_baseline",
+      "n": 700,
+      "macro_a": 0.7567130878616751,
+      "macro_b": 0.6562428116984713,
+      "delta": 0.10047027616320381,
+      "lo": 0.06334896790062487,
+      "hi": 0.1368152619647906,
+      "p_bootstrap": 0.0,
+      "mcnemar": {
+        "only_a": 119,
+        "only_b": 51,
+        "p": 1.9236599430848328e-07
+      }
+    },
+    {
+      "name": "PhoBERT − lookback gộp",
+      "a": "e09_phobert",
+      "b": "e02_lookback_lens",
+      "n": 700,
+      "macro_a": 0.748663484832481,
+      "macro_b": 0.7451033243486074,
+      "delta": 0.0035601604838736423,
+      "lo": -0.02871082176976546,
+      "hi": 0.03543123408623219,
+      "p_bootstrap": 0.832
+    },
+    {
+      "name": "PhoBERT − chunk-aware",
+      "a": "e09_phobert",
+      "b": "e03_chunk_aware",
+      "n": 700,
+      "macro_a": 0.748663484832481,
+      "macro_b": 0.7567130878616751,
+      "delta": -0.008049603029194108,
+      "lo": -0.0382517504835045,
+      "hi": 0.022052340511254164,
+      "p_bootstrap": 0.607
+    },
+    {
+      "name": "XLM-R − lookback gộp",
+      "a": "e09_xlmr",
+      "b": "e02_lookback_lens",
+      "n": 700,
+      "macro_a": 0.7761832106969129,
+      "macro_b": 0.7451033243486074,
+      "delta": 0.031079886348305497,
+      "lo": 0.0008417482769524921,
+      "hi": 0.06132916443638017,
+      "p_bootstrap": 0.0446
+    },
+    {
+      "name": "XLM-R − chunk-aware",
+      "a": "e09_xlmr",
+      "b": "e03_chunk_aware",
+      "n": 700,
+      "macro_a": 0.7761832106969129,
+      "macro_b": 0.7567130878616751,
+      "delta": 0.019470122835237746,
+      "lo": -0.01022465430967875,
+      "hi": 0.04974301969113084,
+      "p_bootstrap": 0.2018
+    },
+    {
+      "name": "Lookback gộp − Gemini (300 mẫu)",
+      "a": "e02_lookback_lens",
+      "b": "e10_gemini_judge",
+      "n": 300,
+      "macro_a": 0.7310407994756419,
+      "macro_b": 0.6637388843518897,
+      "delta": 0.06730191512375228,
+      "lo": -0.0014914810022340537,
+      "hi": 0.13426568964413318,
+      "p_bootstrap": 0.054,
+      "mcnemar": {
+        "only_a": 66,
+        "only_b": 45,
+        "p": 0.05716364524660199
+      }
+    },
+    {
+      "name": "Chunk-aware − Gemini (300 mẫu)",
+      "a": "e03_chunk_aware",
+      "b": "e10_gemini_judge",
+      "n": 300,
+      "macro_a": 0.7372993491409595,
+      "macro_b": 0.6637388843518897,
+      "delta": 0.07356046478906986,
+      "lo": 0.010254124796966897,
+      "hi": 0.1376784981184072,
+      "p_bootstrap": 0.0234,
+      "mcnemar": {
+        "only_a": 57,
+        "only_b": 34,
+        "p": 0.020584209038374254
+      }
+    }
+  ],
+  "rounds": 10000,
+  "seed": 42
+}
