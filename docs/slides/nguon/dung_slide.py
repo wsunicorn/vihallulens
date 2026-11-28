@@ -204,14 +204,14 @@ class Page:
         rect(sh, 0, 0.075, 13.333, 0.035, "E9E4D6")
         rect(sh, 0, 0.075, 13.333 * self.n / TOTAL, 0.035, GOLD)
         picture(sh, HERE / "img" / "logo.svg", 0.55, 0.2, h=0.4)
-        text(sh, 1.75, 0.27, 2.8, 0.3, "Báo cáo khóa luận tốt nghiệp", size=12, color=MUTED)
+        text(sh, 1.75, 0.27, 2.8, 0.3, "Báo cáo khóa luận tốt nghiệp", size=13, color=MUTED)
         nav = sh.add_textbox(Inches(4.45), Inches(0.27), Inches(8.33), Inches(0.3))
         tf = nav.text_frame
         tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
         p = tf.paragraphs[0]
         p.alignment = R
         for k, name in enumerate(PARTS):
-            _run(p, name + ("   " if k < len(PARTS) - 1 else ""), 11.5,
+            _run(p, name + ("   " if k < len(PARTS) - 1 else ""), 12,
                  IUH if k == part else "8A8F99", k == part, False)
         line(sh, 0.55, 0.72, 12.78, 0.72, RULE, 1)
         text(sh, 0.55, 0.8, 0.85, 0.62, f"{part + 1:02d}", size=34, bold=True, color=IUH, anchor=MID)
@@ -219,8 +219,8 @@ class Page:
         text(sh, 1.55, 0.78, 11.2, 0.5, title, size=28, bold=True, color=INK, anchor=MID)
         text(sh, 1.55, 1.27, 11.2, 0.38, takeaway, size=17, color=CTX, anchor=MID)
         line(sh, 0.55, 7.0, 12.78, 7.0, RULE, 0.75)
-        text(sh, 0.55, 7.05, 11.3, 0.36, source, size=10.5, color=MUTED)
-        text(sh, 11.9, 7.05, 0.88, 0.3, f"{self.n}/{TOTAL}", size=11, color=MUTED, align=R)
+        text(sh, 0.55, 7.04, 11.3, 0.4, source, size=11.5, color=MUTED)
+        text(sh, 11.9, 7.05, 0.88, 0.3, f"{self.n}/{TOTAL}", size=12, color=MUTED, align=R)
 
     def group(self):
         g = self.s.shapes.add_group_shape()
@@ -332,10 +332,10 @@ for k, (role, name, sub) in enumerate([("Sinh viên thực hiện", "Nguyễn Ng
                                         "Khoa Công nghệ Thông tin")]):
     x = 0.8 + k * 2.55
     rect(sh, x, 5.3, 0.05, 0.95, GOLD)
-    text(sh, x + 0.18, 5.27, 2.35, 1.0, [(role, dict(size=11, color=MUTED, bold=True)),
-                                         (name, dict(size=16, bold=True)),
-                                         (sub, dict(size=12, color=MUTED))])
-text(sh, 0.8, 6.75, 6, 0.35, "Thành phố Hồ Chí Minh, tháng 12 năm 2026", size=13, color=MUTED)
+    text(sh, x + 0.18, 5.27, 2.35, 1.0, [(role, dict(size=12.5, color=MUTED, bold=True)),
+                                         (name, dict(size=16.5, bold=True)),
+                                         (sub, dict(size=13.5, color=MUTED))])
+text(sh, 0.8, 6.75, 6, 0.35, "Thành phố Hồ Chí Minh, tháng 12 năm 2026", size=14.5, color=MUTED)
 pages.append(pg)
 
 # 2 ------------------------------------------------------------------------- Ch1: three classes
@@ -354,8 +354,8 @@ ctx = ["Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng.
 for i, s in enumerate(ctx):
     y = 2.5 + i * 1.05
     box(sh, 0.8, y, 4.3, 0.95, CTXS, r=0.06)
-    text(sh, 0.95, y + 0.06, 1.0, 0.25, f"Câu {i + 1}", size=12, bold=True, color=CTX)
-    text(sh, 0.95, y + 0.33, 4.05, 0.6, s, size=14)
+    text(sh, 0.95, y + 0.06, 1.0, 0.25, f"Câu {i + 1}", size=13, bold=True, color=CTX)
+    text(sh, 0.95, y + 0.31, 4.05, 0.62, s, size=15)
 resp = [("TRUNG THỰC", OK, "Hà Nội từng mang tên Thăng Long dưới triều **Lý**.",
          "Mọi ý đều có trong tài liệu (câu 2)", "0,001"),
         ("ẢO GIÁC NỘI TẠI", WARN, "Hà Nội từng mang tên Thăng Long dưới triều **Trần**, khi dân số đã "
@@ -367,11 +367,11 @@ for i, (lab, col, s, why, risk) in enumerate(resp):
     y = 1.85 + i * 1.68
     box(g, 5.55, y, 7.23, 1.55, WHITE, RULE, 1.25, r=0.1)
     rect(g, 5.55, y + 0.06, 0.08, 1.43, col)
-    pill(g, 5.8, y + 0.14, 2.1, 0.34, lab, col, size=12)
+    pill(g, 5.8, y + 0.13, 2.4, 0.36, lab, col, size=13.5)
     text(g, 5.8, y + 0.58, 5.4, 0.62, s, size=16)
-    text(g, 5.8, y + 1.15, 5.4, 0.3, why, size=13, bold=True, color=col)
-    text(g, 11.25, y + 0.14, 1.35, 0.28, "Điểm rủi ro", size=12, color=MUTED, align=R)
-    text(g, 10.95, y + 0.45, 1.65, 0.6, risk, size=28, bold=True, color=col, align=R)
+    text(g, 5.8, y + 1.13, 5.4, 0.32, why, size=14.5, bold=True, color=col)
+    text(g, 11.05, y + 0.14, 1.55, 0.3, "Điểm rủi ro", size=13.5, color=MUTED, align=R)
+    text(g, 10.95, y + 0.47, 1.65, 0.6, risk, size=30, bold=True, color=col, align=R)
 pages.append(pg)
 
 # 3 ------------------------------------------------------------------------- Ch1: problem, motivation
@@ -389,7 +389,7 @@ flow = [("Đầu vào", "Ngữ cảnh, câu hỏi và câu trả lời của b�
 for k, (h, b) in enumerate(flow):
     x = 0.55 + k * 4.12
     box(sh, x, 1.88, 3.85, 1.3, CTXS if k == 1 else WHITE, CTX if k == 1 else RULE, 1.5, r=0.1)
-    text(sh, x + 0.2, 1.93, 3.5, 1.2, [(h, dict(size=16, bold=True, color=CTX)), (b, dict(size=14.5))],
+    text(sh, x + 0.2, 1.93, 3.5, 1.2, [(h, dict(size=17, bold=True, color=CTX)), (b, dict(size=15.5))],
          anchor=MID)
     if k < 2:
         line(sh, x + 3.88, 2.53, x + 4.09, 2.53, CTX, 2.25, head=True)
@@ -405,18 +405,18 @@ for k, (ic, h, b, note) in enumerate([
     x = 0.55 + k * 4.12
     box(g, x, 3.85, 3.85, 1.8, WHITE, RULE, 1.25, r=0.1)
     icon(g, ic, x + 0.2, 4.0, 0.42, BAD)
-    text(g, x + 0.75, 3.98, 3.0, 0.46, h, size=15, bold=True, anchor=MID)
-    text(g, x + 0.2, 4.55, 3.5, 0.75, b, size=14)
-    text(g, x + 0.2, 5.22, 3.5, 0.35, "Ưu điểm: " + note[0].lower() + note[1:], size=12.5, color=OK, bold=True)
+    text(g, x + 0.75, 3.98, 3.0, 0.46, h, size=16, bold=True, anchor=MID)
+    text(g, x + 0.2, 4.52, 3.55, 0.75, b, size=15)
+    text(g, x + 0.2, 5.22, 3.5, 0.35, "Ưu điểm: " + note[0].lower() + note[1:], size=14, color=OK, bold=True)
 g = pg.group()
-text(g, 0.55, 5.74, 12, 0.32, "Yêu cầu đặt ra cho đề tài", size=14.5, bold=True)
+text(g, 0.55, 5.74, 12, 0.32, "Yêu cầu đặt ra cho đề tài", size=16, bold=True)
 for k, (ic, t) in enumerate([("users", "Không gọi mô hình giám khảo"), ("lock", "Không tinh chỉnh mô "
-                             "hình ngôn ngữ"), ("cpu", "Chạy trên một GPU 16 GB"),
+                             "hình ngôn ngữ"), ("cpu", "Chạy trên GPU 16 GB"),
                              ("flag", "Tiếng Việt, ba lớp nhãn")]):
     x = 0.55 + k * 3.09
     box(g, x, 6.12, 2.95, 0.68, INK, r=0.12)
     icon(g, ic, x + 0.16, 6.28, 0.36, WHITE)
-    text(g, x + 0.62, 6.12, 2.25, 0.68, t, size=13.5, bold=True, color=WHITE, anchor=MID)
+    text(g, x + 0.62, 6.12, 2.28, 0.68, t, size=14.5, bold=True, color=WHITE, anchor=MID)
 pages.append(pg)
 
 # 4 ------------------------------------------------------------------------- Ch1: gaps, questions
@@ -441,12 +441,12 @@ for k, (col, ic, gk, gs, qk, qs, hs) in enumerate(cols):
     card(g, x, 1.88, 3.95, 2.0, col)
     icon(g, ic, x + 0.22, 2.1, 0.42, col)
     text(g, x + 0.78, 2.08, 3.05, 0.46, gk, size=15, bold=True, color=col, anchor=MID)
-    text(g, x + 0.22, 2.65, 3.55, 1.15, gs, size=15)
+    text(g, x + 0.22, 2.62, 3.6, 1.2, gs, size=16)
     line(g, x + 1.975, 3.95, x + 1.975, 4.3, col, 2.5, head=True)
     box(g, x, 4.38, 3.95, 2.42, WHITE, col, 2, r=0.1)
     text(g, x + 0.22, 4.5, 3.55, 0.34, qk, size=15, bold=True, color=col)
-    text(g, x + 0.22, 4.88, 3.55, 1.3, qs, size=15.5)
-    text(g, x + 0.22, 6.32, 3.55, 0.34, "Giả thuyết: " + hs, size=13.5, bold=True, color=MUTED)
+    text(g, x + 0.22, 4.86, 3.6, 1.4, qs, size=16.5)
+    text(g, x + 0.22, 6.32, 3.55, 0.34, "Giả thuyết: " + hs, size=15, bold=True, color=MUTED)
 pages.append(pg)
 
 # 5 ------------------------------------------------------------------------- Ch2: related work
@@ -467,7 +467,7 @@ rows = [("Hướng", "Công trình tiêu biểu", "Phải huấn luyện", "Chi 
          "Một lượt đọc cho mỗi đoạn", "Chi phí tăng theo số đoạn"),
         ("Trọng số chú ý (khóa luận)", "Lookback Lens, ReDeEP, Ogasa và Arase", "Bộ phân loại tuyến tính",
          "Một lượt đọc", "Cần mô hình mã nguồn mở")]
-widths = [2.55, 2.55, 2.25, 2.2, 2.68]
+widths = [2.45, 2.5, 2.55, 2.2, 2.53]
 tbl = sh.add_table(len(rows), len(widths), Inches(0.55), Inches(1.9), Inches(sum(widths)),
                    Inches(4.8)).table
 for j, w in enumerate(widths):
@@ -482,7 +482,7 @@ for i, row in enumerate(rows):
         cell.fill.fore_color.rgb = rgb(INK if i == 0 else CTXS if i == len(rows) - 1 else
                                        WHITE if i % 2 else PAPER2)
         cell.text_frame.word_wrap = True
-        _run(cell.text_frame.paragraphs[0], v, 14.5, WHITE if i == 0 else CTX if i == len(rows) - 1
+        _run(cell.text_frame.paragraphs[0], v, 16, WHITE if i == 0 else CTX if i == len(rows) - 1
              and j == 0 else INK, i == 0 or i == len(rows) - 1 or j == 0, False)
 pages.append(pg)
 
@@ -501,7 +501,7 @@ ws = [0.05, 0.08, 0.30, 0.09, 0.04, 0.04]
 for i, (t, w) in enumerate(zip(toks, ws, strict=True)):
     y = 2.45 + i * 0.38
     box(sh, 0.8, y, 1.3, 0.31, WHITE, CTX, 1.25, r=0.05)
-    text(sh, 0.8, y, 1.3, 0.31, t, size=12.5, align=C, anchor=MID)
+    text(sh, 0.8, y, 1.3, 0.31, t, size=14, align=C, anchor=MID)
     line(sh, 2.13, y + 0.15, 2.95, 3.55, CTX, 0.8 + w * 18)
 box(sh, 2.95, 3.32, 0.95, 0.46, RESS, RES, 1.75, r=0.06)
 text(sh, 2.95, 3.32, 0.95, 0.46, "1994", size=16, bold=True, align=C, anchor=MID)
@@ -509,22 +509,22 @@ for i, (t, w) in enumerate(zip(["UNESCO", "công", "nhận", "năm"], [0.06, 0.0
                                strict=True)):
     y = 2.83 + i * 0.38
     box(sh, 4.95, y, 1.35, 0.31, WHITE, RES, 1.25, r=0.05)
-    text(sh, 4.95, y, 1.35, 0.31, t, size=12.5, align=C, anchor=MID)
+    text(sh, 4.95, y, 1.35, 0.31, t, size=14, align=C, anchor=MID)
     line(sh, 3.92, 3.55, 4.92, y + 0.15, RES, 0.8 + w * 18)
-text(sh, 0.8, 4.78, 1.6, 0.28, "Tài liệu", size=12.5, bold=True, color=CTX)
-text(sh, 4.6, 4.38, 1.9, 0.28, "Câu trả lời đã viết", size=12.5, bold=True, color=RES, align=R)
+text(sh, 0.8, 4.76, 1.6, 0.3, "Tài liệu", size=14, bold=True, color=CTX)
+text(sh, 4.3, 4.36, 2.2, 0.3, "Câu trả lời đã viết", size=14, bold=True, color=RES, align=R)
 g = pg.group()
-text(g, 0.8, 5.12, 3.2, 0.3, "Chú ý trung bình mỗi từ của tài liệu", size=13, color=MUTED)
+text(g, 0.8, 5.1, 3.4, 0.3, "Chú ý trung bình mỗi từ của tài liệu", size=14, color=MUTED)
 rect(g, 0.8, 5.44, 2.4, 0.24, PAPER2)
 rect(g, 0.8, 5.44, 2.0, 0.24, CTX)
-text(g, 3.3, 5.38, 0.7, 0.32, "0,10", size=15, bold=True, color=CTX)
-text(g, 0.8, 5.8, 3.3, 0.3, "Chú ý trung bình mỗi từ đã viết trước", size=13, color=MUTED)
+text(g, 3.3, 5.38, 0.75, 0.32, "0,10", size=16, bold=True, color=CTX)
+text(g, 0.8, 5.78, 3.4, 0.3, "Chú ý trung bình mỗi từ đã viết trước", size=14, color=MUTED)
 rect(g, 0.8, 6.12, 2.4, 0.24, PAPER2)
 rect(g, 0.8, 6.12, 1.25, 0.24, RES)
-text(g, 3.3, 6.06, 0.7, 0.32, "0,06", size=15, bold=True, color=RES)
+text(g, 3.3, 6.06, 0.75, 0.32, "0,06", size=16, bold=True, color=RES)
 box(g, 4.15, 5.12, 2.2, 1.5, CTXS, r=0.1)
-text(g, 4.25, 5.17, 2.0, 1.4, [("Tỷ lệ lookback", dict(size=13, color=MUTED)),
-                                ("0,10 ÷ (0,10 + 0,06)", dict(size=14)),
+text(g, 4.25, 5.17, 2.0, 1.4, [("Tỷ lệ lookback", dict(size=14, color=MUTED)),
+                                ("0,10 ÷ (0,10 + 0,06)", dict(size=15)),
                                 ("≈ 62 %", dict(size=28, bold=True, color=CTX))], align=C, anchor=MID)
 g = pg.group()
 card(g, 6.8, 1.85, 5.98, 4.95, IUH)
@@ -546,15 +546,15 @@ for layer in range(27):
                 shape=MSO_SHAPE.RECTANGLE)
         fill = c.fill._xPr.find(qn("a:solidFill")).find(qn("a:srgbClr"))
         etree.SubElement(fill, qn("a:alpha")).set("val", str(int(min(1, v * 0.9) * 100000)))
-text(g, 7.05, 4.67, 3.2, 0.3, "27 lớp × 28 đầu = 756 tỷ lệ", size=13.5, bold=True)
+text(g, 7.05, 4.67, 3.2, 0.3, "27 lớp × 28 đầu = 756 tỷ lệ", size=15, bold=True)
 line(g, 9.95, 3.55, 10.45, 3.55, MUTED, 2.25, head=True)
 box(g, 10.5, 3.05, 2.1, 1.0, WHITE, INK, 1.5, r=0.08)
-text(g, 10.5, 3.05, 2.1, 1.0, [("Hồi quy logistic", dict(size=14, bold=True)),
-                              ("Ba lớp nhãn", dict(size=12, color=MUTED))], align=C, anchor=MID)
-text(g, 7.05, 5.1, 5.55, 1.65, [
+text(g, 10.5, 3.05, 2.1, 1.0, [("Hồi quy logistic", dict(size=15, bold=True)),
+                              ("Ba lớp nhãn", dict(size=13.5, color=MUTED))], align=C, anchor=MID)
+text(g, 7.05, 5.05, 5.6, 1.72, [
     "**Đầu chú ý**: một thành phần tính chú ý riêng trong mỗi lớp của mô hình.",
     "Bài gốc (tiếng Anh): dùng được khi chuyển từ hỏi đáp sang tóm tắt văn bản.",
-    "Khóa luận tái lập cho tiếng Việt với ba lớp nhãn."], size=13.5, bullet=True, after=4)
+    "Khóa luận tái lập cho tiếng Việt với ba lớp nhãn."], size=14.5, bullet=True, after=3)
 pages.append(pg)
 
 # 7 ------------------------------------------------------------------------- Ch3: data
@@ -567,9 +567,9 @@ sh = pg.sh
 rows = [("Bộ dữ liệu", "Vai trò trong khóa luận", "Số mẫu", "Cách chia"),
         ("ViHallu", "Bộ chính: câu trả lời do GPT-4o sinh, nhãn ảo giác ba lớp", "7.000",
          "Tự chia 80/10/10 theo ngữ cảnh"),
-        ("ISE-DSC01", "Ngữ cảnh dài (trung vị 19 câu); đo khả năng định vị bằng chứng", "36.369",
+        ("ISE-DSC01", "Ngữ cảnh dài (trung vị 19 câu); định vị bằng chứng", "36.369",
          "Tự chia 80/10/10 theo ngữ cảnh"),
-        ("ViWikiFC", "So sánh với kết quả đã công bố; thí nghiệm loại bỏ câu bằng chứng", "20.919",
+        ("ViWikiFC", "So với kết quả đã công bố; thí nghiệm can thiệp", "20.919",
          "Chia gốc; trùng tài liệu 100 %"),
         ("ViFactCheck", "Thử trên lĩnh vực tin tức", "7.232", "Chia gốc; trùng tài liệu 99,3 %")]
 widths = [1.85, 5.25, 1.25, 3.88]
@@ -587,19 +587,19 @@ for i, row in enumerate(rows):
         cell.fill.fore_color.rgb = rgb(INK if i == 0 else CTXS if i == 1 else WHITE if i % 2 else PAPER2)
         p = cell.text_frame.paragraphs[0]
         p.alignment = R if j == 2 else L
-        _run(p, v, 14.5, WHITE if i == 0 else BAD if "trùng" in v else INK,
+        _run(p, v, 15.5, WHITE if i == 0 else BAD if "trùng" in v else INK,
              i == 0 or j == 0 or "trùng" in v, False)
 g = pg.group()
 card(g, 0.55, 4.75, 6.85, 2.07, CTX)
-text(g, 0.8, 4.88, 6.4, 0.34, "Chia theo ngữ cảnh, không chia theo từng câu trả lời", size=15,
+text(g, 0.8, 4.88, 6.4, 0.34, "Chia theo ngữ cảnh, không chia theo từng câu trả lời", size=16,
      bold=True, color=CTX)
 palette = [CTX, RES, VIOLET, OK, WARN, BAD, "2A6FB0", "8A5A44"]
 sizes = [3, 2, 4, 3, 2, 3, 4, 2]
-for x, w, lab, docs in [(0.8, 3.6, "Huấn luyện 80 %", range(0, 6)), (4.6, 1.2, "Kiểm định 10 %",
+for x, w, lab, docs in [(0.8, 3.45, "Huấn luyện 80 %", range(0, 6)), (4.4, 1.35, "Kiểm định 10 %",
                                                                        range(6, 7)),
-                        (5.95, 1.2, "Kiểm tra 10 %", range(7, 8))]:
+                        (5.9, 1.35, "Kiểm tra 10 %", range(7, 8))]:
     box(g, x, 5.3, w, 0.55, WHITE, RULE, 1.25, r=0.06)
-    text(g, x - 0.1, 5.88, w + 0.2, 0.28, lab, size=12.5, bold=True, color=MUTED, align=C)
+    text(g, x - 0.05, 5.87, w + 0.1, 0.3, lab, size=13.5, bold=True, color=MUTED, align=C)
     step, dot, gap = 0.17, 0.14, 0.08
     span = sum(sizes[d] for d in docs) * step - (step - dot) + (len(docs) - 1) * gap
     dx = x + (w - span) / 2
@@ -608,16 +608,16 @@ for x, w, lab, docs in [(0.8, 3.6, "Huấn luyện 80 %", range(0, 6)), (4.6, 1.
             box(g, dx, 5.505, dot, dot, palette[d], shape=MSO_SHAPE.OVAL)
             dx += step
         dx += gap
-text(g, 0.8, 6.22, 6.45, 0.55, "Mỗi màu là một tài liệu: mọi câu trả lời của nó nằm chung một tập.",
-     size=13.5)
+text(g, 0.8, 6.24, 6.45, 0.55, "Mỗi màu là một tài liệu: mọi câu trả lời của nó nằm chung một tập.",
+     size=15)
 g = pg.group()
 card(g, 7.6, 4.75, 5.18, 2.07, RES)
-text(g, 7.85, 4.88, 4.8, 0.34, "Kiểm chứng nhãn thủ công", size=15, bold=True, color=RES)
-text(g, 7.85, 5.25, 4.75, 0.55, "Nhãn NEI (thiếu thông tin) được xem là ảo giác ngoại lai; hai thành "
-     "viên kiểm tra độc lập 100 mẫu:", size=13)
+text(g, 7.85, 4.88, 4.8, 0.34, "Kiểm chứng nhãn thủ công", size=16, bold=True, color=RES)
+text(g, 7.85, 5.24, 4.8, 0.6, "Nhãn NEI (thiếu thông tin) được xem là ảo giác ngoại lai; hai thành "
+     "viên kiểm tra độc lập 100 mẫu:", size=14.5)
 for k, (v, t) in enumerate([("67/100", "Cả hai đồng ý là ngoại lai"), ("0,505", "Mức đồng thuận kappa")]):
-    text(g, 7.85 + k * 2.45, 5.9, 2.35, 0.9, [(v, dict(size=24, bold=True, color=RES)),
-                                              (t, dict(size=12.5, color=MUTED))])
+    text(g, 7.85 + k * 2.45, 5.9, 2.4, 0.9, [(v, dict(size=24, bold=True, color=RES)),
+                                             (t, dict(size=14, color=MUTED))])
 pages.append(pg)
 
 # 8 ------------------------------------------------------------------------- Ch4: chunk-aware
@@ -628,13 +628,13 @@ pg = Page(8, 3, "Phương pháp đề xuất: chunk-aware lookback ratio",
           notes=NOTES[8])
 sh = pg.sh
 sents = ["Vịnh Hạ Long nằm ở tỉnh Quảng Ninh.", "Vịnh gồm 1.969 hòn đảo lớn nhỏ.",
-         "UNESCO công nhận vịnh là Di sản thiên nhiên thế giới năm 1994.",
-         "Năm 2000, vịnh được công nhận lần thứ hai về giá trị địa chất."]
+         "UNESCO công nhận là Di sản thế giới năm 1994.",
+         "Năm 2000, vịnh được công nhận lần hai."]
 for i, s in enumerate(sents):
     x = 0.55 + i * 1.62
     box(sh, x, 1.85, 1.52, 1.05, CTXS, CTX, 1, r=0.06)
-    text(sh, x + 0.08, 1.88, 1.4, 0.25, f"Câu {i + 1}", size=11.5, bold=True, color=CTX)
-    text(sh, x + 0.08, 2.12, 1.38, 0.78, s, size=11.5)
+    text(sh, x + 0.08, 1.89, 1.4, 0.25, f"Câu {i + 1}", size=12.5, bold=True, color=CTX)
+    text(sh, x + 0.08, 2.13, 1.4, 0.78, s, size=13)
 panels = [("A · Trung thực", OK, "“UNESCO công nhận vịnh là Di sản thiên nhiên thế giới năm 1994.”",
            [0.06, 0.09, 0.71, 0.14], "0,65", "71 %", "Tập trung vào một câu"),
           ("B · Ngoại lai", BAD, "“Vịnh Hạ Long mỗi năm đón hơn bảy triệu lượt khách.”",
@@ -643,9 +643,9 @@ for k, (name, col, quote, share, ent, mx, verdict) in enumerate(panels):
     g = sh if k == 0 else pg.group()
     y = 3.02 + k * 1.92
     box(g, 0.55, y, 6.4, 1.8, WHITE, RULE, 1.25, r=0.1)
-    pill(g, 0.72, y + 0.12, 1.65, 0.32, name, col, size=12)
-    text(g, 2.5, y + 0.08, 4.35, 0.45, quote, size=12, italic=True)
-    text(g, 0.72, y + 0.58, 2.9, 0.26, "Lookback Lens: chú ý vào tài liệu", size=12, color=MUTED)
+    pill(g, 0.72, y + 0.12, 1.65, 0.34, name, col, size=13.5)
+    text(g, 2.5, y + 0.07, 4.4, 0.48, quote, size=13.5, italic=True)
+    text(g, 0.72, y + 0.56, 3.1, 0.28, "Lookback Lens: chú ý vào tài liệu", size=13.5, color=MUTED)
     rect(g, 0.72, y + 0.88, 2.0, 0.18, PAPER2)
     rect(g, 0.72, y + 0.88, 2.0 * 0.62, 0.18, CTX)
     text(g, 2.8, y + 0.76, 0.75, 0.38, "62 %", size=16, bold=True)
@@ -653,29 +653,29 @@ for k, (name, col, quote, share, ent, mx, verdict) in enumerate(panels):
     for i, v in enumerate(share):
         bx = 3.85 + i * 0.75
         rect(g, bx, base - v * 0.95, 0.5, v * 0.95, CTX)
-        text(g, bx - 0.1, base - v * 0.95 - 0.24, 0.7, 0.22, f"{round(v * 100)} %", size=11, align=C)
-        text(g, bx - 0.1, base, 0.7, 0.2, f"Câu {i + 1}", size=10, color=MUTED, align=C)
-    text(g, 0.72, y + 1.16, 3.0, 0.6, [(f"Entropy {ent} · lớn nhất {mx}", dict(size=13, bold=True)),
-                                       (verdict, dict(size=13, bold=True, color=col))])
+        text(g, bx - 0.1, base - v * 0.95 - 0.24, 0.7, 0.22, f"{round(v * 100)} %", size=12.5, align=C)
+        text(g, bx - 0.1, base, 0.7, 0.2, f"Câu {i + 1}", size=11.5, color=MUTED, align=C)
+    text(g, 0.72, y + 1.12, 3.1, 0.64, [(f"Entropy {ent} · lớn nhất {mx}", dict(size=14.5, bold=True)),
+                                       (verdict, dict(size=14.5, bold=True, color=col))])
 g = pg.group()
 card(g, 7.2, 1.85, 5.58, 4.95, IUH)
-text(g, 7.45, 2.0, 5.1, 0.34, "Năm đặc trưng hình dạng của mỗi đầu chú ý", size=15, bold=True,
+text(g, 7.45, 2.0, 5.1, 0.34, "Năm đặc trưng hình dạng của mỗi đầu chú ý", size=16, bold=True,
      color=IUH)
-feats = [("MAX", "Tỷ trọng của đoạn được chú ý nhiều nhất", "Giảm"),
-         ("ENT", "Mức phân tán của chú ý (entropy chuẩn hóa)", "Tăng"),
-         ("GINI", "Mức chênh lệch chú ý giữa các đoạn", "Giảm"),
-         ("GAP", "Khoảng cách giữa hai đoạn đứng đầu", "Giảm"),
-         ("DRIFT", "Mức dịch chuyển giữa hai từ liên tiếp", "Không dự đoán")]
-text(g, 11.0, 2.45, 1.65, 0.3, "Khi mất bằng chứng", size=12, bold=True, color=MUTED, align=R)
+feats = [("MAX", "Tỷ trọng lớn nhất của một đoạn", "Giảm"),
+         ("ENT", "Mức phân tán của chú ý (entropy)", "Tăng"),
+         ("GINI", "Mức chênh lệch giữa các đoạn", "Giảm"),
+         ("GAP", "Chênh lệch giữa hai đoạn đầu", "Giảm"),
+         ("DRIFT", "Thay đổi giữa hai từ liên tiếp", "Không dự đoán")]
+text(g, 10.6, 2.43, 2.05, 0.3, "Khi mất bằng chứng", size=13.5, bold=True, color=MUTED, align=R)
 for i, (f, m, d) in enumerate(feats):
     y = 2.82 + i * 0.6
     line(g, 7.45, y - 0.04, 12.6, y - 0.04, RULE, 0.75)
     text(g, 7.45, y, 1.0, 0.52, f, size=14, bold=True, color=IUH, anchor=MID)
-    text(g, 8.45, y, 2.8, 0.52, m, size=13, anchor=MID)
-    text(g, 11.25, y, 1.4, 0.52, d, size=13, bold=True, color=MUTED if d.startswith("Không") else CTX,
+    text(g, 8.35, y, 2.95, 0.52, m, size=14.5, anchor=MID)
+    text(g, 11.2, y, 1.45, 0.52, d, size=14, bold=True, color=MUTED if d.startswith("Không") else CTX,
          align=R, anchor=MID)
 text(g, 7.45, 5.9, 5.15, 0.85, "Mỗi đầu chú ý cho **6 giá trị**: một tỷ lệ lookback và năm đặc trưng "
-     "hình dạng.", size=14)
+     "hình dạng.", size=15.5)
 pages.append(pg)
 
 # 9 ------------------------------------------------------------------------- Ch4: pipeline, hook
@@ -695,32 +695,32 @@ for k, (n, h, b) in enumerate(steps):
     box(sh, x, 1.88, 2.8, 1.75, WHITE, RULE, 1.25, r=0.1)
     box(sh, x + 0.18, 2.02, 0.46, 0.46, IUH, shape=MSO_SHAPE.OVAL)
     text(sh, x + 0.18, 2.02, 0.46, 0.46, n, size=16, bold=True, color=WHITE, align=C, anchor=MID)
-    text(sh, x + 0.75, 2.0, 2.0, 0.5, h, size=15.5, bold=True, anchor=MID)
-    text(sh, x + 0.18, 2.6, 2.5, 1.0, b, size=13.5)
+    text(sh, x + 0.75, 2.0, 2.0, 0.5, h, size=16.5, bold=True, anchor=MID)
+    text(sh, x + 0.18, 2.58, 2.52, 1.02, b, size=15)
     if k < 3:
         line(sh, x + 2.83, 2.75, x + 3.07, 2.75, IUH, 2.25, head=True)
 g = pg.group()
 card(g, 0.55, 3.85, 7.25, 2.95, BAD)
-text(g, 0.8, 3.98, 6.8, 0.34, "Bộ nhớ GPU khi đọc 4.096 token (Qwen2.5-7B)", size=15, bold=True)
+text(g, 0.8, 3.98, 6.8, 0.34, "Bộ nhớ GPU khi đọc 4.096 token (Qwen2.5-7B)", size=16, bold=True)
 bars = [("Trọng số mô hình", 5.3, MUTED), ("Ma trận chú ý một lớp", 0.94, CTX),
         ("Giữ cả 28 lớp", 26.3, BAD), ("Dùng forward hook", 8.43, OK)]
 x0, x1, vmax = 3.3, 7.0, 28
 for i, (lab, v, col) in enumerate(bars):
     y = 4.45 + i * 0.5
-    text(g, 0.8, y, 2.4, 0.4, lab, size=13.5, anchor=MID, align=R)
+    text(g, 0.75, y, 2.45, 0.4, lab, size=15, anchor=MID, align=R)
     rect(g, x0, y + 0.06, (x1 - x0) * v / vmax, 0.28, col)
-    text(g, x0 + (x1 - x0) * v / vmax + 0.06, y, 1.0, 0.4, vn(v, 1) + " GB", size=13, bold=True,
+    text(g, x0 + (x1 - x0) * v / vmax + 0.06, y, 1.0, 0.4, vn(v, 1) + " GB", size=14.5, bold=True,
          color=col, anchor=MID)
 x16 = x0 + (x1 - x0) * 16 / vmax
 line(g, x16, 4.35, x16, 6.4, BAD, 1.5, dash=True)
-text(g, x16 - 0.8, 6.42, 1.6, 0.3, "Giới hạn GPU 16 GB", size=12, bold=True, color=BAD, align=C)
+text(g, x16 - 1.1, 6.42, 2.2, 0.3, "Giới hạn GPU 16 GB", size=13.5, bold=True, color=BAD, align=C)
 g = pg.group()
 card(g, 8.0, 3.85, 4.78, 2.95, OK)
-text(g, 8.25, 3.98, 4.4, 0.34, "Forward hook", size=15, bold=True, color=OK)
+text(g, 8.25, 3.98, 4.4, 0.34, "Forward hook", size=16, bold=True, color=OK)
 text(g, 8.25, 4.38, 4.35, 2.35, [
     "Một hàm tự chạy ngay khi mỗi lớp tính xong.",
     "Tính đặc trưng từ ma trận chú ý, rồi bỏ ma trận trước khi sang lớp sau.",
-    "Mỗi câu trả lời mất khoảng 0,44 giây trên GPU Tesla T4."], size=14, bullet=True, after=5)
+    "Mỗi câu trả lời mất khoảng 0,44 giây trên GPU Tesla T4."], size=16, bullet=True, after=6)
 pages.append(pg)
 
 # 10 ------------------------------------------------------------------------ Ch5: system
@@ -737,24 +737,24 @@ layers = [("Tầng 4 · Phục vụ", "Dịch vụ REST, giao diện quan sát, 
 for i, (h, b, col) in enumerate(layers):
     y = 1.88 + i * 0.95
     box(sh, 0.55, y, 5.3, 0.84, WHITE, col, 1.75, r=0.08)
-    text(sh, 0.75, y + 0.05, 4.9, 0.32, h, size=14.5, bold=True, color=col)
-    text(sh, 0.75, y + 0.42, 4.95, 0.36, b, size=13.5)
+    text(sh, 0.75, y + 0.04, 4.9, 0.34, h, size=15.5, bold=True, color=col)
+    text(sh, 0.75, y + 0.42, 5.0, 0.36, b, size=14.5)
 g = pg.group()
 for k, (ic, h) in enumerate([("file-json", "Thư viện Python"), ("server", "Dịch vụ REST"),
                              ("layers", "Docker")]):
     x = 0.55 + k * 1.8
     box(g, x, 5.8, 1.7, 1.0, PAPER2, r=0.08)
     icon(g, ic, x + 0.6, 5.88, 0.45, INK)
-    text(g, x, 6.36, 1.7, 0.36, h, size=13, bold=True, align=C)
+    text(g, x, 6.36, 1.7, 0.36, h, size=14, bold=True, align=C)
 g = pg.group()
 picture(g, HERE / "img" / "web-ket-qua.webp", 6.1, 1.88, w=6.68, h=3.84)
-for k, (v, t) in enumerate([("11,5 KB", "Tệp bộ phát hiện"), ("700/700", "Dự đoán trùng khi nạp "
-                                                                         "lại tệp"),
+for k, (v, t) in enumerate([("11,5 KB", "Tệp bộ phát hiện"), ("700/700", "Dự đoán trùng khi "
+                                                                         "nạp lại"),
                             ("860", "Ca kiểm thử tự động")]):
     text(g, 6.1 + k * 2.27, 5.76, 2.2, 0.8, [(v, dict(size=24, bold=True, color=IUH)),
-                                             (t, dict(size=12.5, color=MUTED))])
-text(g, 6.1, 6.50, 6.68, 0.3, "Ảnh: hệ RAG minh họa gán **ảo giác ngoại lai** cho câu trả lời có chi tiết ngoài tài liệu.",
-     size=12.5)
+                                             (t, dict(size=14, color=MUTED))])
+text(g, 6.1, 6.50, 6.68, 0.3, "Ảnh: câu trả lời thêm chi tiết ngoài tài liệu bị gán **ảo giác ngoại lai**.",
+     size=14)
 pages.append(pg)
 
 # 11 ------------------------------------------------------------------------ Ch6: classification
@@ -766,7 +766,7 @@ pg = Page(11, 5, "Kết quả phân loại trên ViHallu",
           notes=NOTES[11])
 sh = pg.sh
 card(sh, 0.55, 1.85, 8.0, 4.95, IUH)
-text(sh, 0.8, 1.98, 7.5, 0.34, "Macro-F1 ba lớp và khoảng tin cậy 95 %", size=15, bold=True)
+text(sh, 0.8, 1.98, 7.5, 0.34, "Macro-F1 ba lớp và khoảng tin cậy 95 %", size=16, bold=True)
 rowsr = [("Đặc trưng bề mặt", "9 tham số", 0.656, 0.620, 0.689, MUTED),
          ("PhoBERT đã tinh chỉnh", "369 triệu tham số", 0.749, 0.714, 0.778, RES),
          ("XLM-R đã tinh chỉnh", "560 triệu tham số", 0.776, 0.757, 0.818, RES),
@@ -777,19 +777,19 @@ x0, x1 = 3.35, 7.4
 for t in (0.60, 0.65, 0.70, 0.75, 0.80, 0.85):
     xx = x0 + (t - 0.60) / 0.25 * (x1 - x0)
     line(sh, xx, 2.45, xx, 6.22, "E6E1D6", 0.75)
-    text(sh, xx - 0.3, 6.24, 0.6, 0.25, vn(t, 2), size=11.5, color=MUTED, align=C)
-text(sh, x0, 6.48, x1 - x0, 0.28, "macro-F1 (dự đoán ngẫu nhiên ≈ 0,33)", size=11.5, color=MUTED,
+    text(sh, xx - 0.35, 6.24, 0.7, 0.26, vn(t, 2), size=13, color=MUTED, align=C)
+text(sh, x0 - 0.3, 6.47, x1 - x0 + 0.6, 0.3, "Macro-F1 (dự đoán ngẫu nhiên ≈ 0,33)", size=13, color=MUTED,
      align=C)
 for i, (name, par, v, lo, hi, col) in enumerate(rowsr):
     y = 2.72 + i * 0.6
     if name == "Chunk-aware":
         box(sh, 0.62, y - 0.29, 7.86, 0.58, CTXS, r=0.05)
-    text(sh, 0.8, y - 0.29, 2.5, 0.32, name, size=14, bold=True)
-    text(sh, 0.8, y + 0.02, 2.5, 0.27, par, size=12, color=MUTED)
-    ci_row(sh, x0, x1, 0.60, 0.85, y, v, lo, hi, col, 13.5, vn(v))
+    text(sh, 0.8, y - 0.3, 2.55, 0.32, name, size=15, bold=True)
+    text(sh, 0.8, y + 0.02, 2.55, 0.27, par, size=13, color=MUTED)
+    ci_row(sh, x0, x1, 0.60, 0.85, y, v, lo, hi, col, 15, vn(v))
 g = pg.group()
 card(g, 8.8, 1.85, 3.98, 4.95, CTX)
-text(g, 9.05, 1.98, 3.6, 0.34, "So sánh trên cùng các mẫu", size=15, bold=True, color=CTX)
+text(g, 9.05, 1.98, 3.6, 0.34, "So sánh trên cùng các mẫu", size=16, bold=True, color=CTX)
 pairs = [("Chunk-aware so với PhoBERT", "Không khác biệt rõ"),
          ("Chunk-aware so với XLM-R", "Không khác biệt rõ"),
          ("Lookback Lens so với XLM-R", "Thấp hơn 0,031"),
@@ -797,11 +797,11 @@ pairs = [("Chunk-aware so với PhoBERT", "Không khác biệt rõ"),
 for i, (h, verdict) in enumerate(pairs):
     y = 2.5 + i * 0.82
     line(g, 9.05, y - 0.06, 12.55, y - 0.06, RULE, 0.75)
-    text(g, 9.05, y, 3.6, 0.75, [(h, dict(size=13.5, bold=True)),
-                                 (verdict, dict(size=13.5, bold=True,
+    text(g, 9.05, y, 3.65, 0.75, [(h, dict(size=15, bold=True)),
+                                  (verdict, dict(size=15, bold=True,
                                                 color=OK if verdict.startswith("Không") else RES))])
 text(g, 9.05, 5.85, 3.6, 0.9, "“Không khác biệt rõ”: khoảng tin cậy 95 % của hiệu số chứa 0.",
-     size=12, color=MUTED)
+     size=14, color=MUTED)
 pages.append(pg)
 
 # 12 ------------------------------------------------------------------------ Ch6: localisation
@@ -813,39 +813,39 @@ pg = Page(12, 5, "Chú ý có tập trung vào đúng đoạn chứa bằng ch�
           notes=NOTES[12])
 sh = pg.sh
 card(sh, 0.55, 1.85, 6.0, 4.95, CTX)
-text(sh, 0.8, 1.98, 5.6, 0.34, "Tỷ lệ xếp đúng câu bằng chứng lên đầu", size=15, bold=True, color=CTX)
-text(sh, 0.8, 2.38, 5.6, 0.3, "ISE-DSC01 · 2.376 mẫu · trung bình 22,6 câu mỗi tài liệu", size=13,
+text(sh, 0.8, 1.98, 5.6, 0.34, "Tỷ lệ xếp đúng câu bằng chứng lên đầu", size=16, bold=True, color=CTX)
+text(sh, 0.8, 2.38, 5.6, 0.3, "ISE-DSC01 · 2.376 mẫu · trung bình 22,6 câu mỗi tài liệu", size=14.5,
      color=MUTED)
 for i, (lab, v, col) in enumerate([("Đầu chú ý tốt nhất", 0.878, CTX), ("Trung bình 756 đầu", 0.332,
                                                                        "6FB3B0"),
                                    ("Chọn ngẫu nhiên", 0.061, MUTED)]):
     y = 2.85 + i * 0.72
-    text(sh, 0.8, y, 2.0, 0.5, lab, size=14, anchor=MID)
+    text(sh, 0.8, y, 2.05, 0.5, lab, size=15.5, anchor=MID)
     rect(sh, 2.85, y + 0.08, 3.1, 0.34, PAPER2)
     rect(sh, 2.85, y + 0.08, 3.1 * v, 0.34, col)
-    text(sh, 2.9 + 3.1 * v, y, 0.95, 0.5, vn(v * 100, 1) + " %", size=14, bold=True, color=col,
+    text(sh, 2.9 + 3.1 * v, y, 0.95, 0.5, vn(v * 100, 1) + " %", size=15.5, bold=True, color=col,
          anchor=MID)
 text(sh, 0.8, 5.1, 5.6, 1.65, [
     "Gấp **14,3 lần** chọn ngẫu nhiên; trung bình cả 756 đầu cũng gấp 5,4 lần.",
-    "Lặp lại trên ViWikiFC: đầu tốt nhất 85,3 %, trung bình 32,9 %."], size=14, bullet=True, after=4)
+    "Lặp lại trên ViWikiFC: đầu tốt nhất 85,3 %, trung bình 32,9 %."], size=15.5, bullet=True, after=6)
 g = pg.group()
 card(g, 6.8, 1.85, 5.98, 4.95, RES)
-text(g, 7.05, 1.98, 5.5, 0.34, "So với cắt bỏ từng đoạn ngữ cảnh (300 mẫu)", size=15, bold=True,
+text(g, 7.05, 1.98, 5.5, 0.34, "So với cắt bỏ từng đoạn ngữ cảnh (300 mẫu)", size=16, bold=True,
      color=RES)
 for i, (lab, v, cost, col) in enumerate([("Đầu chú ý tốt nhất", 0.850, "1 lượt đọc", CTX),
                                          ("Đầu chọn trên bộ khác", 0.797, "1 lượt đọc", "6FB3B0"),
                                          ("Cắt bỏ từng đoạn", 0.733, "10,9 lượt đọc", RES)]):
     y = 2.6 + i * 0.78
-    text(g, 7.05, y, 2.25, 0.52, lab, size=14, anchor=MID)
+    text(g, 7.05, y, 2.3, 0.52, lab, size=15.5, anchor=MID)
     rect(g, 9.35, y + 0.08, 2.25, 0.36, PAPER2)
     rect(g, 9.35, y + 0.08, 2.25 * v, 0.36, col)
-    text(g, 9.42, y + 0.08, 1.1, 0.36, vn(v * 100, 1) + " %", size=13.5, bold=True, color=WHITE,
+    text(g, 9.42, y + 0.08, 1.1, 0.36, vn(v * 100, 1) + " %", size=15, bold=True, color=WHITE,
          anchor=MID)
-    text(g, 11.65, y, 1.05, 0.52, cost, size=12, color=MUTED, anchor=MID)
+    text(g, 11.65, y, 1.15, 0.52, cost, size=13.5, color=MUTED, anchor=MID)
 text(g, 7.05, 5.1, 5.55, 1.65, [
     "Một lượt đọc, chính xác hơn 11,7 điểm phần trăm, có ý nghĩa thống kê.",
-    "Chỉ kết luận về định vị bằng chứng, chưa chứng minh mô hình dùng đoạn đó để trả lời."], size=14,
-     bullet=True, after=4)
+    "Chỉ kết luận về định vị bằng chứng, chưa chứng minh mô hình dùng đoạn đó để trả lời."], size=15.5,
+     bullet=True, after=6)
 pages.append(pg)
 
 # 13 ------------------------------------------------------------------------ Ch6: intervention
@@ -856,37 +856,37 @@ pg = Page(13, 5, "Thí nghiệm can thiệp: loại bỏ câu bằng chứng",
           notes=NOTES[13])
 sh = pg.sh
 card(sh, 0.55, 1.85, 5.6, 4.95, IUH)
-text(sh, 0.8, 1.98, 5.2, 0.34, "Thiết kế thí nghiệm", size=15, bold=True, color=IUH)
+text(sh, 0.8, 1.98, 5.2, 0.34, "Thiết kế thí nghiệm", size=16, bold=True, color=IUH)
 for k, (lab, col, gold) in enumerate([("Tài liệu A: có câu bằng chứng", CTX, True),
                                       ("Tài liệu B: thay câu đó bằng câu cùng chủ đề", RES, False)]):
     y = 2.5 + k * 1.45
-    text(sh, 0.8, y, 5.1, 0.32, lab, size=13.5, bold=True, color=col)
+    text(sh, 0.8, y, 5.2, 0.32, lab, size=15, bold=True, color=col)
     for i in range(10):
         hit = i == 4
         box(sh, 0.8 + i * 0.5, y + 0.42, 0.42, 0.62,
             (CTX if gold else RES) if hit else PAPER2, (CTX if gold else RES) if hit else RULE, 1, r=0.04)
-    text(sh, 0.8 + 4 * 0.5 - 0.2, y + 1.06, 0.82, 0.25, "Bằng chứng" if gold else "Câu thay",
-         size=10.5, bold=True, color=col, align=C)
+    text(sh, 0.8 + 4 * 0.5 - 0.4, y + 1.06, 1.22, 0.27, "Bằng chứng" if gold else "Câu thay",
+         size=12.5, bold=True, color=col, align=C)
 text(sh, 0.8, 5.5, 5.15, 1.25, ["Cùng một phát biểu, cùng chín câu còn lại, cùng thứ tự.",
-                                "Hướng thay đổi được ghi trong mã nguồn trước khi chạy."], size=14,
+                                "Hướng thay đổi được ghi vào mã nguồn từ trước."], size=15.5,
      bullet=True, after=4)
 g = pg.group()
 card(g, 6.4, 1.85, 6.38, 4.95, OK)
-text(g, 6.65, 1.98, 5.9, 0.34, "Tỷ lệ cặp thay đổi đúng hướng dự đoán", size=15, bold=True, color=OK)
-text(g, 11.25, 2.4, 1.35, 0.28, "Độ lớn hiệu ứng", size=11.5, color=MUTED, align=R)
+text(g, 6.65, 1.98, 5.9, 0.34, "Tỷ lệ cặp thay đổi đúng hướng dự đoán", size=16, bold=True, color=OK)
+text(g, 10.8, 2.38, 1.8, 0.3, "Độ lớn hiệu ứng", size=13.5, color=MUTED, align=R)
 for i, (lab, v, r_) in enumerate([("ENT tăng", 0.754, "0,716"), ("GINI giảm", 0.745, "0,686"),
                                   ("MAX giảm", 0.724, "0,657"), ("GAP giảm", 0.712, "0,624")]):
     y = 2.8 + i * 0.65
-    text(g, 6.65, y, 1.45, 0.48, lab, size=14, bold=True, anchor=MID)
+    text(g, 6.65, y, 1.5, 0.48, lab, size=15.5, bold=True, anchor=MID)
     rect(g, 8.15, y + 0.08, 3.0, 0.32, PAPER2)
     rect(g, 8.15, y + 0.08, 3.0 * v, 0.32, OK)
-    text(g, 8.22, y + 0.08, 1.1, 0.32, vn(v * 100, 1) + " %", size=13, bold=True, color=WHITE,
+    text(g, 8.22, y + 0.08, 1.1, 0.32, vn(v * 100, 1) + " %", size=14.5, bold=True, color=WHITE,
          anchor=MID)
-    text(g, 11.3, y, 1.3, 0.48, r_, size=13.5, align=R, anchor=MID)
+    text(g, 11.3, y, 1.3, 0.48, r_, size=15.5, align=R, anchor=MID)
 line(g, 8.15 + 1.5, 2.72, 8.15 + 1.5, 5.4, MUTED, 1.25, dash=True)
-text(g, 9.15, 5.4, 1.0, 0.26, "50 %", size=11.5, color=MUTED, align=C)
+text(g, 9.1, 5.4, 1.1, 0.28, "50 %", size=13, color=MUTED, align=C)
 text(g, 6.65, 5.8, 5.95, 0.95, "Đúng hướng **4/4** đặc trưng, độ lớn hiệu ứng ở mức lớn; nhưng mức thay "
-     "đổi tuyệt đối nhỏ (khoảng 0,015 trên thang 0–1).", size=14)
+     "đổi tuyệt đối nhỏ (khoảng 0,015 trên thang 0–1).", size=15.5)
 pages.append(pg)
 
 # 14 ------------------------------------------------------------------------ Ch6: cost, transfer
@@ -902,7 +902,7 @@ rows = [("Phương pháp", "Macro-F1", "ms/mẫu", "Tham số"),
         ("Gemini làm giám khảo †", "0,753", "8.194", "0"),
         ("Chunk-aware, mô hình 7B", "0,757", "438", "579"),
         ("Lookback Lens, mô hình 3B", "0,735", "223", "195")]
-widths = [2.75, 1.15, 1.1, 1.55]
+widths = [2.8, 1.25, 1.05, 1.45]
 tbl = sh.add_table(len(rows), len(widths), Inches(0.55), Inches(1.88), Inches(sum(widths)),
                    Inches(3.1)).table
 for j, w in enumerate(widths):
@@ -917,16 +917,16 @@ for i, row in enumerate(rows):
         cell.fill.fore_color.rgb = rgb(INK if i == 0 else OKS if i == 5 else WHITE if i % 2 else PAPER2)
         p = cell.text_frame.paragraphs[0]
         p.alignment = L if j == 0 else R
-        _run(p, v, 14, WHITE if i == 0 else INK, i == 0 or i == 5, False)
+        _run(p, v, 15.5, WHITE if i == 0 else INK, i == 0 or i == 5, False)
 g = pg.group()
 box(g, 0.55, 5.18, 6.55, 1.62, OKS, r=0.1)
 text(g, 0.75, 5.27, 6.2, 1.5, [("**Mô hình đọc 3B:** nhanh gấp đôi bản 7B, ít hơn 56 % bộ nhớ, macro-F1 chỉ giảm "
-                                "0,010.", dict(size=14)),
+                                "0,010.", dict(size=15)),
                                ("**Tự kiểm tra:** mô hình 3B vừa sinh vừa đọc lại câu trả lời; thời gian chỉ tăng "
-                                "**3,6 %**, dữ liệu không phải gửi ra ngoài.", dict(size=14))], after=8)
+                                "**3,6 %**, dữ liệu không phải gửi ra ngoài.", dict(size=15))], after=8)
 g = pg.group()
 card(g, 7.35, 1.85, 5.43, 4.95, IUH)
-text(g, 7.6, 1.98, 5.0, 0.34, "Huấn luyện trên bộ này, dùng trên bộ kia", size=15, bold=True,
+text(g, 7.6, 1.98, 5.0, 0.34, "Huấn luyện trên bộ này, dùng trên bộ kia", size=16, bold=True,
      color=IUH)
 cd = CategoryChartData()
 cd.categories = ["ViHallu → ISE-DSC01", "ISE-DSC01 → ViHallu"]
@@ -936,13 +936,13 @@ ch = g.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(7.5), Inches(2.4), Inche
                  cd).chart
 ch.has_legend = True
 ch.legend.position, ch.legend.include_in_layout = XL_LEGEND_POSITION.TOP, False
-ch.legend.font.size, ch.legend.font.name = Pt(13), FONT
-ch.font.size, ch.font.name = Pt(13), FONT
+ch.legend.font.size, ch.legend.font.name = Pt(14.5), FONT
+ch.font.size, ch.font.name = Pt(14.5), FONT
 va = ch.value_axis
 va.minimum_scale, va.maximum_scale = 0, 0.9
 va.has_major_gridlines = False
 va.visible = False
-ch.category_axis.tick_labels.font.size = Pt(13)
+ch.category_axis.tick_labels.font.size = Pt(14)
 ch.category_axis.format.line.color.rgb = rgb(RULE)
 pl = ch.plots[0]
 pl.gap_width, pl.overlap = 70, -10
@@ -953,10 +953,10 @@ for ser, col in zip(pl.series, (RES, CTX), strict=True):
         tf = pt.data_label.text_frame
         tf.text = vn(v)
         r0 = tf.paragraphs[0].runs[0]
-        r0.font.size, r0.font.bold, r0.font.name = Pt(13), True, FONT
+        r0.font.size, r0.font.bold, r0.font.name = Pt(15), True, FONT
         pt.data_label.position = XL_LABEL_POSITION.OUTSIDE_END
 text(g, 7.6, 5.8, 5.0, 0.95, "Số liệu của Lookback Lens. Hai bộ định nghĩa ảo giác ngoại lai khác nhau, "
-     "nên phân loại ba lớp không dùng lại được.", size=13)
+     "nên phân loại ba lớp không dùng lại được.", size=14.5)
 pages.append(pg)
 
 # 15 ------------------------------------------------------------------------ Ch7: discussion
@@ -967,7 +967,7 @@ pg = Page(15, 6, "Thảo luận: định vị đúng nhưng không phân loại 
           notes=NOTES[15])
 sh = pg.sh
 card(sh, 0.55, 1.85, 6.55, 4.95, BAD)
-text(sh, 0.8, 1.98, 6.1, 0.34, "Hiệu macro-F1: chunk-aware trừ Lookback Lens", size=15, bold=True,
+text(sh, 0.8, 1.98, 6.1, 0.34, "Hiệu macro-F1: chunk-aware trừ Lookback Lens", size=16, bold=True,
      color=BAD)
 forest = [("ViHallu, Qwen2.5-7B", 0.0116, -0.0233, 0.0453), ("ViHallu, Qwen2.5-3B", -0.0128, -0.0442,
                                                               0.0186),
@@ -981,26 +981,26 @@ zero = fx0 + (0 - lo_v) / (hi_v - lo_v) * (fx1 - fx0)
 for t in (-0.04, -0.02, 0.02, 0.04):
     xx = fx0 + (t - lo_v) / (hi_v - lo_v) * (fx1 - fx0)
     line(sh, xx, 2.45, xx, 5.85, "E6E1D6", 0.75)
-    text(sh, xx - 0.35, 5.88, 0.7, 0.25, f"{t:+.2f}".replace(".", ","), size=11, color=MUTED, align=C)
+    text(sh, xx - 0.35, 5.88, 0.7, 0.25, f"{t:+.2f}".replace(".", ","), size=12.5, color=MUTED, align=C)
 line(sh, zero, 2.45, zero, 5.85, INK, 1.5)
-text(sh, zero - 0.2, 5.88, 0.4, 0.25, "0", size=11, color=MUTED, align=C)
+text(sh, zero - 0.2, 5.88, 0.4, 0.25, "0", size=12.5, color=MUTED, align=C)
 for i, (lab, v, lo, hi) in enumerate(forest):
     y = 2.65 + i * 0.4
-    text(sh, 0.8, y - 0.18, 2.5, 0.36, lab, size=13, anchor=MID)
+    text(sh, 0.8, y - 0.18, 2.55, 0.36, lab, size=14.5, anchor=MID)
     ci_row(sh, fx0, fx1, lo_v, hi_v, y, v, lo, hi, CTX if v > 0 else RES)
-text(sh, 0.8, 6.2, 6.1, 0.55, "Không khoảng tin cậy nào nằm hẳn một phía của 0.", size=14, bold=True)
+text(sh, 0.8, 6.2, 6.1, 0.55, "Không khoảng tin cậy nào nằm hẳn một phía của 0.", size=15.5, bold=True)
 g = pg.group()
 card(g, 7.35, 1.85, 5.43, 4.95, IUH)
-text(g, 7.6, 1.98, 5.0, 0.34, "Vì sao không tăng điểm?", size=15, bold=True, color=IUH)
+text(g, 7.6, 1.98, 5.0, 0.34, "Vì sao không tăng điểm?", size=16, bold=True, color=IUH)
 text(g, 7.6, 2.45, 5.0, 3.0, [
     "**Cùng tín hiệu:** 99,9 % thông tin của năm đặc trưng đã có trong tỷ lệ gộp (ISE-DSC01).",
     "**Chú ý cho biết mô hình dựa vào đoạn nào,** không cho biết câu trả lời khẳng định gì về đoạn đó: "
     "câu trả lời đúng và câu trả lời phủ định lại tài liệu cùng dựa vào một đoạn.",
-    "**Ranh giới nội tại – ngoại lai** khó ngay cả với người gán nhãn (kappa 0,505)."], size=14,
-     bullet=True, after=6)
+    "**Ranh giới nội tại – ngoại lai** khó ngay cả với người gán nhãn (kappa 0,505)."], size=15.5,
+     bullet=True, after=8)
 box(g, 7.6, 5.6, 5.0, 1.05, PAPER2, r=0.08)
 text(g, 7.75, 5.63, 4.75, 1.0, "Xác suất của chunk-aware đáng tin hơn chủ yếu vì bộ phân loại nhỏ hơn; "
-     "hiệu chỉnh xác suất làm hai bên tương đương.", size=13, anchor=MID)
+     "hiệu chỉnh xác suất làm hai bên tương đương.", size=14.5, anchor=MID)
 pages.append(pg)
 
 # 16 ------------------------------------------------------------------------ Ch8: hypotheses
@@ -1019,18 +1019,18 @@ hyp = [("H1", "Tỷ lệ chú ý gộp tốt hơn đặc trưng bề mặt, tư�
         "Đúng hướng 4/4, mức thay đổi nhỏ", "Ủng hộ về hướng", WARN),
        ("H5", "Giữ hiệu năng khi chuyển sang bộ dữ liệu khác",
         "Ba lớp giảm mạnh; nhị phân 0,63–0,78", "Một phần", WARN)]
-text(sh, 1.2, 1.88, 5.0, 0.3, "Giả thuyết", size=12.5, bold=True, color=MUTED)
-text(sh, 6.65, 1.88, 3.8, 0.3, "Bằng chứng chính", size=12.5, bold=True, color=MUTED)
-text(sh, 10.55, 1.88, 2.2, 0.3, "Kết luận", size=12.5, bold=True, color=MUTED, align=C)
+text(sh, 1.32, 1.86, 5.0, 0.32, "Giả thuyết", size=14.5, bold=True, color=MUTED)
+text(sh, 6.72, 1.86, 3.6, 0.32, "Bằng chứng chính", size=14.5, bold=True, color=MUTED)
+text(sh, 10.5, 1.86, 2.25, 0.32, "Kết luận", size=14.5, bold=True, color=MUTED, align=C)
 for i, (h, s, e, v, col) in enumerate(hyp):
     g = sh if i == 0 else pg.group()
     y = 2.25 + i * 0.9
     box(g, 0.55, y, 12.23, 0.8, WHITE if i % 2 == 0 else PAPER2, RULE, 0.75, r=0.06)
     box(g, 0.7, y + 0.17, 0.46, 0.46, INK, shape=MSO_SHAPE.OVAL)
-    text(g, 0.7, y + 0.17, 0.46, 0.46, h, size=13, bold=True, color=WHITE, align=C, anchor=MID)
-    text(g, 1.32, y, 5.2, 0.8, s, size=15, bold=True, anchor=MID)
-    text(g, 6.65, y, 3.8, 0.8, e, size=14, color=MUTED, anchor=MID)
-    pill(g, 10.6, y + 0.2, 2.05, 0.42, v, col, size=13)
+    text(g, 0.7, y + 0.17, 0.46, 0.46, h, size=14, bold=True, color=WHITE, align=C, anchor=MID)
+    text(g, 1.32, y, 5.2, 0.8, s, size=16, bold=True, anchor=MID)
+    text(g, 6.72, y, 3.6, 0.8, e, size=15, color=MUTED, anchor=MID)
+    pill(g, 10.42, y + 0.17, 2.2, 0.46, v, col, size=14.5)
 pages.append(pg)
 
 # 17 ------------------------------------------------------------------------ Ch8: results, limits
@@ -1057,8 +1057,8 @@ for k, (h, ic, col, items) in enumerate(cols3):
     x = 0.55 + k * 4.14
     card(g, x, 1.88, 3.95, 4.92, col)
     icon(g, ic, x + 0.22, 2.1, 0.42, col)
-    text(g, x + 0.78, 2.07, 3.0, 0.48, h, size=17, bold=True, color=col, anchor=MID)
-    text(g, x + 0.25, 2.8, 3.5, 3.9, items, size=17, bullet=True, after=20)
+    text(g, x + 0.78, 2.07, 3.0, 0.48, h, size=19, bold=True, color=col, anchor=MID)
+    text(g, x + 0.25, 2.72, 3.55, 4.0, items, size=19, bullet=True, after=14)
 pages.append(pg)
 
 # 18 ------------------------------------------------------------------------ references
@@ -1086,15 +1086,15 @@ refs = [("Phương pháp nền và hướng liên quan", CTX, [
             ("[18]", "Qwen Team (2024). Qwen2.5 Technical Report. ", "arXiv:2412.15115"),
             ("[12]", "Lewis và cộng sự (2020). Retrieval-Augmented Generation. ", "NeurIPS"),
             ("[9]", "Ji và cộng sự (2023). Survey of Hallucination in NLG. ", "ACM CSUR")])]
-pos = [(0.55, 1.9), (0.55, 4.6), (6.8, 1.9), (6.8, 4.0)]
+pos = [(0.55, 1.88), (0.55, 4.6), (6.8, 1.88), (6.8, 4.0)]
 for (h, col, items), (x, y) in zip(refs, pos, strict=True):
-    text(sh, x, y, 5.9, 0.32, h.upper(), size=13, bold=True, color=col)
+    text(sh, x, y, 5.9, 0.34, h.upper(), size=14.5, bold=True, color=col)
     for i, (n, body, venue) in enumerate(items):
-        yy = y + 0.42 + i * 0.42
-        text(sh, x, yy, 0.6, 0.34, n, size=13, bold=True, color=col)
-        tb = text(sh, x + 0.62, yy, 5.55, 0.34, body, size=13)
+        yy = y + 0.45 + i * 0.44
+        text(sh, x, yy, 0.6, 0.34, n, size=14, bold=True, color=col)
+        tb = text(sh, x + 0.6, yy, 5.6, 0.34, body, size=14)
         if venue:
-            _run(tb.text_frame.paragraphs[0], venue, 13, MUTED, False, True)
+            _run(tb.text_frame.paragraphs[0], venue, 14, MUTED, False, True)
 pages.append(pg)
 
 # 19 ------------------------------------------------------------------------ thanks
