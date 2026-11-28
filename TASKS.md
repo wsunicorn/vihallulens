@@ -5209,7 +5209,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     - Chụp lại bảy ảnh `docs/media/anh_*` cho quyển và dựng lại quyển (vẫn 130 trang).
     - Slide 10: ảnh cũ 1400 × 900 đặt cao 3,65 in nên chỉ rộng 5,68 in mà lại đặt lệch phải trong khung rộng
       6,68 in. Thay bằng ảnh kết quả thật của câu hỏi về hồ Hoàn Kiếm (ảo giác ngoại lai, rủi ro 0,997), cắt
-      đúng tỷ lệ và phủ kín khung, nên ảnh khớp với câu chú thích bên dưới.
+      đúng tỷ lệ và phủ kín khung, nên ảnh khớp với câu chú thích bên dưới. Ảnh chụp ở nền sáng, có viền mảnh,
+      cho đồng bộ với nền slide và với các ảnh trang web trong quyển.
     - Slide 7: 17 chấm của tập huấn luyện cần 3,77 in trong ô 3,6 in; thu bước chấm và căn giữa theo tổng
       chiều rộng.
     - Rà cả bộ: lớp của mô hình gọi là "lớp" như trong quyển, "tầng" chỉ dành cho bốn tầng của hệ thống;
