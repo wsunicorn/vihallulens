@@ -5215,6 +5215,9 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     - Rà cả bộ: lớp của mô hình gọi là "lớp" như trong quyển, "tầng" chỉ dành cho bốn tầng của hệ thống;
       nhãn viết hoa chữ đầu; thêm tiêu đề "Yêu cầu đặt ra cho đề tài" ở trang 3; trang 14 thêm ý về mô hình
       đọc 3B cho cân với bảng; trang 17 tách ý "tự kiểm tra mới đo chi phí" cho rõ nghĩa.
+    - Tăng cỡ chữ ở những chỗ còn trống: chữ thân từ 12–14 pt lên 14–16 pt, nhãn biểu đồ và chú thích từ
+      10,5–12 pt lên 12–14 pt, chân trang lên 11,5 pt, ba cột trang 17 lên 19 pt. Ô nào không đủ chỗ thì nới
+      vị trí hoặc rút gọn câu (bảng dữ liệu trang 7, năm đặc trưng trang 8) để không có chữ rơi xuống dòng lẻ.
   - **Riêng tư, bớt chữ, chỉ bấm khi cần — 15/11/2026.**
     - Bộ slide giữ riêng như quyển: git chỉ còn nguồn dựng (`nguon/`); `slide_hoi_dong.html`, `.pdf` và
       đầu vào `slide_goc_32.html` vào `.gitignore`; `dung_lai.py` chép bản cuối sang
