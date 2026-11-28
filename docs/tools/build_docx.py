@@ -72,6 +72,9 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from column_widths import Layout, best_widths, numeric_columns  # noqa: E402
+
 DOCS = Path(__file__).resolve().parents[1]
 SRC_MD = DOCS / "BaoCao_KLTN.md"
 OUT_DOCX = DOCS / "BaoCao_KLTN.docx"
@@ -117,11 +120,13 @@ NARROW_IMAGES = ("bieudo_",)
 # pushed each to the next page and left 40–77 % of the page above blank. At 14 cm (90 % of the
 # text width or a little less) each fits where it is first referred to; nothing in them becomes
 # too small to read.
-FIT_IMAGES = {"hinh_tong_quat_he_thong": 14.0, "hinh_co_che_chunk_aware": 14.0,
-              "anh_demo_rag": 14.0, "hinh_chia_theo_nhom": 13.0}  # its caption runs to two lines
+FIT_IMAGES = {"bieudo_ke_hoach": 13.2, "hinh_tong_quat_he_thong": 12.4,
+              "hinh_co_che_chunk_aware": 14.0,
+              "anh_demo_rag": 14.0, "hinh_ba_loai_ao_giac": 12.6,
+              "hinh_chia_theo_nhom": 13.0}  # its caption runs to two lines
 # dense diagrams go on a landscape page — "hình vẽ trình bày theo chiều ngang khổ giấy
 # thì đầu bảng là lề trái của trang"
-LANDSCAPE_IMAGES = ("hinh_trich_huanluyen_phucvu",)
+LANDSCAPE_IMAGES = ()
 # A landscape page is turned onto the sheet, so its long top and bottom edges lie along
 # the spine and the outer edge. The binding margin on both, with header and footer kept
 # clear of it, dates from the two-sided layout, when either edge could meet the spine;
@@ -656,6 +661,13 @@ def apply_styles(doc) -> None:
     # tail back at 0 and the tab after it finds that 1.680 stop instead of the dotted
     # right one, dropping the page number mid-line with no leader. Hanging the same
     # amount keeps the first line where it was and starts the tail under the title.
+    # pseudocode: rules above and below, numbered lines hanging on a tab
+    for name in ("Algo Title", "Algo Head", "Algo 0", "Algo 1", "Algo 2", "Algo End"):
+        level = {"Algo 1": 1, "Algo 2": 2}.get(name, 0)
+        numbered = name not in ("Algo Title", "Algo Head")
+        define(doc, name.replace(" ", ""), name, size=12, line=1.15, before=0, after=2,
+               left=0.8 + 0.8 * level if numbered else 0, first=-0.8 if numbered else 0)
+
     # Table of contents as in the reference report: chapter lines and unnumbered page titles
     # in bold capitals at the margin, sections 0,5 cm further in per level, no space after
     # an entry. With the chapter number separated by a space there is no tab stop before
@@ -743,6 +755,13 @@ def make_equation_table(doc, marker, rows: list[str], chapter: str, number: str,
     for k, tex in enumerate(rows):
         par = mid.paragraphs[0] if k == 0 else mid.add_paragraph()
         par.style = doc.styles["Normal"]
+        if k:
+            # Word sets consecutive display equations as one block and ignores the space
+            # between their paragraphs; an empty line of 6 pt keeps them apart
+            par.paragraph_format.line_spacing = Pt(6)
+            par.paragraph_format.space_before = par.paragraph_format.space_after = Pt(0)
+            par = mid.add_paragraph()
+            par.style = doc.styles["Normal"]
         par.add_run(tex)
         spacing(par, before=6 if k == 0 else 3, after=6 if k == len(rows) - 1 else 3,
                 line=1.0, align=WD_ALIGN_PARAGRAPH.CENTER)
@@ -856,6 +875,35 @@ def strip_prefix(p, prefix: str) -> None:
     p.add_run(rest)
 
 
+def format_algorithm_line(p, style: str) -> None:
+    """One line of pseudocode: the rules of the block, its number on a tab, kept whole."""
+    last = style == "algo end"
+    p.paragraph_format.keep_with_next = not last
+    p.paragraph_format.space_before = Pt(6 if style == "algo title" else 0)
+    p.paragraph_format.space_after = Pt(10 if last else 2)
+    sides = {"algo title": ("top", "bottom"), "algo end": ("bottom",)}.get(style, ())
+    if sides:
+        bdr = el("w:pBdr")
+        for side in sides:
+            bdr.append(el(f"w:{side}", **{"w:val": "single", "w:sz": 8, "w:space": 3,
+                                          "w:color": "000000"}))
+        put(ensure_ppr(p._p), bdr)
+    nodes = list(p._p.iter(qn("w:t")))
+    m = re.match(r"(\d+\.)\s*(.*)", nodes[0].text or "", re.S) if nodes else None
+    if not m or style in ("algo title", "algo head"):
+        return
+    nodes[0].text = m.group(1)
+    tab = el("w:tab")
+    nodes[0].addnext(tab)
+    if m.group(2):
+        rest = OxmlElement("w:t")
+        rest.text = m.group(2)
+        rest.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        tab.addnext(rest)
+    elif len(nodes) > 1 and (nodes[1].text or "").startswith(" "):
+        nodes[1].text = nodes[1].text.lstrip(" ")
+
+
 def body_pass(doc, num_id: int) -> dict:
     counts = {"trang": 0, "phần": 0, "công thức": 0, "dòng công thức": 0, "chú thích": 0,
               "ảnh": 0, "đề mục đánh số": 0}
@@ -897,6 +945,10 @@ def body_pass(doc, num_id: int) -> dict:
                 counts["đề mục đánh số"] += 1
             else:                        # "Phụ lục A — …": a title that carries no number
                 spacing(p, before=6, after=12, line=1.15, left=0, first=0, keep_next=True)
+            continue
+
+        if style.startswith("algo "):
+            format_algorithm_line(p, style)
             continue
 
         if text == "@@PAGEBREAK@@":
@@ -1036,91 +1088,30 @@ def cell_text(cell) -> str:
     return "".join(t.text or "" for t in cell._tc.iter(qn("w:t"), qn("m:t")))
 
 
-def fit_columns(table, width_cm: float, pt: float) -> None:
-    """Column widths from content: each column gets at least its longest word, and the
-    rest of the text width goes to columns in proportion to how much text they carry."""
-    char_cm = 0.02 * pt                       # a generous Times New Roman glyph width
-    cols = list(zip(*[[cell_text(c) for c in row.cells] for row in table.rows], strict=False))
-    dense = len(cols) >= 8
+def fit_columns(table, width_cm: float, pt: float, body_pt: float | None = None) -> Layout:
+    """Widths that make the table as short as it can be (see column_widths.py)."""
+    dense = len(table.columns) >= 8
     # cell padding: Word's default 0.19 cm a side; dense tables get 0.1 cm
-    pad = 0.25 if dense else 0.45
+    pad = 0.24 if dense else 0.42
     if dense:
         mar = el("w:tblCellMar")
         for side in ("left", "right"):
             mar.append(el(f"w:{side}", **{"w:w": twips(0.1), "w:type": "dxa"}))
         put(table._tbl.tblPr, mar)
-    mins, wants = [], []
-    for texts in cols:
-        # Word may break after a space, an en dash or a slash, never inside a number
-        # a date such as 28/08/2026 is one unbreakable piece, so "/" does not split, and
-        # neither does the no-break space that ties a number to its unit
-        pieces = [w for t in texts for w in re.split(r"[ \t\n–]+", t) if w]
-        longest_word = max((len(w) for w in pieces), default=1)
-        lens = [len(t) for t in texts[1:]] or [len(texts[0])]
-        # the widest word decides the column: it is often set bold, or in Cambria Math,
-        # both wider than the plain face char_cm is measured on
-        mins.append(longest_word * char_cm * 1.3 + pad)
-        wants.append(max(sum(lens) / len(lens), 0.5 * max(lens), len(texts[0]) * 0.6))
-    spare = width_cm - sum(mins)
-    if spare <= 0:
-        widths = [m * width_cm / sum(mins) for m in mins]
-    else:
-        extra = [max(w * char_cm - m, 0.05) for w, m in zip(wants, mins, strict=False)]
-        widths = [m + spare * e / sum(extra) for m, e in zip(mins, extra, strict=False)]
-    tblpr = table._tbl.tblPr
-    put(tblpr, el("w:tblW", **{"w:w": twips(width_cm), "w:type": "dxa"}))
-    put(tblpr, el("w:tblLayout", **{"w:type": "fixed"}))
-    for col, w in zip(table.columns, widths, strict=False):
-        col.width = Cm(w)
-    for row in table.rows:
-        for cell, w in zip(row.cells, widths, strict=False):
-            cell.width = Cm(w)
+    layout = Layout(table, pt, pad, body_pt)
+    set_widths(table, best_widths(layout, width_cm))
+    return layout
 
 
 # the two front-matter lists are laid out like the template's own: 13 pt, no shading,
 # a plain grid, the term centred and bold, its explanation on the left
-# the abbreviation table follows the reference report's proportions (about 18 / 40 / 42 %),
-# so the meaning column no longer wraps three or four lines while the full form has room
-GLOSSARY_HEADS = {("Từ viết tắt", "Từ đầy đủ", "Nghĩa"): (2.8, 6.2, 6.5),
+# nearly every row fits on one line, so the list takes one page
+# the abbreviation list (three columns) is set at 12 pt to stay on one page
+GLOSSARY_PT = {3: 12, 2: 13}
+GLOSSARY_HEADS = {("Từ viết tắt", "Từ đầy đủ", "Nghĩa"): (2.2, 5.9, 7.4),
                   ("Ký hiệu", "Ý nghĩa"): (3.14, TEXT_W_CM - 3.14)}
 
-# Data tables whose column widths are fixed by hand. The first seven (Bảng 7.2, D.1–D.4, G.1,
-# G.2) were set in Word for the submitted book (v4) and are copied from it to the twip; the
-# last two are Bảng 6.1 and 6.14. Every other data table keeps fit_columns().
-BOOK_WIDTHS = {
-    ("Cấu hình", "Tham số — lookback gộp", "Tham số — chunk-aware", "ECE — lookback gộp",
-     "ECE — chunk-aware", "Bên có ECE thấp hơn"): (2.999, 2.142, 2.434, 2.140, 2.434, 3.351),
-    ("Thành phần", "Cách cố định"): (4.233, 11.266),
-    ("Môi trường", "Python", "PyTorch", "transformers", "Dùng cho"):
-        (3.351, 2.028, 2.646, 2.822, 4.652),
-    ("Loại kết quả", "Mức tái lập", "Ghi chú"): (4.057, 3.704, 7.738),
-    ("Tệp", "SHA-256"): (4.674, 10.825),
-    ("Hạng mục", "Nhóm thực hiện và quyết định", "Công cụ AI hỗ trợ"): (3.704, 6.703, 5.092),
-    ("Ngày", "Yêu cầu (trích)", "Mục đích"): (1.764, 7.585, 6.151),
-    # Bảng 6.1: fit_columns() squeezed "Độ chính xác dự báo dương" into 1,4 cm (five lines);
-    # the binary metrics and the confidence interval get the room their headers need
-    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "macro-F1 nhị phân", "Độ nhạy",
-     "Độ chính xác dự báo dương", "F1 no", "F1 intr", "F1 extr", "ECE"):
-        (2.7, 2.5, 1.8, 1.3, 2.1, 1.3, 1.3, 1.3, 1.2),
-    # Bảng 6.14: a wider interval column keeps every row to two lines, so the table fits on the
-    # page its section starts on instead of leaving half of that page blank
-    ("Phương pháp", "macro-F1 [KTC 95\u00a0%]", "ms/mẫu", "VRAM cao nhất", "Tham số huấn luyện",
-     "Loại chi phí"): (3.3, 3.2, 1.75, 2.25, 2.55, 2.45),
-    # Bảng 2.1, 3.1, 6.18: fit_columns() sized these by their longest single cell, so a
-    # column of short names took a quarter of the width while the prose column wrapped
-    # five or six lines
-    ("Hướng", "Tín hiệu sử dụng", "Công trình tiêu biểu", "Cần huấn luyện",
-     "Chi phí khi suy luận", "Hạn chế chính"): (2.2, 2.4, 2.9, 2.1, 2.4, 3.5),
-    ("Bộ dữ liệu", "Vai trò", "Đặc điểm quyết định vai trò"): (2.7, 3.9, 8.9),
-    # Bảng 3.6 and 7.1: the prose column needs the room that fit_columns() gave the short ones
-    ("Mã", "Tên ngắn và nội dung", "Giả thuyết", "Bộ dữ liệu", "Mô hình đọc", "Mục"):
-        (1.3, 5.8, 1.7, 2.7, 2.6, 1.4),
-    ("Giả thuyết", "Bằng chứng chính", "Thí nghiệm", "Kết luận"): (3.3, 5.3, 4.1, 2.8),
-    ("Cách gộp đặc trưng trên các câu của phản hồi", "macro-F1 [KTC 95 %]", "F1 extr",
-     "Hiệu F1 extr so với whole [KTC ghép cặp]", "macro-F1 trên phản hồi có từ hai câu"):
-        (4.4, 3.0, 1.5, 3.5, 3.1),
-}
-# the hash table (Bảng D.4) sets its rows at 8 pt so every SHA-256 fits on one line, as
+# the hash table sets its rows at 8 pt so every SHA-256 fits on one line, as
 # the book does; its header row keeps the usual size
 BODY_PT = {("Tệp", "SHA-256"): 8}
 
@@ -1155,35 +1146,6 @@ def table_height_cm(table, pt: float) -> float:
     return total
 
 
-def audit_tables(doc) -> None:
-    """Report columns where Word would have to break a word, number or date, and columns
-    far wider than the text they hold. Printed only; the widths are fixed above."""
-    issues = []
-    for t, table in enumerate(doc.tables, 1):
-        head = [cell_text(c).strip() for c in table.rows[0].cells]
-        rows = [[cell_text(c) for c in row.cells] for row in table.rows]
-        widths = [c.width.cm if c.width else 0 for c in table.rows[-1].cells]
-        n_cols = len(widths)
-        pt = 13 if tuple(head) in GLOSSARY_HEADS else (10 if n_cols >= 8 else TABLE_PT)
-        char_cm = 0.019 * pt
-        total = sum(widths) or 1
-        lens = [sum(len(r[k]) for r in rows[1:]) for k in range(n_cols)]
-        all_len = sum(lens) or 1
-        for k in range(n_cols):
-            # a no-break space ties a number to its unit into one block Word cannot split
-            words = [w for r in rows for w in re.split(r"[ \t\n–]+", r[k]) if w]
-            longest = max(words, key=len, default="")
-            if len(longest) * char_cm > widths[k] - 0.2:
-                issues.append(f"bảng {t} «{head[0][:18]}» cột {k + 1}: «{longest[:20]}» không vừa "
-                              f"{widths[k]:.2f} cm")
-            share_w, share_t = widths[k] / total, lens[k] / all_len
-            if widths[k] > 3 and share_w > 2.2 * max(share_t, 0.02):
-                issues.append(f"bảng {t} «{head[0][:18]}» cột {k + 1} «{head[k][:16]}»: rộng "
-                              f"{share_w:.0%} mà chỉ chứa {share_t:.0%} lượng chữ")
-    if issues:
-        print("   kiểm bảng:\n     " + "\n     ".join(issues))
-
-
 def format_tables(doc) -> int:
     n = 0
     long_tables = []
@@ -1195,7 +1157,8 @@ def format_tables(doc) -> int:
         is_glossary = tuple(head) in GLOSSARY_HEADS
         n_cols = len(table.columns)
         # template allows 10–13 pt; the glossaries follow the template's own 13 pt
-        pt = 13 if is_glossary else (10 if n_cols >= 8 else TABLE_PT)
+        pt = GLOSSARY_PT.get(len(table.columns), 13) if is_glossary else (
+            10 if n_cols >= 8 else TABLE_PT)
         last = len(table.rows) - 1
         for old in tblpr.findall(qn("w:tblBorders")):
             tblpr.remove(old)
@@ -1236,13 +1199,28 @@ def format_tables(doc) -> int:
             put(tblpr, mar)
             # every date column holds "28/08/2026" on one line (the report column was 1,9 cm
             # and broke the year); the week column is wide enough for its header "Tuần"
-            set_widths(table, (1.3, 2.35, 2.35, 2.35, 4.55, 2.6))
+            set_widths(table, (1.2, 2.2, 2.2, 2.2, 5.6, 2.1))
         elif is_glossary:
             set_widths(table, GLOSSARY_HEADS[tuple(head)])
-        elif tuple(head) in BOOK_WIDTHS:
-            set_widths(table, BOOK_WIDTHS[tuple(head)])
         else:
-            fit_columns(table, TEXT_W_CM, pt)
+            layout = fit_columns(table, TEXT_W_CM, pt, BODY_PT.get(tuple(head)))
+            centre = numeric_columns([[cell_text(c) for c in row.cells] for row in table.rows])
+            # figures are centred; a table made mostly of them is also centred vertically,
+            # whole rows at a time, while tables of prose keep their cells at the top
+            mostly_numbers = sum(centre) >= 0.5 * (n_cols - 1)
+            for row in table.rows[1:]:
+                for cell, numbers in zip(row.cells, centre, strict=False):
+                    if mostly_numbers:
+                        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+                    for cp in cell.paragraphs if numbers else ():
+                        cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            widths = [c.width.cm for c in table.rows[0].cells]
+            print(f"   bảng {n} «{head[0][:16]}»: {sum(layout.row_lines(widths))} dòng, cột "
+                  + " ".join(f"{w:.1f}" for w in widths))
+            for k, (w, least) in enumerate(zip(widths, layout.minimum(), strict=True)):
+                if w < least - 0.02:
+                    print(f"     cột {k + 1} «{head[k][:20]}»: {w:.2f} cm, từ dài nhất cần "
+                          f"{least:.2f} cm")
         # "các hình, bảng biểu phải được trình bày trong một trang (ngoại trừ các bảng dài
         # hơn một trang)": a table that fits on a page with its caption is chained row to
         # row, so Word moves the whole of it to the next page rather than split it. Only
@@ -1255,7 +1233,6 @@ def format_tables(doc) -> int:
                         cp.paragraph_format.keep_with_next = True
         else:
             long_tables.append(f"{head[0][:24]} ({height:.0f} cm)")
-    audit_tables(doc)
     print(f"   {n - len(long_tables)} bảng giữ trọn một trang; được ngắt vì dài hơn một "
           f"trang: {', '.join(long_tables) or 'không có'}")
     return n
@@ -1453,6 +1430,8 @@ def build_equations(d) -> int:
                 while r.Text and r.Text[-1] in "\r\x07":     # paragraph / end-of-cell mark
                     r.MoveEnd(1, -1)
                 source = r.Text
+                if not (source or "").strip():       # the spacer between two lines
+                    continue
                 m = d.OMaths.Add(r).OMaths(1)
                 m.BuildUp()
                 if "\\" in m.Range.Text:

@@ -22,113 +22,100 @@ MEDIA = DOCS / "media"
 PAGEBREAK = '<div style="page-break-after: always"></div>'
 
 BIB = {
-    "azaria2023": ('Azaria, A., Mitchell, T. (2023), "The Internal State of an LLM Knows When '
-                   'It\'s Lying", *Findings of the Association for Computational Linguistics: '
-                   'EMNLP 2023*, pp. 967–976.'),
-    "cohenwang2024": ('Cohen-Wang, B., Shah, H., Georgiev, K., Madry, A. (2024), "ContextCite: '
-                      'Attributing Model Generation to Context", *Advances in Neural Information '
-                      'Processing Systems* 37, arXiv:2409.00729.'),
-    "chi2021": ('Chi, Z., Dong, L., Wei, F., Yang, N., Singhal, S., Wang, W., Song, X., Mao, '
-                'X.-L., Huang, H., Zhou, M. (2021), "InfoXLM: An Information-Theoretic Framework '
-                'for Cross-Lingual Language Model Pre-Training", *Proceedings of NAACL-HLT '
-                '2021*, pp. 3576–3588.'),
-    "chuang2024": ('Chuang, Y.-S., Qiu, L., Hsieh, C.-Y., Krishna, R., Kim, Y., Glass, J. '
-                   '(2024), "Lookback Lens: Detecting and Mitigating Contextual Hallucinations '
-                   'in Large Language Models Using Only Attention Maps", *Proceedings of EMNLP '
-                   '2024*, pp. 1419–1436.'),
-    "conneau2020": ('Conneau, A., Khandelwal, K., Goyal, N., Chaudhary, V., Wenzek, G., Guzmán, '
-                    'F., Grave, E., Ott, M., Zettlemoyer, L., Stoyanov, V. (2020), "Unsupervised '
-                    'Cross-lingual Representation Learning at Scale", *Proceedings of ACL 2020*, '
-                    'pp. 8440–8451.'),
-    "dao2022": ('Dao, T., Fu, D. Y., Ermon, S., Rudra, A., Ré, C. (2022), "FlashAttention: Fast '
-                'and Memory-Efficient Exact Attention with IO-Awareness", *Advances in Neural '
-                'Information Processing Systems* 35, pp. 16344–16359.'),
-    "dettmers2023": ('Dettmers, T., Pagnoni, A., Holtzman, A., Zettlemoyer, L. (2023), "QLoRA: '
-                     'Efficient Finetuning of Quantized LLMs", *Advances in Neural Information '
-                     'Processing Systems* 36, arXiv:2305.14314.'),
-    "dou2025": ('Dou, L., et al. (2025), "Sailor2: Sailing in South-East Asia with Inclusive '
-                'Multilingual LLMs", arXiv:2502.12982.'),
-    "gao2023rag": ('Gao, Y., Xiong, Y., Gao, X., Jia, K., Pan, J., Bi, Y., Dai, Y., Sun, J., '
-                   'Wang, M., Wang, H. (2023), "Retrieval-Augmented Generation for Large '
-                   'Language Models: A Survey", arXiv:2312.10997.'),
-    "guo2017": ('Guo, C., Pleiss, G., Sun, Y., Weinberger, K. Q. (2017), "On Calibration of '
-                'Modern Neural Networks", *Proceedings of ICML 2017*, pp. 1321–1330.'),
-    "huang2025": ('Huang, L., Yu, W., Ma, W., Zhong, W., Feng, Z., Wang, H., Chen, Q., Peng, W., '
-                  'Feng, X., Qin, B., Liu, T. (2025), "A Survey on Hallucination in Large '
-                  'Language Models: Principles, Taxonomy, Challenges, and Open Questions", *ACM '
-                  'Transactions on Information Systems* 43 (2), pp. 1–55.'),
-    "jain2019": ('Jain, S., Wallace, B. C. (2019), "Attention is not Explanation", *Proceedings '
-                 'of NAACL-HLT 2019*, pp. 3543–3556.'),
-    "ji2023": ('Ji, Z., Lee, N., Frieske, R., Yu, T., Su, D., Xu, Y., Ishii, E., Bang, Y. J., '
-               'Madotto, A., Fung, P. (2023), "Survey of Hallucination in Natural Language '
-               'Generation", *ACM Computing Surveys* 55 (12), pp. 1–38.'),
-    "kerby2014": ('Kerby, D. S. (2014), "The Simple Difference Formula: An Approach to Teaching '
-                  'Nonparametric Correlation", *Comprehensive Psychology* 3, 11.IT.3.1.'),
-    "landis1977": ('Landis, J. R., Koch, G. G. (1977), "The Measurement of Observer Agreement '
-                   'for Categorical Data", *Biometrics* 33 (1), pp. 159–174.'),
-    "le2024": ('Le, H. T., To, L. T., Nguyen, M. T., Nguyen, K. V. (2024), "ViWikiFC: '
-               'Fact-Checking for Vietnamese Wikipedia-Based Textual Knowledge Source", '
-               'arXiv:2405.07615.'),
-    "li2026arcjsd": ('Li, R., Chen, C., Hu, Y., Gao, Y., Wang, X., Yilmaz, E. (2026), '
-                     '"Attributing Response to Context: A Jensen–Shannon Divergence Driven '
-                     'Mechanistic Study of Context Attribution in Retrieval-Augmented '
-                     'Generation", *Proceedings of ICLR 2026*, arXiv:2505.16415.'),
-    "lewis2020": ('Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., '
-                  'Küttler, H., Lewis, M., Yih, W., Rocktäschel, T., Riedel, S., Kiela, D. '
-                  '(2020), "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", '
-                  '*Advances in Neural Information Processing Systems* 33, pp. 9459–9474.'),
-    "manakul2023": ('Manakul, P., Liusie, A., Gales, M. J. F. (2023), "SelfCheckGPT: '
-                    'Zero-Resource Black-Box Hallucination Detection for Generative Large '
-                    'Language Models", *Proceedings of EMNLP 2023*, pp. 9004–9017.'),
-    "maynez2020": ('Maynez, J., Narayan, S., Bohnet, B., McDonald, R. (2020), "On Faithfulness '
-                   'and Factuality in Abstractive Summarization", *Proceedings of ACL 2020*, pp. '
-                   '1906–1919.'),
-    "naeini2015": ('Naeini, M. P., Cooper, G. F., Hauskrecht, M. (2015), "Obtaining Well '
-                   'Calibrated Probabilities Using Bayesian Binning", *Proceedings of AAAI '
-                   '2015*, pp. 2901–2907.'),
-    "nguyen2020phobert": ('Nguyen, D. Q., Nguyen, A. T. (2020), "PhoBERT: Pre-trained Language '
-                          'Models for Vietnamese", *Findings of EMNLP 2020*, pp. 1037–1042.'),
-    "nguyen2026vihallu": ('Nguyen, A. T.-H., Tran, K. Q., Huynh, T. V., Nguyen, P. T.-H., '
-                          'Nguyen, C. T., Nguyen, K. V. (2026), "DSC2025 – ViHallu Challenge: '
-                          'Detecting Hallucination in Vietnamese LLMs", arXiv:2601.04711.'),
-    "ogasa2025": ('Ogasa, Y., Arase, Y. (2025), "Hallucinated Span Detection with Multi-View '
-                  'Attention Features", arXiv:2504.04335.'),
-    "qwen2025": 'Qwen Team (2024), *Qwen2.5 Technical Report*, arXiv:2412.15115.',
-    "robertson2009": ('Robertson, S., Zaragoza, H. (2009), "The Probabilistic Relevance '
-                      'Framework: BM25 and Beyond", *Foundations and Trends in Information '
-                      'Retrieval* 3 (4), pp. 333–389.'),
-    "sun2025redeep": ('Sun, Z., Zang, X., Zheng, K., Song, Y., Xu, J., Zhang, X., Yu, W., Song, '
-                      'Y., Li, H. (2025), "ReDeEP: Detecting Hallucination in '
-                      'Retrieval-Augmented Generation via Mechanistic Interpretability", '
-                      '*Proceedings of ICLR 2025*, arXiv:2410.11414.'),
-    "thorne2018": ('Thorne, J., Vlachos, A., Christodoulopoulos, C., Mittal, A. (2018), "FEVER: '
-                   'a Large-scale Dataset for Fact Extraction and VERification", *Proceedings of '
-                   'NAACL-HLT 2018*, pp. 809–819.'),
-    "tran2025semviqa": ('Tran, D. X., Nguyen, N. V., Tran, T. T., Hoang, A. T., Duong, T. V., '
-                        'Le, D. T., Le, P.-L. (2025), "SemViQA: A Semantic Question Answering '
-                        'System for Vietnamese Information Fact-Checking", arXiv:2503.00955.'),
-    "tran2025vifactcheck": ('Tran, T.-H., Tran, Q.-D., Tran, K. Q., Nguyen, K. V. (2025), '
-                            '"ViFactCheck: A New Benchmark Dataset and Methods for Multi-domain '
-                            'News Fact-Checking in Vietnamese", *Proceedings of the AAAI '
-                            'Conference on Artificial Intelligence* 39 (1), pp. 308–316.'),
-    "uitdsc2023": ('UIT Data Science Challenge 2023, Group B – UIT Data Science Challenge 2023 '
-                   '(10-2023), https://codalab.lisn.upsaclay.fr/competitions/15497'),
-    "vargha2000": ('Vargha, A., Delaney, H. D. (2000), "A Critique and Improvement of the CL '
-                   'Common Language Effect Size Statistics of McGraw and Wong", *Journal of '
-                   'Educational and Behavioral Statistics* 25 (2), pp. 101–132.'),
-    "vaswani2017": ('Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. '
-                    'N., Kaiser, Ł., Polosukhin, I. (2017), "Attention Is All You Need", '
-                    '*Advances in Neural Information Processing Systems* 30, pp. 5998–6008.'),
-    "vazquez2025": ('Vázquez, R., et al. (2025), "SemEval-2025 Task 3: Mu-SHROOM, the '
-                    'Multilingual Shared-task on Hallucinations and Related Observable '
-                    'Overgeneration Mistakes", *Proceedings of SemEval-2025*, pp. 2472–2497.'),
-    "wiegreffe2019": ('Wiegreffe, S., Pinter, Y. (2019), "Attention is not not Explanation", '
-                      '*Proceedings of EMNLP-IJCNLP 2019*, pp. 11–20.'),
-    "yeh2026lumina": ('Yeh, S., Li, S., Mallick, T. (2026), "LUMINA: Detecting Hallucinations in '
-                      'RAG System with Context-Knowledge Signals", *Proceedings of ICLR 2026*, '
-                      'arXiv:2509.21875.'),
-    "zheng2023judge": ('Zheng, L., et al. (2023), "Judging LLM-as-a-Judge with MT-Bench and '
-                       'Chatbot Arena", *Advances in Neural Information Processing Systems* 36.'),
+    "cohenwang2024": (
+        'Cohen-Wang, B., Shah, H., Georgiev, K., Madry, A. (2024), "ContextCite: Attributing '
+        'Model Generation to Context", *Advances in Neural Information Processing Systems* '
+        '37, arXiv:2409.00729.'),
+    "chi2021": (
+        'Chi, Z., Dong, L., Wei, F., et al. (2021), "InfoXLM: An Information-Theoretic '
+        'Framework for Cross-Lingual Language Model Pre-Training", *Proceedings of NAACL-HLT '
+        '2021*, pp. 3576–3588.'),
+    "chuang2024": (
+        'Chuang, Y.-S., Qiu, L., Hsieh, C.-Y., et al. (2024), "Lookback Lens: Detecting and '
+        'Mitigating Contextual Hallucinations in Large Language Models Using Only Attention '
+        'Maps", *Proceedings of EMNLP 2024*, pp. 1419–1436.'),
+    "conneau2020": (
+        'Conneau, A., Khandelwal, K., Goyal, N., et al. (2020), "Unsupervised Cross-lingual '
+        'Representation Learning at Scale", *Proceedings of ACL 2020*, pp. 8440–8451.'),
+    "dettmers2023": (
+        'Dettmers, T., Pagnoni, A., Holtzman, A., Zettlemoyer, L. (2023), "QLoRA: Efficient '
+        'Finetuning of Quantized LLMs", *Advances in Neural Information Processing Systems* '
+        '36, arXiv:2305.14314.'),
+    "dou2025": (
+        'Dou, L., et al. (2025), "Sailor2: Sailing in South-East Asia with Inclusive '
+        'Multilingual LLMs", arXiv:2502.12982.'),
+    "guo2017": (
+        'Guo, C., Pleiss, G., Sun, Y., Weinberger, K. Q. (2017), "On Calibration of Modern '
+        'Neural Networks", *Proceedings of ICML 2017*, pp. 1321–1330.'),
+    "jain2019": (
+        'Jain, S., Wallace, B. C. (2019), "Attention is not Explanation", *Proceedings of '
+        'NAACL-HLT 2019*, pp. 3543–3556.'),
+    "ji2023": (
+        'Ji, Z., Lee, N., Frieske, R., et al. (2023), "Survey of Hallucination in Natural '
+        'Language Generation", *ACM Computing Surveys* 55 (12), pp. 1–38.'),
+    "kerby2014": (
+        'Kerby, D. S. (2014), "The Simple Difference Formula: An Approach to Teaching '
+        'Nonparametric Correlation", *Comprehensive Psychology* 3, 11.IT.3.1.'),
+    "le2024": (
+        'Le, H. T., To, L. T., Nguyen, M. T., Nguyen, K. V. (2024), "ViWikiFC: Fact-Checking '
+        'for Vietnamese Wikipedia-Based Textual Knowledge Source", arXiv:2405.07615.'),
+    "li2026arcjsd": (
+        'Li, R., Chen, C., Hu, Y., et al. (2026), "Attributing Response to Context: A '
+        'Jensen–Shannon Divergence Driven Mechanistic Study of Context Attribution in '
+        'Retrieval-Augmented Generation", *Proceedings of ICLR 2026*, arXiv:2505.16415.'),
+    "lewis2020": (
+        'Lewis, P., Perez, E., Piktus, A., et al. (2020), "Retrieval-Augmented Generation for'
+        ' Knowledge-Intensive NLP Tasks", *Advances in Neural Information Processing Systems*'
+        ' 33, pp. 9459–9474.'),
+    "maynez2020": (
+        'Maynez, J., Narayan, S., Bohnet, B., McDonald, R. (2020), "On Faithfulness and '
+        'Factuality in Abstractive Summarization", *Proceedings of ACL 2020*, pp. 1906–1919.'),
+    "nguyen2020phobert": (
+        'Nguyen, D. Q., Nguyen, A. T. (2020), "PhoBERT: Pre-trained Language Models for '
+        'Vietnamese", *Findings of EMNLP 2020*, pp. 1037–1042.'),
+    "nguyen2026vihallu": (
+        'Nguyen, A. T.-H., Tran, K. Q., Huynh, T. V., et al. (2026), "DSC2025 – ViHallu '
+        'Challenge: Detecting Hallucination in Vietnamese LLMs", arXiv:2601.04711.'),
+    "ogasa2025": (
+        'Ogasa, Y., Arase, Y. (2025), "Hallucinated Span Detection with Multi-View Attention '
+        'Features", arXiv:2504.04335.'),
+    "qwen2025": (
+        'Qwen Team (2024), *Qwen2.5 Technical Report*, arXiv:2412.15115.'),
+    "robertson2009": (
+        'Robertson, S., Zaragoza, H. (2009), "The Probabilistic Relevance Framework: BM25 and'
+        ' Beyond", *Foundations and Trends in Information Retrieval* 3 (4), pp. 333–389.'),
+    "sun2025redeep": (
+        'Sun, Z., Zang, X., Zheng, K., et al. (2025), "ReDeEP: Detecting Hallucination in '
+        'Retrieval-Augmented Generation via Mechanistic Interpretability", *Proceedings of '
+        'ICLR 2025*, arXiv:2410.11414.'),
+    "thorne2018": (
+        'Thorne, J., Vlachos, A., Christodoulopoulos, C., Mittal, A. (2018), "FEVER: a '
+        'Large-scale Dataset for Fact Extraction and VERification", *Proceedings of NAACL-HLT'
+        ' 2018*, pp. 809–819.'),
+    "tran2025semviqa": (
+        'Tran, D. X., Nguyen, N. V., Tran, T. T., et al. (2025), "SemViQA: A Semantic '
+        'Question Answering System for Vietnamese Information Fact-Checking", '
+        'arXiv:2503.00955.'),
+    "tran2025vifactcheck": (
+        'Tran, T.-H., Tran, Q.-D., Tran, K. Q., Nguyen, K. V. (2025), "ViFactCheck: A New '
+        'Benchmark Dataset and Methods for Multi-domain News Fact-Checking in Vietnamese", '
+        '*Proceedings of the AAAI Conference on Artificial Intelligence* 39 (1), pp. 308–316.'),
+    "uitdsc2023": (
+        'UIT Data Science Challenge 2023, Group B – UIT Data Science Challenge 2023 '
+        '(10-2023), https://codalab.lisn.upsaclay.fr/competitions/15497'),
+    "vargha2000": (
+        'Vargha, A., Delaney, H. D. (2000), "A Critique and Improvement of the CL Common '
+        'Language Effect Size Statistics of McGraw and Wong", *Journal of Educational and '
+        'Behavioral Statistics* 25 (2), pp. 101–132.'),
+    "vaswani2017": (
+        'Vaswani, A., Shazeer, N., Parmar, N., et al. (2017), "Attention Is All You Need", '
+        '*Advances in Neural Information Processing Systems* 30, pp. 5998–6008.'),
+    "wiegreffe2019": (
+        'Wiegreffe, S., Pinter, Y. (2019), "Attention is not not Explanation", *Proceedings '
+        'of EMNLP-IJCNLP 2019*, pp. 11–20.'),
+    "zheng2023judge": (
+        'Zheng, L., et al. (2023), "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", '
+        '*Advances in Neural Information Processing Systems* 36.'),
 }
 
 LABEL_RX = re.compile(r"\[\[(fig|tab|eq|sec):([\w-]+)\]\]")

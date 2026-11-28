@@ -54,7 +54,11 @@ API = "API ngoài"
 # ``doc`` is None when the method has no reading model, so its only cost is the row's own.
 ROWS: tuple[dict, ...] = (
     {"ten": "Baseline bề mặt (E01)", "run": "e01_surface_baseline", "doc": None, "loai": CPU},
-    {"ten": "Gemini giám khảo (E10)", "run": "e10_gemini_judge", "doc": None, "loai": API},
+    {"ten": "Gemini giám khảo, tiêu chí rút gọn (E10)", "run": "e10_gemini_judge", "doc": None,
+     "loai": API},
+    # the complete rubric only changes the prompt; its run hit the cache, so it borrows the timing
+    {"ten": "Gemini giám khảo, tiêu chí đầy đủ (E10)", "run": "e10_gemini_judge_full", "doc": None,
+     "loai": API, "ms_from": "e10_gemini_judge"},
     {"ten": "PhoBERT-large tinh chỉnh (E09)", "run": "e09_phobert", "doc": None, "loai": GPU_MAHOA},
     {"ten": "XLM-R-large tinh chỉnh (E09)", "run": "e09_xlmr", "doc": None, "loai": GPU_MAHOA},
     {"ten": "Lookback gộp, Qwen2.5-7B (E02)", "run": "e02_lookback_lens", "doc": "7B",
@@ -146,8 +150,9 @@ def build(runs: dict[str, dict], feasibility: dict[str, dict]) -> list[dict]:
             ms = cost["ms"] if cost else None
             vram = cost["vram_mb"] if cost else None
         else:
-            ms = extra.get("ms_per_sample")
-            vram = extra.get("peak_vram_mb")
+            timed = (runs[spec["ms_from"]].get("extra") or {}) if spec.get("ms_from") else extra
+            ms = timed.get("ms_per_sample")
+            vram = timed.get("peak_vram_mb")
 
         out.append({
             "phuong_phap": spec["ten"],

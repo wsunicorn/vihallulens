@@ -197,6 +197,10 @@ Hai chỗ cố ý khác bản hướng dẫn, ghi lại vì chúng ảnh hưởn
 1. Con người được trả lời `khong_chac`. Giám khảo thì không: một phương pháp so sánh phải ra nhãn cho mọi mẫu, nếu không macro-F1 của nó tính trên một tập khác với mọi dòng còn lại.
 2. Giám khảo phải **nêu lý do trước rồi mới chốt nhãn**. `propertyOrdering` trong schema ép thứ tự đó, nên mô hình lần theo bằng chứng trước khi quyết, thay vì biện minh cho một nhãn đã trót đưa ra.
 
+#### Tiêu chí đầy đủ và lượt đối chứng (T19B, 24–28/11/2026)
+
+Bộ tiêu chí ở trên là nửa đầu của bản hướng dẫn: đến 23/08 bản hướng dẫn có thêm phép thử "ngữ cảnh có bác bỏ được câu trả lời không" và quy tắc cho số liệu sai. T19B chạy lại 300 mẫu với tiêu chí đầy đủ (`RUBRIC_FULL`): **0,753** [0,702–0,801]. Vì tên mô hình giữ nguyên nhưng nhà cung cấp có thể cập nhật mô hình phía sau, tiêu chí cũ được chạy lại trên đúng 300 mẫu để đối chứng: **0,708** [0,657–0,760] so với 0,664 tháng 08. Kiểm định ghép cặp (`results/paired_tests.json`): mô hình thay đổi +0,045 [+0,010; +0,081], tiêu chí đầy đủ +0,044 [+0,006; +0,082]. Với tiêu chí đầy đủ, Gemini không phân biệt được với chunk-aware (+0,015 [−0,043; +0,073]), lookback gộp, PhoBERT và XLM-R trên cùng 300 mẫu.
+
 #### Cỡ mẫu, và vì sao chỉ 300
 
 Mục 2 `CONVENTIONS.md` chỉ cho dùng free tier ở quy mô rất nhỏ. Tập con **300 trên 700 mẫu test** được chọn **tất định bằng SHA-256** đúng như cách chia tập, để cache không trượt và con số không nhúc nhích giữa hai lần chạy.
@@ -256,7 +260,8 @@ Cột macro-F1 ghi kèm **khoảng tin cậy 95 % của tập test**, không ph�
 | PhoBERT tinh chỉnh (E09) | **0,749** [0,714–0,778] | 0,851 | 0,921 | 0,883 | 0,800 | 0,693 | 0,754 | 0,081 | 12,3 | 9.002 |
 | XLM-R large tinh chỉnh (E09) § | **0,776** [0,757–0,818] | **0,881** | 0,920 | **0,918** | **0,844** | 0,729 | 0,756 | 0,097 | 25,2 | 11.231 |
 | InfoXLM large tinh chỉnh (E09) | *không tinh chỉnh được* | | | | | | | | | 11.231 |
-| Gemini free giám khảo (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
+| Gemini free giám khảo, tiêu chí rút gọn (E10) † | **0,664** [0,607–0,719] | 0,821 | **0,974** | 0,818 | 0,753 | 0,582 | 0,656 | — | 8.194 | 0 |
+| Gemini free giám khảo, tiêu chí đầy đủ (E10, T19B) † | 0,753 [0,702–0,801] | 0,856 | 0,968 | 0,851 | 0,806 | 0,747 | 0,704 | — | 8.194 | 0 |
 | **Lookback gộp (E02)** ¶ | **0,745** [0,711–0,776] | 0,843 | 0,896 | 0,890 | 0,793 | **0,731** | 0,712 | 0,109 | 438 | 8.328 |
 | **Chunk-aware câu (E03)** ¶ | 0,757 [0,724–0,789] | 0,864 | 0,894 | 0,915 | 0,823 | 0,686 | **0,762** | **0,044** | 438 | 8.328 |
 
@@ -1036,10 +1041,10 @@ báo cáo**, đúng cách đang làm với tỷ lệ cắt ngữ cảnh.
 
 ### Ba hạn chế phải nói rõ
 
-1. **Chưa kiểm được các lớp còn sống của Sailor2 có bị bóp méo không.** Lượt đối chiếu `bfloat16` hết
-   bộ nhớ hai lần, kể cả sau khi sửa phần giải phóng mô hình. Với Qwen, T07 kiểm được 27 lớp còn
-   lại khớp `float32` tới 0,07 % thang đo; với Sailor2 không có con số tương đương. Hai bên vì
-   thế đứng trên hai mức kiểm chứng khác nhau.
+1. **Các lớp còn lại của Sailor2 đã được đối chiếu ngày 24/11/2026 (T30B, T30C).** Lệch trung bình so
+   với kích hoạt `float32`: 0,26 % thang đo từng token, 0,13 % sau khi lấy trung bình theo phản hồi;
+   Qwen2.5-7B đo cùng cách: 0,10 % và 0,05 % (T07 đo trực tiếp: 0,07 %). Đối chiếu `bfloat16` (T30B)
+   không dùng được: Qwen lệch 2,5 %, Sailor2 lệch 6,9 %, gần như toàn bộ do `bfloat16`.
 2. **Cột chi phí không so được giữa hai mô hình.** Sailor2 đo 566–572 ms/mẫu, Qwen đo 528, nhưng
    hai lượt chạy ở hai phiên GPU khác nhau. Mục 5 của `CONVENTIONS.md` ghi rõ T4 bị giảm xung nhịp 10–15 %
    sau vài phút chạy liên tục, nên chênh lệch 8 % này nằm gọn trong phần nhiễu đó. Muốn so chi
@@ -1425,6 +1430,13 @@ không có rủi ro không hội tụ như InfoXLM ở E09.
 xác hơn, chỉ được mỗi VRAM. Lý do ở mục Bảng 5b: nó buộc phải chạy `bfloat16`, mà T4 không có
 bf16 gốc.
 
+### Chi phí biên đã đo trong kịch bản tự kiểm tra (T45E, 24/11/2026)
+
+Qwen2.5-3B `float16` trên T4, 100 ngữ cảnh test ViHallu, phát lại cùng chuỗi token
+(`results/e11_self_check.json`). Sinh SDPA 6.570 ms/câu; đọc lại một lượt +239 ms (**3,6 %**); hook ở từng bước
+sinh +1.181 ms (18,0 %); eager so với SDPA −2,4 %. Đặc trưng hai cách đọc lệch 0,0002. Ba trong bốn dự đoán
+ghi trước sai. Mục dưới đây là lập luận **trước** phép đo này, giữ lại làm lịch sử.
+
 ### Cột chi phí biên là lập luận, không phải phép đo
 
 Lập luận trung tâm của đề tài về chi phí là: trong một hệ RAG thật, lượt đọc **dù sao cũng phải
@@ -1752,6 +1764,23 @@ Nó trả lời câu hội đồng dễ hỏi theo hướng cụ thể: đề t�
 Một điều phụ: trung bình 756 đầu chỉ đạt 0,349. Tín hiệu định vị nằm ở **một số đầu**, đúng như
 Lookback Lens gốc thấy, nên "chú ý" nói chung và "một đầu được chọn" là hai thứ khác nhau khi trích
 dẫn kết quả này.
+
+### Kiểm định ghép cặp và hiệu chỉnh xác suất (T22B, T22C — 24/11/2026)
+
+`results/paired_tests.json` (bootstrap ghép cặp 10.000 lần trên dự đoán đã lưu) và
+`results/calibration.json`. Chunk-aware − lookback gộp:
+
+| Cấu hình | Hiệu macro-F1 | KTC 95 % ghép cặp | p sau Holm |
+|---|---|---|---|
+| ViHallu 7B / 3B / 1.5B | +0,0116 / −0,0128 / +0,0114 | [−0,023; +0,045] / [−0,044; +0,019] / [−0,006; +0,029] | 1,00 / 1,00 / 0,99 |
+| ViHallu Sailor2 | −0,0258 | [−0,057; +0,005] | 0,67 |
+| ISE-DSC01 29.077 / 5.600 | +0,0068 / +0,0050 | [−0,001; +0,014] / [−0,005; +0,015] | 0,67 / 1,00 |
+| ViWikiFC | −0,0012 | [−0,013; +0,011] | 1,00 |
+| ViFactCheck | +0,0226 | [−0,003; +0,048] | 0,67 |
+
+XLM-R − E02 +0,031 [+0,001; +0,061]; XLM-R − E03 +0,020 [−0,010; +0,050]; E03 − Gemini (300 mẫu) +0,074
+[+0,010; +0,138]. Sau temperature scaling, không còn chênh lệch ECE nào phân biệt được giữa hai nhóm đặc
+trưng hay giữa hai cỡ bộ phân loại (40/40 khoảng tin cậy chứa 0). Diễn giải ở T22B, T22C `TASKS.md`.
 
 ## 6. Các kết quả đã công bố dùng để so sánh
 

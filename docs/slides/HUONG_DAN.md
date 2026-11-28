@@ -10,12 +10,15 @@ dựng** bộ slide. Các file sau nằm trong `.gitignore`, chỉ có trên má
 | File | Là gì |
 |---|---|
 | `slide_hoi_dong.html` | **Bộ chính, 31 slide**, sắp theo bố cục tám chương của quyển. Mở bằng Edge hoặc Chrome, chạy không cần mạng. |
+| `slide_hoi_dong_15.pptx`, `.pdf` | **Bộ 15 trang theo bố cục quyển** (thêm trang cảm ơn là 16), dựng bằng `python docs/slides/nguon/dung_15.py --pdf` theo thứ tự GVHD yêu cầu ngày 05/10: giới thiệu và bài toán, động lực và khoảng trống, cơ sở lý thuyết, dữ liệu, phương pháp, hệ thống, thực nghiệm, tự đánh giá, tài liệu tham khảo. Mọi chữ, bảng, biểu đồ là đối tượng PowerPoint; Times New Roman; câu kết luận dưới tiêu đề; bấm để hiện từng nhóm; có ghi chú người nói. Biểu tượng Lucide (ISC) ở `nguon/icons/`. Chép sang `Reports/` với tên `Slide15_KLTN_…`. |
 | `slide_hoi_dong.pdf` | Trạng thái cuối của từng slide, một slide một trang. |
+| `slide_hoi_dong.pptx` | Bản PowerPoint sửa được: mọi chữ, khối, đường, cột biểu đồ là đối tượng thật; chỉ ảnh chụp và biểu tượng nhỏ là ảnh. Mỗi slide là trạng thái cuối của sơ đồ, chuyển slide mờ dần, có ghi chú người nói. |
 | `nguon/slide_goc_32.html` | Bộ 32 slide ngày 02/10, đầu vào bước 1. Cần giữ để dựng lại; sao lưu cùng các tài liệu riêng. |
 | `_build/` | Hai bộ trung gian 19 và 23 slide. |
 
 Mỗi lần dựng, bản cuối được chép sang `UniversityRequirements/Reports/` với tên
-`Slide_KLTN_22635801_22643511_PhatHienAoGiac.html` / `.pdf`, cạnh bản Word và PDF của quyển. Tài
+`Slide_KLTN_22635801_22643511_PhatHienAoGiac.html` / `.pdf` / `.pptx`, cạnh bản Word và PDF của quyển.
+Bản PPTX dựng bằng `dung_lai.py --pptx` (`nguon/xuat_pptx.py`): Chrome mở bản HTML ở trạng thái cuối, `nguon/trich_doi_tuong.js` đọc vị trí, màu, chữ của từng phần tử, rồi mỗi phần tử thành một hình PowerPoint. Phông web được thay bằng phông có sẵn trên mọi máy Windows (Cambria cho tiêu đề, Segoe UI cho nội dung). Sửa nội dung thì sửa nguồn HTML rồi dựng lại; sửa thẳng trong PowerPoint sẽ mất khi dựng lại. Tài
 liệu chuẩn bị bảo vệ (giải thích từng slide, câu hỏi hội đồng, sổ tay học) nằm ở
 `UniversityRequirements/MyNotes/`.
 

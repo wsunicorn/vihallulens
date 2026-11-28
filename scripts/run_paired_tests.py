@@ -63,6 +63,17 @@ OTHERS = (
     ("XLM-R − chunk-aware", "e09_xlmr", "e03_chunk_aware"),
     ("Lookback gộp − Gemini (300 mẫu)", "e02_lookback_lens", "e10_gemini_judge"),
     ("Chunk-aware − Gemini (300 mẫu)", "e03_chunk_aware", "e10_gemini_judge"),
+    # T19B, added when the judge was rerun with the complete rubric
+    ("Gemini tiêu chí đầy đủ − Gemini v1", "e10_gemini_judge_full", "e10_gemini_judge"),
+    ("Gemini tiêu chí đầy đủ − bề mặt", "e10_gemini_judge_full", "e01_surface_baseline"),
+    ("Gemini tiêu chí đầy đủ − lookback", "e10_gemini_judge_full", "e02_lookback_lens"),
+    ("Gemini tiêu chí đầy đủ − chunk-aware", "e10_gemini_judge_full", "e03_chunk_aware"),
+    ("PhoBERT − Gemini tiêu chí đầy đủ", "e09_phobert", "e10_gemini_judge_full"),
+    ("XLM-R − Gemini tiêu chí đầy đủ", "e09_xlmr", "e10_gemini_judge_full"),
+    # control for the provider changing the model: the published rubric scored again in 11/2026
+    ("Gemini v1 (11/2026) − Gemini v1 (08/2026)", "e10_gemini_judge_v1_rerun", "e10_gemini_judge"),
+    ("Gemini tiêu chí đầy đủ − Gemini v1 (11/2026)", "e10_gemini_judge_full",
+     "e10_gemini_judge_v1_rerun"),
 )
 
 

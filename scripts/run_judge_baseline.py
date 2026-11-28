@@ -318,7 +318,9 @@ def main() -> int:
         "subset_note": f"{len(y_pred)}/{len(frame)} mẫu test, chọn tất định theo SHA-256",
         "n_api_calls": fresh,
         "n_unreadable": unreadable,
-        "ms_per_sample": elapsed * 1000 / max(len(y_pred), 1),
+        # Only a run that called the API for every sample measured the API. A resumed run would
+        # divide a few calls' time by all samples and log a cost three orders too small.
+        "ms_per_sample": (elapsed * 1000 / max(len(y_pred), 1) if fresh == len(y_pred) else None),
         "peak_vram_mb": 0.0,
         "n_params_trainable": 0,
         "confidence_mean": float(np.mean(confidence)),

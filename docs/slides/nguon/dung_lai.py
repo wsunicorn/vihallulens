@@ -8,15 +8,18 @@ source no longer matches:
   3. ``b3_hoan_thien.py``  — academic titles and wording, agenda, part dividers, E19, stepping → 31
 
 The two intermediate decks go to ``docs/slides/_build/``. ``--pdf`` also writes
-``slide_hoi_dong.pdf``, the final state of every slide (``xuat_pdf.py``). The finished deck is
-copied to ``UniversityRequirements/Reports/`` next to the thesis, under the submission name.
+``slide_hoi_dong.pdf``, the final state of every slide (``xuat_pdf.py``); ``--pptx`` also writes
+``slide_hoi_dong.pptx``, an editable PowerPoint copy with native shapes (``xuat_pptx.py``).
+The finished deck is copied to ``UniversityRequirements/Reports/`` next to the thesis,
+under the submission name.
 
 The deck is kept private like the thesis: the input deck ``slide_goc_32.html`` and every output
 are gitignored and live only on the team's machines; the repository holds the build scripts.
 
 The three build steps need only the standard library. The PDF export needs Google Chrome and
 ``uv run --no-project --with playwright==1.48.0 --with pymupdf==1.25.5 --with pillow``
-in front of ``python docs/slides/nguon/dung_lai.py --pdf``.
+in front of ``python docs/slides/nguon/dung_lai.py --pdf``; ``--pptx`` adds
+``--with python-pptx==1.0.2 --with cairosvg==2.7.1``.
 """
 
 import shutil
@@ -47,8 +50,10 @@ run(
 run("b3_hoan_thien.py", BUILD / "slide_hoi_dong_23.html", DECK)
 if "--pdf" in sys.argv:
     run("xuat_pdf.py", DECK, DECK.with_suffix(".pdf"))
+if "--pptx" in sys.argv:
+    run("xuat_pptx.py", DECK, DECK.with_suffix(".pptx"))
 if SUBMIT.is_dir():
-    for out in (DECK, DECK.with_suffix(".pdf")):
+    for out in (DECK, DECK.with_suffix(".pdf"), DECK.with_suffix(".pptx")):
         if out.exists():
             shutil.copy2(out, SUBMIT / (SUBMIT_NAME + out.suffix))
             print("chép", out.name, "→", SUBMIT / (SUBMIT_NAME + out.suffix))

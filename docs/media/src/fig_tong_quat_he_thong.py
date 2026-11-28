@@ -115,8 +115,8 @@ def build() -> None:
           ["Giao diện quan sát\ntô màu đoạn theo tỷ trọng chú ý",
            "Hệ RAG minh họa\ntruy xuất → sinh → kiểm tra",
            "Cảnh báo ảo giác\nkèm đoạn ngữ cảnh đáng ngờ"]],
-         "Chi phí tăng thêm của kịch bản tự kiểm tra chưa được đo: trên T4, mô hình sinh và "
-         "mô hình đọc là hai mô hình khác nhau.", None),
+         "Kịch bản tự kiểm tra (Qwen2.5-3B vừa sinh vừa đọc): phát hiện chỉ làm tăng "
+         "3,6 % thời gian sinh khi đọc lại một lượt.", None),
     ]
     for title, subtitle, color, tint, rows, note, store in tiers:
         y = tier(c, y, title, subtitle, color, tint, rows, note, store)
@@ -128,7 +128,7 @@ def build() -> None:
     y += 22
     # explicit breaks: a chip is too narrow for a separator to end a line cleanly
     items = ["Python 3.11\nuv.lock", "configs/*.yaml", "seed 42",
-             "results/*.jsonl", "KTC bootstrap\n2.000 lần", "pytest\n825 ca"]
+             "results/*.jsonl", "KTC bootstrap\n2.000 lần", "pytest\n860 ca"]
     bw = (W - 5 * 8) / 6
     c.raw_text(M, y, "MÔI TRƯỜNG VÀ BẰNG CHỨNG TÁI LẬP", T_SMALL, fill=GRAY, weight="bold")
     y += 16
