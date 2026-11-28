@@ -748,6 +748,7 @@ for k, (ic, h) in enumerate([("file-json", "Thư viện Python"), ("server", "D�
     text(g, x, 6.36, 1.7, 0.36, h, size=14, bold=True, align=C)
 g = pg.group()
 picture(g, HERE / "img" / "web-ket-qua.webp", 6.1, 1.88, w=6.68, h=3.84)
+box(g, 6.1, 1.88, 6.68, 3.84, None, RULE, 1.25, shape=MSO_SHAPE.RECTANGLE)
 for k, (v, t) in enumerate([("11,5 KB", "Tệp bộ phát hiện"), ("700/700", "Dự đoán trùng khi "
                                                                          "nạp lại"),
                             ("860", "Ca kiểm thử tự động")]):
