@@ -4938,8 +4938,8 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Còn lại cho quyển:** đoạn trong mục 7.2 về ranh giới *định vị* và *quy trách nhiệm*. Mục 7.2
     đang chờ GVHD đọc lại, nên đoạn này chuyển sang danh sách sửa quyển của T48.
 
-- [ ] **T45E** · L · **Chi phí trong kịch bản tự kiểm tra, trên Qwen2.5-3B** — gộp vào E11 (trước đây
-  dự kiến là E20) — **Kaggle T4, 1,5–2 giờ**
+- [x] **T45E** · L · **Chi phí trong kịch bản tự kiểm tra, trên Qwen2.5-3B** — gộp vào E11 (trước đây
+  dự kiến là E20) — hoàn thành 24/11/2026
   - **Vì sao đổi cách làm:** bản cũ đòi GPU có `bfloat16` gốc, vì Qwen2.5-7B tràn số ở `float16` nên không
     sinh được trên T4. Nhưng T31 đã đo Qwen2.5-3B không có lớp nào tràn số, nên một bản 3B có thể vừa
     sinh vừa cung cấp trọng số chú ý trên chính T4.
@@ -4955,19 +4955,83 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Giới hạn:** chỉ đo chi phí, vì câu trả lời tự sinh không có nhãn; T4 không chạy được FlashAttention nên
     phép đo là SDPA so với eager.
   - **Kiểm tra:** `report` in đủ bốn cách kèm khoảng tin cậy; số vào mục 6.12 và 8.2 của quyển.
+  - **Kết quả** (85 phút T4, 100 mẫu, 0 mẫu bỏ, 0 lớp tràn số): sinh 6.570 ms/câu; đọc lại một lượt **+239 ms =
+    3,6 %**; đọc chú ý ở từng bước sinh +1.181 ms = 18,0 %; eager so với SDPA **nhanh hơn** 2,4 %. Độ lệch đặc
+    trưng giữa hai cách đọc 0,0002 sau khi lấy trung bình. Hai lượt lặp lệch nhau không quá 0,3 %.
+  - **Dự đoán: đúng 1/4.** Sai cả ba dự đoán về thời gian: hook ở từng bước tốn 20 % chứ không dưới 10 %; tắt
+    SDPA không làm chậm; đọc lại rẻ hơn đọc khi sinh 5 lần.
+  - **Học được.** Lập luận cũ "chú ý có sẵn trong lượt sinh nên gần như miễn phí" chỉ đúng về phép tính, không
+    đúng về cài đặt: 36 lớp × 94 bước là khoảng 3.400 lần gọi hook bằng Python, mỗi lần 0,4 ms. Đọc lại một
+    lượt gộp hết các bước nên rẻ hơn nhiều. Kết luận thực dụng: tự kiểm tra nên đọc lại.
+  - **Vì sao mẫu ngắn mà vẫn có nghĩa:** chi phí đọc lại tăng theo tổng số token (tương quan 0,97), còn chi phí
+    sinh tăng theo số token phải sinh; câu trả lời càng dài, tỷ lệ càng nhỏ (9,0 % → 2,9 %).
 
-- [ ] **T30B** · L · **Đối chiếu kiểu số của Sailor2-8B** — bổ sung cho E13 — **Kaggle T4, 1–1,5 giờ**
+- [x] **T30B, T30C** · L · **Đối chiếu kiểu số của Sailor2-8B** — bổ sung cho E13 — hoàn thành 24/11/2026
   - Hai lần trước hết bộ nhớ ở lượt đối chiếu. `compare_dtypes.py --save / --from-saved` cho mỗi kiểu số chạy
     ở một tiến trình riêng; đối chiếu `float16` với `bfloat16`, kèm Qwen2.5-7B làm mức tham chiếu.
     Notebook `t30b_sailor2_kieu_so_t4.ipynb`.
   - **Dự đoán ghi trước:** độ lệch trung bình của Sailor2 không quá hai lần của Qwen2.5-7B.
   - **Kiểm tra:** hai bảng so sánh, hoặc ghi rõ lần thử thứ ba vẫn hết bộ nhớ.
+  - **Kết quả T30B** (13 phút): bốn lượt đều chạy được, tách tiến trình là đủ hết lỗi bộ nhớ. Qwen2.5-7B lệch
+    0,025 giữa `float16` và `bfloat16`, Sailor2 lệch 0,069. **Dự đoán (không quá 2 lần) sai**: 2,8 lần. Nhưng
+    T07 đo Qwen `float16` chỉ lệch `float32` 0,0007, nên 0,025 gần như là sai số của `bfloat16`: phép đối
+    chiếu này không trả lời được câu hỏi.
+  - **Kết quả T30C:** nạp ở `float16` rồi chuyển phần kích hoạt sang `float32` (`--dtype float32_late`), vừa
+    bộ nhớ ở 4.096 token. Qwen lệch **0,00098** (kiểm được cách đo, gần 0,0007 của T07), Sailor2 lệch **0,0026**.
+    Sau khi lấy trung bình theo phản hồi: 0,0005 và 0,0013, bằng 0,4 % và 1,2 % độ lệch chuẩn giữa các mẫu;
+    tương quan hạng theo đầu xấp xỉ 1. **Cả hai dự đoán của T30C đúng.**
+  - **Học được:** trước khi lấy một kiểu số làm chuẩn, phải biết sai số của chính nó. `bfloat16` không tràn
+    nhưng ít chữ số có nghĩa, nên không dùng làm chuẩn cho `float16` được.
+  - Kết quả vào mục 4.8, 6.10; bỏ một dòng ở mục 8.2. Bảng dạng chữ ở `results/t30b/`, `results/t30c/`.
 
-- [ ] **T22B** · L · **So sánh ghép cặp chunk-aware với lookback gộp** — bổ sung cho E03, E07, E13–E15 — CPU
-- [ ] **T22C** · L · **Hiệu chỉnh xác suất sau huấn luyện** — bổ sung cho E02, E03 — CPU
-- [ ] **T19B** · L · **LLM giám khảo với tiêu chí đầy đủ** — bổ sung cho E10 — Gemini bản miễn phí
-- [ ] **T13B** · LM · **Gán nhãn NEI vòng 2** — hai người gán độc lập
-- [ ] **T34B** · LM · **Đọc 100 mẫu bộ phát hiện dự đoán sai** — hai người đọc độc lập
+- [x] **T22B** · L · **So sánh ghép cặp chunk-aware với lookback gộp** — bổ sung cho E03, E07, E13–E15 —
+  hoàn thành 24/11/2026
+  - **Để làm gì.** Trước đây quyển so hai phương pháp bằng cách xem hai khoảng tin cậy riêng có chồng nhau
+    không. Hai phương pháp được đánh giá trên cùng mẫu nên cách này chưa chặt: phải đo thẳng độ bất định
+    của *hiệu*.
+  - **Đã làm.** `scripts/run_paired_tests.py`: bootstrap ghép cặp 10.000 lần (rút mẫu chung cho cả hai bên),
+    kiểm định McNemar chính xác, hiệu chỉnh Holm cho tám phép so của H2. Không khớp lại mô hình nào: dùng
+    dự đoán đã lưu trong `runs.jsonl`, và mỗi bộ dự đoán phải cho lại đúng macro-F1 của bản ghi mới được dùng.
+  - **Kết quả.** Cả tám khoảng tin cậy của H2 chứa 0, p sau Holm nhỏ nhất 0,67; năm hiệu dương, ba âm. XLM-R
+    cao hơn lookback gộp 0,031 [+0,001; +0,061] (p = 0,045 chưa hiệu chỉnh), chưa phân biệt được với
+    chunk-aware. PhoBERT không phân biệt được với cả hai. Chunk-aware cao hơn Gemini 0,074 [+0,010; +0,138]
+    trên 300 mẫu; lookback gộp thì chưa đủ (p = 0,054).
+  - **Dự đoán ghi trước:** đúng ở H2 và đặc trưng bề mặt. Không ghi trước cặp XLM-R – lookback gộp.
+  - **Học được.** "Khoảng tin cậy chồng nhau" không đồng nghĩa "không khác nhau": XLM-R và lookback gộp có
+    hai khoảng chồng nhau nhưng hiệu ghép cặp lại không chứa 0.
+- [x] **T22C** · L · **Hiệu chỉnh xác suất sau huấn luyện** — bổ sung cho E02, E03 — hoàn thành 24/11/2026
+  - **Để làm gì.** Mục 7.3 nghi ECE thấp của E03 đến từ bộ phân loại nhỏ hơn chứ không từ đặc trưng, và tự
+    nêu cách kiểm: so ở cùng số tham số, và áp temperature scaling cho cả hai.
+  - **Đã làm.** `scripts/run_calibration.py`, tám cấu hình, mỗi cấu hình 2 × 2: nhóm đặc trưng (lookback gộp,
+    chunk-aware) × cỡ (192 cột, đủ số đầu). Xếp hạng đầu chỉ dùng train, hệ số T khớp trên dev, test chỉ để
+    đánh giá.
+  - **Kết quả.** Ở cùng số tham số, 14/16 cặp không phân biệt được ECE. Bộ phân loại nhỏ có ECE thấp hơn ở
+    15/16 cặp (9 cặp có KTC không chứa 0). Sau temperature scaling, 40/40 khoảng tin cậy chứa 0. ECE của
+    lookback gộp trên ViHallu giảm từ 0,109 xuống 0,043.
+  - **Dự đoán ghi trước:** (2) và (3) đúng; (1) chỉ đúng ở cỡ nhỏ (ở cỡ đủ chunk-aware thấp hơn 0,032).
+  - **Quan sát ngoài kế hoạch, KHÔNG dùng làm kết quả chính:** lookback gộp giữ 192 đầu đạt 0,780 dev và 0,789
+    test trên ViHallu, cao hơn bản 756 đầu và cao hơn chunk-aware. Lưới `TOPK_GRID` chỉ tới 64 nên quy trình
+    không thử giá trị này. Lấy nó bây giờ là chọn cấu hình sau khi đã thấy điểm test.
+  - **Cảnh báo:** hai lượt khớp trên ViWikiFC chưa hội tụ hẳn sau 2.000 vòng lặp.
+- [x] **T19B** · L · **LLM giám khảo với tiêu chí đầy đủ** — bổ sung cho E10 — Gemini bản miễn phí — hoàn thành 28/11/2026
+  - **Để làm gì.** Bản hướng dẫn gán nhãn ngày 23/08 có thêm hai phần mà tiêu chí của E10 (đo 27/08) chưa
+    mang: phép thử "ngữ cảnh có bác bỏ được câu trả lời không" và quy tắc cho số liệu sai. Hỏi: với tiêu chí
+    đầy đủ, LLM giám khảo còn kém hướng chú ý không.
+  - **Đã làm.** `RUBRIC_FULL` trong `src/vihallulens/judge/prompt.py`, cùng 300 mẫu, cùng mô hình
+    `gemini-3.1-flash-lite`, nhiệt độ 0 (`e10_gemini_judge_full`, 24/11). Vì tên mô hình không đổi mà nhà
+    cung cấp có thể cập nhật mô hình phía sau, chạy thêm một **lượt đối chứng**: tiêu chí rút gọn cũ trên đúng
+    300 mẫu (`e10_gemini_judge_v1_rerun`, 24–28/11, dừng một lần vì hết hạn mức 500 lượt/ngày; bộ nhớ đệm
+    riêng `results/judge_cache_v1_rerun.jsonl`). Kiểm định ghép cặp ở `scripts/run_paired_tests.py`.
+  - **Kết quả.** Tiêu chí đầy đủ 0,753 [0,702–0,801]; tiêu chí rút gọn chạy lại 0,708 [0,657–0,760], so
+    với 0,664 tháng 08. Mức tăng +0,089 [+0,049; +0,129] chia đôi: +0,045 [+0,010; +0,081] do mô hình phía
+    nhà cung cấp thay đổi, +0,044 [+0,006; +0,082] do tiêu chí. Với tiêu chí đầy đủ, Gemini không phân biệt
+    được với chunk-aware (Gemini cao hơn 0,015 [−0,043; +0,073]), lookback gộp, PhoBERT và XLM-R trên 300 mẫu.
+  - **Đưa vào quyển.** Bảng 6.1 và 6.9 thêm dòng tiêu chí đầy đủ, Hình 6.1 và 6.7 vẽ lại, nhận xét về LLM
+    giám khảo ở mục 6.2 viết lại; câu trả lời CH2 ở mục 7.1 bỏ ý "cao hơn LLM giám khảo"; mục 7.5 thêm hạn chế
+    "kết quả của LLM giám khảo không cố định theo thời gian"; Phụ lục C ghi lượt đối chứng.
+  - **Học được.** Một phương pháp so sánh qua API không đứng yên: cùng tên mô hình, cùng prompt, ba tháng sau
+    cho kết quả khác có ý nghĩa thống kê. So với hướng chú ý chạy cục bộ, đây vừa là khác biệt về chi phí, vừa
+    là khác biệt về khả năng tái lập.
 
 ---
 
@@ -5085,6 +5149,38 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
   - **Trạng thái 26/09/2026:** bản thảo đầy đủ 151 trang đã xong (T42–T46). Chưa nộp — còn chờ
     sửa 6 nhóm lỗi định dạng ở T47 và ý kiến thầy về ba việc: định vị đóng góp, bố cục chương,
     và có làm E17 không. Còn gần hai tháng so với hạn 22/11.
+- [x] **T48B** · L · **Trực quan hóa kết quả thí nghiệm** — hoàn thành 24/11/2026
+  - **Vì sao:** Chương 6 có 19 bảng nhưng chỉ 3 biểu đồ kết quả, Chương 7 có 4 bảng và không biểu đồ nào; tệp
+    trong `results/` không có trang giải thích. Người đọc khó thấy ý nghĩa của kết quả nếu chỉ có số.
+  - **Đã làm:** bảy biểu đồ đọc thẳng từ `results/`, không gõ tay con số nào (`docs/media/src/result_charts.py`):
+    bản đồ hit@1 của 756 đầu (6.5), phân bố thay đổi khi mất bằng chứng (6.8), đóng góp từng nhóm đặc trưng
+    (6.9), chuyển bộ dữ liệu (6.11), chú ý so với cắt bỏ ngữ cảnh (6.14), hiệu ghép cặp (7.1), biểu đồ độ tin
+    cậy (7.3). Mỗi hình có đoạn hướng dẫn đọc. Bốn bảng có hình thay thế chuyển sang phụ lục. Thêm
+    `results/README.md` giải thích từng tệp và từng trường.
+  - `scripts/build_figure_data.py` rút số liệu cho hình từ `data/processed/` và **dừng nếu lệch số đã công bố**;
+    cả mười phép đối chiếu đều khớp.
+  - **Quan sát mới (ngoài kế hoạch):** thứ hạng định vị của 756 đầu trên ISE-DSC01 và ViWikiFC tương quan
+    Spearman 0,975; 201 trong 234 đầu đạt hit@1 từ 0,5 trên bộ thứ nhất cũng đạt trên bộ thứ hai. Vai trò định
+    vị gắn với từng đầu của mô hình đọc, không gắn với bộ dữ liệu.
+  - **Học được:** hình phân bố cho thấy điều bảng trung vị không nói được: hướng thay đổi nhất quán nhưng
+    đỉnh phân bố nằm sát 0, nên đặc trưng hình dạng phản ứng thật mà vẫn không đủ để phân loại.
+- [x] **T48C** · L · **Rà độ dễ đọc và rút gọn quyển** — hoàn thành 24/11/2026
+  - **Vì sao:** văn xuôi kể lại số đã có trong bảng, chi tiết quy trình chen giữa mạch lập luận, kết quả nhắc
+    lại ở 1.8, 7.1 và 8.1, nhiều câu trên 45 từ.
+  - **Đã làm:** rút phần văn từ 34.300 xuống 26.300 từ; mỗi mục Chương 6 nêu câu hỏi, kết quả chính rồi mới tới
+    số liệu; bỏ năm bảng trùng hoặc quá nhỏ ở Chương 6, bỏ phụ lục trang giới thiệu, gộp các khối lệnh tái
+    lập; chữ cái phụ lục lùi một bậc từ Phụ lục D cũ. Quyển từ 165 còn 136 trang.
+  - **Không bỏ:** kết quả bất lợi, dự đoán sai, hạn chế, các phép kiểm tra loại trừ nguyên nhân khác.
+  - **Bảng (24/11):** `docs/tools/column_widths.py` đo bề rộng chữ thật theo phông, tìm bộ độ rộng cột cho bảng
+    thấp nhất, chia đều phần dư; thay cho phép ước lượng theo số ký tự và khoảng 20 bảng đặt tay. Cột số canh
+    giữa. Rút nhãn dòng, bỏ cột chỉ có một giá trị. Quyển còn 132 trang. Công thức nhiều dòng được giãn cách (trước bị dính nhau).
+  - **Theo góp ý của Lân (24/11):** danh mục viết tắt gọn trong một trang; giả mã (Hình 4.4 cũ) thành văn bản,
+    gọi là Thuật toán 4.1; Hình 5.1 in trên trang dọc, giữ nguyên bố cục hình; tài liệu tham khảo 37 → 28 (bỏ Gao
+    2023, Huang 2025, Naeini 2015, LUMINA, Azaria 2023, SelfCheckGPT, Landis 1977, Mu-SHROOM, FlashAttention). Mẫu và quy trình của Khoa không quy định số tài liệu tối thiểu.
+    Danh mục viết tắt giữ phần nghĩa đầy đủ; thuật toán không đánh số. Quyển còn 128 trang (25/11).
+  - **Đọc lại:** gọi tên ngắn kèm mã, thêm câu nối giữa các mục, sửa câu "tập test chỉ dùng một lần" thành
+    "không tham gia bước lựa chọn nào" (phân tích ở 7.1, 7.3 có tính lại trên test), và nói rõ ngoại lệ đo chi
+    phí tự kiểm tra ở 4.1.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
   - **Riêng tư, bớt chữ, chỉ bấm khi cần — 15/11/2026.**

@@ -261,6 +261,132 @@
         "only_b": 34,
         "p": 0.020584209038374254
       }
+    },
+    {
+      "name": "Gemini tiêu chí đầy đủ − Gemini v1",
+      "a": "e10_gemini_judge_full",
+      "b": "e10_gemini_judge",
+      "n": 300,
+      "macro_a": 0.7525322372827192,
+      "macro_b": 0.6637388843518897,
+      "delta": 0.08879335293082957,
+      "lo": 0.04905431852527236,
+      "hi": 0.1292748168475486,
+      "p_bootstrap": 0.0,
+      "mcnemar": {
+        "only_a": 32,
+        "only_b": 7,
+        "p": 7.025478407740593e-05
+      }
+    },
+    {
+      "name": "Gemini tiêu chí đầy đủ − bề mặt",
+      "a": "e10_gemini_judge_full",
+      "b": "e01_surface_baseline",
+      "n": 300,
+      "macro_a": 0.7525322372827192,
+      "macro_b": 0.6860344957445207,
+      "delta": 0.06649774153819854,
+      "lo": 0.006668330036339408,
+      "hi": 0.12772592165459304,
+      "p_bootstrap": 0.0332,
+      "mcnemar": {
+        "only_a": 52,
+        "only_b": 34,
+        "p": 0.06615259746138927
+      }
+    },
+    {
+      "name": "Gemini tiêu chí đầy đủ − lookback",
+      "a": "e10_gemini_judge_full",
+      "b": "e02_lookback_lens",
+      "n": 300,
+      "macro_a": 0.7525322372827192,
+      "macro_b": 0.7310407994756419,
+      "delta": 0.021491437807077296,
+      "lo": -0.03773646227372798,
+      "hi": 0.08140186512886537,
+      "p_bootstrap": 0.4802,
+      "mcnemar": {
+        "only_a": 45,
+        "only_b": 41,
+        "p": 0.7465343822890572
+      }
+    },
+    {
+      "name": "Gemini tiêu chí đầy đủ − chunk-aware",
+      "a": "e10_gemini_judge_full",
+      "b": "e03_chunk_aware",
+      "n": 300,
+      "macro_a": 0.7525322372827192,
+      "macro_b": 0.7372993491409595,
+      "delta": 0.015232888141759715,
+      "lo": -0.04298901570866872,
+      "hi": 0.07310102143999615,
+      "p_bootstrap": 0.6122,
+      "mcnemar": {
+        "only_a": 41,
+        "only_b": 39,
+        "p": 0.9110721212260929
+      }
+    },
+    {
+      "name": "PhoBERT − Gemini tiêu chí đầy đủ",
+      "a": "e09_phobert",
+      "b": "e10_gemini_judge_full",
+      "n": 300,
+      "macro_a": 0.7465053125920638,
+      "macro_b": 0.7525322372827192,
+      "delta": -0.006026924690655466,
+      "lo": -0.05898673522419149,
+      "hi": 0.045956102705274914,
+      "p_bootstrap": 0.8182
+    },
+    {
+      "name": "XLM-R − Gemini tiêu chí đầy đủ",
+      "a": "e09_xlmr",
+      "b": "e10_gemini_judge_full",
+      "n": 300,
+      "macro_a": 0.7486394832659369,
+      "macro_b": 0.7525322372827192,
+      "delta": -0.0038927540167823516,
+      "lo": -0.05681775409534216,
+      "hi": 0.04772661779744133,
+      "p_bootstrap": 0.8888
+    },
+    {
+      "name": "Gemini v1 (11/2026) − Gemini v1 (08/2026)",
+      "a": "e10_gemini_judge_v1_rerun",
+      "b": "e10_gemini_judge",
+      "n": 300,
+      "macro_a": 0.7084447478712711,
+      "macro_b": 0.6637388843518897,
+      "delta": 0.04470586351938144,
+      "lo": 0.009763358825132554,
+      "hi": 0.08142792814732916,
+      "p_bootstrap": 0.0086,
+      "mcnemar": {
+        "only_a": 20,
+        "only_b": 7,
+        "p": 0.0191572904586792
+      }
+    },
+    {
+      "name": "Gemini tiêu chí đầy đủ − Gemini v1 (11/2026)",
+      "a": "e10_gemini_judge_full",
+      "b": "e10_gemini_judge_v1_rerun",
+      "n": 300,
+      "macro_a": 0.7525322372827192,
+      "macro_b": 0.7084447478712711,
+      "delta": 0.04408748941144813,
+      "lo": 0.006338117886367312,
+      "hi": 0.08223696568739226,
+      "p_bootstrap": 0.0226,
+      "mcnemar": {
+        "only_a": 23,
+        "only_b": 11,
+        "p": 0.05761267291381955
+      }
     }
   ],
   "rounds": 10000,

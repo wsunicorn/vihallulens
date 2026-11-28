@@ -7,6 +7,7 @@ Thư mục này chứa **bản thảo theo chương** của `docs/BaoCao_KLTN.md
 
 ```bash
 python docs/media/src/charts.py          # 1a. vẽ lại biểu đồ (matplotlib)
+python docs/media/src/result_charts.py   #     bảy biểu đồ đọc thẳng từ results/
 python docs/media/src/method_figs.py     # 1b. vẽ lại sơ đồ (SVG + Chrome headless)
 python docs/media/src/concept_figs.py
 python docs/media/src/fig_tong_quat_he_thong.py
@@ -72,6 +73,9 @@ có đúng một mục con, và khi tệp ảnh không tồn tại.
 Chốt ngày 15/11/2026 sau lượt rà văn phong cả quyển, bổ sung ngày 24/11/2026. Áp dụng cho quyển, bộ slide, sổ tay chuẩn
 bị bảo vệ và tài liệu trong `docs/`.
 
+- **Viết hoa chữ đầu mỗi gạch đầu dòng và mỗi ô bảng**, kể cả khi dòng là một vế câu nối sau dấu hai chấm; mỗi gạch
+  đầu dòng kết thúc bằng dấu chấm, không dùng dấu chấm phẩy. Ngoại lệ: thuật ngữ, tên trong mã và đơn vị vốn viết thường
+  (`eager`, macro-F1, ms/mẫu).
 - **Văn học thuật, không văn nói.** Thay cách nói đời thường và cách nhân hóa mô hình bằng từ chuẩn:
 
   | Không viết | Viết |
@@ -96,7 +100,7 @@ bị bảo vệ và tài liệu trong `docs/`.
   | tự giám sát / giám sát ngoài | kịch bản tự kiểm tra / kiểm tra bằng mô hình khác |
   | bằng chứng vàng, câu vàng | bằng chứng chuẩn, câu bằng chứng |
   | vùng nhiễu | phạm vi sai số ngẫu nhiên |
-  | đổi dấu, đổi chiều | lúc dương, lúc âm |
+  | đổi dấu, đổi chiều, lúc dương lúc âm | dương hoặc âm tùy mô hình đọc |
   | độ phân giải, độ mịn (của đoạn) | kích thước đoạn |
   | độ trôi | mức chênh lệch |
   | bậc thang | mô hình đọc nhỏ hơn |
@@ -106,7 +110,7 @@ bị bảo vệ và tài liệu trong `docs/`.
   | sụt | giảm |
 
   "Chấm" theo nghĩa dấu chấm của biểu đồ, nút "Chấm" trên giao diện web, và các câu trích nguyên
-  văn (Phụ lục G) giữ nguyên.
+  văn (Phụ lục F) giữ nguyên.
 - **Gọi tên, không gọi mã trơ.** Viết "tên ngắn (Exx)" theo Bảng 3.6; nhắc H hay CH thì nhắc kèm nội
   dung. `docs/EXPERIMENTS.md` được dùng mã vì là sổ ghi thí nghiệm.
 - **Giải thích thuật ngữ ở lần xuất hiện đầu**; mỗi mục chương 6 theo bốn bước: câu hỏi, cách làm, kết
@@ -194,12 +198,10 @@ khung chỉ còn quyết định tỷ lệ cao/rộng. Trục hai chữ số th�
 giờ có bước 0,025 (in thành "0,03", "0,08"). Sau khi vẽ lại, xem từng hình xem nhãn có đè nhau
 không.
 
-Hình ngang `hinh_trich_huanluyen_phucvu` bị giới hạn bởi **chiều cao** trang ngang (hình +
-chú thích chung 14 cm, vì trang ngang giữ lề 3,5 cm ở cả hai mép dài — xem mục dàn trang
-dưới đây), nên rộng 19,2 cm dù trang còn 23,7 cm. Cỡ chữ của nó chỉnh bằng `TEXT_SCALE` trong
-tệp HTML (hiện 1,3 — thử 1,45 thì nhãn đè nhau và tràn hộp), không phải bằng bề rộng in.
+Hình `hinh_trich_huanluyen_phucvu` in trên trang dọc, rộng hết khổ chữ 15,5 cm (từ 24/11/2026; trước đó
+nằm trên một trang ngang riêng). Bố cục hình giữ nguyên; cỡ chữ chỉnh bằng `TEXT_SCALE` trong tệp HTML.
 
-Hình terminal (`fig_terminal.py`) và thuật toán (`method_figs.fig_thuat_toan`) dựng từ HTML;
+Hình terminal (`fig_terminal.py`) dựng từ HTML; Thuật toán 4.1 là văn bản (các kiểu `Algo …` trong `04_ch4.md`);
 `render(..., trim=True)` cắt phần trắng thừa dưới chân nên cửa sổ chụp có thể để dư chiều cao.
 Pandoc tự giới hạn ảnh ở 14,82 cm; `build_docx.py` trả các hình rộng về đủ 15,5 cm.
 
@@ -213,8 +215,5 @@ chốt điều này ngày 05/10/2026, sau khi nhóm thử dàn hai mặt từ 28
 - **Chân trang** (tên hai sinh viên bên trái, số trang góc phải) có từ trang ABSTRACT, đánh số
   La Mã; **header** (tên khóa luận, căn trái) bắt đầu từ Chương 1. Bìa không có cả hai.
 - Mỗi bìa và mỗi phần (trang đầu, các chương, tài liệu tham khảo – phụ lục) sang trang mới.
-- **Trang ngang** (Hình 5.1) vẫn giữ lề 3,5 cm ở cả hai mép dài và header/chân trang cách mép
-  2,2 cm như hồi dàn hai mặt; nhóm giữ nguyên thay vì nới hình lên 21,4 cm.
 
-Khi đưa đi in: in toàn bộ PDF **một mặt**, cỡ thật 100 % (không "fit to page"). Trang ngang in
-trên tờ A4 thường; dặn tiệm in để máy tự xoay trang.
+Khi đưa đi in: in toàn bộ PDF **một mặt**, cỡ thật 100 % (không "fit to page").

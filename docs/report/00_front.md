@@ -66,11 +66,11 @@ HO CHI MINH CITY — DECEMBER 2026
 
 **Research and development of a hallucination detection system for Vietnamese retrieval-augmented large language models based on internal attention signals**
 
-Retrieval-augmented generation (RAG) grounds a large language model (LLM) in retrieved passages, yet it can still state what those passages do not support. Existing Vietnamese detectors either fine-tune a large encoder or employ an LLM judge for each answer. We ask whether the attention maps of an open reading model, taken from one forward pass over the context and the answer, can detect such contextual hallucination.
+Retrieval-augmented generation (RAG) grounds a large language model (LLM) in retrieved passages, yet unsupported statements remain. Existing Vietnamese detectors either fine-tune a large encoder or employ an LLM judge for each answer. We ask whether the attention maps of an open reading model, taken from one forward pass over the context and the answer, can detect such contextual hallucination.
 
 We reproduce Lookback Lens, which measures per head the share of the response's attention that falls on the context, and extend it into a chunk-aware lookback ratio: the same attention split over context chunks, its shape summarised by five statistics. Per-layer forward hooks let a 4-bit Qwen2.5-7B-Instruct run within one 16 GB Tesla T4.
 
-Across nineteen experiments, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, comparable to a fine-tuned PhoBERT-large (0.749) and higher on the intrinsic class. The best-localising of 756 heads ranks the gold-evidence chunk first in 87.8% of ISE-DSC01 samples, 14.3 times chance; removing that sentence shifts all four pre-registered shape statistics as predicted, and a single head localises evidence better than chunk-by-chunk context ablation (0.850 vs 0.733) at 10.9 times lower cost. The chunk-aware gain is not statistically significant (0.757 vs 0.745); three-class detectors do not transfer across corpora, while the binary decision does (macro-F1 0.78). The detector is released as a Python library, a REST service with an attention view and a Docker image.
+Across nineteen experiments, a linear classifier over 756 lookback ratios (2,271 parameters) reaches a three-class macro-F1 of 0.745, comparable to a fine-tuned PhoBERT-large (0.749) and higher on the intrinsic class. The best-localising of 756 heads ranks the gold-evidence chunk first in 87.8% of ISE-DSC01 samples, 14.3 times chance; removing that sentence shifts all four shape statistics as predicted, and a single head localises evidence better than chunk-by-chunk context ablation (0.850 vs 0.733) at 10.9 times lower cost. The chunk-aware gain is not statistically significant (0.757 vs 0.745); three-class detectors do not transfer across corpora, while the binary decision does (macro-F1 0.78). The detector ships as a Python library, a REST service and a Docker image.
 
 **Keywords: hallucination detection, retrieval-augmented generation, attention analysis, Vietnamese natural language processing, model calibration.**
 
@@ -178,24 +178,24 @@ CHỮ KÝ CỦA GIẢNG VIÊN
 |---|---|---|
 | **API** | Application Programming Interface | Giao diện lập trình ứng dụng |
 | **AUROC** | Area Under the Receiver Operating Characteristic Curve | Diện tích dưới đường cong ROC |
-| **BM25** | Best Matching 25 | Hàm xếp hạng truy xuất văn bản theo tần suất từ |
-| **CH** | — | Câu hỏi nghiên cứu (CH1, CH2, CH3) |
+| **BM25** | Best Matching 25 | Hàm xếp hạng truy xuất văn bản |
+| **CH** | — | Câu hỏi nghiên cứu (CH1–CH3) |
 | **CPU** | Central Processing Unit | Bộ xử lý trung tâm |
-| **DSC** | Data Science Challenge | Cuộc thi Khoa học dữ liệu của Trường Đại học Công nghệ Thông tin, ĐHQG TP.HCM |
+| **DSC** | Data Science Challenge | Cuộc thi Khoa học dữ liệu của Trường ĐH CNTT |
 | **ECE** | Expected Calibration Error | Sai số hiệu chỉnh kỳ vọng |
 | **GPU** | Graphics Processing Unit | Bộ xử lý đồ họa |
 | **GVHD** | — | Giảng viên hướng dẫn |
 | **H** | — | Giả thuyết nghiên cứu (H1–H5) |
 | **KTC** | — | Khoảng tin cậy |
 | **LLM** | Large Language Model | Mô hình ngôn ngữ lớn |
-| **MLP** | Multi-Layer Perceptron | Mạng truyền thẳng nhiều lớp bên trong mỗi lớp Transformer |
+| **MLP** | Multi-Layer Perceptron | Mạng truyền thẳng nhiều lớp trong Transformer |
 | **MRR** | Mean Reciprocal Rank | Nghịch đảo hạng trung bình |
 | **NEI** | Not Enough Information | Nhãn "không đủ thông tin" trong các bộ kiểm chứng thông tin |
 | **NF4** | 4-bit NormalFloat | Định dạng lượng tử hóa trọng số 4 bit |
 | **NLI** | Natural Language Inference | Suy luận ngôn ngữ tự nhiên (kéo theo văn bản) |
 | **RAG** | Retrieval-Augmented Generation | Sinh văn bản tăng cường truy xuất |
 | **REST** | Representational State Transfer | Kiểu kiến trúc dịch vụ web |
-| **SHA** | Secure Hash Algorithm | Họ hàm băm mật mã; đề tài dùng SHA-256 |
+| **SHA** | Secure Hash Algorithm | Họ hàm băm mật mã |
 | **VRAM** | Video Random Access Memory | Bộ nhớ của GPU |
 | **YAML** | YAML Ain't Markup Language | Định dạng tệp cấu hình dạng văn bản |
 

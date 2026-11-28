@@ -558,73 +558,9 @@ def fig_thiet_ke_can_thiep() -> None:
     render("hinh_thiet_ke_can_thiep", PAGE_W, int(c.height))
 
 
-# =========================================================================
-# 6. Pseudo-code of the extraction algorithm
-# =========================================================================
-ALGO_HTML = """<!doctype html><html><head><meta charset="utf-8"><style>
-body { margin: 0; background: #ffffff; font-family: 'Times New Roman', serif; color: #1f2328; }
-.box { width: 1010px; margin: 18px 22px; border-top: 2.4px solid #1f2328; border-bottom: 2.4px solid
-#1f2328; }
-.head { font-size: 28px; padding: 10px 6px; border-bottom: 1.4px solid #1f2328; }
-.head b { font-weight: bold; }
-.io { font-size: 25px; padding: 8px 6px 4px 6px; line-height: 1.45; }
-ol { margin: 4px 0 12px 0; padding-left: 58px; font-size: 25px; line-height: 1.55; }
-li { padding-left: 6px; }
-li::marker { color: #6b7280; font-size: 22px; }
-.kw { font-weight: bold; }
-.cm { color: #6b7280; font-style: italic; }
-.in1 { margin-left: 30px; } .in2 { margin-left: 60px; }
-.m { font-style: italic; }
-</style></head><body><div class="box">
-<div class="head"><b>Thuật toán.</b> Trích đặc trưng chunk-aware bằng forward hook</div>
-<div class="io"><span class="kw">Đầu vào:</span> mô hình đọc với tập lớp được đọc 𝓛 (đã bỏ các lớp
-tràn số); ngữ cảnh <span class="m">c</span>, câu hỏi <span class="m">q</span> (có thể rỗng), phản
-hồi <span class="m">y</span>; chiến lược chia đoạn<br>
-<span class="kw">Đầu ra:</span> LR<sub>total</sub>, LR<sub>context</sub> ∈ ℝ<sup>|𝓛|×H×(T−1)</sup>;
-mật độ theo đoạn D ∈ ℝ<sup>|𝓛|×H×(T−1)×K</sup>; năm đặc trưng hình dạng</div>
-<ol>
-<li><span class="m">p</span> ← ghép <span class="m">c</span>, <span class="m">q</span>, <span
-class="m">y</span> theo chat template của mô hình đọc</li>
-<li><span class="m">C</span>, <span class="m">R</span> ← vị trí token của vùng ngữ cảnh và vùng phản
-hồi <span class="cm">▷ tìm chuỗi trong p, ánh xạ qua bảng vị trí ký tự</span></li>
-<li><span class="m">C</span><sub>1</sub>, …, <span class="m">C<sub>K</sub></span> ← chia <span
-class="m">c</span> thành đoạn, ánh xạ sang token</li>
-<li><span class="kw">với mỗi</span> lớp <span class="m">l</span> ∈ 𝓛 <span class="kw">thực
-hiện</span> đăng ký hook<sub><span class="m">l</span></sub></li>
-<li>chạy mô hình đọc trên <span class="m">p</span> đúng một lượt truyền xuôi <span class="cm">▷
-teacher forcing, cài đặt chú ý eager</span></li>
-<li><span class="kw">hàm</span> hook<sub><span class="m">l</span></sub>(đầu ra của khối chú ý):</li>
-<li class="in1"><span class="m">A</span> ← trọng số chú ý của lớp <span class="m">l</span> <span
-class="cm">▷ H × n × n, chỉ tồn tại trong lớp này</span></li>
-<li class="in1"><span class="kw">với mỗi</span> đầu <span class="m">h</span> và token phản hồi <span
-class="m">t</span> = 2, …, <span class="m">T</span> <span class="kw">thực hiện</span></li>
-<li class="in2">tính <span class="m">A<sub>X</sub></span>(<span class="m">t</span>), <span
-class="m">A<sub>C</sub></span>(<span class="m">t</span>), <span
-class="m">A</span><sub>new</sub>(<span class="m">t</span>) và LR<sub>total</sub>,
-LR<sub>context</sub> theo công thức lookback</li>
-<li class="in2">D[<span class="m">l</span>, <span class="m">h</span>, <span class="m">t</span>,
-<span class="m">k</span>] ← mật độ chú ý của đoạn <span class="m">C<sub>k</sub></span>, với <span
-class="m">k</span> = 1, …, <span class="m">K</span></li>
-<li class="in1"><span class="kw">trả về</span> (đầu ra chú ý, None) <span class="cm">▷ không tích
-lũy A; A được giải phóng trước lớp kế tiếp</span></li>
-<li>gỡ mọi hook</li>
-<li><span class="m">s</span> ← chuẩn hóa D thành tỷ trọng theo đoạn; tính MAX, ENT, GINI, GAP, DRIFT
-trên CPU</li>
-<li><span class="kw">trả về</span> LR<sub>total</sub>, LR<sub>context</sub>, D và năm đặc trưng hình
-dạng</li>
-</ol></div></body></html>"""
-
-
-def fig_thuat_toan() -> None:
-    (OUT / "hinh_thuat_toan.html").write_text(ALGO_HTML, encoding="utf-8")
-    # printed 15,5 cm wide: 25 px of text lands at ~10,4 pt
-    render("hinh_thuat_toan", 1056, 1100, ext="html", trim=True)
-
-
 if __name__ == "__main__":
     fig_khung_nghien_cuu()
     fig_quy_trinh_du_lieu()
     fig_chia_theo_nhom()
     fig_forward_hook()
     fig_thiet_ke_can_thiep()
-    fig_thuat_toan()

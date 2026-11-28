@@ -624,37 +624,37 @@ REFS_SHORT = [
     (
         "Phương pháp nền và đối chiếu",
         [
-            (3, "Chuang và cộng sự (2024). Lookback Lens. <i>EMNLP 2024</i>."),
-            (32, "Vaswani và cộng sự (2017). Attention Is All You Need. <i>NeurIPS</i>."),
-            (27, "Sun và cộng sự (2025). ReDeEP. <i>ICLR 2025</i>."),
-            (4, "Cohen-Wang và cộng sự (2024). ContextCite. <i>NeurIPS 37</i>."),
-            (18, "Li và cộng sự (2026). ARC-JSD. <i>ICLR 2026</i>."),
+            (2, "Chuang và cộng sự (2024). Lookback Lens. <i>EMNLP 2024</i>."),
+            (26, "Vaswani và cộng sự (2017). Attention Is All You Need. <i>NeurIPS</i>."),
+            (20, "Sun và cộng sự (2025). ReDeEP. <i>ICLR 2025</i>."),
+            (3, "Cohen-Wang và cộng sự (2024). ContextCite. <i>NeurIPS 37</i>."),
+            (13, "Li và cộng sự (2026). ARC-JSD. <i>ICLR 2026</i>."),
         ],
     ),
     (
         "Dữ liệu",
         [
-            (22, "Nguyen và cộng sự (2026). DSC2025 – ViHallu Challenge. <i>arXiv:2601.04711</i>."),
-            (31, "UIT Data Science Challenge 2023 (bộ ISE-DSC01)."),
-            (16, "Le và cộng sự (2024). ViWikiFC. <i>arXiv:2405.07615</i>."),
+            (15, "Nguyen và cộng sự (2026). DSC2025 – ViHallu Challenge. <i>arXiv:2601.04711</i>."),
+            (24, "UIT Data Science Challenge 2023 (bộ ISE-DSC01)."),
+            (11, "Le và cộng sự (2024). ViWikiFC. <i>arXiv:2405.07615</i>."),
         ],
     ),
     (
         "Mốc so sánh",
         [
-            (23, "Nguyen và Nguyen (2020). PhoBERT. <i>Findings of EMNLP 2020</i>."),
-            (5, "Conneau và cộng sự (2020). XLM-R. <i>ACL 2020</i>."),
-            (36, "Zheng và cộng sự (2023). LLM-as-a-Judge. <i>NeurIPS 36</i>."),
-            (29, "Tran và cộng sự (2025). SemViQA. <i>arXiv:2503.00955</i>."),
+            (16, "Nguyen và Nguyen (2020). PhoBERT. <i>Findings of EMNLP 2020</i>."),
+            (4, "Conneau và cộng sự (2020). XLM-R. <i>ACL 2020</i>."),
+            (28, "Zheng và cộng sự (2023). LLM-as-a-Judge. <i>NeurIPS 36</i>."),
+            (22, "Tran và cộng sự (2025). SemViQA. <i>arXiv:2503.00955</i>."),
         ],
     ),
     (
         "Mô hình và nền tảng",
         [
-            (25, "Qwen Team (2024). Qwen2.5 Technical Report. <i>arXiv:2412.15115</i>."),
-            (17, "Lewis và cộng sự (2020). Retrieval-Augmented Generation. <i>NeurIPS 33</i>."),
+            (18, "Qwen Team (2024). Qwen2.5 Technical Report. <i>arXiv:2412.15115</i>."),
+            (12, "Lewis và cộng sự (2020). Retrieval-Augmented Generation. <i>NeurIPS 33</i>."),
             (
-                13,
+                9,
                 "Ji và cộng sự (2023). Survey of Hallucination in NLG. <i>ACM Computing Surveys</i>.",
             ),
         ],
@@ -1658,9 +1658,7 @@ TU_NGU = [
     ('Nghịch lý 1.5B', 'Trường hợp 1.5B', 1),
     ('đỉnh bớt nổi', 'đỉnh kém nổi bật', 1),
     ('ví dụ thật: câu hỏi Hồ Hoàn Kiếm', 'ví dụ thực tế: câu hỏi Hồ Hoàn Kiếm', 2),
-    ('[32]</span>Vaswani', '[33]</span>Vaswani', 1),
-    ('[36]</span>Zheng', '[37]</span>Zheng', 1),
-    ('danh mục 36 tài liệu', 'danh mục 37 tài liệu', 2),
+    ('danh mục 36 tài liệu', 'danh mục 28 tài liệu', 2),
     ("cap: 'E19: chú ý đúng ", "cap: 'Cùng 300 mẫu (E19): chú ý đúng ", 1),
     ("Ba giả thuyết được ủng hộ (H1, H3, H4); H2 về chunk-aware không được ủng hộ; "
      "H5 bị bác bỏ ở bài toán ba lớp.</p>",
@@ -1675,6 +1673,72 @@ TU_NGU = [
 for old, new, n in TU_NGU:
     if out.count(old) != n:
         problems.append(f"tu ngu: «{old[:60]}» gặp {out.count(old)}/{n} lần")
+    out = out.replace(old, new)
+# cập nhật theo quyển ngày 25/11/2026: số bảng, số hình, tài liệu đã bớt, kết quả mới
+CAP_NHAT = [
+    ('Bảng 6.1, 6.14</span>', 'Bảng 6.1, 6.9</span>', 1),
+    ('Bảng 6.3, 6.7, 6.17 ·', 'Bảng 6.2, Hình 6.2 và 6.9 ·', 1),
+    ('Bảng 6.6 · 1.836', 'Bảng 6.5, Hình 6.4 · 1.836', 1),
+    ('Bảng 6.2, 6.8, 6.9, 6.10, 6.12, 6.18 ·', 'Hình 6.5 và 7.1, Bảng 6.4 và 6.7 ·', 1),
+    ('Bảng 6.10 và 6.14 ·', 'Bảng 6.7, 6.9 và 6.10 ·', 1),
+    ('Bảng 6.13 ·', 'Hình 6.6 ·', 1),
+    ('E19 (Bảng 6.17)', 'E19 (Hình 6.9)', 1),
+    ('Vì sao không dùng được FlashAttention: Dao và cộng sự (NeurIPS 2022) · Bảng 2.2', 'Bảng 2.2', 1),
+    ('Manakul và cộng sự (2023) · Azaria và Mitchell (2023) ·', 'Chuang và cộng sự (2024) ·', 1),
+    ('kiểm tra tính nhất quán như SelfCheckGPT không cần', 'kiểm tra tính nhất quán giữa nhiều câu trả lời không cần', 1),
+    ("w: 'SelfCheckGPT (2023)'", "w: 'so nhiều câu trả lời với nhau'", 1),
+    ("w: 'Azaria và Mitchell (2023)'", "w: 'biểu diễn bên trong mô hình'", 1),
+    ('Lookback Lens đọc trọng số chú ý; Azaria và Mitchell đọc trạng thái ẩn.',
+     'Tín hiệu có thể là trọng số chú ý (như Lookback Lens) hoặc trạng thái ẩn.', 1),
+    ('nắm được mẫu hình thô', 'phản ánh đặc điểm đơn giản của văn bản', 2),
+    ('có chi phí rất thấp nhưng thô;', 'có chi phí rất thấp nhưng kém chính xác;', 1),
+    ('chỉ <b>66</b> đúng; <b>988</b> bị gọi là nội tại', 'chỉ <b>66</b> đúng; <b>988</b> bị phân loại thành nội tại', 1),
+    ('</b> bị gọi là ngoại lai;', '</b> bị phân loại thành ngoại lai;', 1),
+    ('Chiều ngược lại mất lớp nội tại.', 'Ở chiều ngược lại, 136 trong 234 câu nội tại bị phân loại thành ngoại lai.', 1),
+    ('Các kết quả trước là tương quan, nên nhóm', 'Các kết quả trước mới cho thấy tương quan, nên nhóm', 1),
+    ('với chunk-aware; khoảng tin cậy chồng lên khoảng tin cậy của XLM-R, nên nhóm kết luận là tương đương, không khẳng định cao hơn.',
+     'với chunk-aware, tương đương PhoBERT. So với XLM-R, chunk-aware chưa phân biệt được (hiệu ghép cặp 0,020, khoảng tin cậy chứa 0), còn lookback gộp thấp hơn 0,031.', 1),
+    ('Khoảng tin cậy chồng với XLM-R nên kết luận là <b>tương đương</b>, không khẳng định cao hơn.',
+     '<b>Tương đương PhoBERT</b>; so với XLM-R, chunk-aware chưa phân biệt được, lookback gộp thấp hơn 0,031.', 1),
+    ('thấp hơn XLM-R 0,776 nhưng khoảng tin cậy chồng nhau;', 'thấp hơn XLM-R 0,776 (hiệu ghép cặp 0,031);', 1),
+    ('khác tập đánh giá, khác chế độ (mục 7.1)', 'khác tập đánh giá, khác cách tiếp cận (mục 7.1)', 1),
+    ('Mỗi hướng hiện có trả một chi phí: <b>thời gian và dữ liệu ra ngoài</b>',
+     'Mỗi hướng hiện có một hạn chế: <b>thời gian và dữ liệu gửi ra ngoài</b>', 1),
+    ('Không nắm được ngữ nghĩa', 'Không xét nội dung', 1),
+    ("gold ? 'vàng' : 'khác'", "gold ? 'chuẩn' : 'khác'", 1),
+    # LLM giám khảo với tiêu chí đầy đủ (T19B, 28/11/2026)
+    ('dữ liệu phải gửi ra ngoài, và macro-F1 chỉ đạt 0,664.',
+     'dữ liệu phải gửi ra ngoài, và kết quả phụ thuộc tiêu chí đánh giá: macro-F1 0,664 với tiêu chí rút gọn, 0,753 với tiêu chí đầy đủ.', 1),
+    ('Hai phương pháp so sánh đầu tiên, đặc trưng bề mặt và Gemini, đạt khoảng 0,66; lưu ý Gemini chỉ được đánh giá trên 300 mẫu.',
+     'Đặc trưng bề mặt đạt 0,656. Gemini làm giám khảo đạt 0,753 với tiêu chí đánh giá đầy đủ và 0,664 với tiêu chí rút gọn; lưu ý Gemini chỉ được đánh giá trên 300 mẫu, và trên đúng 300 mẫu đó Gemini không phân biệt được với hướng chú ý.', 1),
+    ("['macro-F1 0,664', C.muted]", "['macro-F1 0,664–0,753', C.muted]", 1),
+    ("['Gemini giám khảo †', .664, .607, .719, 0, '0 · gọi API', 'base', 'Gemini đánh giá từng mẫu — 8,2 giây/mẫu, không huấn luyện · đánh giá trên 300/700 mẫu test']",
+     "['Gemini, tiêu chí đầy đủ †', .7525, .702, .801, 0, '0 · gọi API', 'base', 'Gemini đánh giá từng mẫu — 8,2 giây/mẫu, không huấn luyện · đánh giá trên 300/700 mẫu test · tiêu chí rút gọn: 0,664']", 1),
+    ("Hai phương pháp so sánh đầu tiên: <b>đặc trưng bề mặt</b> và <b>Gemini làm giám khảo</b> — khoảng 0,66. Mức ngẫu nhiên với ba lớp là khoảng 0,33.'",
+     "Hai phương pháp so sánh đầu tiên: <b>đặc trưng bề mặt</b> 0,656 và <b>Gemini làm giám khảo</b> 0,753 với tiêu chí đầy đủ (0,664 với tiêu chí rút gọn). Mức ngẫu nhiên với ba lớp là khoảng 0,33.'", 1),
+    ("['Gemini', 8194, .664, 0, C.muted, 'base', '— (máy chủ Google)']", "['Gemini', 8194, .7525, 0, C.muted, 'base', '— (máy chủ Google)']", 1),
+    ('825 ca tự động', '860 ca tự động', 1),
+    ('>825</span>', '>860</span>', 1),
+    ("['825', 'ca kiểm thử", "['860', 'ca kiểm thử", 1),
+    ('và <b>chênh lệch lúc dương, lúc âm</b>.', 'và <b>chênh lệch dương hoặc âm tùy phép đo</b>.', 1),
+    ('và chênh lệch lúc dương, lúc âm. Nguyên nhân',
+     'và chênh lệch dương hoặc âm tùy phép đo. Kiểm định ghép cặp trên cả tám cấu hình cho cùng kết '
+     'luận: mọi khoảng tin cậy đều chứa 0. Nguyên nhân', 1),
+    ('lúc dương, lúc âm khi đổi mô hình đọc', 'dương hoặc âm tùy mô hình đọc', 2),
+    ('mà T4 không hỗ trợ ở mức phần cứng.&lt;br&gt;',
+     'mà T4 không hỗ trợ ở mức phần cứng. Khi chính mô hình 3B sinh câu trả lời rồi đọc lại để kiểm '
+     'tra, thời gian chỉ tăng thêm 3,6 %, đo trên 100 mẫu.&lt;br&gt;', 1),
+    ('và chi phí tăng thêm khi một mô hình vừa sinh vừa đọc (kịch bản tự kiểm tra) chưa được đo.',
+     'và khi một mô hình vừa sinh vừa đọc (kịch bản tự kiểm tra), nhóm mới đo được chi phí, tăng '
+     'thêm 3,6 % thời gian với mô hình 3B, chưa đo được độ chính xác.', 1),
+    ('Chưa đo chi phí tăng thêm khi một mô hình vừa sinh vừa đọc',
+     'Mô hình tự kiểm tra: mới đo chi phí (+3,6 %), chưa đo độ chính xác', 1),
+    ('Đo chi phí tăng thêm đó trên GPU hỗ trợ sẵn bfloat16',
+     'Gán nhãn câu trả lời tự sinh để đo độ chính xác tự kiểm tra', 1),
+]
+for old, new, n in CAP_NHAT:
+    if out.count(old) != n:
+        problems.append(f"cap nhat: «{old[:60]}» gặp {out.count(old)}/{n} lần")
     out = out.replace(old, new)
 visible = re.sub(r"data:[^\"')]+", "", out)
 BANNED = [

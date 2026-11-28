@@ -104,13 +104,14 @@ def vnum(x: float, nd: int = 4) -> str:
 def chart_main() -> None:
     rows = [
         ("Đặc trưng bề mặt (E01)",       0.6562, 0.6200, 0.6891, GRAY),
-        ("Gemini giám khảo (E10) †",     0.6637, 0.6070, 0.7191, LIGHT),
+        ("Gemini, tiêu chí rút gọn †",   0.6637, 0.6070, 0.7191, LIGHT),
+        ("Gemini, tiêu chí đầy đủ †",    0.75253, 0.7019, 0.8015, LIGHT),
         ("PhoBERT-large (E09)",          0.7487, 0.7137, 0.7776, BLUE),
         ("XLM-R-large (E09)",            0.7762, 0.7570, 0.8184, NAVY),
         ("Lookback gộp (E02)",           0.7451, 0.7111, 0.7762, ORANGE),
         ("Chunk-aware theo câu (E03)",   0.7567, 0.7242, 0.7885, RED),
     ]
-    fig, ax = plt.subplots(figsize=(8.0, 4.2))
+    fig, ax = plt.subplots(figsize=(8.0, 4.6))
     ys = np.arange(len(rows))[::-1]
     for y, (_name, m, lo, hi, color) in zip(ys, rows, strict=False):
         ax.barh(y, m, height=0.58, color=color, edgecolor="#2b2b31", linewidth=0.7)
@@ -212,7 +213,8 @@ def chart_tradeoff() -> None:
     # and 1.5B pairs read to the right, the 3B pair to the left.
     pts = [
         ("Đặc trưng bề mặt",       0.001,   0.6562, GRAY,      (10, 8),    "left",  "baseline"),
-        ("Gemini giám khảo",       8194.0,  0.6637, LIGHT,     (-46, -20), "left",  "baseline"),
+        ("Gemini, tiêu chí rút gọn", 8194.0, 0.6637, LIGHT,    (-60, -20), "left",  "baseline"),
+        ("Gemini, tiêu chí đầy đủ", 8194.0, 0.7525, LIGHT,     (-12, 20),  "left",  "bottom"),
         ("PhoBERT-large",          12.3,    0.7487, BLUE,      (-40, 16),  "left",  "baseline"),
         ("XLM-R-large",            25.2,    0.7762, NAVY,      (6, 8),     "left",  "baseline"),
         ("Chunk-aware 7B",         437.6,   0.7567, RED,       (15, 3),    "left",  "center"),
