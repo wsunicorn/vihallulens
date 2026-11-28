@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>vihallulens — nhìn vào đâu</title>
+<title>ViHalluLens — Phát hiện ảo giác cho hệ RAG tiếng Việt</title>
 <meta name="description" content="Phát hiện ảo giác cho hệ RAG tiếng Việt bằng tín hiệu chú ý nội tại của mô hình đọc. Khóa luận tốt nghiệp, Trường Đại học Công nghiệp TP.HCM.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
@@ -176,12 +176,12 @@
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
   @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
   .bars { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 10px 6px 0; border-bottom: 1px solid var(--line); }
-  .bars .b { flex: 1; background: linear-gradient(180deg, hsla(var(--attn), .85), hsla(var(--attn), .35)); border-radius: 6px 6px 0 0; transition: height .35s cubic-bezier(.2,.8,.2,1); min-height: 3px; position: relative; }
+  .bars .b { flex: 1; background: linear-gradient(180deg, hsl(var(--attn) / .85), hsl(var(--attn) / .35)); border-radius: 6px 6px 0 0; transition: height .35s cubic-bezier(.2,.8,.2,1); min-height: 3px; position: relative; }
   .bars .b i { position: absolute; top: -20px; left: 0; right: 0; text-align: center; font-size: .7rem; color: var(--muted); font-style: normal; }
   .bars.one .b { background: linear-gradient(180deg, #9a938a, #cfc8bd); }
   .slider { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: .9rem; }
   input[type=range] { flex: 1; accent-color: var(--accent); }
-  .stat-inline { display: flex; gap: 18px; font-size: .85rem; margin-top: 8px; color: var(--muted); flex-wrap: wrap; }
+  .stat-inline { display: flex; gap: 6px 14px; font-size: .85rem; margin-top: 8px; color: var(--muted); flex-wrap: wrap; }
   .stat-inline b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
   /* ---------- numbers ---------- */
@@ -229,14 +229,14 @@
   .risk .bar { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #cfe8d6, #f3dfa0, #f0b7b2); position: relative; }
   .risk .pin { position: absolute; top: -5px; width: 3px; height: 22px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); transition: left .5s cubic-bezier(.2,.8,.2,1); }
   .risk .num { font-size: .82rem; color: var(--muted); margin-top: 4px; }
-  .proba { display: grid; grid-template-columns: 110px 1fr 56px; gap: 8px 10px; align-items: center; font-size: .85rem; }
+  .proba { display: grid; grid-template-columns: max-content 1fr 56px; gap: 8px 10px; align-items: center; font-size: .85rem; }
   .proba .track { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
   .proba .fill { height: 100%; background: var(--accent-2); transition: width .5s cubic-bezier(.2,.8,.2,1); }
   .meta { color: var(--muted); font-size: .8rem; margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
   .note { font-size: .82rem; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin-top: 14px; }
   .warn { color: var(--bad); }
   .legend { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); margin-top: 8px; }
-  .legend .grad { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, hsla(var(--attn), .05), hsla(var(--attn), .85)); }
+  .legend .grad { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, hsl(var(--attn) / .05), hsl(var(--attn) / .85)); }
   .chunks-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 10px; }
   .chunks-table td { padding: 4px 6px; border-top: 1px solid var(--line); vertical-align: top; }
   .chunks-table td.n { color: var(--muted); width: 32px; } .chunks-table td.s { text-align: right; width: 64px; font-variant-numeric: tabular-nums; }
@@ -361,14 +361,14 @@
 
 <nav id="nav">
   <div class="wrap">
-    <a class="brand" href="#hero"><span class="mini layer" id="mini"></span>vihallulens</a>
+    <a class="brand" href="#hero"><span class="mini layer" id="mini"></span>ViHalluLens</a>
     <div class="links">
-      <a href="#problem">Vấn đề</a><a href="#how">Cơ chế</a><a href="#chunk">Chunk-aware</a><a href="#numbers">Số liệu</a>
-      <a href="#honest">Nói thẳng</a><a href="#demo">Demo</a><a href="#system">Hệ thống</a>
+      <a href="#problem">Bài toán</a><a href="#how">Phương pháp</a><a href="#chunk">Đóng góp</a><a href="#numbers">Kết quả</a>
+      <a href="#honest">Thảo luận</a><a href="#demo">Minh họa</a><a href="#system">Hệ thống</a>
     </div>
-    <div id="health" class="loading"><span class="dot"></span><span id="health-text">đang kiểm dịch vụ…</span></div>
-    <button id="torch-btn" title="Bật/tắt đèn pin" aria-label="Đèn pin">🔦</button>
-    <button id="theme" title="Đổi sáng/tối" aria-label="Đổi giao diện sáng tối">☾</button>
+    <div id="health" class="loading"><span class="dot"></span><span id="health-text">Đang kiểm tra dịch vụ…</span></div>
+    <button id="torch-btn" title="Bật hoặc tắt hiệu ứng đèn pin" aria-label="Hiệu ứng đèn pin">🔦</button>
+    <button id="theme" title="Đổi giao diện sáng hoặc tối" aria-label="Đổi giao diện sáng hoặc tối">☾</button>
   </div>
 </nav>
 
@@ -377,72 +377,72 @@
   <div id="stage">
     <canvas id="motes"></canvas>
     <h1 id="title">
-      <span class="t1">Mô hình có thể bịa chữ. Ánh mắt của nó thì không.</span>
-      <span class="t2">MẮT KHÔNG NÓI DỐI</span>
+      <span class="t1">Kiểm tra câu trả lời của hệ RAG tiếng Việt bằng tín hiệu chú ý của mô hình ngôn ngữ</span>
+      <span class="t2">PHÁT HIỆN ẢO GIÁC</span>
     </h1>
     <aside class="side left" id="side-l">
-      <p><b>Đừng hỏi mô hình nói gì. Hỏi nó đang nhìn vào đâu.</b></p>
-      <p>Khi Qwen2.5 đọc lại câu trả lời cùng ngữ cảnh, phân bố chú ý của nó lên <b>từng đoạn</b> đủ để lật mặt một câu bịa — không LLM giám khảo, không tinh chỉnh.</p>
+      <p><b>Câu trả lời có dựa vào tài liệu được truy xuất hay không?</b></p>
+      <p>Khi Qwen2.5 đọc lại câu trả lời cùng ngữ cảnh, phần chú ý nó dành cho <b>từng đoạn</b> ngữ cảnh đủ để nhận ra câu trả lời có ảo giác, mà không cần mô hình giám khảo hay tinh chỉnh mô hình ngôn ngữ.</p>
     </aside>
     <aside class="side right" id="side-r">
-      <div class="stat"><b>87,8 %</b><span>chỉ đúng đoạn chứa bằng chứng, giữa 22,6 đoạn</span></div>
-      <div class="stat"><b>579</b><span>tham số — bộ phân loại khớp trong vài giây trên CPU</span></div>
-      <div class="stat"><b>16</b><span>thí nghiệm, 3 bộ dữ liệu, 4 mô hình đọc, một card T4</span></div>
+      <div class="stat"><b>87,8 %</b><span>Số mẫu mà câu nhận nhiều chú ý nhất đúng là câu chứa bằng chứng (trung bình 22,6 câu mỗi ngữ cảnh)</span></div>
+      <div class="stat"><b>579</b><span>Tham số của bộ phân loại, huấn luyện trong vài giây trên CPU</span></div>
+      <div class="stat"><b>19</b><span>Thí nghiệm trên 4 bộ dữ liệu tiếng Việt và 4 mô hình đọc, chạy trên một GPU Tesla T4</span></div>
     </aside>
     <div class="layer" id="face"></div>
     <div id="branch"><img src="img/branch.webp" alt="" onerror="this.parentElement.remove()"></div>
     <div class="layer" id="prof"></div>
     <div id="intro">
-      <div class="eyebrow">Khóa luận tốt nghiệp · Khoa học dữ liệu · ĐH Công nghiệp TP.HCM</div>
-      <h1>Nghiên cứu và xây dựng hệ thống phát hiện ảo giác cho LLM tăng cường truy xuất tiếng Việt <span>dựa trên tín hiệu chú ý nội tại</span></h1>
-      <p class="muted" style="margin:0">Khi mô hình đọc lại câu trả lời cùng ngữ cảnh, phân bố chú ý của nó lên <b>từng đoạn</b> đủ để phân biệt trung thực, ảo giác nội tại, ảo giác ngoại lai — không LLM giám khảo, không tinh chỉnh, bộ phân loại 579 tham số.</p>
+      <div class="eyebrow">Khóa luận tốt nghiệp · Khoa học dữ liệu · Trường Đại học Công nghiệp TP.HCM</div>
+      <h1>Phát hiện ảo giác cho hệ RAG tiếng Việt <span>dựa trên tín hiệu chú ý nội tại</span></h1>
+      <p class="muted" style="margin:0">Mô hình ngôn ngữ đọc lại câu trả lời cùng ngữ cảnh đã truy xuất. Tỷ trọng chú ý dành cho <b>từng đoạn</b> ngữ cảnh được dùng để xếp câu trả lời vào một trong ba nhãn: trung thực, ảo giác nội tại, ảo giác ngoại lai. Bộ phân loại chỉ có 579 tham số và không cần mô hình giám khảo.</p>
       <div class="hero-cta">
-        <a class="btn primary" href="#demo">Thử ngay</a>
-        <a class="btn" href="#how">Cơ chế trong 30 giây</a>
+        <a class="btn primary" href="#demo">Dùng thử</a>
+        <a class="btn" href="#how">Phương pháp</a>
         <a class="btn" href="https://github.com/wsunicorn/vihallulens" target="_blank" rel="noopener">Mã nguồn</a>
       </div>
       <div class="hero-meta"><span>Nguyễn Ngọc Lân · Nguyễn Tấn Minh</span><span>GVHD: ThS. Trương Vĩnh Linh</span><span>2026</span></div>
     </div>
     <div id="torch"></div>
-    <div id="hint">cuộn để cú đậu xuống ↓</div>
+    <div id="hint">Cuộn xuống để xem tiếp ↓</div>
   </div>
 </section>
 
 <!-- ============================================================ 2. problem -->
 <section id="problem" class="alt">
   <div class="wrap">
-    <div class="eyebrow reveal">Vấn đề</div>
-    <h2 class="reveal">Một câu trả lời trông rất ổn có thể không bám vào ngữ cảnh</h2>
-    <p class="lead reveal" data-delay="1">Hệ RAG truy xuất tài liệu rồi để mô hình viết. Ba chuyện có thể xảy ra. Rê chuột lên từng thẻ — cú Lens sẽ cho biết nó nghĩ gì.
-      Ba ví dụ này được chấm thật trên T4, không ai dàn dựng.</p>
+    <div class="eyebrow reveal">Bài toán</div>
+    <h2 class="reveal">Câu trả lời trôi chảy vẫn có thể không dựa vào tài liệu</h2>
+    <p class="lead reveal" data-delay="1">Hệ RAG (tăng cường truy xuất) tìm tài liệu liên quan rồi để mô hình ngôn ngữ viết câu trả lời dựa trên tài liệu đó. Câu trả lời có thể trung thực, có thể nói sai điều tài liệu viết (ảo giác nội tại), hoặc thêm điều tài liệu không nhắc tới (ảo giác ngoại lai).
+      Ba ví dụ dưới đây được bộ phát hiện chấm trên GPU Tesla T4; bấm vào một thẻ để xem chi tiết ở phần Minh họa.</p>
     <div class="grid3" id="kinds"></div>
-    <p class="muted reveal" style="margin-top:16px;font-size:.9rem">Ngữ cảnh chung của ba thẻ: <i>Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý…</i></p>
+    <p class="muted reveal" style="margin-top:16px;font-size:.9rem">Ngữ cảnh chung của ba ví dụ: <i>Hà Nội là thủ đô của Việt Nam, nằm bên bờ sông Hồng. Thành phố có lịch sử hơn một nghìn năm, từng mang tên Thăng Long dưới triều Lý…</i></p>
   </div>
 </section>
 
 <!-- ============================================================ 3. how -->
 <section id="how">
   <div class="wrap">
-    <div class="eyebrow reveal">Cơ chế, 30 giây</div>
-    <h2 class="reveal">Đọc lại câu trả lời cùng ngữ cảnh, xem chú ý rơi vào đâu</h2>
-    <p class="lead reveal" data-delay="1">Không sinh token mới. Một lượt đọc duy nhất (teacher forcing), và ma trận chú ý được cộng dồn <em>ngay trong từng lớp</em> rồi giải phóng — nhờ đó
-      ngữ cảnh 4.096 token vừa trong 16 GB của một card T4.</p>
+    <div class="eyebrow reveal">Phương pháp</div>
+    <h2 class="reveal">Mô hình đọc lại câu trả lời cùng ngữ cảnh, rồi đo chú ý dành cho từng đoạn</h2>
+    <p class="lead reveal" data-delay="1">Mô hình không sinh thêm từ nào: câu trả lời có sẵn được đưa vào và đọc trong một lượt (teacher forcing). Đặc trưng chú ý được tính <em>ngay tại từng lớp</em>, sau đó ma trận chú ý được giải phóng, nhờ vậy
+      ngữ cảnh dài 4.096 token vẫn vừa bộ nhớ 16 GB của GPU Tesla T4.</p>
     <div class="steps">
       <div class="step reveal"><div class="n">1</div>
-        <svg viewBox="0 0 120 64"><rect x="6" y="8" width="108" height="14" rx="4" fill="hsla(var(--attn),.25)"/><rect x="6" y="28" width="60" height="10" rx="4" fill="var(--line)"/><rect x="6" y="44" width="80" height="10" rx="4" fill="var(--accent-2)"/></svg>
-        <h3>Ghép prompt</h3><p>Ngữ cảnh + câu hỏi ở lượt <code>user</code>, câu trả lời cần chấm ở lượt <code>assistant</code>. Mẫu chốt một lần, không đổi.</p></div>
+        <svg viewBox="0 0 120 64"><rect x="6" y="8" width="108" height="14" rx="4" fill="hsl(var(--attn) / .25)"/><rect x="6" y="28" width="60" height="10" rx="4" fill="var(--line)"/><rect x="6" y="44" width="80" height="10" rx="4" fill="var(--accent-2)"/></svg>
+        <h3>Ghép đầu vào</h3><p>Ngữ cảnh và câu hỏi đặt ở lượt người dùng, câu trả lời cần chấm đặt ở lượt trợ lý, theo một mẫu cố định cho mọi thí nghiệm.</p></div>
       <div class="step reveal" data-delay="1"><div class="n">2</div>
         <svg viewBox="0 0 120 64"><g fill="none" stroke="var(--accent)" stroke-width="2"><rect x="10" y="10" width="100" height="44" rx="8"/><path d="M30 32h60M30 22h60M30 42h60" opacity=".5"/></g></svg>
-        <h3>Một lượt đọc</h3><p>Qwen2.5-7B lượng tử hóa 4-bit, <code>float16</code>, bỏ lớp 27 vì tràn số. 437 ms một mẫu.</p></div>
+        <h3>Một lượt đọc</h3><p>Qwen2.5-7B nén 4 bit, tính ở kiểu <code>float16</code>; lớp 27 bị loại vì tràn số. Trung bình 437 ms mỗi mẫu.</p></div>
       <div class="step reveal" data-delay="2"><div class="n">3</div>
         <svg viewBox="0 0 120 64"><g stroke="var(--accent)" stroke-width="1.5" fill="none"><path d="M20 50 C 40 10, 60 10, 80 50"/><path d="M40 50 C 55 20, 75 20, 100 50" opacity=".6"/><path d="M10 50 C 20 30, 30 30, 50 50" opacity=".4"/></g><circle cx="60" cy="52" r="3" fill="var(--accent)"/></svg>
-        <h3>Hook trong lớp</h3><p>Mỗi lớp, mỗi đầu: cộng phần chú ý của token phản hồi rơi vào <em>từng đoạn</em> ngữ cảnh, rồi xóa ma trận.</p></div>
+        <h3>Forward hook</h3><p>Hàm tự chạy khi mỗi lớp tính xong: cộng phần chú ý mà các token của câu trả lời dành cho <em>từng đoạn</em> ngữ cảnh, rồi giải phóng ma trận.</p></div>
       <div class="step reveal" data-delay="3"><div class="n">4</div>
-        <svg viewBox="0 0 120 64"><g fill="hsla(var(--attn),.6)"><rect x="12" y="40" width="14" height="14"/><rect x="32" y="16" width="14" height="38"/><rect x="52" y="30" width="14" height="24"/><rect x="72" y="46" width="14" height="8"/><rect x="92" y="36" width="14" height="18"/></g></svg>
-        <h3>Đặc trưng theo đoạn</h3><p>Tỷ lệ gộp (Lookback Lens) + entropy, tỷ trọng lớn nhất, Gini, khoảng cách top-1/top-2, độ trôi.</p></div>
+        <svg viewBox="0 0 120 64"><g fill="hsl(var(--attn) / .6)"><rect x="12" y="40" width="14" height="14"/><rect x="32" y="16" width="14" height="38"/><rect x="52" y="30" width="14" height="24"/><rect x="72" y="46" width="14" height="8"/><rect x="92" y="36" width="14" height="18"/></g></svg>
+        <h3>Đặc trưng theo đoạn</h3><p>Tỷ lệ lookback gộp như Lookback Lens, cùng năm đặc trưng hình dạng: entropy, tỷ trọng lớn nhất, hệ số Gini, chênh lệch giữa hai đoạn đứng đầu và mức thay đổi giữa các token.</p></div>
       <div class="step reveal" data-delay="3"><div class="n">5</div>
         <svg viewBox="0 0 120 64"><path d="M10 50 L 110 14" stroke="var(--accent)" stroke-width="2"/><g fill="var(--ok)"><circle cx="30" cy="30" r="3"/><circle cx="50" cy="22" r="3"/></g><g fill="var(--bad)"><circle cx="70" cy="46" r="3"/><circle cx="90" cy="40" r="3"/></g></svg>
-        <h3>Hồi quy logistic</h3><p>579 tham số, khớp trong vài giây trên CPU. Ba lớp: trung thực, nội tại, ngoại lai. Trả cả điểm rủi ro.</p></div>
+        <h3>Hồi quy logistic</h3><p>579 tham số, huấn luyện trong vài giây trên CPU. Cho ra một trong ba nhãn và điểm rủi ro, bằng 1 trừ xác suất trung thực.</p></div>
     </div>
   </div>
 </section>
@@ -451,20 +451,20 @@
 <section id="chunk" class="alt">
   <div class="wrap">
     <div class="eyebrow reveal">Đóng góp</div>
-    <h2 class="reveal">Chunk-aware: không hỏi "nhìn ngữ cảnh bao nhiêu", mà hỏi "nhìn đoạn nào"</h2>
-    <p class="lead reveal" data-delay="1">Lookback Lens gộp cả ngữ cảnh thành một con số. Tách theo đoạn thì có thêm <em>hình dạng</em> của phân bố — và đầu ra chỉ được đoạn nào.
-      Kéo thanh trượt để thấy hai cách nhìn khác nhau ra sao (minh họa, không phải số đo).</p>
+    <h2 class="reveal">Chunk-aware lookback ratio: đo chú ý dành cho từng đoạn, không chỉ cho cả ngữ cảnh</h2>
+    <p class="lead reveal" data-delay="1">Lookback Lens gộp toàn bộ ngữ cảnh thành một tỷ lệ. Tách tỷ lệ đó theo từng đoạn cho biết thêm <em>hình dạng</em> của phân bố chú ý (tập trung hay dàn trải) và chỉ ra đoạn được dựa vào nhiều nhất.
+      Kéo thanh trượt để so sánh hai cách đo (hình minh họa, không phải số liệu đo).</p>
     <div class="compare reveal" data-delay="2">
       <div class="card">
-        <h3>Lookback Lens gốc — một khối</h3>
+        <h3>Lookback Lens: một tỷ lệ cho cả ngữ cảnh</h3>
         <div class="bars one" id="bars-one"><div class="b"><i id="one-v">62 %</i></div></div>
-        <p class="muted" style="font-size:.85rem;margin-top:10px">Tỷ lệ chú ý rơi vào ngữ cảnh so với phần đã sinh. Phân bố nhọn hay tản đều cho <b>cùng một số</b>.</p>
+        <p class="muted" style="font-size:.85rem;margin-top:10px">Tỷ lệ giữa chú ý dành cho ngữ cảnh và chú ý dành cho phần câu trả lời đã viết. Phân bố tập trung hay dàn trải đều cho <b>cùng một con số</b>.</p>
       </div>
       <div class="card">
-        <h3>Chunk-aware — theo từng đoạn</h3>
+        <h3>Chunk-aware: tỷ trọng của từng đoạn</h3>
         <div style="position:relative"><div class="bars" id="bars-many"></div><canvas id="bars-motes" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas></div>
-        <div class="slider"><span>tản</span><input type="range" id="focus" min="0" max="100" value="70"><span>tập trung</span></div>
-        <div class="stat-inline"><span>entropy <b id="s-ent">—</b></span><span>tỷ trọng lớn nhất <b id="s-max">—</b></span><span>Gini <b id="s-gini">—</b></span></div>
+        <div class="slider"><span>Dàn trải</span><input type="range" id="focus" min="0" max="100" value="70" aria-label="Mức tập trung của chú ý"><span>Tập trung</span></div>
+        <div class="stat-inline"><span>Entropy <b id="s-ent">—</b></span><span>Tỷ trọng lớn nhất <b id="s-max">—</b></span><span>Hệ số Gini <b id="s-gini">—</b></span></div>
       </div>
     </div>
     <div class="grid2" style="margin-top:28px">
@@ -473,22 +473,22 @@
         <svg class="fallback" viewBox="0 0 400 250" aria-hidden="true">
           <rect width="400" height="250" fill="var(--bg2)"/>
           <g font-family="inherit" font-size="11" fill="var(--muted)">
-            <rect x="30" y="40" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.12)"/><text x="40" y="57">đoạn 1</text>
-            <rect x="30" y="76" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.55)"/><text x="40" y="93">đoạn 2 ← 48 %</text>
-            <rect x="30" y="112" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.2)"/><text x="40" y="129">đoạn 3</text>
-            <rect x="30" y="148" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.08)"/><text x="40" y="165">đoạn 4</text>
-            <rect x="120" y="200" width="160" height="24" rx="12" fill="var(--accent)"/><text x="145" y="216" fill="#fff">câu trả lời</text>
+            <rect x="30" y="40" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.12)"/><text x="40" y="57">Đoạn 1</text>
+            <rect x="30" y="76" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.55)"/><text x="40" y="93">Đoạn 2 ← 48 %</text>
+            <rect x="30" y="112" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.2)"/><text x="40" y="129">Đoạn 3</text>
+            <rect x="30" y="148" width="340" height="26" rx="6" fill="hsla(28,80%,55%,.08)"/><text x="40" y="165">Đoạn 4</text>
+            <rect x="120" y="200" width="160" height="24" rx="12" fill="var(--accent)"/><text x="145" y="216" fill="#fff">Câu trả lời</text>
             <g stroke="var(--accent)" stroke-dasharray="3 4" fill="none"><path d="M200 200 C 200 150, 120 130, 60 89"/><path d="M200 200 C 220 170, 300 160, 340 89"/></g>
           </g>
         </svg>
       </div>
       <div class="reveal" data-delay="2">
-        <h3>Điều đo được</h3>
+        <h3>Kết quả đo được</h3>
         <ul class="muted" style="padding-left:18px">
-          <li>Đầu chú ý mạnh nhất chỉ đúng đoạn chứa bằng chứng <b>87,8 %</b> số lần, giữa trung bình 22,6 đoạn — gấp <b>14,29×</b> chọn hú họa (E06, ISE-DSC01).</li>
-          <li>Lặp lại trên bộ thứ hai với sai lệch <b>0,003</b> — thuộc tính của mô hình đọc, không của một bộ dữ liệu (E08).</li>
-          <li>Bỏ câu bằng chứng đi thì phân bố đổi đúng hướng dự đoán ở cả bốn đại lượng, 71–75 % số cặp (E08).</li>
-          <li>Chia theo <b>câu</b> thắng cả bốn cấu hình cửa sổ token, kể cả đối chứng không chồng lấn — ranh giới ngữ nghĩa mới là thứ quan trọng (E05).</li>
+          <li>Đầu chú ý tốt nhất xếp đúng câu chứa bằng chứng lên đầu ở <b>87,8 %</b> số mẫu, trong trung bình 22,6 câu mỗi ngữ cảnh, gấp <b>14,29 lần</b> chọn ngẫu nhiên (E06, ISE-DSC01).</li>
+          <li>Trên bộ dữ liệu thứ hai, tỷ lệ trung bình của mọi đầu chú ý chỉ chênh <b>0,003</b> so với bộ thứ nhất: khả năng định vị bằng chứng là đặc tính của mô hình đọc, không phụ thuộc bộ dữ liệu (E08).</li>
+          <li>Khi loại bỏ câu bằng chứng khỏi ngữ cảnh, cả bốn đặc trưng thay đổi theo đúng hướng đã dự đoán trước ở 71–75 % số cặp (E08).</li>
+          <li>Chia đoạn theo <b>câu</b> cho kết quả cao hơn cả bốn cấu hình chia theo cửa sổ token, kể cả cấu hình đối chứng không chồng lấn, dù chênh lệch chưa có ý nghĩa thống kê (E04, E05).</li>
         </ul>
       </div>
     </div>
@@ -498,57 +498,58 @@
 <!-- ============================================================ 5. numbers -->
 <section id="numbers">
   <div class="wrap">
-    <div class="eyebrow reveal">Số liệu</div>
-    <h2 class="reveal">16 thí nghiệm, 3 bộ dữ liệu, 4 mô hình đọc</h2>
+    <div class="eyebrow reveal">Kết quả</div>
+    <h2 class="reveal">19 thí nghiệm, 4 bộ dữ liệu, 4 mô hình đọc</h2>
     <div class="nums reveal" data-delay="1">
-      <div class="num"><div class="v" data-count="87.8" data-suffix=" %">0</div><div class="k">hit@1 so với đoạn bằng chứng vàng</div></div>
-      <div class="num"><div class="v" data-count="0.7567" data-dec="4">0</div><div class="k">macro-F1 ViHallu, chunk-aware (E03)</div></div>
-      <div class="num"><div class="v" data-count="700" data-suffix="/700">0</div><div class="k">phán đoán tái lập từ bundle đã lưu</div></div>
-      <div class="num"><div class="v" data-count="579">0</div><div class="k">tham số của bộ phân loại</div></div>
-      <div class="num"><div class="v" data-count="0.044" data-dec="3">0</div><div class="k">ECE — hiệu chỉnh tốt nhất Bảng 1</div></div>
-      <div class="num"><div class="v" data-count="120" data-prefix="≈" data-suffix="k">0</div><div class="k">lượt đọc đã trích trên Kaggle T4</div></div>
-      <div class="num"><div class="v" data-count="781">0</div><div class="k">ca kiểm thử tự động, không cần GPU</div></div>
-      <div class="num"><div class="v" data-count="3710" data-suffix=" MB">0</div><div class="k">VRAM đỉnh với mô hình đọc 3B</div></div>
+      <div class="num"><div class="v" data-count="87.8" data-suffix=" %">0</div><div class="k">Tỷ lệ xếp đúng câu chứa bằng chứng lên đầu (hit@1)</div></div>
+      <div class="num"><div class="v" data-count="0.757" data-dec="3">0</div><div class="k">Macro-F1 của chunk-aware trên ViHallu (E03)</div></div>
+      <div class="num"><div class="v" data-count="700" data-suffix="/700">0</div><div class="k">Dự đoán trùng khớp khi nạp lại tệp mô hình đã lưu</div></div>
+      <div class="num"><div class="v" data-count="579">0</div><div class="k">Tham số của bộ phân loại</div></div>
+      <div class="num"><div class="v" data-count="0.044" data-dec="3">0</div><div class="k">Sai số hiệu chỉnh xác suất (ECE), thấp nhất trong bảng kết quả chính</div></div>
+      <div class="num"><div class="v" data-count="8328" data-suffix=" MB">0</div><div class="k">Bộ nhớ GPU cao nhất với mô hình đọc Qwen2.5-7B</div></div>
+      <div class="num"><div class="v" data-count="860">0</div><div class="k">Ca kiểm thử tự động, chạy không cần GPU</div></div>
+      <div class="num"><div class="v" data-count="3710" data-suffix=" MB">0</div><div class="k">Bộ nhớ GPU cao nhất với mô hình đọc Qwen2.5-3B</div></div>
     </div>
     <div class="tablewrap reveal" data-delay="2">
       <table class="res">
-        <thead><tr><th>Phương pháp (ViHallu, test 700)</th><th class="r">macro-F1</th><th class="r">ms/mẫu</th><th class="r">Tham số huấn luyện</th><th>Cần gì</th></tr></thead>
+        <thead><tr><th>Phương pháp (ViHallu, tập kiểm tra 700 mẫu)</th><th class="r">Macro-F1</th><th class="r">ms/mẫu</th><th class="r">Tham số huấn luyện</th><th>Yêu cầu</th></tr></thead>
         <tbody>
-          <tr><td>Baseline bề mặt (độ dài, trùng lặp từ)</td><td class="r">0,656</td><td class="r">0,001</td><td class="r">9</td><td>CPU</td></tr>
-          <tr><td>Gemini giám khảo (300 mẫu)</td><td class="r">0,664</td><td class="r">8.194</td><td class="r">0</td><td>API ngoài, dữ liệu rời máy</td></tr>
-          <tr><td>PhoBERT-large tinh chỉnh</td><td class="r">0,749</td><td class="r">12,3</td><td class="r">369 triệu</td><td>GPU + tinh chỉnh</td></tr>
-          <tr><td>XLM-R-large tinh chỉnh</td><td class="r"><b>0,776</b></td><td class="r">25,2</td><td class="r">560 triệu</td><td>GPU + tinh chỉnh</td></tr>
-          <tr class="us"><td>Lookback gộp, Qwen2.5-7B</td><td class="r">0,745</td><td class="r">437,6</td><td class="r">2.271</td><td>GPU, lượt đọc có sẵn</td></tr>
-          <tr class="us"><td><b>Chunk-aware, Qwen2.5-7B</b></td><td class="r">0,757</td><td class="r">437,6</td><td class="r"><b>579</b></td><td>GPU, lượt đọc có sẵn</td></tr>
-          <tr class="us"><td>Lookback gộp, Qwen2.5-3B</td><td class="r">0,735</td><td class="r"><b>222,7</b></td><td class="r"><b>195</b></td><td>GPU, lượt đọc có sẵn</td></tr>
+          <tr><td>Đặc trưng bề mặt (độ dài, tỷ lệ trùng từ)</td><td class="r">0,656</td><td class="r">0,001</td><td class="r">9</td><td>CPU</td></tr>
+          <tr><td>Gemini làm giám khảo, tiêu chí rút gọn (300 mẫu)</td><td class="r">0,664</td><td class="r">8.194</td><td class="r">0</td><td>Gọi API bên ngoài, dữ liệu gửi ra khỏi máy</td></tr>
+          <tr><td>Gemini làm giám khảo, tiêu chí đầy đủ (300 mẫu)</td><td class="r">0,753</td><td class="r">8.194</td><td class="r">0</td><td>Gọi API bên ngoài, dữ liệu gửi ra khỏi máy</td></tr>
+          <tr><td>PhoBERT-large tinh chỉnh</td><td class="r">0,749</td><td class="r">12,3</td><td class="r">369 triệu</td><td>GPU, tinh chỉnh toàn bộ mô hình</td></tr>
+          <tr><td>XLM-R-large tinh chỉnh</td><td class="r"><b>0,776</b></td><td class="r">25,2</td><td class="r">560 triệu</td><td>GPU, tinh chỉnh toàn bộ mô hình</td></tr>
+          <tr class="us"><td>Lookback gộp, Qwen2.5-7B</td><td class="r">0,745</td><td class="r">437,6</td><td class="r">2.271</td><td>GPU, một lượt đọc</td></tr>
+          <tr class="us"><td><b>Chunk-aware, Qwen2.5-7B</b></td><td class="r">0,757</td><td class="r">437,6</td><td class="r"><b>579</b></td><td>GPU, một lượt đọc</td></tr>
+          <tr class="us"><td>Lookback gộp, Qwen2.5-3B</td><td class="r">0,735</td><td class="r"><b>222,7</b></td><td class="r"><b>195</b></td><td>GPU, một lượt đọc</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="muted reveal" style="font-size:.85rem;margin-top:10px">Khoảng tin cậy 95 % của mọi dòng rộng khoảng 0,065 — XLM-R và chunk-aware chồng nhau. Bảng đầy đủ, kèm khoảng tin cậy, ở <code>docs/EXPERIMENTS.md</code>.</p>
+    <p class="muted reveal" style="font-size:.85rem;margin-top:10px">Khoảng tin cậy 95 % của mỗi dòng rộng khoảng 0,065; khoảng của XLM-R và của chunk-aware chồng lên nhau. Bảng đầy đủ kèm khoảng tin cậy ở <code>docs/EXPERIMENTS.md</code>.</p>
   </div>
 </section>
 
 <!-- ============================================================ 6. honest -->
 <section id="honest" class="alt">
   <div class="wrap">
-    <div class="eyebrow reveal">Nói thẳng</div>
-    <h2 class="reveal">Điều chúng tôi đo được — và điều chúng tôi không</h2>
+    <div class="eyebrow reveal">Thảo luận</div>
+    <h2 class="reveal">Điều kết quả cho thấy và điều chưa đạt được</h2>
     <div class="grid2">
       <div class="honest reveal" data-delay="1">
-        <h3>Chunk-aware <em>không</em> cộng thêm điểm phân loại</h3>
-        <p class="muted">Năm phép đo độc lập — thêm đặc trưng bề mặt, đổi họ mô hình, đổi cỡ mô hình, đổi bộ dữ liệu, chuyển chéo bộ — cùng nói: năm đại lượng hình dạng mang tín hiệu thật,
-          nhưng là <b>cùng một tín hiệu</b> tỷ lệ gộp đã mang, đo được ở mức <b>99,9 %</b> chồng lấn trên ngữ cảnh 22,6 đoạn.</p>
+        <h3>Chunk-aware <em>không</em> làm tăng độ chính xác phân loại</h3>
+        <p class="muted">Năm phép đo độc lập (thêm đặc trưng bề mặt, đổi họ mô hình, đổi kích thước mô hình, đổi bộ dữ liệu, huấn luyện trên bộ này rồi đánh giá trên bộ khác) cho cùng một kết luận: năm đặc trưng hình dạng có mang tín hiệu,
+          nhưng <b>99,9 %</b> tín hiệu đó đã có sẵn trong tỷ lệ gộp. Dưới đây là chênh lệch macro-F1 giữa chunk-aware và tỷ lệ gộp.</p>
         <div class="measure">
-          <div>E03 · ViHallu<b>+0,012</b></div><div>E12 · thêm bề mặt<b>−0,007</b></div><div>E13 · Sailor2<b>−0,026</b></div><div>E14 · 3B / 1.5B<b>−0,013 / +0,011</b></div><div>E15 · ViWikiFC<b>−0,001</b></div>
+          <div>E03 · ViHallu<b>+0,012</b></div><div>E12 · Thêm đặc trưng bề mặt<b>−0,007</b></div><div>E13 · Sailor2<b>−0,026</b></div><div>E14 · 3B / 1.5B<b>−0,013 / +0,011</b></div><div>E15 · ViWikiFC<b>−0,001</b></div>
         </div>
       </div>
       <div class="honest reveal" data-delay="2">
-        <h3>Nhưng nó cho thứ tỷ lệ gộp không cho được</h3>
+        <h3>Nhưng chunk-aware cho biết điều tỷ lệ gộp không cho biết</h3>
         <ul class="muted">
-          <li><b>Đầu ra chỉ được đoạn nào</b> — 87,8 % trùng đoạn bằng chứng. Tỷ lệ gộp chỉ trả một con số.</li>
-          <li><b>Trung thực hay không</b> chuyển được giữa các bộ dữ liệu (nhị phân 0,63–0,78); <b>ảo giác kiểu nào</b> thì không, vì hai bộ định nghĩa "ngoại lai" khác nhau (E16).</li>
-          <li>Thu mô hình đọc 4,7 lần chỉ mất 0,022 macro-F1; nấc 3B nhanh gấp đôi 7B, nhẹ hơn 56 % bộ nhớ (E14).</li>
-          <li>Trên T4, mô hình đọc <code>float16</code> <b>không sinh được</b> câu trả lời — lớp 27 tràn số. Lập luận "chi phí biên gần 0" chỉ đúng trên phần cứng có <code>bfloat16</code> gốc.</li>
+          <li><b>Chỉ ra đoạn được dựa vào:</b> đoạn nhận nhiều chú ý nhất trùng với câu chứa bằng chứng ở 87,8 % số mẫu, trong khi tỷ lệ gộp chỉ cho một con số.</li>
+          <li><b>Có ảo giác hay không</b> chuyển giao được giữa các bộ dữ liệu (macro-F1 hai lớp 0,63–0,78); <b>loại ảo giác</b> thì không, vì hai bộ dữ liệu định nghĩa ảo giác ngoại lai khác nhau (E16).</li>
+          <li>Thu nhỏ mô hình đọc 4,7 lần chỉ giảm 0,022 macro-F1; bản 3B nhanh gấp đôi bản 7B và tốn ít hơn 56 % bộ nhớ (E14).</li>
+          <li>Khi mô hình sinh câu trả lời tự đọc lại để kiểm tra (Qwen2.5-3B), thời gian chỉ tăng 3,6 %. Qwen2.5-7B ở kiểu <code>float16</code> tràn số ở lớp 27 nên không dùng để sinh câu trả lời trên T4.</li>
         </ul>
       </div>
     </div>
@@ -558,15 +559,15 @@
 <!-- ============================================================ 7. demo -->
 <section id="demo">
   <div class="wrap">
-    <div class="eyebrow reveal">Demo</div>
-    <h2 class="reveal">Hỏi hệ RAG minh họa, hoặc chấm một câu trả lời bất kỳ</h2>
+    <div class="eyebrow reveal">Minh họa</div>
+    <h2 class="reveal">Đặt câu hỏi cho hệ RAG minh họa, hoặc chấm một câu trả lời có sẵn</h2>
     <div id="mode-banner" class="banner"></div>
     <div class="card reveal" data-delay="1" style="margin-bottom:22px">
-      <h3 class="h">Hỏi hệ RAG — 21 tài liệu ngắn về Việt Nam · BM25 → Qwen2.5-3B sinh trả lời → bộ phát hiện chấm</h3>
+      <h3 class="h">Hệ RAG minh họa: 21 tài liệu ngắn về Việt Nam · truy xuất BM25 → Qwen2.5-3B sinh câu trả lời → bộ phát hiện chấm</h3>
       <div class="row" style="margin-top:0">
-        <input id="rag-q" type="text" placeholder="Ví dụ: Đỉnh núi cao nhất Đông Dương là gì?" style="flex:1;min-width:240px">
+        <input id="rag-q" type="text" aria-label="Câu hỏi cho hệ RAG" placeholder="Ví dụ: Đỉnh núi cao nhất Đông Dương là gì?" style="flex:1;min-width:240px">
         <button class="primary" id="ask" disabled>Hỏi</button>
-        <span id="ask-busy" class="muted" style="display:none;font-size:.85rem">truy xuất → sinh trả lời → chấm…</span>
+        <span id="ask-busy" class="muted" style="display:none;font-size:.85rem">Đang truy xuất, sinh câu trả lời và chấm…</span>
       </div>
       <div class="examples" id="rag-examples" style="margin-top:10px"></div>
       <div id="rag-out" class="rag-out" style="display:none"></div>
@@ -578,13 +579,13 @@
         <div class="examples" id="examples"></div>
         <label for="context">Ngữ cảnh đã truy xuất</label>
         <textarea id="context" rows="8" placeholder="Dán các đoạn văn bản mà hệ RAG đã truy xuất…"></textarea>
-        <label for="question">Câu hỏi <span style="font-weight:normal">(để trống với bài kiểm chứng)</span></label>
+        <label for="question">Câu hỏi <span style="font-weight:normal">(bỏ trống với bài toán kiểm chứng thông tin)</span></label>
         <textarea id="question" rows="2"></textarea>
         <label for="response">Câu trả lời cần chấm</label>
         <textarea id="response" rows="4"></textarea>
         <div class="row">
           <button class="primary" id="score" disabled>Chấm</button>
-          <span id="busy" class="muted" style="display:none;font-size:.85rem">đang chạy mô hình đọc…</span>
+          <span id="busy" class="muted" style="display:none;font-size:.85rem">Mô hình đọc đang xử lý…</span>
         </div>
         <div id="error"></div>
       </div>
@@ -595,18 +596,18 @@
           <div class="label" id="label">—</div>
           <div class="risk">
             <div class="bar"><div class="pin" id="pin" style="left:0%"></div></div>
-            <div class="num">điểm rủi ro <b id="risk">—</b> = 1 − P(trung thực)</div>
+            <div class="num">Điểm rủi ro <b id="risk">—</b> = 1 − P(trung thực)</div>
           </div>
         </div>
         <div class="proba" id="proba"></div>
         <div class="meta" id="meta"></div>
-        <h3 class="h" style="margin-top:20px">Ngữ cảnh — tô theo tỷ trọng chú ý mỗi đoạn nhận được</h3>
+        <h3 class="h" style="margin-top:20px">Ngữ cảnh, tô màu theo tỷ trọng chú ý của từng đoạn</h3>
         <div id="context-view"></div>
-        <div class="legend"><span>ít</span><div class="grad"></div><span>nhiều</span><span style="margin-left:8px">· rê chuột lên đoạn để xem %</span></div>
+        <div class="legend"><span>Ít</span><div class="grad"></div><span>Nhiều</span><span style="margin-left:8px">· Di chuột lên một đoạn để xem tỷ trọng</span></div>
         <table class="chunks-table" id="chunks"></table>
-        <div class="note">Màu cho biết mô hình <b>nhìn vào đâu</b> khi sinh câu trả lời, không cho biết câu trả lời <b>nói gì về chỗ đó</b>.
-          Đo ở E06: đoạn được nhìn nhiều nhất trùng đoạn chứa bằng chứng 87,8 % số lần. Đo ở T35: một câu phủ định lật ngược ngữ cảnh vẫn tô đúng đoạn ấy.
-          Điểm rủi ro là con số nên hành động theo; nhãn ba lớp có sai số rộng hơn.</div>
+        <div class="note">Màu cho biết mô hình <b>dựa vào đoạn nào</b> khi đọc câu trả lời, không cho biết câu trả lời <b>khẳng định gì về đoạn đó</b>.
+          Ở E06, đoạn nhận nhiều chú ý nhất trùng với đoạn chứa bằng chứng ở 87,8 % số mẫu; một câu trả lời phủ định lại ngữ cảnh vẫn được tô đúng đoạn đó.
+          Khi ra quyết định, nên dựa vào điểm rủi ro; nhãn ba lớp có sai số lớn hơn.</div>
       </div>
     </div>
   </div>
@@ -616,16 +617,16 @@
 <section id="system" class="alt sys">
   <div class="wrap">
     <div class="eyebrow reveal">Hệ thống</div>
-    <h2 class="reveal">Ba cách dùng, một bộ phát hiện 11,5 KB</h2>
+    <h2 class="reveal">Ba cách sử dụng một bộ phát hiện 11,5 KB</h2>
     <div class="grid3">
-      <div class="card reveal" data-delay="1"><h3>📦 Thư viện</h3>
+      <div class="card reveal" data-delay="1"><h3>📦 Thư viện Python</h3>
 <pre><code>from vihallulens import HallucinationDetector
 
 det = HallucinationDetector.from_pretrained(
     "models/e03_chunk_aware.pkl")
 r = det.score(context, question, response)
 r.label, r.risk_score, r.chunk_attention</code></pre>
-        <p class="muted" style="font-size:.85rem">Bundle mang cả công thức dựng cột — 32 đầu chú ý đã chọn, lưới lớp — và từ chối bản ghi trích trên lưới khác.</p></div>
+        <p class="muted" style="font-size:.85rem">Tệp mô hình (bundle) lưu cả cách dựng đặc trưng (32 đầu chú ý đã chọn, danh sách lớp) và từ chối đặc trưng được trích theo cấu hình khác.</p></div>
       <div class="card reveal" data-delay="2"><h3>🔌 REST</h3>
 <pre><code>python scripts/serve.py --port 8000
 
@@ -633,12 +634,12 @@ POST /score        {context, question, response}
 POST /score/batch  {items: [...]}   # ≤ 64
 POST /demo/ask     {question}
 GET  /health       loading | ok | error</code></pre>
-        <p class="muted" style="font-size:.85rem">Mô hình nạp trong luồng nền; <code>/health</code> báo đúng trạng thái. Gửi cách chia đoạn khác cách đã khớp → 400, không lặng lẽ bỏ qua.</p></div>
+        <p class="muted" style="font-size:.85rem">Mô hình được nạp ở luồng nền; <code>/health</code> báo đúng trạng thái. Yêu cầu dùng cách chia đoạn khác với lúc huấn luyện bị từ chối với mã lỗi 400 thay vì bị bỏ qua.</p></div>
       <div class="card reveal" data-delay="3"><h3>🐳 Docker</h3>
 <pre><code>docker compose up --build
 # ảnh 10,5 GB, trọng số 15 GB tải vào volume
 # GET /health → ok khi mô hình đã nạp</code></pre>
-        <p class="muted" style="font-size:.85rem">Cần GPU NVIDIA. Không có GPU thì báo lỗi sau 6 giây thay vì tải 15 GB rồi mới hỏng.</p></div>
+        <p class="muted" style="font-size:.85rem">Cần GPU NVIDIA. Nếu không có GPU, dịch vụ báo lỗi sau 6 giây thay vì tải 15 GB trọng số rồi mới thất bại.</p></div>
     </div>
   </div>
 </section>
@@ -646,28 +647,28 @@ GET  /health       loading | ok | error</code></pre>
 <!-- ============================================================ 9. team -->
 <footer>
   <div class="wrap">
-    <h2 style="font-size:1.4rem">Nhóm</h2>
+    <h2 style="font-size:1.4rem">Nhóm thực hiện</h2>
     <div class="people">
       <div><b>Nguyễn Ngọc Lân</b>22635801</div>
       <div><b>Nguyễn Tấn Minh</b>22643511</div>
       <div><b>GVHD: ThS. Trương Vĩnh Linh</b>Khoa Khoa học dữ liệu, Trường Đại học Công nghiệp TP.HCM</div>
     </div>
-    <p>Mở rộng từ <a href="https://arxiv.org/abs/2407.07071" target="_blank" rel="noopener">Lookback Lens (Chuang và cộng sự, EMNLP 2024)</a>. Dữ liệu: ViHallu, ISE-DSC01, ViWikiFC. Mô hình đọc: Qwen2.5-7B/3B/1.5B, Sailor2-8B.
-      Mọi số trên trang chép từ <code>results/</code> và <code>docs/EXPERIMENTS.md</code> trong <a href="https://github.com/wsunicorn/vihallulens" target="_blank" rel="noopener">kho mã</a>.</p>
-    <p id="replay-credit" style="display:none">Chế độ phát lại: kết quả trên trang là bản ghi từ phiên Kaggle 11/09/2026 (Tesla T4), không tính lại trên máy này.</p>
+    <p>Mở rộng từ <a href="https://arxiv.org/abs/2407.07071" target="_blank" rel="noopener">Lookback Lens (Chuang và cộng sự, EMNLP 2024)</a>. Dữ liệu: ViHallu, ISE-DSC01, ViWikiFC, ViFactCheck. Mô hình đọc: Qwen2.5-7B, 3B, 1.5B và Sailor2-8B.
+      Mọi con số trên trang lấy từ <code>results/</code> và <code>docs/EXPERIMENTS.md</code> trong <a href="https://github.com/wsunicorn/vihallulens" target="_blank" rel="noopener">kho mã nguồn</a>.</p>
+    <p id="replay-credit" style="display:none">Chế độ phát lại: kết quả trên trang được ghi từ phiên Kaggle ngày 11/09/2026 (GPU Tesla T4), không tính lại trên máy này.</p>
   </div>
 </footer>
 
 
 <!-- corner companion: a round window onto the owl's face -->
-<div id="buddy" title="Cú Lens"><div class="bubble" id="bubble"></div><div class="layer" id="buddy-face"></div></div>
-<button id="buddy-off" title="Ẩn linh thú">ẩn cú</button>
+<div id="buddy" title="Linh vật Lens"><div class="bubble" id="bubble"></div><div class="layer" id="buddy-face"></div></div>
+<button id="buddy-off" title="Ẩn linh vật">Ẩn linh vật</button>
 
 <script>
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const LABEL_VI = { no: "trung thực", intrinsic: "ảo giác nội tại", extrinsic: "ảo giác ngoại lai" };
+  const LABEL_VI = { no: "Trung thực", intrinsic: "Ảo giác nội tại", extrinsic: "Ảo giác ngoại lai" };
   const ORDER = ["no", "intrinsic", "extrinsic"];
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const touch = matchMedia("(hover: none)").matches;
@@ -871,7 +872,7 @@ GET  /health       loading | ok | error</code></pre>
       : `translate(calc(-50% - 24vw), calc(-50% + ${(40 - 40 * s3).toFixed(1)}px))`;
     intro.classList.toggle("on", s3 > .6);
     if (prof && !prof.busy) prof.setVariant(s3 > .5 ? "point" : "base", 700);
-    if (prof && s3 > .6 && !window.__waved) { window.__waved = true; setTimeout(() => { prof.wave(); say("Chào! Tôi là Lens, người gác đêm của trang này."); }, 300); }
+    if (prof && s3 > .6 && !window.__waved) { window.__waved = true; setTimeout(() => { prof.wave(); say("Xin chào, tôi là Lens. Tôi sẽ giới thiệu từng phần của trang."); }, 300); }
     hint.style.opacity = p < .05 ? "1" : "0";
     paintTorch();
     $("side-l").style.opacity = $("side-r").style.opacity = (1 - span(p, .05, .3)).toFixed(3);
@@ -919,19 +920,19 @@ GET  /health       loading | ok | error</code></pre>
       else { prof.act("shake", 450); if (prof.has("shock")) prof.play([["shock", 1800]]); }
     }
     clearTimeout(verdictT); verdictT = setTimeout(() => root.classList.remove("v-" + label), ms);
-    say(label === "no" ? "Bám sát ngữ cảnh. Tôi yên tâm." : label === "intrinsic" ? "Có đọc ngữ cảnh… mà nói lệch. Nội tại." : "Chỗ này không có trong ngữ cảnh!");
+    say(label === "no" ? "Câu trả lời bám sát ngữ cảnh." : label === "intrinsic" ? "Câu trả lời nói khác điều ngữ cảnh viết: ảo giác nội tại." : "Câu trả lời có thông tin không có trong ngữ cảnh: ảo giác ngoại lai.");
   }
   let idle = 0;
   setInterval(() => { idle += 1; if (idle === 25) { layers.forEach((l) => l.host.classList.add("sleep")); say("…zzz"); } }, 1000);
-  const wake = () => { if (idle >= 25) { layers.forEach((l) => { l.host.classList.remove("sleep"); l.blink(160); }); say("Ơ, tôi đây."); } idle = 0; };
+  const wake = () => { if (idle >= 25) { layers.forEach((l) => { l.host.classList.remove("sleep"); l.blink(160); }); say("Tôi vẫn đang theo dõi."); } idle = 0; };
   ["pointermove", "scroll", "keydown", "click", "touchstart"].forEach((ev) => addEventListener(ev, wake, { passive: true }));
-  buddy.addEventListener("click", () => say(["Kéo xuống demo thử đi!", "Tôi nhìn đoạn nào, tô đoạn đó.", "87,8 % — không phải hú họa.", "Đừng tin nhãn ba lớp quá, hãy tin điểm rủi ro."][Math.floor(Math.random() * 4)]));
+  buddy.addEventListener("click", () => say(["Phần Minh họa ở cuối trang cho phép tự chấm một câu trả lời.", "Đoạn được tô đậm là đoạn mô hình dựa vào nhiều nhất.", "Ở 87,8 % số mẫu, đoạn nhận nhiều chú ý nhất là đoạn chứa bằng chứng.", "Khi ra quyết định, nên dựa vào điểm rủi ro hơn là nhãn ba lớp."][Math.floor(Math.random() * 4)]));
   $("buddy-off").onclick = () => { buddy.classList.add("hidden"); $("buddy-off").style.display = "none"; };
-  $("prof").addEventListener("click", () => { if (prof) { prof.wave(); say(["Chào bạn!", "Cuộn tiếp đi, còn nhiều lắm.", "Tôi chấm 700 mẫu, trùng 700 với chính tôi."][Math.floor(Math.random() * 3)]); } });
-  $("face").addEventListener("click", () => { if (face) { face.blink(120); setTimeout(() => face.blink(120), 260); say("Nhìn gì? Tôi mới là người nhìn."); } });
+  $("prof").addEventListener("click", () => { if (prof) { prof.wave(); say(["Xin chào!", "Cuộn xuống để xem tiếp.", "Nạp lại tệp mô hình đã lưu cho kết quả trùng khớp 700/700 mẫu."][Math.floor(Math.random() * 3)]); } });
+  $("face").addEventListener("click", () => { if (face) { face.blink(120); setTimeout(() => face.blink(120), 260); say("Trọng số chú ý cho biết mô hình đang dựa vào phần nào của văn bản."); } });
   $("prof").style.cursor = "pointer"; $("face").style.cursor = "pointer";
   const said = new Set();
-  const notes = { problem: "Ba thẻ này chấm thật đấy, rê thử.", how: "Tôi không sinh chữ — chỉ đọc lại.", chunk: "Kéo thanh trượt xem hình dạng đổi.", numbers: "Số nào cũng có trong results/.", honest: "Phần này hội đồng sẽ hỏi. Nói trước.", demo: "Đến lượt bạn.", system: "pip install rồi ba dòng là xong." };
+  const notes = { problem: "Bấm vào một thẻ để xem chi tiết kết quả chấm.", how: "Mô hình không sinh thêm chữ, chỉ đọc lại câu trả lời.", chunk: "Kéo thanh trượt để thấy hình dạng phân bố thay đổi.", numbers: "Mọi con số đều lấy từ thư mục results/.", honest: "Phần này trình bày cả những điều chưa đạt được.", demo: "Bạn có thể tự đặt câu hỏi ở đây.", system: "Cài gói rồi gọi ba dòng lệnh là dùng được." };
   const sectionIO = new IntersectionObserver((entries) => entries.forEach((en) => { const id = en.target.id; if (en.isIntersecting && !said.has(id) && notes[id]) { said.add(id); say(notes[id]); } }), { threshold: .35 });
   Object.keys(notes).forEach((id) => { const s = $(id); if (s) sectionIO.observe(s); });
 
@@ -957,7 +958,7 @@ GET  /health       loading | ok | error</code></pre>
       bars.forEach((b, i) => { b.style.height = (100 * p[i] * 1.6).toFixed(1) + "%"; b.firstChild.textContent = Math.round(100 * p[i]) + " %"; });
       const ent = -p.reduce((a, v) => a + v * Math.log(v), 0) / Math.log(n), mx = Math.max(...p);
       const s = [...p].sort((a, b) => a - b), gini = s.reduce((a, v, i) => a + (2 * (i + 1) - n - 1) * v, 0) / n;
-      $("s-ent").textContent = ent.toFixed(2); $("s-max").textContent = Math.round(100 * mx) + " %"; $("s-gini").textContent = gini.toFixed(2);
+      $("s-ent").textContent = ent.toFixed(2).replace(".", ","); $("s-max").textContent = Math.round(100 * mx) + " %"; $("s-gini").textContent = gini.toFixed(2).replace(".", ",");
       $("one-v").textContent = "62 %"; $("bars-one").firstElementChild.style.height = "62%";
       peakEl = bars[p.indexOf(mx)];
     }
@@ -973,7 +974,7 @@ GET  /health       loading | ok | error</code></pre>
     mode = m; const b = $("mode-banner");
     if (m === "replay") {
       b.className = "banner replay";
-      b.innerHTML = `<b>Chế độ phát lại.</b> ${why} Kết quả dưới đây là bản ghi của chính trang này chạy trên Tesla T4 (Kaggle, 11/09/2026): năm câu hỏi RAG và ba ví dụ. Chấm văn bản tự do cần mô hình đọc — chạy <code>python scripts/serve.py</code> trên máy có GPU.`;
+      b.innerHTML = `<b>Chế độ phát lại.</b> ${why} Các kết quả bên dưới được ghi lại khi chính trang này chạy trên GPU Tesla T4 (Kaggle, 11/09/2026): năm câu hỏi cho hệ RAG và ba ví dụ. Muốn chấm văn bản tùy ý cần chạy mô hình đọc bằng lệnh <code>python scripts/serve.py</code> trên máy có GPU.`;
       $("replay-credit").style.display = ""; $("ask").disabled = false; $("score").disabled = true; $("rag-q").placeholder = "Chọn một trong năm câu hỏi đã chạy…";
     } else { b.className = "banner"; $("replay-credit").style.display = "none"; }
   }
@@ -982,13 +983,13 @@ GET  /health       loading | ok | error</code></pre>
       const r = await fetch("/health"); const h = await r.json(); const box = $("health");
       box.className = h.status === "ok" ? "ok" : (h.status === "error" ? "error" : "loading");
       const model = h.reading_model ? ` · ${h.reading_model.split("/").pop()}` : ""; const vram = h.vram_allocated_mb != null ? ` · ${Math.round(h.vram_allocated_mb)} MB` : "";
-      $("health-text").textContent = h.status === "ok" ? `sẵn sàng${model}${vram}` : h.status === "error" ? "lỗi nạp mô hình" : h.status === "not_loaded" ? "mô hình chưa nạp" : "đang nạp mô hình đọc…";
+      $("health-text").textContent = h.status === "ok" ? `Sẵn sàng${model}${vram}` : h.status === "error" ? "Lỗi nạp mô hình" : h.status === "not_loaded" ? "Mô hình chưa nạp" : "Đang nạp mô hình đọc…";
       ready = h.status === "ok";
       if (ready) { if (mode !== "live") setMode("live"); $("score").disabled = false; $("ask").disabled = false; }
-      else if (h.status === "error" || h.status === "not_loaded") { await loadReplay(); setMode("replay", h.status === "error" ? `Dịch vụ không nạp được mô hình (${h.error || "không rõ"}).` : "Dịch vụ chạy nhưng chưa nạp mô hình."); box.className = "replay"; $("health-text").textContent = "phát lại kết quả Kaggle"; }
+      else if (h.status === "error" || h.status === "not_loaded") { await loadReplay(); setMode("replay", h.status === "error" ? `Dịch vụ không nạp được mô hình (${h.error || "không rõ nguyên nhân"}).` : "Dịch vụ đang chạy nhưng chưa nạp mô hình."); box.className = "replay"; $("health-text").textContent = "Phát lại kết quả từ Kaggle"; }
     } catch (e) {
-      ready = false; $("health").className = "replay"; $("health-text").textContent = "phát lại kết quả Kaggle";
-      try { await loadReplay(); setMode("replay", "Không có dịch vụ nào ở địa chỉ này."); } catch (e2) { $("health").className = "error"; $("health-text").textContent = "không có dịch vụ, không có replay.json"; }
+      ready = false; $("health").className = "replay"; $("health-text").textContent = "Phát lại kết quả từ Kaggle";
+      try { await loadReplay(); setMode("replay", "Không có dịch vụ nào ở địa chỉ này."); } catch (e2) { $("health").className = "error"; $("health-text").textContent = "Không có dịch vụ và không có tệp replay.json"; }
     }
   }
   health(); setInterval(() => { if (mode === "live" || !replay) health(); }, 5000);
@@ -997,12 +998,12 @@ GET  /health       loading | ok | error</code></pre>
     const kinds = $("kinds"); kinds.innerHTML = "";
     data.examples.forEach((ex, i) => {
       const lab = ex.score.label; const card = document.createElement("div"); card.className = `card kind ${lab} reveal`; card.dataset.delay = String(i + 1);
-      card.innerHTML = `<span class="tag">${LABEL_VI[lab]}</span><h3>${esc(ex.name)}</h3><q>${esc(ex.response)}</q>
-        <div class="verdict-mini"><span>bộ phát hiện: <b class="label ${lab}" style="font-size:.9rem">${LABEL_VI[lab]}</b></span><span>rủi ro <b>${ex.score.risk_score.toFixed(3)}</b></span></div>`;
+      card.innerHTML = `<span class="tag">${LABEL_VI[lab]}</span><h3>${esc(ex.question)}</h3><q>${esc(ex.response)}</q>
+        <div class="verdict-mini"><span>Bộ phát hiện: <b class="label ${lab}" style="font-size:.9rem">${LABEL_VI[lab]}</b></span><span>Điểm rủi ro <b>${ex.score.risk_score.toFixed(3).replace(".", ",")}</b></span></div>`;
       card.addEventListener("pointerenter", () => verdict(lab, 2500));
       card.addEventListener("click", () => { useExample(ex); location.hash = "#demo"; });
       kinds.appendChild(card); io.observe(card);
-      const b = document.createElement("button"); b.textContent = ex.name; b.onclick = () => useExample(ex); $("examples").appendChild(b);
+      const b = document.createElement("button"); b.textContent = "Ví dụ: " + LABEL_VI[lab].toLowerCase(); b.onclick = () => useExample(ex); $("examples").appendChild(b);
     });
     $("rag-examples").innerHTML = "";
     data.questions.forEach((q) => { const b = document.createElement("button"); b.textContent = q.question; b.onclick = () => { $("rag-q").value = q.question; if (mode === "replay") ask(); }; $("rag-examples").appendChild(b); });
@@ -1018,23 +1019,23 @@ GET  /health       loading | ok | error</code></pre>
     for (const c of sorted) {
       if (c.char_start > pos) html += esc(context.slice(pos, c.char_start));
       const alpha = 0.06 + 0.8 * (c.share / max);
-      html += `<span class="chunk" style="background:hsla(32,90%,58%,${alpha.toFixed(3)})" data-i="${c.index}"><span class="ttip">đoạn ${c.index + 1} · ${(100 * c.share).toFixed(1)} %</span>${esc(context.slice(c.char_start, c.char_end))}</span>`;
+      html += `<span class="chunk" style="background:hsla(32,90%,58%,${alpha.toFixed(3)})" data-i="${c.index}"><span class="ttip">Đoạn ${c.index + 1} · ${(100 * c.share).toFixed(1).replace(".", ",")} %</span>${esc(context.slice(c.char_start, c.char_end))}</span>`;
       pos = c.char_end;
     }
     if (pos < context.length) html += esc(context.slice(pos));
     $("context-view").innerHTML = html;
-    $("chunks").innerHTML = [...chunks].sort((a, b) => b.share - a.share).map((c) => `<tr><td class="n">${c.index + 1}</td><td>${esc(c.text)}</td><td class="s">${(100 * c.share).toFixed(1)} %</td></tr>`).join("");
+    $("chunks").innerHTML = [...chunks].sort((a, b) => b.share - a.share).map((c) => `<tr><td class="n">${c.index + 1}</td><td>${esc(c.text)}</td><td class="s">${(100 * c.share).toFixed(1).replace(".", ",")} %</td></tr>`).join("");
     if (!reduced) { const spans = [...document.querySelectorAll("#context-view .chunk")].sort((a, b) => +a.dataset.i - +b.dataset.i); spans.forEach((s, i) => { s.style.opacity = "0"; setTimeout(() => { s.style.transition = "opacity .35s"; s.style.opacity = "1"; }, 90 * i); }); }
   }
   function renderResult(out, context, replayed) {
     $("result").style.display = ""; $("result").classList.add("in");
     const lab = $("label"); lab.textContent = LABEL_VI[out.label] || out.label; lab.className = "label " + out.label;
-    $("risk").textContent = out.risk_score.toFixed(3); $("pin").style.left = (100 * out.risk_score).toFixed(1) + "%";
-    $("proba").innerHTML = ORDER.map((k) => { const p = out.proba[k] ?? 0; return `<div>${LABEL_VI[k]}</div><div class="track"><div class="fill" style="width:${(100 * p).toFixed(1)}%"></div></div><div>${(100 * p).toFixed(1)} %</div>`; }).join("");
-    const meta = [`${out.n_chunks} đoạn`, `${Math.round(out.elapsed_ms)} ms${replayed ? " (trên T4)" : ""}`];
-    if (out.truncated) meta.push(`<span class="warn">ngữ cảnh bị cắt bớt vì vượt trần token</span>`);
-    if (out.nonfinite_layers && out.nonfinite_layers.length) meta.push(`<span class="warn">lớp tràn số: ${out.nonfinite_layers.join(", ")}</span>`);
-    if (replayed) meta.push(`<span>phát lại từ Kaggle 11/09/2026</span>`);
+    $("risk").textContent = out.risk_score.toFixed(3).replace(".", ","); $("pin").style.left = (100 * out.risk_score).toFixed(1) + "%";
+    $("proba").innerHTML = ORDER.map((k) => { const p = out.proba[k] ?? 0; return `<div>${LABEL_VI[k]}</div><div class="track"><div class="fill" style="width:${(100 * p).toFixed(1)}%"></div></div><div>${(100 * p).toFixed(1).replace(".", ",")} %</div>`; }).join("");
+    const meta = [`${out.n_chunks} đoạn`, `${Math.round(out.elapsed_ms)} ms${replayed ? " trên T4" : ""}`];
+    if (out.truncated) meta.push(`<span class="warn">Ngữ cảnh bị cắt bớt vì vượt quá giới hạn token</span>`);
+    if (out.nonfinite_layers && out.nonfinite_layers.length) meta.push(`<span class="warn">Lớp bị tràn số: ${out.nonfinite_layers.join(", ")}</span>`);
+    if (replayed) meta.push(`<span>Phát lại từ phiên Kaggle 11/09/2026</span>`);
     $("meta").innerHTML = meta.join(" · ");
     renderContext(context, out.chunk_attention);
     verdict(out.label, 6000);
@@ -1046,28 +1047,28 @@ GET  /health       loading | ok | error</code></pre>
     $("ask").disabled = true; $("ask-busy").style.display = ""; $("rag-out").style.display = "none";
     try {
       let out;
-      if (mode === "replay") { const data = await loadReplay(); out = data.questions.find((q) => q.question === question); if (!out) throw new Error("Chế độ phát lại chỉ có năm câu đã chạy trên Kaggle — bấm một nút bên dưới."); await new Promise((r) => setTimeout(r, reduced ? 0 : 500)); }
+      if (mode === "replay") { const data = await loadReplay(); out = data.questions.find((q) => q.question === question); if (!out) throw new Error("Chế độ phát lại chỉ có năm câu hỏi đã chạy trên Kaggle; hãy chọn một câu bên dưới."); await new Promise((r) => setTimeout(r, reduced ? 0 : 500)); }
       else { const r = await fetch("/demo/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) }); out = await r.json(); if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail)); }
       $("context").value = out.context; $("question").value = out.question; $("response").value = out.answer;
-      const docs = out.retrieved.map((d) => `${d.title} (${d.score.toFixed(1)})`).join(" · "); const t = out.elapsed_ms;
-      $("rag-out").innerHTML = `Truy xuất: ${esc(docs)} · truy xuất ${Math.round(t.retrieve)} ms · sinh ${Math.round(t.generate)} ms · chấm ${Math.round(t.score)} ms<div class="ans">${esc(out.answer)}</div>`;
+      const docs = out.retrieved.map((d) => `${d.title} (${d.score.toFixed(1).replace(".", ",")})`).join(" · "); const ms = (v) => Math.round(v).toLocaleString("vi-VN"); const t = out.elapsed_ms;
+      $("rag-out").innerHTML = `Tài liệu truy xuất được: ${esc(docs)} · Truy xuất ${ms(t.retrieve)} ms · Sinh ${ms(t.generate)} ms · Chấm ${ms(t.score)} ms<div class="ans">${esc(out.answer)}</div>`;
       $("rag-out").style.display = "";
       renderResult(out.score, out.context, mode === "replay");
       $("result").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
-    } catch (e) { $("rag-out").textContent = "Không hỏi được: " + e.message; $("rag-out").style.display = ""; }
+    } catch (e) { $("rag-out").textContent = "Lỗi khi đặt câu hỏi: " + e.message; $("rag-out").style.display = ""; }
     finally { $("ask-busy").style.display = "none"; $("ask").disabled = !(ready || mode === "replay"); }
   }
   $("ask").onclick = ask; $("rag-q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });
   $("score").onclick = async () => {
     const body = { context: $("context").value, question: $("question").value, response: $("response").value };
     $("error").textContent = "";
-    if (!body.context.trim() || !body.response.trim()) { $("error").textContent = "Cần có ngữ cảnh và câu trả lời."; return; }
+    if (!body.context.trim() || !body.response.trim()) { $("error").textContent = "Cần nhập ngữ cảnh và câu trả lời."; return; }
     $("score").disabled = true; $("busy").style.display = ""; layers.forEach((l) => l.host.classList.add("think")); if (prof && prof.has("think")) prof.setVariant("think");
     try {
       const r = await fetch("/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const out = await r.json(); if (!r.ok) throw new Error(typeof out.detail === "string" ? out.detail : JSON.stringify(out.detail));
       renderResult(out, body.context, false);
-    } catch (e) { $("error").textContent = "Không chấm được: " + e.message; }
+    } catch (e) { $("error").textContent = "Lỗi khi chấm: " + e.message; }
     finally { $("busy").style.display = "none"; $("score").disabled = !ready; layers.forEach((l) => l.host.classList.remove("think")); }
   };
 })();

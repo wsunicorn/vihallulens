@@ -8,16 +8,10 @@ data/raw/*
 UniversityRequirements/
 reference_papers/
 
-# --- Bộ slide (docs/slides/): commit HTML, PDF và nguồn dựng ---
-# Bộ slide riêng tư như quyển báo cáo: chỉ commit nguồn dựng (script, sơ đồ);
-# bản HTML, PDF và bộ slide gốc làm đầu vào chỉ giữ trên máy
-docs/slides/_build/
-docs/slides/slide_hoi_dong.html
-docs/slides/slide_hoi_dong.pdf
+# --- Bộ slide (docs/slides/): chỉ commit nguồn dựng ---
+# Bộ slide riêng tư như quyển báo cáo: bản PPTX, PDF chỉ giữ trên máy
 docs/slides/slide_hoi_dong.pptx
-docs/slides/slide_hoi_dong_15.pptx
-docs/slides/slide_hoi_dong_15.pdf
-docs/slides/nguon/slide_goc_32.html
+docs/slides/slide_hoi_dong.pdf
 
 # --- Kết quả nặng ---
 results/*.npz

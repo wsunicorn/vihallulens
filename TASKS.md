@@ -5183,6 +5183,38 @@ Không thí nghiệm nào ở đây được đổi mẫu prompt ở mục 8 c�
     phí tự kiểm tra ở 4.1.
 - [ ] **T49** · LM · Chỉnh sửa sau phản biện (tuần 17)
 - [ ] **T50** · LM · Slide và diễn tập bảo vệ (tuần 18)
+  - **Bộ 19 trang theo yêu cầu GVHD — 28/11/2026.** GVHD dặn: mẫu tùy chọn, cấu trúc theo quyển khóa luận,
+    tối đa 20 phút gồm hỏi đáp, trình bày khoảng 10 phút, 10–20 slide.
+    - `docs/slides/nguon/dung_slide.py` dựng `slide_hoi_dong.pptx` và `.pdf` bằng python-pptx (học cách làm của
+      bộ slide thực tập): mọi chữ, bảng, biểu đồ là đối tượng PowerPoint, Times New Roman, câu kết luận dưới tiêu đề,
+      thanh tám chương và số chương, chân trang ghi công trình cùng bảng, hình trong quyển, bấm để hiện từng nhóm.
+    - 19 trang: bìa; Chương 1 (3 trang), 2 (2), 3 (1), 4 (2), 5 (1), 6 (4), 7 (1), 8 (3 gồm tài liệu tham khảo);
+      cảm ơn. Ghi chú người nói tổng khoảng 1.060 chữ, đọc trong khoảng 9 phút 20 giây; đề xuất Lân trang 1–9,
+      Minh trang 10–19.
+    - Thuật ngữ được giải thích ngay trên slide; bỏ cách viết tắt và cách nói dịch sát nghĩa ("mẫu câu lệnh" →
+      "ghép đầu vào", "nhìn vào đâu" → "dựa vào đoạn nào").
+    - Xóa các bộ cũ: bộ HTML 31 slide cùng các bước dựng (`b1`–`b3`, `dung_lai.py`, `xuat_pdf.py`, `xuat_pptx.py`),
+      bộ 15 trang (`dung_15.py`), bản sao lưu và bản trong `Reports/`. Lịch sử vẫn còn trong git.
+    - `HUONG_DAN.md` viết lại; ghi chú riêng trong `UniversityRequirements/MyNotes/` cập nhật theo 19 trang.
+  - **Rà lại chữ trên trang web và bộ 19 trang — 28/11/2026.**
+    - Trang giới thiệu (`serve/static/index.html`) viết lại toàn bộ chữ theo văn phong của quyển. Khẩu hiệu
+      "Mắt không nói dối" (người đọc không biết "mắt" là gì) đổi thành tên việc hệ thống làm: "Phát hiện ảo
+      giác", kèm câu "Kiểm tra câu trả lời của hệ RAG tiếng Việt bằng tín hiệu chú ý của mô hình ngôn ngữ".
+      Bỏ khẩu ngữ ("lật mặt", "hú họa", "nói thẳng"), mục điều hướng theo tên chương (Bài toán, Phương pháp,
+      Đóng góp, Kết quả, Thảo luận, Minh họa, Hệ thống), lời của linh vật thành câu hướng dẫn, số thập phân
+      dùng dấu phẩy. Số liệu cũ trên trang cập nhật theo quyển: 19 thí nghiệm, 4 bộ dữ liệu, 860 ca kiểm thử,
+      thêm dòng Gemini tiêu chí đầy đủ (0,753); ô "≈120k lượt đọc" không truy được nguồn nên thay bằng bộ nhớ
+      đỉnh của Qwen2.5-7B (8.328 MB). Sửa luôn lỗi màu: `hsla(var(--attn), a)` trộn hai cú pháp nên trình
+      duyệt bỏ khai báo, các cột tỷ trọng và thang "Ít … Nhiều" bị trống.
+    - Chụp lại bảy ảnh `docs/media/anh_*` cho quyển và dựng lại quyển (vẫn 130 trang).
+    - Slide 10: ảnh cũ 1400 × 900 đặt cao 3,65 in nên chỉ rộng 5,68 in mà lại đặt lệch phải trong khung rộng
+      6,68 in. Thay bằng ảnh kết quả thật của câu hỏi về hồ Hoàn Kiếm (ảo giác ngoại lai, rủi ro 0,997), cắt
+      đúng tỷ lệ và phủ kín khung, nên ảnh khớp với câu chú thích bên dưới.
+    - Slide 7: 17 chấm của tập huấn luyện cần 3,77 in trong ô 3,6 in; thu bước chấm và căn giữa theo tổng
+      chiều rộng.
+    - Rà cả bộ: lớp của mô hình gọi là "lớp" như trong quyển, "tầng" chỉ dành cho bốn tầng của hệ thống;
+      nhãn viết hoa chữ đầu; thêm tiêu đề "Yêu cầu đặt ra cho đề tài" ở trang 3; trang 14 thêm ý về mô hình
+      đọc 3B cho cân với bảng; trang 17 tách ý "tự kiểm tra mới đo chi phí" cho rõ nghĩa.
   - **Riêng tư, bớt chữ, chỉ bấm khi cần — 15/11/2026.**
     - Bộ slide giữ riêng như quyển: git chỉ còn nguồn dựng (`nguon/`); `slide_hoi_dong.html`, `.pdf` và
       đầu vào `slide_goc_32.html` vào `.gitignore`; `dung_lai.py` chép bản cuối sang

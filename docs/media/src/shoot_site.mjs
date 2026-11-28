@@ -130,20 +130,14 @@ try {
     await send("Page.navigate", { url: urlFor(s) }, sessionId);
     await loaded;
     await sleep(2500);                                  // health probe + replay.json + examples
-    // the first load of a cold service can still read "đang kiểm dịch vụ…": wait it out
+    // the first load of a cold service can still read "Đang kiểm tra dịch vụ…": wait it out
     await evalIn(`(async () => { const el = document.getElementById('health-text');
-      for (let k = 0; el && k < 40 && el.textContent.includes('đang kiểm'); k++)
+      for (let k = 0; el && k < 40 && /đang kiểm/i.test(el.textContent); k++)
         await new Promise(r => setTimeout(r, 150)); })()`);
     // the mascot's speech bubble drifts over the text, and the corner companion (the small
-    // owl and its "ẩn cú" button) sits on top of whatever is bottom right
+    // owl and its "Ẩn linh vật" button) sits on top of whatever is bottom right
     await evalIn(`(() => { const st = document.createElement('style');
-      // The page writes its attention colour as hsla(var(--attn), a) with --attn holding a
-      // space-separated "h s l": that mixes the two colour syntaxes, the browser drops the
-      // declaration, and the per-chunk bars and the "ít … nhiều" legend come out empty. The
-      // shot restates the two gradients in valid syntax; the page source is left alone.
-      st.textContent = '#bubble, #buddy, #buddy-off { display: none !important; }'
-        + ' .bars:not(.one) .b { background: linear-gradient(180deg, hsl(var(--attn) / .85), hsl(var(--attn) / .35)) !important; }'
-        + ' .legend .grad { background: linear-gradient(90deg, hsl(var(--attn) / .05), hsl(var(--attn) / .85)) !important; }';
+      st.textContent = '#bubble, #buddy, #buddy-off { display: none !important; }';
       document.head.appendChild(st); })()`, false);
     if (s.act) await evalIn(`(async () => { const sleep = (ms) => new Promise(r => setTimeout(r, ms)); ${s.act} })()`);
     const y = await evalIn(`(async () => {
