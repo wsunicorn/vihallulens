@@ -1,79 +1,51 @@
 # Bộ slide — cách dùng
 
-Cập nhật 15/11/2026. Bộ dùng để báo cáo trước Hội đồng là `slide_hoi_dong.html` (31 slide).
+Cập nhật 28/11/2026. Bộ báo cáo trước Hội đồng là `slide_hoi_dong.pptx` (và bản `.pdf`), 19 trang.
 
-## Giữ riêng tư như quyển báo cáo
+## Yêu cầu của GVHD
 
-Giống quyển (trên git chỉ có bản thảo `.md`, không có `.docx`, `.pdf`), trên git **chỉ có nguồn
-dựng** bộ slide. Các file sau nằm trong `.gitignore`, chỉ có trên máy của nhóm:
+- Cấu trúc slide theo cấu trúc quyển khóa luận (thư ngày 05/10 và 28/11/2026).
+- Tổng thời gian tối đa 20 phút gồm cả hỏi đáp; phần trình bày khoảng **10 phút**, còn lại dành cho câu hỏi.
+- Từ 10 đến 20 slide; mẫu tùy chọn.
 
-| File | Là gì |
-|---|---|
-| `slide_hoi_dong.html` | **Bộ chính, 31 slide**, sắp theo bố cục tám chương của quyển. Mở bằng Edge hoặc Chrome, chạy không cần mạng. |
-| `slide_hoi_dong_15.pptx`, `.pdf` | **Bộ 15 trang theo bố cục quyển** (thêm trang cảm ơn là 16), dựng bằng `python docs/slides/nguon/dung_15.py --pdf` theo thứ tự GVHD yêu cầu ngày 05/10: giới thiệu và bài toán, động lực và khoảng trống, cơ sở lý thuyết, dữ liệu, phương pháp, hệ thống, thực nghiệm, tự đánh giá, tài liệu tham khảo. Mọi chữ, bảng, biểu đồ là đối tượng PowerPoint; Times New Roman; câu kết luận dưới tiêu đề; bấm để hiện từng nhóm; có ghi chú người nói. Biểu tượng Lucide (ISC) ở `nguon/icons/`. Chép sang `Reports/` với tên `Slide15_KLTN_…`. |
-| `slide_hoi_dong.pdf` | Trạng thái cuối của từng slide, một slide một trang. |
-| `slide_hoi_dong.pptx` | Bản PowerPoint sửa được: mọi chữ, khối, đường, cột biểu đồ là đối tượng thật; chỉ ảnh chụp và biểu tượng nhỏ là ảnh. Mỗi slide là trạng thái cuối của sơ đồ, chuyển slide mờ dần, có ghi chú người nói. |
-| `nguon/slide_goc_32.html` | Bộ 32 slide ngày 02/10, đầu vào bước 1. Cần giữ để dựng lại; sao lưu cùng các tài liệu riêng. |
-| `_build/` | Hai bộ trung gian 19 và 23 slide. |
+## Bố cục
 
-Mỗi lần dựng, bản cuối được chép sang `UniversityRequirements/Reports/` với tên
-`Slide_KLTN_22635801_22643511_PhatHienAoGiac.html` / `.pdf` / `.pptx`, cạnh bản Word và PDF của quyển.
-Bản PPTX dựng bằng `dung_lai.py --pptx` (`nguon/xuat_pptx.py`): Chrome mở bản HTML ở trạng thái cuối, `nguon/trich_doi_tuong.js` đọc vị trí, màu, chữ của từng phần tử, rồi mỗi phần tử thành một hình PowerPoint. Phông web được thay bằng phông có sẵn trên mọi máy Windows (Cambria cho tiêu đề, Segoe UI cho nội dung). Sửa nội dung thì sửa nguồn HTML rồi dựng lại; sửa thẳng trong PowerPoint sẽ mất khi dựng lại. Tài
-liệu chuẩn bị bảo vệ (giải thích từng slide, câu hỏi hội đồng, sổ tay học) nằm ở
-`UniversityRequirements/MyNotes/`.
+Thanh đầu trang có tám mục theo tám chương của quyển, chương đang trình bày in đậm; số lớn bên trái tiêu đề là
+số chương. Dưới tiêu đề là một câu kết luận; chân trang ghi công trình được dùng và bảng, hình, mục tương ứng
+trong quyển.
+
+| Trang | Chương | Nội dung |
+|---|---|---|
+| 1 | — | Bìa |
+| 2–4 | 1 Giới thiệu | Ba loại câu trả lời; phát biểu bài toán và động lực; khoảng trống, câu hỏi, giả thuyết |
+| 5–6 | 2 Cơ sở lý thuyết | Các hướng phát hiện ảo giác đã có; phương pháp nền Lookback Lens |
+| 7 | 3 Dữ liệu | Bốn bộ dữ liệu, chia tập theo ngữ cảnh, kiểm chứng nhãn |
+| 8–9 | 4 Phương pháp | Chunk-aware lookback ratio; quy trình một lượt đọc và forward hook |
+| 10 | 5 Hệ thống | Bốn tầng, cách dùng, minh họa RAG |
+| 11–14 | 6 Thực nghiệm | Kết quả phân loại; định vị bằng chứng; thí nghiệm can thiệp; chi phí và chuyển giao |
+| 15 | 7 Thảo luận | Định vị đúng nhưng không phân loại tốt hơn |
+| 16–18 | 8 Kết luận | Năm giả thuyết; kết quả, hạn chế, hướng phát triển; tài liệu tham khảo |
+| 19 | — | Cảm ơn |
 
 ## Trình chiếu
 
-**Chỉ bấm khi bước sau thay đổi bước trước.** Bốn sơ đồ có bước sau thay nội dung của bước trước:
-slide 12 (chia ngẫu nhiên → chia theo ngữ cảnh), 16 (cách thông thường → forward hook), 22 (mẫu
-minh họa đổi, bước 5 thay bằng E19) và 26 (đổi chiều chuyển giao). Ở bốn slide này, bước 1 tự chạy
-rồi dừng, mỗi lần bấm chạy thêm một bước, hết bước thì bấm sang slide sau. Mười bốn sơ đồ còn lại
-chỉ thêm nội dung nên tự chạy hết một lượt khi vào slide, dưới hình là một câu tóm tắt.
-
-| Phím / thao tác | Việc |
-|---|---|
-| `→` `↓` `Space` `Enter` `PageDown` | slide sau; ở bốn slide chia bước: bước kế, đang chạy dở thì cho xong |
-| `←` `↑` `PageUp` `Backspace` | slide trước (hiện sẵn trạng thái cuối); ở bốn slide chia bước: lùi một bước |
-| `Shift+→` / `Shift+←` | bỏ qua các bước, sang slide sau / về slide trước |
-| gõ số rồi `Enter` (ví dụ `2` `2` `Enter`) | nhảy tới slide đó — tiện khi hội đồng hỏi lại |
-| bấm vào một chấm số dưới hình | nhảy tới bước đó (bốn slide chia bước) |
-| `B` hoặc `.` | bật / tắt màn hình đen |
-| `R` | chạy lại hoạt ảnh (hoặc bước hiện tại) |
-| `Home` / `End`, `N`, `F` | slide đầu / cuối, ghi chú diễn giả, toàn màn hình |
-| click phía phải / trái màn hình | như phím tới / lùi; click **trong sơ đồ** dành cho rê chuột, bấm nút |
-
-Bút trình chiếu gửi `PageDown` / `PageUp`, dùng được ngay. Slide 22: bước 2 chỉ chạy một mẫu, muốn
-xem thêm thì bấm "Mẫu khác".
-
-Địa chỉ `slide_hoi_dong.html#21` mở thẳng slide 21; `?all` hiện sẵn trạng thái cuối (để chụp, in);
-`?qa` tự dựng mọi sơ đồ, tua mọi bước và in `QA-OK` nếu không lỗi; `?auto` cho mọi sơ đồ tự chạy hết
-các bước kèm chú thích từng bước (dùng khi quay màn hình).
+Mở bằng PowerPoint, trình chiếu như bình thường. Mỗi lần bấm hiện thêm một nhóm nội dung; hết nhóm thì bấm
+sang trang sau. Ghi chú người nói nằm trong phần Notes của từng trang, tổng khoảng 1.060 chữ (8–9 phút đọc).
+Bản `.pdf` hiện đủ nội dung mọi trang, dùng để gửi đọc trước.
 
 ## Dựng lại
 
-Không sửa trực tiếp `slide_hoi_dong.html`. Sửa ở `nguon/` rồi chạy ở thư mục gốc của repo:
+Mọi chữ, bảng, biểu đồ là đối tượng PowerPoint nên sửa thẳng được, nhưng lần dựng lại sau sẽ ghi đè. Sửa lâu
+dài thì sửa `nguon/dung_slide.py` rồi chạy ở thư mục gốc của repo:
 
 ```
-python docs/slides/nguon/dung_lai.py
+uv run --no-project --with python-pptx==1.0.2 --with cairosvg==2.7.1 --with pillow --with pywin32==308 \
+    python docs/slides/nguon/dung_slide.py --pdf
 ```
 
-Thêm `--pdf` để xuất lại PDF (cần Google Chrome):
+`--pdf` xuất PDF bằng PowerPoint (cần Windows có Office). Bản cuối được chép sang
+`UniversityRequirements/Reports/Slide_KLTN_22635801_22643511_PhatHienAoGiac.pptx` / `.pdf`.
 
-```
-uv run --no-project --with playwright==1.48.0 --with pymupdf==1.25.5 --with pillow python docs/slides/nguon/dung_lai.py --pdf
-```
-
-| Bước | File trong `nguon/` | Làm gì | Sửa ở đây khi muốn đổi |
-|---|---|---|---|
-| — | `slide_goc_32.html` (chỉ trên máy) | Bộ 32 slide ngày 02/10, đầu vào gốc | — |
-| 1 | `b1_rut_gon_19.py` | Rút còn 19 slide (Minh dựng ngày 14/10) | nội dung 19 slide gốc, số liệu trong hình |
-| 2 | `b2_bo_sung.py`, `figs_bo_sung.js` | Chèn bốn slide theo yêu cầu của GVHD ngày 05/10 | bốn slide này |
-| 3 | `b3_hoan_thien.py` | Tiêu đề, dòng tóm tắt, từ ngữ, ghi chú, mục lục, slide chuyển phần, E19, biểu tượng, slide khoảng trống và kết quả, tài liệu tham khảo rút gọn, cách điều khiển | mọi chữ trên slide, cách điều khiển |
-| xuất | `xuat_pdf.py` | PDF | — |
-
-Mỗi chỗ sửa là một phép thay chuỗi có kiểm số lần khớp; nguồn không khớp thì script dừng.
-`b3_hoan_thien.py` còn chặn các từ ngữ đời thường đã loại (ví dụ "bịa", "đoán bừa", "cần chấm",
-"chuyển được"); bảng `VAN_PHONG` ở bước cuối đổi chữ theo quy ước dùng từ của quyển
-(`docs/report/README.md`). Biểu tượng là
-một bộ SVG nét mảnh vẽ trong `b3_hoan_thien.py` (`ICONS`), không dùng thư viện ngoài. `nguon/img/`
-giữ ảnh gốc (logo trường, hình minh họa); trong HTML các ảnh này đã nhúng sẵn.
+Bộ slide giữ riêng như quyển: git chỉ có nguồn dựng (`nguon/dung_slide.py`, ảnh trong `nguon/img/`, biểu tượng
+Lucide giấy phép ISC trong `nguon/icons/`); `.pptx`, `.pdf` nằm trong `.gitignore`. Tài liệu chuẩn bị bảo vệ
+(hướng dẫn đọc slide, hỏi đáp, sổ tay) ở `UniversityRequirements/MyNotes/`.

@@ -156,9 +156,12 @@ node docs/media/src/shoot_site.mjs --out docs/media
 ```
 
 Script tự bấm nút giúp: hình `anh_demo_rag` và `anh_giao_dien_quan_sat` cần bấm câu hỏi
-RAG thứ hai, `anh_phat_hien_ngoai_lai` cần bấm ví dụ "Ngoại lai". Nó cũng ẩn bong bóng
-thoại của con cú và con cú nhỏ ở góc phải dưới (`#buddy`, nút "ẩn cú") — cả hai hay che
-mất chữ — và chờ thanh trạng thái hết "đang kiểm dịch vụ…" rồi mới chụp.
+RAG thứ hai, `anh_phat_hien_ngoai_lai` cần bấm ví dụ thứ ba ("Ví dụ: ảo giác ngoại lai"). Nó
+cũng ẩn bong bóng thoại của con cú và con cú nhỏ ở góc phải dưới (`#buddy`, nút "Ẩn linh
+vật") — cả hai hay che mất chữ — và chờ thanh trạng thái hết "Đang kiểm tra dịch vụ…" rồi
+mới chụp. Chữ trên trang được viết lại ngày 28/11/2026 theo quy ước văn phong của quyển
+(bỏ khẩu hiệu, khẩu ngữ; số thập phân dùng dấu phẩy), nên các ảnh `anh_*` được chụp lại
+cùng ngày.
 
 Khối hero của trang có nền đen **cứng trong CSS** (`#hero { background: #000 }`), không
 theo biến theme, nên `anh_trang_chu_hero` vẫn là nền tối dù chụp ở chế độ sáng — đây là
